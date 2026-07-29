@@ -1,0 +1,21 @@
+[package]
+name = "oxiland"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.87"
+description = "A Redland-compatible RDF toolkit backed by Oxigraph"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/oxiland/oxiland"
+keywords = ["rdf", "sparql", "redland", "oxigraph", "semantic-web"]
+categories = ["database"]
+
+[features]
+default = []
+rocksdb = ["oxigraph/rocksdb"]
+
+[dependencies]
+oxigraph = { version = "=0.5.9", default-features = false }
+thiserror = "2"
+
+[dev-dependencies]
+tempfile = "3"
