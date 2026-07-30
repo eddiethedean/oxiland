@@ -15,7 +15,7 @@ and evidence process on top of the same engine. See
 ## Is Oxiland “Redland-compatible”?
 
 Only in evidence-scoped senses documented in the [parity ledger](../parity.md). It is
-**not** C source/ABI compatible in 0.2, and not a 100% `librdf` port. crates.io
+**not** C source/ABI compatible in 0.3, and not a 100% `librdf` port. crates.io
 describes Redland-*shaped* workflows, not drop-in parity.
 
 ## What does “Verified” mean in the parity ledger?

@@ -1,11 +1,12 @@
 # Migration from Redland
 
-This page helps maintainers map Redland `librdf` workflows to Oxiland 0.2.
+This page helps maintainers map Redland `librdf` workflows to Oxiland 0.3.
 It is **not** a complete symbol-by-symbol porting guide (that is a 0.6
 accounting goal). Inventories remain authoritative for claimed rows:
 
 - [0.1 core inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
 - [0.2 I/O inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.2.json)
+- [0.3 query inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.3.json)
 
 ## Mindset
 
@@ -42,19 +43,25 @@ accounting goal). Inventories remain authoritative for claimed rows:
 
 Design detail: [docs/design/0.2-io-api.md](../design/0.2-io-api.md).
 
-## Query
+## Query / update / results (0.3)
 
-| Redland concept | Oxiland 0.2 |
+| Redland concept | Oxiland |
 |---|---|
 | Create/execute SPARQL | `Query::new(...).execute(&model)` |
-| ASK / SELECT | Supported at a basic level |
-| Update / rich results | Verified in 0.3 (`Query` / `Update` / `ResultsFormat`) |
+| ASK / SELECT / CONSTRUCT / DESCRIBE | Streaming `QueryResults` |
+| Limit / offset / dataset | `Query::limit` / `offset` / `default_graph` / … |
+| SPARQL Update | `Update::new(...).execute(&model)` |
+| Results to string | `ResultsFormat` + `serialize_query_results_to_string` |
+| Graph results to RDF | `serialize_graph_results_to_writer` / `io::Serializer` |
+| Cancel | `CancellationToken` (wall-clock timeout is caller-driven) |
+
+Design detail: [docs/design/0.3-query-api.md](../design/0.3-query-api.md).
 
 ## C source and ABI
 
 Not available. A separately audited `oxiland-capi` is planned no earlier than
 0.7 ([ADR-002](../DECISIONS.md)). Do not schedule a binary drop-in migration on
-0.2 timelines.
+0.3 timelines.
 
 ## Suggested migration sequence
 

@@ -11,7 +11,7 @@ Product guides for writing applications against the published crate:
 
 1. [Getting started](users/getting-started.md) — install, toolchain, first workflows
 2. [RDF I/O](users/io.md) — syntaxes, GraphTarget, progressive vs collecting load
-3. [SPARQL](users/sparql.md) — ASK and SELECT
+3. [SPARQL](users/sparql.md) — Query, Update, and results
 4. [Persistence](users/persistence.md) — experimental Fjall stores and export
 5. [FAQ and troubleshooting](users/faq.md)
 
@@ -22,8 +22,9 @@ Adoption and compatibility decision material:
 1. [Positioning](evaluators/positioning.md) — vs Oxigraph, Sophia, and Redland
 2. [Migration from Redland](evaluators/migration-from-redland.md)
 3. [Parity ledger](parity.md) — scoped verified claims
-4. [0.2 compatibility report](reports/0.2.md)
-5. [Compatibility contract](COMPATIBILITY.md)
+4. [0.3 compatibility report](reports/0.3.md)
+5. [0.2 compatibility report](reports/0.2.md)
+6. [Compatibility contract](COMPATIBILITY.md)
 
 ## Contributors
 
@@ -38,7 +39,7 @@ Process and planning (compatibility work is vertical-slice driven):
 7. [Verification](VERIFICATION.md)
 8. [Decisions](DECISIONS.md)
 9. [Risks](RISKS.md)
-10. [Reports and release checklists](reports/0.2.md)
+10. [Reports and release checklists](reports/0.3.md) · [0.3.0 release](reports/0.3.0-release.md)
 
 ### Document authority (contributors)
 

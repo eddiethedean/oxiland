@@ -45,7 +45,7 @@ Inventory revisions:
 | Parser | Verified (0.2 slice) | Unstarted | 0.2/0.7 | `Parser` facade, Syntax discovery, progressive/collecting load |
 | Serializer | Verified (0.2 slice) | Unstarted | 0.2/0.7 | `Serializer` facade, prefixes, graph/dataset checks |
 | SPARQL query/results | Verified (0.3 slice) | Unstarted | 0.3/0.7 | Query builder, streaming results, ResultsFormat |
-| Query update | Verified (0.3 slice) | Unstarted | 0.3/0.7 | `Update` facade; Fjall resync after execute |
+| Query update | Verified (0.3 slice) | Unstarted | 0.3/0.7 | `Update` facade; write-locked Fjall resync with compensated rollback |
 | Digests | Unstarted | Unstarted | 0.5/0.7 | inventory and mapping pending |
 | Hashes / lists | Unreviewed | Unstarted | 0.5/0.7 | likely Rust replacements; rationale required |
 | Heuristics / files / Unicode | Partial (I/O Unicode) | Unstarted | 0.5/0.7 | Unicode literals covered in 0.2 I/O tests |

@@ -9,8 +9,8 @@
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/eddiethedean/oxiland)
 
 **Oxiland** is a safe Rust facade for Redland-shaped RDF workflows—models,
-contexts, statement matching, SPARQL ASK/SELECT, and stream-oriented Turtle /
-N-Triples / N-Quads / TriG / RDF/XML I/O—backed by pinned
+contexts, statement matching, SPARQL query/update/results, and stream-oriented
+Turtle / N-Triples / N-Quads / TriG / RDF/XML I/O—backed by pinned
 [Oxigraph](https://oxigraph.org/) 0.5.9 with `#![forbid(unsafe_code)]`.
 
 Use it when you want Redland concepts and explicit unsupported/error behavior
@@ -46,11 +46,11 @@ A longer comparison (including Sophia and native Redland) is in
 | Default-graph CRUD | Available |
 | Named-graph/context CRUD and matching | Available |
 | Partial statement matching | Available; streaming `StatementMatches` |
-| SPARQL query execution | Basic ASK/SELECT support |
+| SPARQL ASK / SELECT / CONSTRUCT / DESCRIBE | Available; streaming `QueryResults` |
 | RDF parser and serializer facades | Available; Turtle, N-Triples, N-Quads, TriG, RDF/XML |
 | Syntax discovery by name, MIME type, and extension | Available via `Syntax` |
 | Persistent Fjall model | Experimental via `Model::open` (unstable on-disk format until 0.4) |
-| SPARQL Update and complete result adapters | Planned for 0.3 |
+| SPARQL Update and results serialization | Available; XML/JSON/CSV/TSV + graph serialize helper |
 | Full safe Rust Redland accounting | Planned for 0.6 |
 | C source and ABI compatibility | Planned for 0.7–0.9 |
 

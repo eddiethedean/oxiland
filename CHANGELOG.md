@@ -40,6 +40,7 @@ Redland-shaped SPARQL query, update, and results over Oxigraph 0.5.9.
 - ASK rejects API `limit`/`offset` at builder time (including after PREFIX/BASE)
 - Invalid query/update base IRI and prefix map to `InvalidRdf` consistently
 - SPARQL smoke harness exercises `compatibility/fixtures/sparql/smoke.ttl`
+
 ## [0.2.0] - 2026-07-30
 
 Redland-shaped RDF input and output over Oxigraph 0.5.9.

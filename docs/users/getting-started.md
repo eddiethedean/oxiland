@@ -19,7 +19,7 @@ that pin moves; this is intentional for the Oxigraph 0.5.9 compatibility matrix.
 
 ```toml
 [dependencies]
-oxiland = "0.2.0"
+oxiland = "0.3.0"
 ```
 
 ## Workflow 1 — Build a model and ASK
@@ -71,6 +71,7 @@ From a checkout: `cargo run --example parse_serialize`.
 ## What to read next
 
 - Named graphs and matching: README “Contexts” or `cargo run --example contexts`
+- SPARQL Update / results: [sparql.md](sparql.md) (`construct`, `update` examples)
 - I/O details and progressive load: [io.md](io.md)
 - Persistence caveats: [persistence.md](persistence.md)
 - Common failures: [faq.md](faq.md)
