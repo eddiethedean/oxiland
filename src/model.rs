@@ -1,4 +1,3 @@
-#[cfg(feature = "rocksdb")]
 use std::path::Path;
 
 use oxigraph::model::{
@@ -6,6 +5,7 @@ use oxigraph::model::{
 };
 use oxigraph::store::{QuadIter, Store};
 
+use crate::persist::DiskStore;
 use crate::{Error, Result};
 
 /// A partial triple pattern, equivalent to Redland's statement matching API.
@@ -43,6 +43,10 @@ impl Iterator for StatementMatches {
 
 /// An RDF graph model backed by an Oxigraph store.
 ///
+/// In-memory models use Oxigraph alone. Persistent models opened with
+/// [`Model::open`] keep an Oxigraph working set and a [redb](https://www.redb.org/)
+/// durable copy of every quad.
+///
 /// Cloning a [`Model`] clones the store handle and shares the same dataset; it
 /// does not deep-copy statements. `Model` is `Send` and `Sync`.
 ///
@@ -76,29 +80,34 @@ impl Iterator for StatementMatches {
 #[derive(Clone)]
 pub struct Model {
     store: Store,
+    disk: Option<DiskStore>,
 }
 
 impl Model {
     /// Creates an empty in-memory model.
     pub fn new() -> Result<Self> {
         Store::new()
-            .map(|store| Self { store })
+            .map(|store| Self { store, disk: None })
             .map_err(|error| Error::Storage(error.to_string()))
     }
 
-    /// Opens or creates a persistent RocksDB model.
+    /// Opens or creates a persistent model at `path`.
     ///
-    /// On-disk format compatibility across Oxiland versions is not guaranteed
-    /// in 0.x; see ADR-006.
-    #[cfg(feature = "rocksdb")]
+    /// Quads are stored in a redb database and loaded into an Oxigraph
+    /// in-memory working set for querying. On-disk format compatibility across
+    /// Oxiland versions is not guaranteed in 0.x; see ADR-006.
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
-        Store::open(path)
-            .map(|store| Self { store })
-            .map_err(|error| Error::OpenStore {
-                path: path.to_owned(),
-                message: error.to_string(),
-            })
+        let disk = DiskStore::open(path)?;
+        let store = Store::new().map_err(|error| Error::OpenStore {
+            path: path.to_owned(),
+            message: error.to_string(),
+        })?;
+        disk.load_into(&store)?;
+        Ok(Self {
+            store,
+            disk: Some(disk),
+        })
     }
 
     /// Returns the underlying Oxigraph store.
@@ -112,8 +121,10 @@ impl Model {
     /// Unknown backend names return [`Error::Unsupported`].
     pub fn storage_backend_available(name: &str) -> Result<bool> {
         match name {
-            "memory" => Ok(true),
-            "rocksdb" => Ok(cfg!(feature = "rocksdb")),
+            "memory" | "redb" => Ok(true),
+            "rocksdb" => Err(Error::Unsupported(
+                "rocksdb backend was replaced by redb; use Model::open".into(),
+            )),
             other => Err(Error::Unsupported(format!(
                 "storage backend '{other}' is not recognized"
             ))),
@@ -146,6 +157,12 @@ impl Model {
         self.store
             .insert(&quad)
             .map_err(|error| Error::Storage(error.to_string()))?;
+        if let Some(disk) = &self.disk {
+            if let Err(error) = disk.insert(&quad) {
+                let _ = self.store.remove(quad.as_ref());
+                return Err(error);
+            }
+        }
         Ok(inserted)
     }
 
@@ -173,6 +190,14 @@ impl Model {
         self.store
             .remove(quad.as_ref())
             .map_err(|error| Error::Storage(error.to_string()))?;
+        if removed {
+            if let Some(disk) = &self.disk {
+                if let Err(error) = disk.remove(&quad) {
+                    let _ = self.store.insert(&quad);
+                    return Err(error);
+                }
+            }
+        }
         Ok(removed)
     }
 

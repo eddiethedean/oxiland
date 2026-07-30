@@ -32,6 +32,7 @@
 
 mod error;
 mod model;
+mod persist;
 mod query;
 mod world;
 

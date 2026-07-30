@@ -238,7 +238,7 @@
       "implementation": "src/model.rs",
       "tests": ["tests/model.rs::unsupported_storage_backend_is_explicit"],
       "state": "implemented",
-      "notes": "In-memory default; optional RocksDB via feature flag. Full storage matrix is 0.4."
+      "notes": "In-memory default; durable redb via Model::open. Full storage matrix is 0.4."
     }
   ]
 }

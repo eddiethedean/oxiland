@@ -34,6 +34,7 @@ items = [
     "oxiland::Model::is_empty",
     "oxiland::Model::len",
     "oxiland::Model::new",
+    "oxiland::Model::open",
     "oxiland::Model::remove",
     "oxiland::Model::remove_from_graph",
     "oxiland::Model::storage_backend_available",

@@ -18,7 +18,7 @@ paths, and—later in the 0.x series—a separately audited C compatibility laye
 
 - Familiar Redland concepts with Rust ownership and error handling.
 - Oxigraph-backed RDF terms, datasets, parsing primitives, and SPARQL.
-- In-memory operation by default, with optional RocksDB persistence.
+- In-memory operation by default, with optional redb persistence.
 - No `unsafe` code in the primary crate.
 - Compatibility claims backed by an API inventory and differential tests
   rather than an unqualified percentage.
@@ -35,7 +35,7 @@ paths, and—later in the 0.x series—a separately audited C compatibility laye
 | Partial statement matching | Available; streaming `StatementMatches` |
 | SPARQL query execution | Basic ASK/SELECT support |
 | RDF parser and serializer primitives | Re-exported; Redland-style facade planned for 0.2 |
-| Persistent RocksDB model | Optional `rocksdb` feature |
+| Persistent redb model | Available via `Model::open` |
 | SPARQL Update and complete result adapters | Planned for 0.3 |
 | Full safe Rust Redland accounting | Planned for 0.6 |
 | C source and ABI compatibility | Planned for 0.7–0.9 |
@@ -46,7 +46,6 @@ does not imply full subsystem parity with Redland.
 ## Requirements
 
 - Rust 1.87 or newer
-- A supported native toolchain when enabling RocksDB
 
 Oxiland pins Oxigraph 0.5.9 for the current release so compatibility testing is
 performed against a known engine version.
@@ -58,14 +57,6 @@ Add Oxiland to your `Cargo.toml`:
 ```toml
 [dependencies]
 oxiland = "0.1.0"
-```
-
-The default build uses Oxigraph's in-memory backend and does not compile
-RocksDB. Enable persistent storage explicitly:
-
-```toml
-[dependencies]
-oxiland = { version = "0.1.0", features = ["rocksdb"] }
 ```
 
 ## Quick start
@@ -140,13 +131,14 @@ The complete example is runnable with `cargo run --example contexts`.
 
 ## Persistent storage
 
-With the `rocksdb` feature enabled:
+`Model::open` stores quads in a [redb](https://www.redb.org/) database and keeps
+an Oxigraph in-memory working set for querying:
 
 ```rust,no_run
 use oxiland::Model;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let model = Model::open("./data/oxiland")?;
+    let model = Model::open("./data/oxiland.redb")?;
     assert!(model.is_empty()?);
     Ok(())
 }
@@ -250,16 +242,7 @@ python3 scripts/check-inventory.py
 scripts/generate-public-api.sh check
 ```
 
-When changing storage or feature flags, also run the RocksDB path:
-
-```console
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test --all-features
-cargo doc --no-deps --all-features
-```
-
-CI mirrors this split: PRs run the default path plus MSRV; `main` and
-release tags additionally build the RocksDB feature once.
+CI runs these checks on stable and Rust 1.87.
 
 Compatibility work should be implemented as a vertical slice: inventory
 mapping, public API, implementation, positive and failure tests, differential

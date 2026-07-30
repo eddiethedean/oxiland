@@ -192,14 +192,18 @@ fn sparql_parse_errors_are_distinct_from_evaluation() {
 fn unsupported_storage_backend_is_explicit() {
     let error = Model::storage_backend_available("mysql").unwrap_err();
     assert!(matches!(error, Error::Unsupported(_)));
+    assert!(matches!(
+        Model::storage_backend_available("rocksdb"),
+        Err(Error::Unsupported(_))
+    ));
     assert!(Model::storage_backend_available("memory").unwrap());
+    assert!(Model::storage_backend_available("redb").unwrap());
 }
 
-#[cfg(feature = "rocksdb")]
 #[test]
-fn rocksdb_model_round_trips_statements() {
+fn redb_model_round_trips_statements() {
     let dir = tempfile::tempdir().unwrap();
-    let path = dir.path().join("store");
+    let path = dir.path().join("store.redb");
     {
         let model = Model::open(&path).unwrap();
         assert!(model.add(example_statement()).unwrap());
@@ -207,5 +211,4 @@ fn rocksdb_model_round_trips_statements() {
     }
     let reopened = Model::open(&path).unwrap();
     assert!(reopened.contains(example_statement().as_ref()).unwrap());
-    assert!(Model::storage_backend_available("rocksdb").unwrap());
 }

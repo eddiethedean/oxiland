@@ -5,11 +5,6 @@ on:
     branches: [main]
   pull_request:
   workflow_call:
-    inputs:
-      include_rocksdb:
-        description: Build and test the optional rocksdb feature
-        type: boolean
-        default: true
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -84,38 +79,3 @@ jobs:
 
       - name: Test
         run: cargo test
-
-  rocksdb:
-    name: RocksDB
-    if: >-
-      (github.event_name == 'workflow_call' && inputs.include_rocksdb) ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main')
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: rocksdb
-
-      - name: Install RocksDB build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake clang libclang-dev
-
-      - name: Clippy (all features)
-        run: cargo clippy --all-targets --all-features -- -D warnings
-
-      - name: Test (all features)
-        run: cargo test --all-features
-
-      - name: Docs (all features)
-        run: cargo doc --no-deps --all-features

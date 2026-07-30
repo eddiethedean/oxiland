@@ -15,15 +15,14 @@ categories = ["database"]
 exclude = [".github/"]
 
 [package.metadata.docs.rs]
-# Keep docs.rs builds free of the optional RocksDB native dependency.
 features = []
 
 [features]
 default = []
-rocksdb = ["oxigraph/rocksdb"]
 
 [dependencies]
 oxigraph = { version = "=0.5.9", default-features = false }
+redb = "2.6"
 thiserror = "2"
 
 [dev-dependencies]

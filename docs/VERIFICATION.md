@@ -88,16 +88,11 @@ Conformance categories include:
 
 ## CI matrix
 
-Required on every PR:
+Required on every PR and on `main`/release:
 
-- stable Rust default-feature checks (fmt, Clippy, tests, docs, examples,
-  inventory, public-API snapshot);
+- stable Rust checks (fmt, Clippy, tests, docs, examples, inventory,
+  public-API snapshot);
 - Rust 1.87 MSRV Clippy and tests.
-
-Required on `main` pushes and release tags:
-
-- the PR set above;
-- one RocksDB/`--all-features` job (Clippy, tests, docs).
 
 The intended broader matrix still includes:
 
@@ -122,10 +117,9 @@ Before review:
 
 ```text
 cargo fmt --check
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test --all-features
-cargo test --no-default-features
-cargo doc --no-deps --all-features
+cargo clippy --all-targets -- -D warnings
+cargo test
+cargo doc --no-deps
 ```
 
 Milestones may add native or long-running commands to this baseline.
