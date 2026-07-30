@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- User and evaluator documentation paths under `docs/users/` and
+  `docs/evaluators/`
+- `SECURITY.md` and `CODE_OF_CONDUCT.md`
+- Examples `select` and `progressive_load`
+- Milestone stub `docs/milestones/0.3.md`
+
+### Changed
+
+- crates.io description and categories no longer overclaim Redland compatibility
+- README rewritten for adoption (when-to-use, experimental Fjall, format table,
+  role-based doc links, badges)
+- Docs index is a Users / Evaluators / Contributors router
+- Parity ledger clarifies scoped meaning of `verified`
+
 ## [0.2.0] - 2026-07-30
 
 Redland-shaped RDF input and output over Oxigraph 0.5.9.

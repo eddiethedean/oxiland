@@ -50,6 +50,8 @@ jobs:
           cargo run --example quick_start
           cargo run --example contexts
           cargo run --example parse_serialize
+          cargo run --example select
+          cargo run --example progressive_load
 
       - name: Inventory
         run: python3 scripts/check-inventory.py

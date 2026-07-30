@@ -120,8 +120,18 @@ The detailed acceptance criteria and dependency map live in the
 
 ## Current 0.3 backlog
 
-See the [roadmap 0.3 section](ROADMAP.md#03--query-and-results). Detailed work
-packages will land in `milestones/0.3.md` when that milestone opens.
+See the [roadmap 0.3 section](ROADMAP.md#03--query-and-results) and the
+[milestone 0.3 stub](milestones/0.3.md). Work-package details expand as design
+spikes land; until then:
+
+| Priority | Deliverable | Notes |
+|---:|---|---|
+| P0 | Query/result inventory slice | Redland query + result symbols |
+| P0 | Streaming SELECT/bindings adapters | Public facade over Oxigraph iterators |
+| P0 | SPARQL Update entry points | Explicit unsupported until ready |
+| P1 | CONSTRUCT/DESCRIBE result forms | With empty/failure tests |
+| P1 | Limit/offset/base IRI configuration | Document unsupported features |
+| P2 | Result serialization formats | Where Oxigraph/Redland overlap |
 
 ## Definition of ready
 

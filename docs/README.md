@@ -1,63 +1,63 @@
-# Oxiland project plans
+# Oxiland documentation
 
-Status: active planning index
+Choose a path by role. Planning documents describe intended work; the
+[parity ledger](../PARITY.md) records what is verified now.
 
-These documents define the product boundary, current evidence, and the path from
-Oxiland's current Rust facade to verified Redland compatibility.
+## Users
 
-## Start here
+Product guides for writing applications against the published crate:
 
-1. [Project charter](CHARTER.md) defines users, scope, non-goals, invariants,
-   success measures, and the 1.0 promise.
-2. [Roadmap](ROADMAP.md) defines the 0.x release outcomes and evidence gates.
-3. [0.2 milestone plan](milestones/0.2.md) specifies the current release's work
-   packages, decisions, test matrix, and exit checklist.
-4. [Execution plan](EXECUTION.md) defines how work becomes a verified vertical
-   slice and records the current work order.
-5. [Architecture](ARCHITECTURE.md) defines components and dependency direction.
-6. [Compatibility plan](COMPATIBILITY.md) defines exactly what parity means.
-7. [Verification plan](VERIFICATION.md) defines acceptable evidence.
-8. [Decision log](DECISIONS.md) records choices that constrain future work.
-9. [Risk register](RISKS.md) records threats, responses, triggers, and release
-   blockers.
+1. [Getting started](users/getting-started.md) — install, toolchain, first workflows
+2. [RDF I/O](users/io.md) — syntaxes, GraphTarget, progressive vs collecting load
+3. [SPARQL](users/sparql.md) — ASK and SELECT
+4. [Persistence](users/persistence.md) — experimental Fjall stores and export
+5. [FAQ and troubleshooting](users/faq.md)
 
-The live subsystem-level status remains in the root
-[parity ledger](../PARITY.md). Plans describe intended work; the ledger records
-only work that has landed and been verified. Milestone reports live under
-[`reports/`](reports/), starting with [0.1](reports/0.1.md) and
-[0.2](reports/0.2.md). Release checklists:
-[0.1.0](reports/0.1.0-release.md),
-[0.2.0](reports/0.2.0-release.md).
+API reference: [docs.rs/oxiland](https://docs.rs/oxiland).
 
-## Document authority
+## Evaluators
 
-When documents answer different questions, use this order:
+Adoption and compatibility decision material:
+
+1. [Positioning](evaluators/positioning.md) — vs Oxigraph, Sophia, and Redland
+2. [Migration from Redland](evaluators/migration-from-redland.md)
+3. [Parity ledger](../PARITY.md) — scoped verified claims
+4. [0.2 compatibility report](reports/0.2.md)
+5. [Compatibility contract](COMPATIBILITY.md)
+
+## Contributors
+
+Process and planning (compatibility work is vertical-slice driven):
+
+1. [CONTRIBUTING.md](../CONTRIBUTING.md)
+2. [Project charter](CHARTER.md)
+3. [Roadmap](ROADMAP.md) — next release is **0.3**
+4. [Milestone 0.3](milestones/0.3.md) (stub) · completed [0.2](milestones/0.2.md)
+5. [Execution plan](EXECUTION.md)
+6. [Architecture](ARCHITECTURE.md)
+7. [Verification](VERIFICATION.md)
+8. [Decisions](DECISIONS.md)
+9. [Risks](RISKS.md)
+10. [Reports and release checklists](reports/)
+
+### Document authority (contributors)
 
 | Question | Authority |
 |---|---|
-| Who is Oxiland for and what does 1.0 promise? | [Project charter](CHARTER.md) |
+| Who is Oxiland for and what does 1.0 promise? | [Charter](CHARTER.md) |
 | What exists and is verified now? | [Parity ledger](../PARITY.md) |
 | What release comes next? | [Roadmap](ROADMAP.md) |
-| What exactly must the active release deliver? | [0.2 milestone plan](milestones/0.2.md) |
-| How is work sliced, ordered, and completed? | [Execution plan](EXECUTION.md) |
+| What must the active release deliver? | [milestones/0.3.md](milestones/0.3.md) |
+| How is work sliced and completed? | [Execution](EXECUTION.md) |
 | Where does code belong? | [Architecture](ARCHITECTURE.md) |
-| What does compatibility mean? | [Compatibility plan](COMPATIBILITY.md) |
-| What evidence is sufficient? | [Verification plan](VERIFICATION.md) |
-| Why was a durable choice made? | [Decision log](DECISIONS.md) |
-| What could block the plan? | [Risk register](RISKS.md) |
+| What does compatibility mean? | [Compatibility](COMPATIBILITY.md) |
+| What evidence is sufficient? | [Verification](VERIFICATION.md) |
+| Why was a durable choice made? | [Decisions](DECISIONS.md) |
+| What could block the plan? | [Risks](RISKS.md) |
 
 ## Maintenance rules
 
 - Plans use `planned`, `in progress`, `blocked`, and `complete`.
-- Only verified implementation is marked complete.
-- The roadmap contains release outcomes; detailed work packages live in
-  `milestones/` and must not be duplicated inconsistently.
-- Roadmap gates link to durable evidence before a milestone closes.
-- Accepted deviations have an owner and review milestone.
-- Material API or compatibility choices receive a decision record.
-- New high-impact uncertainty enters the risk register.
-- Historical reports are amended only to correct errors and clearly label later
-  notes; they are not rewritten as current status.
-- Links to implementation evidence use repository-relative paths and stable test
-  names where possible.
-- All relative links and Rust documentation build before release.
+- Only verified implementation is marked complete in the parity ledger.
+- User and evaluator guides must not describe planned work as available.
+- Historical reports are amended only to correct errors.

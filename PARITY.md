@@ -23,7 +23,10 @@ Inventory revisions:
 - `unreviewed`: not yet mapped from canonical Redland inputs.
 - `mapped`: intended Rust/C representation is documented.
 - `implemented`: code exists but lacks complete compatibility evidence.
-- `verified`: required evidence passes for the stated scope.
+- `verified`: required evidence passes for the **stated inventory scope**
+  (linked implementation + tests, and fixtures named by that milestone). It does
+  **not** mean every Redland symbol or a full native differential suite has
+  passed—read the linked inventory revision and milestone report.
 - `not-applicable`: legacy mechanism replaced safely with rationale.
 - `excluded`: intentionally unsupported with an approved impact assessment.
 

@@ -1,0 +1,34 @@
+# Security policy
+
+## Supported versions
+
+| Version | Supported |
+|---|---|
+| 0.2.x | Yes |
+| 0.1.x | Security fixes only when practical; prefer upgrading to 0.2 |
+| < 0.1 | No |
+
+Oxiland is pre-1.0. Public APIs and on-disk formats may change; security fixes
+may ship as breaking 0.x releases when required.
+
+## Reporting a vulnerability
+
+Please **do not** open a public GitHub issue for security vulnerabilities.
+
+Email the maintainer at **odosmatthews@gmail.com** with:
+
+- a description of the issue and impact;
+- steps to reproduce or a proof of concept if available;
+- affected crate version and platform.
+
+You should receive an acknowledgement within a few business days. We will
+coordinate a fix and disclosure timeline. If the issue also affects Oxigraph or
+another dependency, we will help route it appropriately.
+
+## Scope notes
+
+- The primary `oxiland` crate forbids `unsafe` code. Memory-safety issues in
+  dependencies should be reported upstream when possible.
+- Experimental Fjall persistence (`Model::open`) is not a hardened multi-tenant
+  database; treat local store paths as trusted.
+- A future `oxiland-capi` crate will carry separate FFI security review.
