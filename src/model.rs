@@ -288,4 +288,16 @@ impl Model {
             ),
         }
     }
+
+    /// After SPARQL Update mutates the Oxigraph store, resync Fjall if present.
+    pub(crate) fn sync_disk_from_store(&self) -> Result<()> {
+        let Some(disk) = &self.disk else {
+            return Ok(());
+        };
+        let _guard = self
+            .write_lock
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        disk.replace_all_from_store(&self.store)
+    }
 }

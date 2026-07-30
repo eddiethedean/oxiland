@@ -15,14 +15,14 @@ N-Triples / N-Quads / TriG / RDF/XML I/O—backed by pinned
 
 Use it when you want Redland concepts and explicit unsupported/error behavior
 without C ownership; use Oxigraph directly when you only need the engine API.
-Version **0.2.0** covers the trusted core model plus Redland-shaped
-parsers/serializers with scoped evidence in the [parity ledger](PARITY.md)—not
+Version **0.3.0** covers the trusted core model, Redland-shaped RDF I/O, and
+SPARQL query/update/results with scoped evidence in the [parity ledger](PARITY.md)—not
 C ABI/source compatibility, full `librdf` accounting, or a stable on-disk
 format.
 
 > [!IMPORTANT]
 > Compatibility claims are evidence-scoped. See the
-> [parity ledger](PARITY.md) and [0.2 report](docs/reports/0.2.md). Do not read
+> [parity ledger](PARITY.md) and [0.3 report](docs/reports/0.3.md). Do not read
 > “Redland-shaped” as drop-in C or ABI compatibility.
 
 ## When to use Oxiland
@@ -87,7 +87,7 @@ rustc --version   # >= 1.87
 
 ```toml
 [dependencies]
-oxiland = "0.2.0"
+oxiland = "0.3.0"
 ```
 
 ## Quick start
@@ -228,7 +228,7 @@ Oxiland safe facade ──> Oxigraph RDF, storage, I/O, and SPARQL
 Future oxiland-capi (0.7+)
 ```
 
-Roadmap highlights: 0.3 query/results, 0.4 durable storage contracts, 0.7 C ABI
+Roadmap highlights: 0.4 durable storage contracts, 0.7 C ABI
 preview. Full plan: [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Development

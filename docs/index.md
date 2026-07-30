@@ -31,8 +31,8 @@ Process and planning (compatibility work is vertical-slice driven):
 
 1. [Contributing](contributing.md)
 2. [Project charter](CHARTER.md)
-3. [Roadmap](ROADMAP.md) — next release is **0.3**
-4. [Milestone 0.3](milestones/0.3.md) (stub) · completed [0.2](milestones/0.2.md)
+3. [Roadmap](ROADMAP.md) — next release is **0.4**
+4. [Milestone 0.3](milestones/0.3.md) (complete) · [0.2](milestones/0.2.md)
 5. [Execution plan](EXECUTION.md)
 6. [Architecture](ARCHITECTURE.md)
 7. [Verification](VERIFICATION.md)
@@ -47,7 +47,7 @@ Process and planning (compatibility work is vertical-slice driven):
 | Who is Oxiland for and what does 1.0 promise? | [Charter](CHARTER.md) |
 | What exists and is verified now? | [Parity ledger](parity.md) |
 | What release comes next? | [Roadmap](ROADMAP.md) |
-| What must the active release deliver? | [milestones/0.3.md](milestones/0.3.md) |
+| What must the active release deliver? | [milestones/0.3.md](milestones/0.3.md) (complete); next is 0.4 |
 | How is work sliced and completed? | [Execution](EXECUTION.md) |
 | Where does code belong? | [Architecture](ARCHITECTURE.md) |
 | What does compatibility mean? | [Compatibility](COMPATIBILITY.md) |

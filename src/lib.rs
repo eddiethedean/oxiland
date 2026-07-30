@@ -39,7 +39,10 @@ mod world;
 
 pub use error::{Error, ParseError, Result};
 pub use model::{Model, StatementMatches, StatementPattern};
-pub use query::{Query, QueryResults};
+pub use query::{
+    Query, QueryResults, ResultsFormat, Update, serialize_query_results_to_string,
+    serialize_query_results_to_writer,
+};
 pub use world::{FeatureValue, World};
 
 /// RDF term, triple, quad, and graph-name types used by Oxiland.
@@ -73,8 +76,12 @@ pub mod terms {
 
 /// Oxigraph SPARQL primitives for advanced use cases.
 ///
-/// The high-level [`Query`] API covers basic execution. Limit, offset, update,
-/// and streaming result adapters are planned for 0.3.
+/// Prefer [`Query`], [`Update`], and [`ResultsFormat`] for Redland-shaped
+/// workflows. This module is an escape hatch, not the compatibility surface.
 pub mod sparql {
-    pub use oxigraph::sparql::{QueryResults, QuerySolution, QuerySolutionIter, SparqlEvaluator};
+    pub use oxigraph::sparql::results::{QueryResultsFormat, QueryResultsSerializer};
+    pub use oxigraph::sparql::{
+        CancellationToken, QueryResults, QuerySolution, QuerySolutionIter, QueryTripleIter,
+        SparqlEvaluator,
+    };
 }

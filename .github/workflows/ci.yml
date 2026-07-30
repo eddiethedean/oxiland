@@ -52,6 +52,8 @@ jobs:
           cargo run --example parse_serialize
           cargo run --example select
           cargo run --example progressive_load
+          cargo run --example construct
+          cargo run --example update
 
       - name: Inventory
         run: python3 scripts/check-inventory.py
@@ -72,6 +74,9 @@ jobs:
 
       - name: I/O oracle smoke
         run: python3 compatibility/harness/oracle_smoke.py
+
+      - name: SPARQL facade smoke
+        run: python3 compatibility/harness/sparql_smoke.py
 
   io-conformance:
     name: RDF I/O conformance

@@ -1,7 +1,7 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 0.3 (0.2 complete)
+Current milestone: 0.4 (0.3 complete)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -9,7 +9,7 @@ true compatibility surface.
 
 The [project charter](CHARTER.md) constrains scope, the
 [roadmap](ROADMAP.md) defines release outcomes, and
-[milestone plans](milestones/0.2.md) define executable work packages. This document
+[milestone plans](milestones/0.3.md) define executable work packages. This document
 owns the operating model and current work order.
 
 ## Workstreams
@@ -112,26 +112,33 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Begin 0.3 query/result design: streaming solutions, SPARQL Update, result
-   serialization.
-2. Expand differential fixtures beyond the I/O smoke subset where Redland
-   behavior diverges.
+1. Begin 0.4 storage/transactions design (ADR-006).
+2. Expand SPARQL differential fixtures beyond the facade smoke harness.
 3. Keep ADR-006 open until 0.4 storage work starts.
 
-## Current 0.3 backlog
+## Current 0.4 backlog
 
-See the [roadmap 0.3 section](ROADMAP.md#03-query-and-results) and the
-[milestone 0.3 stub](milestones/0.3.md). Work-package details expand as design
-spikes land; until then:
+See the [roadmap 0.4 section](ROADMAP.md#04-storage-and-transactions) and keep
+ADR-006 moving toward acceptance. Work-package details expand as design spikes
+land; until then:
 
 | Priority | Deliverable | Notes |
 |---:|---|---|
-| P0 | Query/result inventory slice | Redland query + result symbols |
-| P0 | Streaming SELECT/bindings adapters | Public facade over Oxigraph iterators |
-| P0 | SPARQL Update entry points | Explicit unsupported until ready |
-| P1 | CONSTRUCT/DESCRIBE result forms | With empty/failure tests |
-| P1 | Limit/offset/base IRI configuration | Document unsupported features |
-| P2 | Result serialization formats | Where Oxigraph/Redland overlap |
+| P0 | ADR-006 storage compatibility boundary | Required before promising on-disk compat |
+| P0 | Transaction / sync / clear APIs | Builds on 0.3 Update |
+| P1 | Storage capability reporting | Explicit Unsupported for legacy backends |
+| P2 | Import/export for archival | N-Quads already available via 0.2 serializers |
+
+## Completed 0.3 backlog
+
+| Priority | Deliverable | Notes |
+|---:|---|---|
+| P0 | Query/result inventory slice | `redland-1.0.17-oxiland-0.3.json` |
+| P0 | Streaming SELECT/bindings adapters | `Query` + `QueryResults` |
+| P0 | SPARQL Update entry points | `Update` + Fjall resync |
+| P1 | CONSTRUCT/DESCRIBE result forms | `tests/query.rs` |
+| P1 | Limit/offset/base IRI configuration | Algebra `Slice` (ADR-009) |
+| P2 | Result serialization formats | `ResultsFormat` XML/JSON/CSV/TSV |
 
 ## Definition of ready
 

@@ -2,7 +2,7 @@
 
 Status: active design baseline  
 Current implementation: single `oxiland` crate on Oxigraph 0.5.9  
-Next review gate: before expanding query/result facades in 0.3
+Next review gate: before expanding storage/transaction contracts in 0.4
 
 This document specifies dependency direction and safety boundaries. It does not
 claim that planned crates or modules already exist.
@@ -107,8 +107,10 @@ behavior and callback contents make that truthful. Thread-safety is asserted in
 tests and, for the C API, in a published per-handle matrix.
 
 Long-running parse, query, update, and bulk-load operations need an explicit
-cancellation policy by 0.3. Cancellation may initially be unsupported, but the
-API must not imply reliable interruption where none exists.
+cancellation policy. As of 0.3, `Query` and `Update` accept an Oxigraph
+`CancellationToken` (ADR-012). Wall-clock timeouts are caller-driven by
+cancelling the token from another thread. The API must not imply reliable
+interruption where none exists.
 
 ## C ABI boundary
 
@@ -188,6 +190,7 @@ not reverse an accepted decision only through code changes.
 
 - What transaction abstraction can cover memory and fjall consistently?
 - Can query cancellation be implemented without modifying Oxigraph?
+  (Resolved in 0.3 via Oxigraph `CancellationToken`; see ADR-012.)
 - Which Redland factory registrations are safe and useful in Rust?
 - Which C handles need reference counting to reproduce observed aliasing?
 

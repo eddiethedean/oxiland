@@ -1,9 +1,9 @@
 [package]
 name = "oxiland"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.87"
-description = "Safe Redland-shaped RDF models, SPARQL ASK/SELECT, and stream-oriented RDF I/O on Oxigraph"
+description = "Safe Redland-shaped RDF models, SPARQL query/update/results, and stream-oriented RDF I/O on Oxigraph"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
 repository = "https://github.com/eddiethedean/oxiland"
@@ -22,6 +22,7 @@ default = []
 
 [dependencies]
 oxigraph = { version = "=0.5.9", default-features = false }
+spargebra = { version = "=0.4.6", default-features = false, features = ["sep-0002", "sep-0006"] }
 fjall = "2.11"
 thiserror = "2"
 

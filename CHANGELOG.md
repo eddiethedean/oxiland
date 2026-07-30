@@ -7,37 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-30
+
+Redland-shaped SPARQL query, update, and results over Oxigraph 0.5.9.
+
 ### Added
 
-- User and evaluator documentation paths under `docs/users/` and
-  `docs/evaluators/`
-- `SECURITY.md` and `CODE_OF_CONDUCT.md`
-- Examples `select` and `progressive_load`
-- Milestone stub `docs/milestones/0.3.md`
-- MkDocs / Read the Docs site (`.readthedocs.yaml`, `mkdocs.yml`)
+- `Query` builder: base IRI, prefixes, limit/offset (algebra `Slice`), dataset
+  selection, and cancellation token (ADR-009, ADR-012)
+- Streaming ASK / SELECT / CONSTRUCT / DESCRIBE via `QueryResults` (ADR-010)
+- `Update` facade with Fjall durable resync after successful execute
+- `ResultsFormat` (XML/JSON/CSV/TSV) plus serialize helpers (ADR-011)
+- Inventory `redland-1.0.17-oxiland-0.3.json`, design doc, ADRs 009–012
+- Examples `construct` and `update`; SPARQL facade smoke harness
+- Compatibility report `docs/reports/0.3.md`
 
 ### Changed
 
-- crates.io description and categories no longer overclaim Redland compatibility
-- README rewritten for adoption (when-to-use, experimental Fjall, format table,
-  role-based doc links, badges)
-- Docs index is a Users / Evaluators / Contributors router
-- Parity ledger clarifies scoped meaning of `verified`
-- `Parser::parse_path_with_extension` uses `GraphTarget::Dataset` for N-Quads
-  and TriG
-- `GraphTarget::Named` keeps quads already named for the target graph (rejects
-  only foreign named graphs)
-- Progressive `load_into` annotates partial progress on I/O and storage errors,
-  not only parse failures
-
-### Fixed
-
-- Fjall duplicate-insert disk failure no longer removes a pre-existing in-memory
-  statement
-- Concurrent `add` / `remove` return values are serialized so both callers cannot
-  observe `true` for a single insert/remove
-- Public API snapshot CI verifies owned public items against the baseline
-- Inventory checker verifies cited test function names exist
+- crates.io description covers query/update/results
+- User SPARQL guide documents 0.3 configuration and serialization
 
 ## [0.2.0] - 2026-07-30
 

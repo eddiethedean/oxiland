@@ -218,6 +218,93 @@ Evidence: `src/io/format.rs`,
 Revisit when: custom factories are required for C consumers, or JSON-LD /
 true N3 must be advertised.
 
+### ADR-009 — Query/Update builders, dataset, unbound, limit/offset
+
+State: accepted  
+Milestone: 0.3
+
+Context: Redland exposes query configuration (base, limit, offset, dataset)
+separately from result iteration. Oxigraph 0.5.9 provides `SparqlEvaluator`,
+`QueryDatasetSpecification`, and spargebra algebra, but not Redland-shaped
+builders.
+
+Decision:
+
+- Owned `Query` and `Update` builders configure base IRI, prefixes, dataset,
+  and cancellation before execution.
+- Unbound solution bindings are `None` via `QuerySolution::get` (name or
+  position).
+- API `limit`/`offset` apply `GraphPattern::Slice` after spargebra parse for
+  SELECT/CONSTRUCT/DESCRIBE; ASK rejects API slice with `Unsupported`.
+- Dataset defaults map to Oxigraph `dataset_mut` /
+  `using_datasets_mut` helpers.
+
+Alternatives: string-rewrite LIMIT/OFFSET; force SPARQL-text-only limits.
+
+Consequences: algebra dependency on pinned `spargebra = "=0.4.6"`; clear error
+when slicing ASK.
+
+Evidence: `src/query.rs`, `docs/design/0.3-query-api.md`, `tests/query.rs`.
+
+Revisit when: Oxigraph gains first-class prepared-query limit APIs.
+
+### ADR-010 — Streaming query result adapters
+
+State: accepted  
+Milestone: 0.3
+
+Context: ADR-005 left query streaming open. Callers must not be forced to
+collect full solution or graph result sets.
+
+Decision: re-export Oxigraph `QueryResults` (`Boolean`, `Solutions`,
+`Graph`) as the facade result type. Document early-stop by dropping iterators.
+`oxiland::sparql` remains an escape hatch; inventory cites the owned `Query` /
+`Update` / `ResultsFormat` surface.
+
+Alternatives: wrap every row in owned Oxiland enums; lending iterators.
+
+Consequences: lifetimes borrow the model/store snapshot semantics of Oxigraph;
+errors inside iterators map through `SparqlEvaluation` at the call site.
+
+Evidence: `tests/query.rs` early-stop cases; `docs/design/0.3-query-api.md`.
+
+Revisit when: a shared streaming trait across find/parse/query is required
+(0.5).
+
+### ADR-011 — SPARQL results serialization formats
+
+State: accepted  
+Milestone: 0.3
+
+Context: Redland serializes query results in several formats. Oxigraph exposes
+XML/JSON/CSV/TSV via sparesults.
+
+Decision: closed `ResultsFormat` enum for Xml, Json, Csv, Tsv with name and
+media-type lookup. Unknown aliases return `Unsupported`. Graph query results
+use RDF `Serializer` from 0.2, not SPARQL results formats.
+
+Evidence: `src/query.rs` (`ResultsFormat`), `tests/query.rs`.
+
+Revisit when: additional W3C result formats must be advertised.
+
+### ADR-012 — Query cancellation policy
+
+State: accepted  
+Milestone: 0.3
+
+Context: Architecture requires a documented cancellation policy by 0.3.
+Oxigraph provides `CancellationToken`.
+
+Decision: `Query`/`Update` accept an optional `CancellationToken`. Cancelling
+the token requests cooperative abort during evaluation. Wall-clock timeouts are
+**not** a facade feature—callers spawn a timer and cancel the token. Absence of
+a token means no cooperative cancel.
+
+Evidence: rustdoc on `Query::cancellation_token`, `tests/query.rs`,
+`docs/users/sparql.md`.
+
+Revisit when: a first-class timeout API is required for C consumers.
+
 ## Proposed decisions
 
 ### ADR-006 — Persistent storage compatibility boundary

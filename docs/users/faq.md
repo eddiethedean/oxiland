@@ -42,11 +42,10 @@ Default `GraphTarget::DefaultGraph` **rejects** named-graph input. Use
 
 ## Update / richer query workflows missing?
 
-ASK and SELECT execution exist today. Oxigraph may also accept CONSTRUCT /
-DESCRIBE query text through `Query::execute`, but Oxiland does not yet provide
-Redland-shaped result helpers for those forms—treat that as an engine escape
-hatch until **0.3**. SPARQL Update is also **0.3**.
-Track [milestones/0.3.md](../milestones/0.3.md).
+ASK, SELECT, CONSTRUCT, DESCRIBE, Update, dataset selection, limit/offset, and
+SPARQL Results serialization shipped in **0.3**. Storage transactions and
+durable on-disk contracts are **0.4**.
+Track [milestones](../milestones/0.3.md) and the [roadmap](../ROADMAP.md).
 
 ## Where do I report bugs or security issues?
 

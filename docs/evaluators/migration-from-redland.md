@@ -48,7 +48,7 @@ Design detail: [docs/design/0.2-io-api.md](../design/0.2-io-api.md).
 |---|---|
 | Create/execute SPARQL | `Query::new(...).execute(&model)` |
 | ASK / SELECT | Supported at a basic level |
-| Update / rich results | Planned 0.3 |
+| Update / rich results | Verified in 0.3 (`Query` / `Update` / `ResultsFormat`) |
 
 ## C source and ABI
 

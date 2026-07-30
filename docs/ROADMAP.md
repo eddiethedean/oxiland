@@ -17,7 +17,7 @@ only when its evidence gates are satisfied.
 |---|---|---|---|
 | 0.1 | Trusted core model | — | `complete` |
 | 0.2 | Redland-shaped RDF I/O | 0.1 | `complete` |
-| 0.3 | Complete query/result workflows | 0.2 | `planned` |
+| 0.3 | Complete query/result workflows | 0.2 | `complete` |
 | 0.4 | Durable storage and transactions | 0.3 | `planned` |
 | 0.5 | Streams, utilities, and observability | 0.4 | `planned` |
 | 0.6 | Accounted safe Rust parity | 0.5 | `planned` |
@@ -114,6 +114,12 @@ Depends on: stable model insertion/context semantics from 0.1.
 
 Outcome: provide complete Redland-style SPARQL workflows without forcing result
 materialization.
+
+State: complete
+Execution specification: [milestone 0.3](milestones/0.3.md)
+Evidence: [parity ledger](parity.md),
+[0.3 compatibility report](reports/0.3.md),
+[inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.3.json)
 
 Deliverables:
 

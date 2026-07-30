@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "milestone": "0.3",
+  "redland_api": "1.0.17",
+  "redland_manual": "1.0.18",
+  "oxiland_version": "0.3.0",
+  "oxigraph_version": "0.5.9",
+  "generated_by": "scripts/check-inventory.py",
+  "notes": "0.3 curated inventory slice for Redland-shaped SPARQL query, update, and results workflows (ADR-009–ADR-012).",
+  "entries": [
+    {
+      "id": "librdf.query.new",
+      "symbol": "librdf_new_query",
+      "kind": "function",
+      "subsystem": "query",
+      "safe_rust": "Query::new",
+      "implementation": "src/query.rs",
+      "tests": ["tests/query.rs::ask_select_construct_describe_positive_paths"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.query.execute",
+      "symbol": "librdf_query_execute",
+      "kind": "function",
+      "subsystem": "query",
+      "safe_rust": "Query::execute",
+      "implementation": "src/query.rs",
+      "tests": [
+        "tests/query.rs::ask_select_construct_describe_positive_paths",
+        "tests/query.rs::parse_versus_evaluation_errors"
+      ],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.query.limit_offset",
+      "symbol": "librdf_query_set_limit / librdf_query_set_offset",
+      "kind": "function",
+      "subsystem": "query",
+      "safe_rust": "Query::limit / Query::offset",
+      "implementation": "src/query.rs",
+      "tests": ["tests/query.rs::limit_and_offset_slice_select"],
+      "state": "verified",
+      "notes": "Algebra GraphPattern::Slice (ADR-009)."
+    },
+    {
+      "id": "librdf.query.dataset",
+      "symbol": "librdf_query_set_limit (dataset / default graph workflows)",
+      "kind": "function",
+      "subsystem": "query",
+      "safe_rust": "Query::default_graph / default_graph_as_union / available_named_graphs",
+      "implementation": "src/query.rs",
+      "tests": ["tests/query.rs::dataset_default_graph_restricts_matches"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.query.results.bindings",
+      "symbol": "librdf_query_results_get_binding_value",
+      "kind": "function",
+      "subsystem": "query",
+      "safe_rust": "QueryResults::Solutions / QuerySolution::get",
+      "implementation": "src/query.rs",
+      "tests": [
+        "tests/query.rs::ask_select_construct_describe_positive_paths",
+        "tests/query.rs::unbound_variables_are_none"
+      ],
+      "state": "verified",
+      "notes": "Unbound = None (ADR-009)."
+    },
+    {
+      "id": "librdf.query.results.boolean",
+      "symbol": "librdf_query_results_get_boolean",
+      "kind": "function",
+      "subsystem": "query",
+      "safe_rust": "QueryResults::Boolean",
+      "implementation": "src/query.rs",
+      "tests": [
+        "tests/query.rs::ask_select_construct_describe_positive_paths",
+        "tests/query.rs::empty_ask_is_false"
+      ],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.query.results.graph",
+      "symbol": "librdf_query_results_as_stream (CONSTRUCT/DESCRIBE)",
+      "kind": "function",
+      "subsystem": "query",
+      "safe_rust": "QueryResults::Graph",
+      "implementation": "src/query.rs",
+      "tests": [
+        "tests/query.rs::ask_select_construct_describe_positive_paths",
+        "tests/query.rs::empty_construct_yields_no_triples"
+      ],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.query.results.to_string",
+      "symbol": "librdf_query_results_to_string2",
+      "kind": "function",
+      "subsystem": "query",
+      "safe_rust": "ResultsFormat / serialize_query_results_to_string",
+      "implementation": "src/query.rs",
+      "tests": ["tests/query.rs::serialize_ask_and_select_results_formats"],
+      "state": "verified",
+      "notes": "Xml/Json/Csv/Tsv (ADR-011)."
+    },
+    {
+      "id": "librdf.model.update",
+      "symbol": "librdf_model_query_execute (update) / SPARQL Update",
+      "kind": "function",
+      "subsystem": "query",
+      "safe_rust": "Update::execute",
+      "implementation": "src/query.rs",
+      "tests": [
+        "tests/query.rs::update_insert_delete_data",
+        "tests/query.rs::fjall_update_persists"
+      ],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.query.cancel",
+      "symbol": "cancellation / timeout policy",
+      "kind": "function",
+      "subsystem": "query",
+      "safe_rust": "Query::cancellation_token / Update::cancellation_token",
+      "implementation": "src/query.rs",
+      "tests": ["tests/query.rs::cancellation_token_is_accepted"],
+      "state": "verified",
+      "notes": "Token supported; wall-clock timeout is caller-driven (ADR-012)."
+    }
+  ]
+}

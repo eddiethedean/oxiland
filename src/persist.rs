@@ -84,6 +84,40 @@ impl DiskStore {
             .persist(PersistMode::SyncAll)
             .map_err(|error| Error::Storage(error.to_string()))
     }
+
+    /// Rewrites durable keys to match `store` after SPARQL Update (0.3).
+    pub(crate) fn replace_all_from_store(&self, store: &Store) -> Result<()> {
+        use std::collections::HashSet;
+
+        let mut keep = HashSet::new();
+        for item in store.iter() {
+            let quad = item.map_err(|error| Error::Storage(error.to_string()))?;
+            let key = quad_key(&quad);
+            self.quads
+                .insert(key.as_bytes(), [])
+                .map_err(|error| Error::Storage(error.to_string()))?;
+            keep.insert(key);
+        }
+
+        let mut orphans = Vec::new();
+        for entry in self.quads.iter() {
+            let (key, _) = entry.map_err(|error| Error::Storage(error.to_string()))?;
+            let key = std::str::from_utf8(&key).map_err(|error| {
+                Error::Storage(format!("persisted quad key was not UTF-8: {error}"))
+            })?;
+            if !keep.contains(key) {
+                orphans.push(key.to_owned());
+            }
+        }
+        for key in orphans {
+            self.quads
+                .remove(key.as_bytes())
+                .map_err(|error| Error::Storage(error.to_string()))?;
+        }
+        self.keyspace
+            .persist(PersistMode::SyncAll)
+            .map_err(|error| Error::Storage(error.to_string()))
+    }
 }
 
 fn quad_key(quad: &Quad) -> String {
