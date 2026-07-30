@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SECURITY.md` and `CODE_OF_CONDUCT.md`
 - Examples `select` and `progressive_load`
 - Milestone stub `docs/milestones/0.3.md`
+- MkDocs / Read the Docs site (`.readthedocs.yaml`, `mkdocs.yml`)
 
 ### Changed
 
@@ -22,6 +23,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   role-based doc links, badges)
 - Docs index is a Users / Evaluators / Contributors router
 - Parity ledger clarifies scoped meaning of `verified`
+- `Parser::parse_path_with_extension` uses `GraphTarget::Dataset` for N-Quads
+  and TriG
+- `GraphTarget::Named` keeps quads already named for the target graph (rejects
+  only foreign named graphs)
+- Progressive `load_into` annotates partial progress on I/O and storage errors,
+  not only parse failures
+
+### Fixed
+
+- Fjall duplicate-insert disk failure no longer removes a pre-existing in-memory
+  statement
+- Concurrent `add` / `remove` return values are serialized so both callers cannot
+  observe `true` for a single insert/remove
+- Public API snapshot CI verifies owned public items against the baseline
+- Inventory checker verifies cited test function names exist
 
 ## [0.2.0] - 2026-07-30
 
@@ -49,8 +65,9 @@ Redland-shaped RDF input and output over Oxigraph 0.5.9.
 
 ### Fixed
 
-- `GraphTarget::DefaultGraph` and `Named` reject named-graph input so they
-  differ from `Dataset` on TriG/N-Quads
+- `GraphTarget::DefaultGraph` rejects named-graph input so it differs from
+  `Dataset` on TriG/N-Quads; `GraphTarget::Named` remaps the default graph and
+  rejects foreign named graphs
 - Parse errors no longer duplicate embedded Oxigraph location text
 - `load_collecting` rolls back quads newly inserted by the call if a later
   insert fails

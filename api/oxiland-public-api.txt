@@ -30,6 +30,8 @@ oxiland::Model::remove_quad
 oxiland::Model::storage_backend_available
 oxiland::Model::store
 oxiland::ParseError
+oxiland::ParseError::location
+oxiland::ParseError::message
 oxiland::Query
 oxiland::Query::as_str
 oxiland::Query::execute
@@ -79,6 +81,9 @@ oxiland::io::Serializer::syntax
 oxiland::io::Serializer::with_prefix
 oxiland::io::SliceStream
 oxiland::io::SourceLocation
+oxiland::io::SourceLocation::column
+oxiland::io::SourceLocation::line
+oxiland::io::SourceLocation::offset
 oxiland::io::Syntax
 oxiland::io::Syntax::NQuads
 oxiland::io::Syntax::NTriples

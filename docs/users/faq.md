@@ -40,9 +40,12 @@ extension (`.nt`, `.ttl`, `application/rdf+xml`, …).
 Default `GraphTarget::DefaultGraph` **rejects** named-graph input. Use
 `GraphTarget::Dataset` for TriG/N-Quads datasets.
 
-## SELECT / Update / CONSTRUCT missing?
+## Update / richer query workflows missing?
 
-ASK and SELECT execution exist; richer result workflows and Update are **0.3**.
+ASK and SELECT execution exist today. Oxigraph may also accept CONSTRUCT /
+DESCRIBE query text through `Query::execute`, but Oxiland does not yet provide
+Redland-shaped result helpers for those forms—treat that as an engine escape
+hatch until **0.3**. SPARQL Update is also **0.3**.
 Track [milestones/0.3.md](../milestones/0.3.md).
 
 ## Where do I report bugs or security issues?

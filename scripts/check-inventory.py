@@ -68,10 +68,19 @@ def validate_inventory(path: Path) -> None:
         if not isinstance(entry["tests"], list) or not entry["tests"]:
             fail(f"{path.name}:{entry['id']}: tests must be a non-empty list")
         for test_ref in entry["tests"]:
-            path_part = test_ref.split("::", 1)[0]
+            if not isinstance(test_ref, str) or not test_ref.strip():
+                fail(f"{path.name}:{entry['id']}: empty test reference")
+            path_part, _, fn_part = test_ref.partition("::")
             test_path = ROOT / path_part
             if not test_path.is_file():
                 fail(f"{path.name}:{entry['id']}: test path missing: {path_part}")
+            if fn_part:
+                text = test_path.read_text(encoding="utf-8")
+                if f"fn {fn_part}(" not in text and f"fn {fn_part}<" not in text:
+                    fail(
+                        f"{path.name}:{entry['id']}: test function missing: "
+                        f"{test_ref}"
+                    )
 
         # Optional 0.2 metadata: when present, must be well-formed.
         if "fixtures" in entry:

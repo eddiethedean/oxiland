@@ -1,5 +1,7 @@
+*.py[cod]
+.DS_Store
+/site
 /target
 Cargo.lock
-.DS_Store
+__pycache__/
 compatibility/harness/*-result.json
-/site

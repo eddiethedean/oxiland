@@ -459,3 +459,65 @@ fn large_stream_parse_does_not_require_full_collect_api() {
     }
     assert_eq!(count, 100);
 }
+
+#[test]
+fn parse_path_with_extension_accepts_nquads_named_graphs() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("data.nq");
+    std::fs::write(
+        &path,
+        "<https://example.com/a> <https://example.com/p> \"x\" <https://example.com/g> .\n",
+    )
+    .unwrap();
+    let (syntax, stream) = Parser::parse_path_with_extension(&path).unwrap();
+    assert_eq!(syntax, Syntax::NQuads);
+    let quads = stream.collect::<Result<Vec<_>, _>>().unwrap();
+    assert_eq!(quads.len(), 1);
+    assert_eq!(
+        quads[0].graph_name,
+        GraphName::NamedNode(NamedNode::new("https://example.com/g").unwrap())
+    );
+}
+
+#[test]
+fn named_graph_target_accepts_matching_named_quads() {
+    let nq = "<https://example.com/a> <https://example.com/p> \"x\" <https://example.com/g> .\n";
+    let target = GraphName::NamedNode(NamedNode::new("https://example.com/g").unwrap());
+    let quads = Parser::for_syntax(Syntax::NQuads)
+        .graph_target(GraphTarget::Named(target.clone()))
+        .parse_str(nq)
+        .unwrap()
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    assert_eq!(quads.len(), 1);
+    assert_eq!(quads[0].graph_name, target);
+}
+
+#[test]
+fn progressive_load_annotates_partial_data_on_io_failure() {
+    struct BoomAfterFirstTriple {
+        delivered: bool,
+    }
+    impl Read for BoomAfterFirstTriple {
+        fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+            if !self.delivered {
+                self.delivered = true;
+                let chunk = b"<https://example.com/a> <https://example.com/p> \"ok\" .\n";
+                buf[..chunk.len()].copy_from_slice(chunk);
+                return Ok(chunk.len());
+            }
+            Err(std::io::Error::other("boom after first triple"))
+        }
+    }
+
+    let model = Model::new().unwrap();
+    let err = Parser::for_syntax(Syntax::NTriples)
+        .load_into(&model, BoomAfterFirstTriple { delivered: false })
+        .unwrap_err();
+    assert!(matches!(err, Error::Io(_)));
+    assert!(
+        err.to_string().contains("partial load"),
+        "error should document partial load: {err}"
+    );
+    assert_eq!(model.len().unwrap(), 1);
+}

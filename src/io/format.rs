@@ -88,6 +88,10 @@ impl Syntax {
     }
 
     /// Resolves a Redland-style syntax name or common alias.
+    ///
+    /// Note: the name alias `"xml"` resolves to RDF/XML, but
+    /// [`Syntax::from_extension`] rejects `".xml"` as ambiguous. Prefer
+    /// `"rdfxml"` / `".rdf"` when both lookup styles must agree.
     pub fn from_name(name: &str) -> Result<Self> {
         let normalized = normalize_token(name);
         match normalized.as_str() {
@@ -158,6 +162,10 @@ impl Syntax {
     }
 
     /// Resolves a file extension without requiring a leading dot.
+    ///
+    /// Ambiguous extensions such as `".xml"` and `".txt"` return
+    /// [`Error::Unsupported`]. The Redland name alias `"xml"` is accepted by
+    /// [`Syntax::from_name`] but not by this method.
     pub fn from_extension(extension: &str) -> Result<Self> {
         let normalized = normalize_token(extension.trim_start_matches('.'));
         match normalized.as_str() {

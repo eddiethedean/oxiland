@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Generate or check the public API snapshot.
 #
-# Uses a stable, feature-default enumeration of Oxiland's intentional public
-# surface. Refine with `cargo +nightly public-api` when introducing a richer
-# tooling upgrade.
+# The baseline is a curated allowlist of Oxiland's intentional public surface.
+# `check` diffs the embedded list against api/oxiland-public-api.txt, then runs
+# scripts/check-public-api-owned.py so owned src/ items cannot drift silently.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -45,6 +45,8 @@ items = [
     "oxiland::Model::storage_backend_available",
     "oxiland::Model::store",
     "oxiland::ParseError",
+    "oxiland::ParseError::location",
+    "oxiland::ParseError::message",
     "oxiland::Query",
     "oxiland::Query::as_str",
     "oxiland::Query::execute",
@@ -94,6 +96,9 @@ items = [
     "oxiland::io::Serializer::with_prefix",
     "oxiland::io::SliceStream",
     "oxiland::io::SourceLocation",
+    "oxiland::io::SourceLocation::column",
+    "oxiland::io::SourceLocation::line",
+    "oxiland::io::SourceLocation::offset",
     "oxiland::io::Syntax",
     "oxiland::io::Syntax::NQuads",
     "oxiland::io::Syntax::NTriples",
@@ -135,6 +140,7 @@ case "$MODE" in
     fi
     rm -f "$tmp"
     echo "public API snapshot ok"
+    python3 "$ROOT/scripts/check-public-api-owned.py"
     ;;
   *)
     echo "usage: $0 [check|generate]" >&2

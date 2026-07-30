@@ -154,8 +154,8 @@ Decision:
   `Store::load_from_*` for the stream path).
 - Facade parses always enable `rename_blank_nodes()`.
 - Default model convenience methods (`Parser::load_into`) insert progressively;
-  on parse failure, already-inserted quads remain and the error documents that
-  a partial load occurred.
+  on parse, I/O, or insert failure after progress, already-inserted quads remain
+  and the error documents that a partial load occurred.
 - An explicitly named collecting path (`Parser::load_collecting`) buffers the
   complete successful quad set and inserts only after parse success. If a later
   insert fails, quads newly inserted by that call are removed best-effort.
@@ -176,6 +176,7 @@ Consequences:
 
 Evidence: `src/io/parser.rs`,
 `tests/io.rs::progressive_load_leaves_partial_data_on_failure`,
+`tests/io.rs::progressive_load_annotates_partial_data_on_io_failure`,
 `tests/io.rs::collecting_load_is_all_or_nothing`,
 [docs/design/0.2-io-api.md](design/0.2-io-api.md).
 

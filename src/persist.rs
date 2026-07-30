@@ -1,3 +1,5 @@
+#[cfg(test)]
+use std::cell::Cell;
 use std::path::Path;
 
 use fjall::{Config, Keyspace, Partition, PartitionCreateOptions, PersistMode};
@@ -8,6 +10,11 @@ use oxigraph::store::Store;
 use crate::{Error, Result};
 
 const QUADS_PARTITION: &str = "oxiland_quads";
+
+#[cfg(test)]
+thread_local! {
+    static DISK_INSERT_FAULT: Cell<bool> = const { Cell::new(false) };
+}
 
 /// Durable quad storage backed by [Fjall](https://github.com/fjall-rs/fjall).
 ///
@@ -55,6 +62,10 @@ impl DiskStore {
     }
 
     pub(crate) fn insert(&self, quad: &Quad) -> Result<()> {
+        #[cfg(test)]
+        if DISK_INSERT_FAULT.with(Cell::get) {
+            return Err(Error::Storage("injected disk insert fault".into()));
+        }
         let key = quad_key(quad);
         self.quads
             .insert(key.as_bytes(), [])
@@ -91,4 +102,38 @@ fn parse_quad(key: &str) -> Result<Quad> {
         ));
     }
     Ok(quad)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Model;
+    use crate::terms::{self, Literal, Triple};
+    use oxigraph::model::Quad;
+
+    #[test]
+    fn duplicate_insert_disk_fault_preserves_existing_quad() {
+        let dir = tempfile::tempdir().unwrap();
+        let model = Model::open(dir.path()).unwrap();
+        let statement = Triple::new(
+            terms::named_node("https://example.com/s").unwrap(),
+            terms::named_node("https://example.com/p").unwrap(),
+            Literal::new_simple_literal("x"),
+        );
+        let quad = Quad::new(
+            statement.subject.clone(),
+            statement.predicate.clone(),
+            statement.object.clone(),
+            oxigraph::model::GraphName::DefaultGraph,
+        );
+        assert!(model.insert_quad(quad.clone()).unwrap());
+        assert_eq!(model.len().unwrap(), 1);
+
+        DISK_INSERT_FAULT.with(|flag| flag.set(true));
+        let err = model.insert_quad(quad).unwrap_err();
+        DISK_INSERT_FAULT.with(|flag| flag.set(false));
+        assert!(matches!(err, Error::Storage(_)));
+        assert_eq!(model.len().unwrap(), 1);
+        assert!(model.contains(statement.as_ref()).unwrap());
+    }
 }

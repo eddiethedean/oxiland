@@ -59,6 +59,7 @@ impl Parser {
     pub fn parse_reader<R: Read>(&self, reader: R) -> Result<QuadStream<R>> {
         Ok(QuadStream {
             inner: QuadStreamInner::Reader(self.build()?.for_reader(reader)),
+            graph_target: self.graph_target.clone(),
         })
     }
 
@@ -69,6 +70,7 @@ impl Parser {
     ) -> Result<SliceStream<'a>> {
         Ok(SliceStream {
             inner: self.build()?.for_slice(slice),
+            graph_target: self.graph_target.clone(),
         })
     }
 
@@ -88,6 +90,10 @@ impl Parser {
     }
 
     /// Parses a path after resolving [`Syntax`] from the file extension.
+    ///
+    /// Dataset syntaxes (N-Quads, TriG) default to [`GraphTarget::Dataset`] so
+    /// typical named-graph files parse successfully. Graph-only syntaxes keep
+    /// [`GraphTarget::DefaultGraph`].
     pub fn parse_path_with_extension(
         path: impl AsRef<Path>,
     ) -> Result<(Syntax, QuadStream<BufReader<File>>)> {
@@ -102,14 +108,19 @@ impl Parser {
                 ))
             })?;
         let syntax = Syntax::from_extension(extension)?;
-        let stream = Parser::for_syntax(syntax).parse_path(path)?;
+        let mut parser = Parser::for_syntax(syntax);
+        if syntax.supports_datasets() {
+            parser = parser.graph_target(GraphTarget::Dataset);
+        }
+        let stream = parser.parse_path(path)?;
         Ok((syntax, stream))
     }
 
     /// Inserts parsed quads into `model` progressively (ADR-007).
     ///
-    /// On parse failure, already-inserted quads remain. The returned error
-    /// documents how many quads this call newly inserted before failing.
+    /// On parse or mid-stream I/O failure, already-inserted quads remain. The
+    /// returned error documents how many quads this call newly inserted before
+    /// failing.
     ///
     /// Returns the number of input quads successfully processed (including
     /// duplicates that were already present).
@@ -121,7 +132,10 @@ impl Parser {
         let mut newly_inserted = 0usize;
         for item in self.parse_reader(reader)? {
             let quad = item.map_err(|error| annotate_partial_load(error, newly_inserted))?;
-            if model.insert_quad(quad)? {
+            if model
+                .insert_quad(quad)
+                .map_err(|error| annotate_partial_load(error, newly_inserted))?
+            {
                 newly_inserted += 1;
             }
             processed += 1;
@@ -185,10 +199,9 @@ impl Parser {
                     .without_named_graphs();
             }
             GraphTarget::Named(graph_name) => {
-                // Remap the syntax default graph; reject other named graphs.
-                parser = parser
-                    .with_default_graph(graph_name.clone())
-                    .without_named_graphs();
+                // Remap the syntax default graph; same-named input quads are
+                // allowed; foreign named graphs are rejected in the stream.
+                parser = parser.with_default_graph(graph_name.clone());
             }
             GraphTarget::Dataset => {
                 if !self.syntax.supports_datasets() {
@@ -209,7 +222,7 @@ pub enum GraphTarget {
     /// Emit default-graph quads and reject named-graph input.
     DefaultGraph,
     /// Remap the syntax default graph into this named graph/context and reject
-    /// other named graphs in the input.
+    /// input quads that name a different graph.
     Named(GraphName),
     /// Preserve named graphs from dataset syntaxes (TriG / N-Quads).
     Dataset,
@@ -219,6 +232,7 @@ pub enum GraphTarget {
 #[must_use]
 pub struct QuadStream<R: Read> {
     inner: QuadStreamInner<R>,
+    graph_target: GraphTarget,
 }
 
 enum QuadStreamInner<R: Read> {
@@ -230,7 +244,10 @@ impl<R: Read> Iterator for QuadStream<R> {
 
     fn next(&mut self) -> Option<Self::Item> {
         match &mut self.inner {
-            QuadStreamInner::Reader(parser) => parser.next().map(map_parse_result),
+            QuadStreamInner::Reader(parser) => parser.next().map(|item| {
+                map_parse_result(item)
+                    .and_then(|quad| enforce_graph_target(quad, &self.graph_target))
+            }),
         }
     }
 }
@@ -239,13 +256,35 @@ impl<R: Read> Iterator for QuadStream<R> {
 #[must_use]
 pub struct SliceStream<'a> {
     inner: SliceQuadParser<'a>,
+    graph_target: GraphTarget,
 }
 
 impl Iterator for SliceStream<'_> {
     type Item = Result<Quad>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(map_syntax_result)
+        self.inner.next().map(|item| {
+            map_syntax_result(item).and_then(|quad| enforce_graph_target(quad, &self.graph_target))
+        })
+    }
+}
+
+fn enforce_graph_target(quad: Quad, target: &GraphTarget) -> Result<Quad> {
+    match target {
+        GraphTarget::DefaultGraph | GraphTarget::Dataset => Ok(quad),
+        GraphTarget::Named(expected) => {
+            if quad.graph_name == *expected {
+                Ok(quad)
+            } else {
+                Err(Error::parse(
+                    format!(
+                        "named graph '{}' is not allowed for GraphTarget::Named('{expected}')",
+                        quad.graph_name
+                    ),
+                    None,
+                ))
+            }
+        }
     }
 }
 
@@ -291,14 +330,22 @@ fn strip_embedded_location(message: String) -> String {
 }
 
 fn annotate_partial_load(error: Error, newly_inserted: usize) -> Error {
+    if newly_inserted == 0 {
+        return error;
+    }
+    let note = format!(
+        "partial load newly inserted {newly_inserted} statement(s) that remain in the model (ADR-007 progressive load)"
+    );
     match error {
-        Error::Parse(mut parse) if newly_inserted > 0 => {
-            parse.message = format!(
-                "{}; partial load newly inserted {newly_inserted} statement(s) that remain in the model (ADR-007 progressive load)",
-                parse.message
-            );
+        Error::Parse(mut parse) => {
+            parse.message = format!("{}; {note}", parse.message);
             Error::Parse(parse)
         }
+        Error::Io(io_error) => Error::Io(std::io::Error::new(
+            io_error.kind(),
+            format!("{io_error}; {note}"),
+        )),
+        Error::Storage(message) => Error::Storage(format!("{message}; {note}")),
         other => other,
     }
 }

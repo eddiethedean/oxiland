@@ -63,7 +63,8 @@ Inventory revisions:
   (`tests/conformance.rs`).
 - Native `rapper` oracle and differential smoke harnesses are available under
   `compatibility/harness/`.
-- Examples `quick_start`, `contexts`, and `parse_serialize` run in CI.
+- Examples `quick_start`, `contexts`, `parse_serialize`, `select`, and
+  `progressive_load` run in CI.
 - ADR-004, ADR-005, ADR-007, and ADR-008 are accepted.
 - Oxigraph 0.5.9 remains pinned with default features disabled.
 

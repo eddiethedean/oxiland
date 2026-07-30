@@ -19,7 +19,13 @@ assert_eq!(turtle, from_ext);
 ```
 
 Unknown names, N3, JSON-LD, content sniffing (`guess`), and ambiguous aliases
-such as `text/plain` or `.xml` return `Error::Unsupported`.
+such as `text/plain` or `.xml` return `Error::Unsupported`. The name alias
+`"xml"` still resolves via `Syntax::from_name`, but `Syntax::from_extension`
+rejects `.xml`—prefer `"rdfxml"` / `.rdf` when both lookup styles must agree.
+
+`Parser::parse_path_with_extension` selects syntax from the extension and, for
+N-Quads/TriG, defaults to `GraphTarget::Dataset` so typical named-graph files
+load without an extra graph-target configuration.
 
 | Syntax | Datasets (named graphs) |
 |---|---|
@@ -31,7 +37,7 @@ such as `text/plain` or `.xml` return `Error::Unsupported`.
 | Target | Behavior |
 |---|---|
 | `GraphTarget::DefaultGraph` (default) | Emit default-graph quads; **reject** named-graph input |
-| `GraphTarget::Named(g)` | Remap the syntax default graph into `g`; reject other named graphs |
+| `GraphTarget::Named(g)` | Remap the syntax default graph into `g`; reject input quads that name a **different** graph (same-named quads are kept) |
 | `GraphTarget::Dataset` | Preserve TriG/N-Quads named graphs; unsupported for graph-only syntaxes |
 
 ## Progressive vs collecting load (ADR-007)

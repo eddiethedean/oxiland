@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 
 use oxigraph::model::{
     GraphName, GraphNameRef, NamedOrBlankNodeRef, Quad, TermRef, Triple, TripleRef,
@@ -50,6 +51,10 @@ impl Iterator for StatementMatches {
 /// Cloning a [`Model`] clones the store handle and shares the same dataset; it
 /// does not deep-copy statements. `Model` is `Send` and `Sync`.
 ///
+/// Mutating methods (`add` / `remove` / `insert_quad` / …) serialize through an
+/// internal lock so the `bool` “newly inserted / removed” return value stays
+/// accurate under concurrent callers that share a cloned handle.
+///
 /// # Examples
 ///
 /// ```
@@ -81,13 +86,18 @@ impl Iterator for StatementMatches {
 pub struct Model {
     store: Store,
     disk: Option<DiskStore>,
+    write_lock: Arc<Mutex<()>>,
 }
 
 impl Model {
     /// Creates an empty in-memory model.
     pub fn new() -> Result<Self> {
         Store::new()
-            .map(|store| Self { store, disk: None })
+            .map(|store| Self {
+                store,
+                disk: None,
+                write_lock: Arc::new(Mutex::new(())),
+            })
             .map_err(|error| Error::Storage(error.to_string()))
     }
 
@@ -107,6 +117,7 @@ impl Model {
         Ok(Self {
             store,
             disk: Some(disk),
+            write_lock: Arc::new(Mutex::new(())),
         })
     }
 
@@ -158,6 +169,10 @@ impl Model {
     /// Returns `true` when the quad was newly inserted and `false` when it was
     /// already present. Used by progressive parser loads (ADR-007).
     pub fn insert_quad(&self, quad: Quad) -> Result<bool> {
+        let _guard = self
+            .write_lock
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let inserted = !self
             .store
             .contains(quad.as_ref())
@@ -167,7 +182,11 @@ impl Model {
             .map_err(|error| Error::Storage(error.to_string()))?;
         if let Some(disk) = &self.disk {
             if let Err(error) = disk.insert(&quad) {
-                let _ = self.store.remove(quad.as_ref());
+                // Only roll back quads this call newly inserted. Removing when
+                // `inserted == false` would delete a pre-existing statement.
+                if inserted {
+                    let _ = self.store.remove(quad.as_ref());
+                }
                 return Err(error);
             }
         }
@@ -178,6 +197,10 @@ impl Model {
     ///
     /// Returns `true` when a matching quad was removed.
     pub fn remove_quad(&self, quad: &Quad) -> Result<bool> {
+        let _guard = self
+            .write_lock
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let removed = self
             .store
             .contains(quad.as_ref())
@@ -213,22 +236,7 @@ impl Model {
     ) -> Result<bool> {
         let triple = statement.into();
         let quad = Quad::new(triple.subject, triple.predicate, triple.object, graph_name);
-        let removed = self
-            .store
-            .contains(quad.as_ref())
-            .map_err(|error| Error::Storage(error.to_string()))?;
-        self.store
-            .remove(quad.as_ref())
-            .map_err(|error| Error::Storage(error.to_string()))?;
-        if removed {
-            if let Some(disk) = &self.disk {
-                if let Err(error) = disk.remove(&quad) {
-                    let _ = self.store.insert(&quad);
-                    return Err(error);
-                }
-            }
-        }
-        Ok(removed)
+        self.remove_quad(&quad)
     }
 
     /// Tests whether the default graph contains a statement.

@@ -12,6 +12,49 @@ fn example_statement() -> Triple {
 fn assert_send_sync<T: Send + Sync>() {}
 
 #[test]
+fn concurrent_add_returns_true_only_once() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::thread;
+
+    let model = Model::new().unwrap();
+    let statement = example_statement();
+    let newly = AtomicUsize::new(0);
+    thread::scope(|scope| {
+        for _ in 0..8 {
+            scope.spawn(|| {
+                if model.add(statement.clone()).unwrap() {
+                    newly.fetch_add(1, Ordering::SeqCst);
+                }
+            });
+        }
+    });
+    assert_eq!(newly.load(Ordering::SeqCst), 1);
+    assert_eq!(model.len().unwrap(), 1);
+}
+
+#[test]
+fn concurrent_remove_returns_true_only_once() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::thread;
+
+    let model = Model::new().unwrap();
+    let statement = example_statement();
+    assert!(model.add(statement.clone()).unwrap());
+    let removed = AtomicUsize::new(0);
+    thread::scope(|scope| {
+        for _ in 0..8 {
+            scope.spawn(|| {
+                if model.remove(statement.clone()).unwrap() {
+                    removed.fetch_add(1, Ordering::SeqCst);
+                }
+            });
+        }
+    });
+    assert_eq!(removed.load(Ordering::SeqCst), 1);
+    assert!(model.is_empty().unwrap());
+}
+
+#[test]
 fn core_types_are_send_sync() {
     assert_send_sync::<Model>();
     assert_send_sync::<World>();
