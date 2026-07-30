@@ -31,8 +31,8 @@ can never recur. `closed` requires the underlying exposure to be removed.
 | R-014 | Downstream consumers depend on undocumented quirks | H | M | `monitoring` | Compatibility | select consumers early and capture fixtures | first downstream build/test failure | classify quirk and add adapter or limitation |
 | R-015 | Packaged artifacts differ from workspace builds | M | H | `active` | Tooling | package dry-run and clean-install tests | packaged smoke test diverges | block publish and repair package manifest/workflow |
 | R-016 | 0.x persistent data becomes unreadable or partially updated | M | H | `active` | Storage | label format unstable, export guidance, reopen/failure tests | format change, failed Fjall write, or upgrade request | preserve old reader/export tool; block destructive migration |
-| R-017 | Parser failure leaves a model partially loaded unexpectedly | H | H | `active` | RDF/SPARQL | resolve ADR-007 before facade publication | valid prefix followed by malformed input | expose explicit partial-progress contract or stage safely |
-| R-018 | Format aliases or auto-detection select the wrong syntax | M | M | `active` | RDF/SPARQL | curated table, ambiguity errors, ADR-008 | alias collision or misleading extension/MIME | require explicit format and publish corrected mapping |
+| R-017 | Parser failure leaves a model partially loaded unexpectedly | H | H | `monitoring` | RDF/SPARQL | ADR-007 progressive vs collecting APIs | callers assume silent atomicity | document path; add 0.4 transactions |
+| R-018 | Format aliases or auto-detection select the wrong syntax | M | M | `monitoring` | RDF/SPARQL | closed Syntax table, ADR-008 | alias collision or misleading extension/MIME | require explicit format and publish corrected mapping |
 | R-019 | Planning outruns implementation and evidence | M | H | `active` | Documentation | separate charter/roadmap/milestone/parity authority | planned feature described as available | correct claim and add consistency check/review gate |
 
 ## Release-blocking rule
@@ -63,10 +63,11 @@ Closing a risk requires evidence that the exposure is gone. Renaming it as a
 known limitation is not closure. A regression may move a mitigated or closed
 risk back to active.
 
-## Current 0.2 focus
+## Current 0.3 focus
 
-The 0.2 release pays particular attention to R-001, R-006, R-007, R-008,
-R-010, R-017, R-018, and R-019. ADR-007 and ADR-008 are mandatory controls for
-R-017 and R-018. R-003 remains monitored under ADR-004. C-specific risks remain
-monitored until their workstream begins but are reviewed if a safe API choice
-would constrain later ownership or ABI behavior.
+The 0.3 release pays particular attention to R-001, R-006, R-007, R-008,
+R-010, and R-012 for query/result workflows. R-017 and R-018 remain monitoring
+items under ADR-007 and ADR-008 after the 0.2 I/O facade. R-003 remains
+monitored under ADR-004. C-specific risks remain monitored until their
+workstream begins but are reviewed if a safe API choice would constrain later
+ownership or ABI behavior.

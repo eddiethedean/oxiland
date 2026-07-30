@@ -134,8 +134,88 @@ Consequences:
 Evidence: `src/model.rs`,
 `tests/model.rs::find_streams_without_full_materialization`.
 
-Revisit when: zero-copy lending access is required, or query/parser streams in
-0.2–0.5 need a shared streaming trait.
+Revisit when: zero-copy lending access is required, or query streams in
+0.3–0.5 need a shared streaming trait.
+
+### ADR-007 — Parser output and model-load failure semantics
+
+State: accepted  
+Milestone: 0.2
+
+Context: a streaming parser can yield valid statements before encountering
+malformed input. Loading the same source into a model could therefore leave
+partial data unless the API stages input or uses a transaction. The 0.2 model
+does not yet have the transaction abstraction planned for 0.4.
+
+Decision:
+
+- The public streaming parser exposes `Iterator<Item = Result<Quad>>` with
+  explicit partial progress, wrapping Oxigraph `RdfParser` (never
+  `Store::load_from_*` for the stream path).
+- Facade parses always enable `rename_blank_nodes()`.
+- Default model convenience methods (`Parser::load_into`) insert progressively;
+  on parse failure, already-inserted quads remain and the error documents that
+  a partial load occurred.
+- An explicitly named collecting path (`Parser::load_collecting`) buffers the
+  complete successful quad set and inserts only after parse success. If a later
+  insert fails, quads newly inserted by that call are removed best-effort.
+- True transactional atomic load remains deferred to 0.4.
+
+Alternatives:
+
+- Omit model-load helpers until transactions exist.
+- Always buffer (unbounded memory for large files).
+- Claim atomic progressive load without transactions (dishonest on Fjall).
+
+Consequences:
+
+- Callers choose streaming honesty versus buffered all-or-nothing by API name.
+- R-017 is mitigated by documentation and error text rather than false
+  atomicity.
+- 0.4 can add transactional load without breaking the streaming core.
+
+Evidence: `src/io/parser.rs`,
+`tests/io.rs::progressive_load_leaves_partial_data_on_failure`,
+`tests/io.rs::collecting_load_is_all_or_nothing`,
+[docs/design/0.2-io-api.md](design/0.2-io-api.md).
+
+Revisit when: 0.4 transactions land, or differential fixtures require Redland
+callback-equivalent atomicity.
+
+### ADR-008 — Built-in RDF format identity and discovery
+
+State: accepted  
+Milestone: 0.2
+
+Context: Redland selects parser and serializer factories through names, MIME
+types, and other aliases. Oxigraph exposes a finite set of format values.
+Treating arbitrary strings as formats would make capability reporting unstable
+and could prematurely commit Oxiland to public custom registration.
+
+Decision: expose a closed `Syntax` enum for Turtle, N-Triples, N-Quads, TriG,
+and RDF/XML, backed by a curated alias table for Redland names, media types,
+and extensions. Unknown, ambiguous, or deferred aliases return
+`Error::Unsupported`. N3 and JSON-LD are not advertised in 0.2. Custom factory
+registration is deferred. Oxigraph primitives remain under
+`oxiland::io::primitives`.
+
+Alternatives:
+
+- String-keyed public registry from day one.
+- Re-export Oxigraph `RdfFormat` as the public identity.
+
+Consequences:
+
+- Capability queries and constructors share one table (R-018).
+- Adding a syntax is an intentional SemVer-visible change.
+- Redland `guess`/content sniffing remains unsupported.
+
+Evidence: `src/io/format.rs`,
+`compatibility/baseline/format-matrix.json`,
+`tests/io.rs::syntax_lookup_covers_names_media_types_and_extensions`.
+
+Revisit when: custom factories are required for C consumers, or JSON-LD /
+true N3 must be advertised.
 
 ## Proposed decisions
 
@@ -155,57 +235,6 @@ Evaluation criteria:
 - crash consistency;
 - user expectations from Redland stores;
 - release and support cost.
-
-### ADR-007 — Parser output and model-load failure semantics
-
-State: proposed
-Decision deadline: before public 0.2 parser facade types
-
-Context: a streaming parser can yield valid statements before encountering
-malformed input. Loading the same source into a model could therefore leave
-partial data unless the API stages input or uses a transaction. The 0.2 model
-does not yet have the transaction abstraction planned for 0.4.
-
-Question: should the core parser expose a fallible stream with explicit partial
-progress while model convenience methods are best-effort, stage complete input,
-or remain unavailable until they can offer a stronger guarantee?
-
-Evaluation criteria:
-
-- bounded memory for large input;
-- clarity of partial-progress and retry behavior;
-- compatibility with Redland parser callbacks;
-- feasibility across in-memory and Fjall-backed models;
-- ability to add transactions in 0.4 without breaking the streaming core.
-
-Required evidence: prototype memory measurements and failure fixtures with valid
-prefixes followed by malformed input.
-
-### ADR-008 — Built-in RDF format identity and discovery
-
-State: proposed
-Decision deadline: before WP-02-02
-
-Context: Redland selects parser and serializer factories through names, MIME
-types, and other aliases. Oxigraph exposes a finite set of format values.
-Treating arbitrary strings as formats would make capability reporting unstable
-and could prematurely commit Oxiland to public custom registration.
-
-Question: should 0.2 expose a closed Oxiland format value backed by a curated
-alias table, while deferring custom factories, or expose a string-keyed registry
-from the start?
-
-Evaluation criteria:
-
-- exhaustive capability reporting;
-- compatibility with Redland aliases and MIME parameters;
-- typo and ambiguity handling;
-- forwards-compatible addition of formats;
-- interaction with future safe and C-only factory registration;
-- public API snapshot and SemVer impact.
-
-Required evidence: a Redland/Oxigraph format matrix and table-driven lookup
-prototype.
 
 ## ADR template
 

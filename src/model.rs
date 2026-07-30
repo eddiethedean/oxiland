@@ -150,6 +150,14 @@ impl Model {
     ) -> Result<bool> {
         let triple = statement.into();
         let quad = Quad::new(triple.subject, triple.predicate, triple.object, graph_name);
+        self.insert_quad(quad)
+    }
+
+    /// Inserts a fully formed quad into the model.
+    ///
+    /// Returns `true` when the quad was newly inserted and `false` when it was
+    /// already present. Used by progressive parser loads (ADR-007).
+    pub fn insert_quad(&self, quad: Quad) -> Result<bool> {
         let inserted = !self
             .store
             .contains(quad.as_ref())
@@ -164,6 +172,28 @@ impl Model {
             }
         }
         Ok(inserted)
+    }
+
+    /// Removes a fully formed quad from the model.
+    ///
+    /// Returns `true` when a matching quad was removed.
+    pub fn remove_quad(&self, quad: &Quad) -> Result<bool> {
+        let removed = self
+            .store
+            .contains(quad.as_ref())
+            .map_err(|error| Error::Storage(error.to_string()))?;
+        self.store
+            .remove(quad.as_ref())
+            .map_err(|error| Error::Storage(error.to_string()))?;
+        if removed {
+            if let Some(disk) = &self.disk {
+                if let Err(error) = disk.remove(quad) {
+                    let _ = self.store.insert(quad);
+                    return Err(error);
+                }
+            }
+        }
+        Ok(removed)
     }
 
     /// Removes a statement from the default graph.

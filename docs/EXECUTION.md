@@ -1,7 +1,7 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 0.2 (0.1 complete)
+Current milestone: 0.3 (0.2 complete)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -94,34 +94,34 @@ it enables. Code without mapping or evidence remains `implemented`, not
 | P2 | Runnable examples and doctests | examples in CI; crate doctests |
 | P2 | 0.1 compatibility report | `docs/reports/0.1.md` |
 
-## Current 0.2 backlog
+## Completed 0.2 backlog
 
 The detailed acceptance criteria and dependency map live in the
-[0.2 milestone plan](milestones/0.2.md). Work-package order is authoritative;
-later packages must not force the public shape of unresolved decisions.
+[0.2 milestone plan](milestones/0.2.md).
 
 | Order | Work package | State | Completion evidence |
 |---:|---|---|---|
-| 1 | WP-02-00 baseline and I/O inventory | `planned` | pinned inputs, inventory IDs, capability table |
-| 2 | WP-02-01 design spikes and decisions | `planned` | ADR-007/008, API proposal, streaming measurements |
-| 3 | WP-02-02 format and capability layer | `planned` | exhaustive table-driven lookup/capability tests |
-| 4a | WP-02-03 streaming parser | `planned` | public API, error/graph/blank-node tests |
-| 4b | WP-02-05 streaming serializer | `planned` | public API, writer/namespace/dataset tests |
-| 5 | WP-02-04 model loading and file input | `planned` | partial-failure, path, and graph-target tests |
-| 6 | WP-02-06 conformance and differential evidence | `planned` | W3C and Redland machine-readable results |
-| 7 | WP-02-07 documentation and release | `planned` | report, guides, package smoke test |
+| 1 | WP-02-00 baseline and I/O inventory | `complete` | baseline README, format matrix, 0.2 inventory, oracle smoke |
+| 2 | WP-02-01 design spikes and decisions | `complete` | ADR-007/008, `docs/design/0.2-io-api.md` |
+| 3 | WP-02-02 format and capability layer | `complete` | `Syntax` + `tests/io.rs` lookup coverage |
+| 4a | WP-02-03 streaming parser | `complete` | `Parser`, early-stop and parse-error tests |
+| 4b | WP-02-05 streaming serializer | `complete` | `Serializer`, round-trip and dataset tests |
+| 5 | WP-02-04 model loading and file input | `complete` | progressive/collecting load + path helpers |
+| 6 | WP-02-06 conformance and differential evidence | `complete` | `tests/conformance.rs`, harness scripts, CI job |
+| 7 | WP-02-07 documentation and release | `complete` | `docs/reports/0.2.md`, examples, parity/roadmap updates |
 
 ### Immediate next actions
 
-1. Capture the Redland/Raptor/Rasqal I/O baseline and format aliases.
-2. Establish an I/O oracle smoke fixture and expand the inventory schema and
-   parser/serializer entries.
-3. Prototype streaming parser output and failure behavior privately.
-4. Resolve ADR-007 and ADR-008 before exposing facade types.
-5. Land the format capability table before parser and serializer entry points.
+1. Begin 0.3 query/result design: streaming solutions, SPARQL Update, result
+   serialization.
+2. Expand differential fixtures beyond the I/O smoke subset where Redland
+   behavior diverges.
+3. Keep ADR-006 open until 0.4 storage work starts.
 
-No item is `in progress` until its definition of ready is satisfied and the
-status change is reflected here.
+## Current 0.3 backlog
+
+See the [roadmap 0.3 section](ROADMAP.md#03--query-and-results). Detailed work
+packages will land in `milestones/0.3.md` when that milestone opens.
 
 ## Definition of ready
 

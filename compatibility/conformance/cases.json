@@ -1,0 +1,57 @@
+{
+  "revision": "0.2.0-curated",
+  "notes": "Curated subset of W3C-style syntax cases exercised through the Oxiland public facade.",
+  "cases": [
+    {
+      "id": "turtle-one-triple",
+      "syntax": "turtle",
+      "input": "compatibility/conformance/turtle/one-triple.ttl",
+      "expect": "pass",
+      "quads": 1
+    },
+    {
+      "id": "turtle-relative-with-base",
+      "syntax": "turtle",
+      "input": "compatibility/conformance/turtle/relative.ttl",
+      "base_iri": "https://example.com/",
+      "expect": "pass",
+      "quads": 1
+    },
+    {
+      "id": "turtle-malformed",
+      "syntax": "turtle",
+      "input": "compatibility/conformance/turtle/malformed.ttl",
+      "expect": "fail"
+    },
+    {
+      "id": "ntriples-one-triple",
+      "syntax": "ntriples",
+      "input": "compatibility/conformance/ntriples/one-triple.nt",
+      "expect": "pass",
+      "quads": 1
+    },
+    {
+      "id": "nquads-named-graph",
+      "syntax": "nquads",
+      "input": "compatibility/conformance/nquads/named.nq",
+      "expect": "pass",
+      "quads": 1,
+      "dataset": true
+    },
+    {
+      "id": "trig-dataset",
+      "syntax": "trig",
+      "input": "compatibility/conformance/trig/dataset.trig",
+      "expect": "pass",
+      "quads": 2,
+      "dataset": true
+    },
+    {
+      "id": "rdfxml-one-triple",
+      "syntax": "rdfxml",
+      "input": "compatibility/conformance/rdfxml/one-triple.rdf",
+      "expect": "pass",
+      "quads": 1
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 Status: active design baseline  
 Current implementation: single `oxiland` crate on Oxigraph 0.5.9  
-Next review gate: before introducing parser/serializer facade types in 0.2
+Next review gate: before expanding query/result facades in 0.3
 
 This document specifies dependency direction and safety boundaries. It does not
 claim that planned crates or modules already exist.

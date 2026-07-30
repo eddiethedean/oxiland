@@ -24,8 +24,10 @@ Oxiland's current Rust facade to verified Redland compatibility.
 The live subsystem-level status remains in the root
 [parity ledger](../PARITY.md). Plans describe intended work; the ledger records
 only work that has landed and been verified. Milestone reports live under
-[`reports/`](reports/), starting with [0.1](reports/0.1.md). The
-[0.1.0 release checklist](reports/0.1.0-release.md) covers publishing steps.
+[`reports/`](reports/), starting with [0.1](reports/0.1.md) and
+[0.2](reports/0.2.md). Release checklists:
+[0.1.0](reports/0.1.0-release.md),
+[0.2.0](reports/0.2.0-release.md).
 
 ## Document authority
 

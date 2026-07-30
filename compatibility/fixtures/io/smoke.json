@@ -1,0 +1,7 @@
+{
+  "id": "io.smoke.turtle.one-triple",
+  "syntax": "turtle",
+  "input": "smoke.ttl",
+  "expected_quads": 1,
+  "normalization": "graph-isomorphism"
+}

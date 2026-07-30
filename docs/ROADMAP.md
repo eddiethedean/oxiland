@@ -16,7 +16,7 @@ only when its evidence gates are satisfied.
 | Version | Outcome | Depends on | State |
 |---|---|---|---|
 | 0.1 | Trusted core model | — | `complete` |
-| 0.2 | Redland-shaped RDF I/O | 0.1 | `planned` |
+| 0.2 | Redland-shaped RDF I/O | 0.1 | `complete` |
 | 0.3 | Complete query/result workflows | 0.2 | `planned` |
 | 0.4 | Durable storage and transactions | 0.3 | `planned` |
 | 0.5 | Streams, utilities, and observability | 0.4 | `planned` |
@@ -82,8 +82,11 @@ contract only in 0.4.
 Outcome: match Redland parser and serializer workflows through safe,
 stream-oriented APIs.
 
-State: planned
+State: complete
 Execution specification: [milestone 0.2](milestones/0.2.md)
+Evidence: [parity ledger](../PARITY.md),
+[0.2 compatibility report](reports/0.2.md),
+[inventory](../compatibility/inventory/redland-1.0.17-oxiland-0.2.json)
 
 Deliverables:
 

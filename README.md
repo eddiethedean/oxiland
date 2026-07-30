@@ -9,10 +9,10 @@ SPARQL engine; Oxiland supplies Redland-oriented concepts, behavior, migration
 paths, and—later in the 0.x series—a separately audited C compatibility layer.
 
 > [!IMPORTANT]
-> Oxiland 0.1 provides the trusted core model surface. It does **not** yet
-> provide complete Redland API accounting, differential behavioral parity,
-> source, or ABI compatibility. See the [parity ledger](PARITY.md) and
-> [0.1 report](docs/reports/0.1.md).
+> Oxiland 0.2 provides the trusted core model plus Redland-shaped RDF I/O. It
+> does **not** yet provide complete Redland API accounting, full differential
+> behavioral parity, source, or ABI compatibility. See the
+> [parity ledger](PARITY.md) and [0.2 report](docs/reports/0.2.md).
 
 ## Why Oxiland?
 
@@ -34,7 +34,8 @@ paths, and—later in the 0.x series—a separately audited C compatibility laye
 | Named-graph/context CRUD and matching | Available |
 | Partial statement matching | Available; streaming `StatementMatches` |
 | SPARQL query execution | Basic ASK/SELECT support |
-| RDF parser and serializer primitives | Re-exported; Redland-style facade planned for 0.2 |
+| RDF parser and serializer facades | Available; Turtle, N-Triples, N-Quads, TriG, RDF/XML |
+| Syntax discovery by name, MIME type, and extension | Available via `Syntax` |
 | Persistent Fjall model | Available via `Model::open` |
 | SPARQL Update and complete result adapters | Planned for 0.3 |
 | Full safe Rust Redland accounting | Planned for 0.6 |
@@ -56,7 +57,7 @@ Add Oxiland to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-oxiland = "0.1.0"
+oxiland = "0.2.0"
 ```
 
 ## Quick start
@@ -128,6 +129,39 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 snapshot (ADR-005).
 
 The complete example is runnable with `cargo run --example contexts`.
+
+## Parsing and serialization
+
+Oxiland 0.2 adds Redland-shaped I/O facades. Choose a closed [`Syntax`](https://docs.rs/oxiland),
+stream quads, or load into a model:
+
+```rust
+use oxiland::io::{Parser, Serializer, Syntax};
+use oxiland::Model;
+
+fn main() -> oxiland::Result<()> {
+    let model = Model::new()?;
+    Parser::for_syntax(Syntax::Turtle)
+        .base_iri("https://example.com/")?
+        .load_collecting(&model, b"<alice> <name> \"Alice\" .".as_slice())?;
+
+    let ntriples = Serializer::for_syntax(Syntax::NTriples)
+        .serialize_model_to_string(&model)?;
+    assert!(ntriples.contains("Alice"));
+    Ok(())
+}
+```
+
+`Parser::load_into` inserts progressively and may leave partial data on parse
+failure (ADR-007). Prefer `load_collecting` when you need parse-then-insert
+batching without transactions. Format lookup never silently guesses: unknown
+names, ambiguous aliases such as `text/plain`/`.xml`, and the legacy `guess`
+alias return `Error::Unsupported` (ADR-008).
+
+Run `cargo run --example parse_serialize` for a complete example. Migration
+notes for Redland parser/serializer callers are in
+[`docs/design/0.2-io-api.md`](docs/design/0.2-io-api.md) and
+[`docs/reports/0.2.md`](docs/reports/0.2.md).
 
 ## Persistent storage
 
@@ -218,6 +252,8 @@ and release criteria.
 - [Changelog](CHANGELOG.md)
 - [Parity ledger](PARITY.md)
 - [0.1 compatibility report](docs/reports/0.1.md)
+- [0.2 compatibility report](docs/reports/0.2.md)
+- [0.2.0 release checklist](docs/reports/0.2.0-release.md)
 - [0.x roadmap](docs/ROADMAP.md)
 - [Detailed 0.2 milestone plan](docs/milestones/0.2.md)
 - [Execution plan and current backlog](docs/EXECUTION.md)
@@ -227,6 +263,7 @@ and release criteria.
 - [Architecture decisions](docs/DECISIONS.md)
 - [Risk register](docs/RISKS.md)
 - [0.1 inventory](compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
+- [0.2 inventory](compatibility/inventory/redland-1.0.17-oxiland-0.2.json)
 
 The parity ledger describes what exists now. Planning documents describe the
 intended path and must not be read as implemented functionality.
@@ -264,7 +301,7 @@ facade, storage, or FFI change:
 5. update the parity ledger and planning evidence.
 
 The most valuable current tasks are listed in the
-[0.2 backlog](docs/EXECUTION.md#current-02-backlog).
+[0.3 backlog](docs/EXECUTION.md#current-03-backlog).
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the vertical-slice and review
 checklists.
 

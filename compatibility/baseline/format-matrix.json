@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "milestone": "0.2",
+  "oxigraph_version": "0.5.9",
+  "formats": [
+    {
+      "syntax": "turtle",
+      "disposition": "verified",
+      "redland_names": ["turtle", "ttl"],
+      "media_types": ["text/turtle", "application/x-turtle", "application/turtle"],
+      "extensions": ["ttl"],
+      "supports_datasets": false
+    },
+    {
+      "syntax": "ntriples",
+      "disposition": "verified",
+      "redland_names": ["ntriples", "n-triples", "nt"],
+      "media_types": ["application/n-triples", "application/x-ntriples"],
+      "extensions": ["nt"],
+      "supports_datasets": false
+    },
+    {
+      "syntax": "nquads",
+      "disposition": "verified",
+      "redland_names": ["nquads", "n-quads", "nq"],
+      "media_types": ["application/n-quads", "text/x-nquads", "application/x-nquads"],
+      "extensions": ["nq"],
+      "supports_datasets": true
+    },
+    {
+      "syntax": "trig",
+      "disposition": "verified",
+      "redland_names": ["trig"],
+      "media_types": ["application/trig", "application/x-trig"],
+      "extensions": ["trig"],
+      "supports_datasets": true
+    },
+    {
+      "syntax": "rdfxml",
+      "disposition": "verified",
+      "redland_names": ["rdfxml", "rdf-xml", "rdf/xml", "xml"],
+      "media_types": ["application/rdf+xml"],
+      "extensions": ["rdf", "owl"],
+      "supports_datasets": false
+    },
+    {
+      "syntax": "text/plain",
+      "disposition": "unsupported",
+      "reason": "Ambiguous media type; require application/n-triples or explicit Syntax (ADR-008)",
+      "redland_names": [],
+      "media_types": ["text/plain"],
+      "extensions": ["txt"],
+      "deferred_to": null
+    },
+    {
+      "syntax": "generic-xml",
+      "disposition": "unsupported",
+      "reason": "Ambiguous XML media type/extension; require application/rdf+xml or .rdf (ADR-008)",
+      "redland_names": [],
+      "media_types": ["application/xml", "text/xml"],
+      "extensions": ["xml"],
+      "deferred_to": null
+    },
+    {
+      "syntax": "n3",
+      "disposition": "unsupported",
+      "reason": "Oxigraph N3 serialize is Turtle-shaped; not advertised in 0.2",
+      "redland_names": ["n3", "notation3"],
+      "media_types": ["text/n3", "text/rdf+n3", "application/n3"],
+      "extensions": ["n3"],
+      "deferred_to": null
+    },
+    {
+      "syntax": "jsonld",
+      "disposition": "deferred",
+      "reason": "Default JSON-LD parse buffers the document; deferred past streaming 0.2 facade",
+      "redland_names": ["jsonld", "json-ld"],
+      "media_types": ["application/ld+json", "application/jsonld", "application/json"],
+      "extensions": ["jsonld", "json"],
+      "deferred_to": "later-0.x"
+    },
+    {
+      "syntax": "guess",
+      "disposition": "unsupported",
+      "reason": "Content sniffing is unsupported; callers must select Syntax explicitly or use extension detection APIs",
+      "redland_names": ["guess", "auto"],
+      "media_types": [],
+      "extensions": [],
+      "deferred_to": null
+    }
+  ]
+}

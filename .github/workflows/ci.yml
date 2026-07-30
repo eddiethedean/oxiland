@@ -49,6 +49,7 @@ jobs:
         run: |
           cargo run --example quick_start
           cargo run --example contexts
+          cargo run --example parse_serialize
 
       - name: Inventory
         run: python3 scripts/check-inventory.py
@@ -58,6 +59,37 @@ jobs:
 
       - name: Public API snapshot
         run: scripts/generate-public-api.sh check
+
+      - name: Install rapper
+        run: sudo apt-get update && sudo apt-get install -y raptor2-utils
+
+      - name: I/O oracle smoke
+        run: python3 compatibility/harness/oracle_smoke.py
+
+  io-conformance:
+    name: RDF I/O conformance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: io-conformance
+
+      - name: Curated syntax conformance
+        run: cargo test --test conformance
+
+      - name: Install rapper
+        run: sudo apt-get update && sudo apt-get install -y raptor2-utils
+
+      - name: Differential smoke
+        run: python3 compatibility/harness/differential_smoke.py
 
   fjall:
     name: Fjall

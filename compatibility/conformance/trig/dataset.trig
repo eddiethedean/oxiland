@@ -1,0 +1,2 @@
+{ <https://example.com/alice> <https://example.com/name> "Alice" . }
+<https://example.com/people> { <https://example.com/bob> <https://example.com/name> "Bob" . }

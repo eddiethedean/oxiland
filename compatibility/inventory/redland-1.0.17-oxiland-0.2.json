@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "milestone": "0.2",
+  "redland_api": "1.0.17",
+  "redland_manual": "1.0.18",
+  "oxiland_version": "0.2.0",
+  "oxigraph_version": "0.5.9",
+  "generated_by": "scripts/check-inventory.py",
+  "notes": "0.2 curated inventory slice for Redland-shaped RDF parser/serializer workflows. Format dispositions live in compatibility/baseline/format-matrix.json.",
+  "entries": [
+    {
+      "id": "librdf.parser.new",
+      "symbol": "librdf_new_parser",
+      "kind": "function",
+      "subsystem": "parser",
+      "safe_rust": "Parser::for_syntax / Syntax::from_name",
+      "implementation": "src/io/parser.rs",
+      "tests": [
+        "tests/io.rs::syntax_lookup_covers_names_media_types_and_extensions",
+        "tests/io.rs::round_trip_each_advertised_syntax"
+      ],
+      "state": "verified",
+      "fixtures": ["compatibility/fixtures/io/smoke.json"],
+      "notes": "Closed Syntax set (ADR-008); custom factories deferred."
+    },
+    {
+      "id": "librdf.parser.parse_string",
+      "symbol": "librdf_parser_parse_string_as_stream",
+      "kind": "function",
+      "subsystem": "parser",
+      "safe_rust": "Parser::parse_str / Parser::parse_slice",
+      "implementation": "src/io/parser.rs",
+      "tests": [
+        "tests/io.rs::parser_streams_and_supports_early_stop",
+        "tests/io.rs::malformed_input_returns_parse_error"
+      ],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.parser.parse_file",
+      "symbol": "librdf_parser_parse_file_as_stream",
+      "kind": "function",
+      "subsystem": "parser",
+      "safe_rust": "Parser::parse_path / Parser::parse_path_with_extension",
+      "implementation": "src/io/parser.rs",
+      "tests": ["tests/io.rs::file_round_trip_and_extension_detection"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.parser.parse_into_model",
+      "symbol": "librdf_parser_parse_string_into_model",
+      "kind": "function",
+      "subsystem": "parser",
+      "safe_rust": "Parser::load_into / Parser::load_collecting",
+      "implementation": "src/io/parser.rs",
+      "tests": [
+        "tests/io.rs::progressive_load_leaves_partial_data_on_failure",
+        "tests/io.rs::collecting_load_is_all_or_nothing"
+      ],
+      "state": "verified",
+      "notes": "Progressive default and explicit collecting path (ADR-007)."
+    },
+    {
+      "id": "librdf.parser.guess",
+      "symbol": "librdf_parser_guess_name2",
+      "kind": "function",
+      "subsystem": "parser",
+      "safe_rust": "Syntax::from_name/from_media_type/from_extension",
+      "implementation": "src/io/format.rs",
+      "tests": ["tests/io.rs::syntax_lookup_covers_names_media_types_and_extensions"],
+      "state": "verified",
+      "deviations": [
+        "Content sniffing ('guess') is unsupported; extension/MIME/name lookup only."
+      ]
+    },
+    {
+      "id": "librdf.serializer.new",
+      "symbol": "librdf_new_serializer",
+      "kind": "function",
+      "subsystem": "serializer",
+      "safe_rust": "Serializer::for_syntax",
+      "implementation": "src/io/serializer.rs",
+      "tests": ["tests/io.rs::round_trip_each_advertised_syntax"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.serializer.serialize_model",
+      "symbol": "librdf_serializer_serialize_model_to_string",
+      "kind": "function",
+      "subsystem": "serializer",
+      "safe_rust": "Serializer::serialize_model_to_string / serialize_model_to_writer",
+      "implementation": "src/io/serializer.rs",
+      "tests": [
+        "tests/io.rs::round_trip_each_advertised_syntax",
+        "tests/io.rs::dataset_serializer_preserves_named_graphs"
+      ],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.serializer.serialize_file",
+      "symbol": "librdf_serializer_serialize_model_to_file",
+      "kind": "function",
+      "subsystem": "serializer",
+      "safe_rust": "Serializer::serialize_model_to_path",
+      "implementation": "src/io/serializer.rs",
+      "tests": ["tests/io.rs::file_round_trip_and_extension_detection"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.serializer.set_namespace",
+      "symbol": "librdf_serializer_set_namespace",
+      "kind": "function",
+      "subsystem": "serializer",
+      "safe_rust": "Serializer::with_prefix",
+      "implementation": "src/io/serializer.rs",
+      "tests": ["tests/io.rs::language_and_datatype_literals_round_trip"],
+      "state": "verified",
+      "notes": "Prefixes validated at builder time for Turtle/TriG/RDF/XML."
+    },
+    {
+      "id": "librdf.model.add_statements_from_parser",
+      "symbol": "librdf_model_add_statements",
+      "kind": "function",
+      "subsystem": "model",
+      "safe_rust": "Model::insert_quad via Parser::load_into",
+      "implementation": "src/model.rs",
+      "tests": ["tests/io.rs::named_graph_target_and_dataset_trig"],
+      "state": "verified"
+    }
+  ]
+}

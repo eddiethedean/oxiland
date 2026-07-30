@@ -7,20 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-30
+
+Redland-shaped RDF input and output over Oxigraph 0.5.9.
+
 ### Added
 
-- Project charter defining users, scope, non-goals, invariants, success
-  measures, and the 1.0 boundary
-- Detailed 0.2 RDF I/O milestone plan with decision gates, work packages,
-  acceptance matrix, and exit checklist
-- Contribution workflow and automated repository-local documentation link check
+- Closed `Syntax` discovery by name, media type, and extension (ADR-008)
+- Streaming `Parser` with base IRI, `GraphTarget`, reader/slice/string/path
+  entry points, and blank-node renaming
+- Progressive `load_into` and collecting `load_collecting` model loads (ADR-007)
+- Streaming `Serializer` with namespace prefixes, writer/string/path helpers,
+  and graph-versus-dataset checks
+- Structured `Error::Parse` / `Serialize` / `Io` categories and `ParseError`
+- Curated 0.2 I/O inventory, format matrix, conformance fixtures, and
+  `rapper` oracle/differential harnesses
+- Example `parse_serialize`
+- Compatibility report `docs/reports/0.2.md`
 
 ### Changed
 
-- Aligned roadmap, execution, architecture, parity, verification, decisions,
-  risks, and historical release documentation
-- Expanded the risk register with status, early signals, contingencies, and 0.2
-  parser/format/persistence risks
+- `oxiland::io` is now the Redland-shaped facade; Oxigraph primitives moved to
+  `oxiland::io::primitives`
+- Public API snapshot expanded for the I/O surface
+
+### Fixed
+
+- `GraphTarget::DefaultGraph` and `Named` reject named-graph input so they
+  differ from `Dataset` on TriG/N-Quads
+- Parse errors no longer duplicate embedded Oxigraph location text
+- `load_collecting` rolls back quads newly inserted by the call if a later
+  insert fails
+- Model serialization streams statements instead of buffering a full copy
+- Ambiguous aliases (`text/plain`, `application/xml`, `.txt`, `.xml`) return
+  `Unsupported` instead of guessing
+- Namespace prefixes are rejected on formats that cannot emit them
+
+### Compatibility claims
+
+- Provides the 0.2 RDF I/O surface described in `docs/reports/0.2.md`
+- Does **not** claim full Redland API accounting, C source/ABI compatibility,
+  N3/JSON-LD support, or transactional atomic import
 
 ## [0.1.0] - 2026-07-30
 

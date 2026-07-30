@@ -1,6 +1,6 @@
 [package]
 name = "oxiland"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.87"
 description = "A Redland-compatible RDF toolkit backed by Oxigraph"
@@ -12,7 +12,7 @@ documentation = "https://docs.rs/oxiland"
 authors = ["Odo Matthews <odosmatthews@gmail.com>"]
 keywords = ["rdf", "sparql", "redland", "oxigraph", "semantic-web"]
 categories = ["database"]
-exclude = [".github/"]
+exclude = [".github/", "compatibility/harness/*-result.json"]
 
 [package.metadata.docs.rs]
 features = []
@@ -27,3 +27,5 @@ thiserror = "2"
 
 [dev-dependencies]
 tempfile = "3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

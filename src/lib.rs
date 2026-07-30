@@ -31,12 +31,13 @@
 #![warn(missing_docs)]
 
 mod error;
+pub mod io;
 mod model;
 mod persist;
 mod query;
 mod world;
 
-pub use error::{Error, Result};
+pub use error::{Error, ParseError, Result};
 pub use model::{Model, StatementMatches, StatementPattern};
 pub use query::{Query, QueryResults};
 pub use world::{FeatureValue, World};
@@ -68,14 +69,6 @@ pub mod terms {
             None => Ok(BlankNode::default()),
         }
     }
-}
-
-/// RDF parsing and serialization primitives.
-///
-/// Redland-shaped parser and serializer facades are planned for 0.2. These
-/// Oxigraph primitives are exposed for early adopters.
-pub mod io {
-    pub use oxigraph::io::{RdfFormat, RdfParser, RdfSerializer};
 }
 
 /// Oxigraph SPARQL primitives for advanced use cases.
