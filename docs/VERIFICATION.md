@@ -91,7 +91,7 @@ Conformance categories include:
 Required on every PR and on `main`/release:
 
 - stable Rust checks (fmt, Clippy, tests, docs, examples, inventory,
-  public-API snapshot);
+  documentation links, public-API snapshot);
 - dedicated Fjall persistence tests;
 - Rust 1.87 MSRV Clippy and tests.
 
@@ -121,6 +121,9 @@ cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 cargo test
 cargo doc --no-deps
+python3 scripts/check-inventory.py
+python3 scripts/check-docs.py
+scripts/generate-public-api.sh check
 ```
 
 Milestones may add native or long-running commands to this baseline.

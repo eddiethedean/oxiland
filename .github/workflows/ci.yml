@@ -53,6 +53,9 @@ jobs:
       - name: Inventory
         run: python3 scripts/check-inventory.py
 
+      - name: Documentation links
+        run: python3 scripts/check-docs.py
+
       - name: Public API snapshot
         run: scripts/generate-public-api.sh check
 

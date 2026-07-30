@@ -1,6 +1,7 @@
 # Redland parity ledger
 
-Current milestone: 0.1 (complete)  
+Last completed milestone: 0.1
+Current development milestone: 0.2 (`planned`)
 Ledger maturity: curated 0.1 inventory slice; full header-derived generation
 pending with the oracle harness
 

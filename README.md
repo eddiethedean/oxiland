@@ -214,10 +214,12 @@ and release criteria.
 ## Project documentation
 
 - [Planning index](docs/README.md)
+- [Project charter and 1.0 definition](docs/CHARTER.md)
 - [Changelog](CHANGELOG.md)
 - [Parity ledger](PARITY.md)
 - [0.1 compatibility report](docs/reports/0.1.md)
 - [0.x roadmap](docs/ROADMAP.md)
+- [Detailed 0.2 milestone plan](docs/milestones/0.2.md)
 - [Execution plan and current backlog](docs/EXECUTION.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Compatibility contract](docs/COMPATIBILITY.md)
@@ -239,6 +241,7 @@ cargo clippy --all-targets -- -D warnings
 cargo test
 cargo doc --no-deps
 python3 scripts/check-inventory.py
+python3 scripts/check-docs.py
 scripts/generate-public-api.sh check
 ```
 
@@ -262,6 +265,8 @@ facade, storage, or FFI change:
 
 The most valuable current tasks are listed in the
 [0.2 backlog](docs/EXECUTION.md#current-02-backlog).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the vertical-slice and review
+checklists.
 
 ## License
 

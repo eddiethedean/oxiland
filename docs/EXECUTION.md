@@ -7,6 +7,11 @@ This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
 true compatibility surface.
 
+The [project charter](CHARTER.md) constrains scope, the
+[roadmap](ROADMAP.md) defines release outcomes, and files under
+[`milestones/`](milestones/) define executable work packages. This document
+owns the operating model and current work order.
+
 ## Workstreams
 
 | Workstream | Responsibility | Primary evidence |
@@ -91,16 +96,32 @@ it enables. Code without mapping or evidence remains `implemented`, not
 
 ## Current 0.2 backlog
 
-Priority is ordered; a lower item should not force the public shape of an
-unresolved higher item.
+The detailed acceptance criteria and dependency map live in the
+[0.2 milestone plan](milestones/0.2.md). Work-package order is authoritative;
+later packages must not force the public shape of unresolved decisions.
 
-| Priority | Deliverable | Completion evidence |
-|---:|---|---|
-| P0 | Safe `Parser` / `Serializer` facades | public API + round-trip tests |
-| P0 | Syntax discovery by name, MIME, extension | lookup tests and unsupported errors |
-| P1 | Reader/writer/string/file/base-IRI entry points | integration tests |
-| P1 | Bounded streaming parse path | large-input memory test |
-| P2 | Document supported vs unsupported Redland syntax names | compatibility notes |
+| Order | Work package | State | Completion evidence |
+|---:|---|---|---|
+| 1 | WP-02-00 baseline and I/O inventory | `planned` | pinned inputs, inventory IDs, capability table |
+| 2 | WP-02-01 design spikes and decisions | `planned` | ADR-007/008, API proposal, streaming measurements |
+| 3 | WP-02-02 format and capability layer | `planned` | exhaustive table-driven lookup/capability tests |
+| 4a | WP-02-03 streaming parser | `planned` | public API, error/graph/blank-node tests |
+| 4b | WP-02-05 streaming serializer | `planned` | public API, writer/namespace/dataset tests |
+| 5 | WP-02-04 model loading and file input | `planned` | partial-failure, path, and graph-target tests |
+| 6 | WP-02-06 conformance and differential evidence | `planned` | W3C and Redland machine-readable results |
+| 7 | WP-02-07 documentation and release | `planned` | report, guides, package smoke test |
+
+### Immediate next actions
+
+1. Capture the Redland/Raptor/Rasqal I/O baseline and format aliases.
+2. Establish an I/O oracle smoke fixture and expand the inventory schema and
+   parser/serializer entries.
+3. Prototype streaming parser output and failure behavior privately.
+4. Resolve ADR-007 and ADR-008 before exposing facade types.
+5. Land the format capability table before parser and serializer entry points.
+
+No item is `in progress` until its definition of ready is satisfied and the
+status change is reflected here.
 
 ## Definition of ready
 
@@ -111,6 +132,8 @@ Work is ready when:
 - blocking architecture decisions are resolved;
 - test data and oracle requirements are available;
 - no unreviewed security or destructive-storage assumption is required.
+- the work package's dependencies are complete or an explicit parallel-safe
+  boundary is documented.
 
 ## Definition of done
 
@@ -122,9 +145,12 @@ Work is done when:
 - compatibility differences are recorded, not hidden;
 - no temporary eager allocation, panic path, or unsafe assumption is left
   without an owner and removal/review milestone.
+- the work package status and evidence links are updated in the same change.
 
 ## Planning cadence
 
+- Update the active work-package table when a package starts, blocks, or
+  completes.
 - Review the current milestone after each completed vertical slice.
 - Review dependency and Oxigraph upgrade decisions before each minor release.
 - Review accepted deviations and high risks at every milestone boundary.
@@ -146,3 +172,17 @@ Report counts separately:
 Progress reports link to evidence revisions. Percent-complete estimates without
 a denominator are not project status.
 
+## Handling blocked or deferred work
+
+A blocked package records the blocking decision, risk, or external dependency
+and the next action that could unblock it. A deferral records:
+
+- user-visible impact and workaround;
+- destination milestone;
+- owner workstream;
+- inventory IDs or release gates affected;
+- whether the current release outcome remains truthful.
+
+Deferral is not completion. If a deferred item is necessary for the milestone
+outcome, the milestone remains blocked or its scope changes through the project
+charter and roadmap change-control process.

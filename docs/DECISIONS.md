@@ -156,6 +156,57 @@ Evaluation criteria:
 - user expectations from Redland stores;
 - release and support cost.
 
+### ADR-007 — Parser output and model-load failure semantics
+
+State: proposed
+Decision deadline: before public 0.2 parser facade types
+
+Context: a streaming parser can yield valid statements before encountering
+malformed input. Loading the same source into a model could therefore leave
+partial data unless the API stages input or uses a transaction. The 0.2 model
+does not yet have the transaction abstraction planned for 0.4.
+
+Question: should the core parser expose a fallible stream with explicit partial
+progress while model convenience methods are best-effort, stage complete input,
+or remain unavailable until they can offer a stronger guarantee?
+
+Evaluation criteria:
+
+- bounded memory for large input;
+- clarity of partial-progress and retry behavior;
+- compatibility with Redland parser callbacks;
+- feasibility across in-memory and Fjall-backed models;
+- ability to add transactions in 0.4 without breaking the streaming core.
+
+Required evidence: prototype memory measurements and failure fixtures with valid
+prefixes followed by malformed input.
+
+### ADR-008 — Built-in RDF format identity and discovery
+
+State: proposed
+Decision deadline: before WP-02-02
+
+Context: Redland selects parser and serializer factories through names, MIME
+types, and other aliases. Oxigraph exposes a finite set of format values.
+Treating arbitrary strings as formats would make capability reporting unstable
+and could prematurely commit Oxiland to public custom registration.
+
+Question: should 0.2 expose a closed Oxiland format value backed by a curated
+alias table, while deferring custom factories, or expose a string-keyed registry
+from the start?
+
+Evaluation criteria:
+
+- exhaustive capability reporting;
+- compatibility with Redland aliases and MIME parameters;
+- typo and ambiguity handling;
+- forwards-compatible addition of formats;
+- interaction with future safe and C-only factory registration;
+- public API snapshot and SemVer impact.
+
+Required evidence: a Redland/Oxigraph format matrix and table-driven lookup
+prototype.
+
 ## ADR template
 
 ```markdown

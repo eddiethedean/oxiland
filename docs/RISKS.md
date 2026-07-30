@@ -1,46 +1,72 @@
 # Risk register
 
 Status: active  
-Review: each milestone boundary and before dependency upgrades
+Review: when a trigger occurs, after each completed work package, at milestone
+boundaries, and before dependency upgrades
 
-Likelihood and impact use `low`, `medium`, or `high`. An owner is a workstream
-until individual maintainers are assigned.
+Likelihood and impact use `low`, `medium`, or `high`. Status is `monitoring`,
+`active`, `mitigated`, or `closed`. An owner is a workstream until individual
+maintainers are assigned.
 
-| ID | Risk | Likelihood | Impact | Owner | Mitigation | Trigger |
-|---|---|---|---|---|---|---|
-| R-001 | Oxigraph semantics differ from Redland in edge cases | High | High | Compatibility | differential fixtures and private adapters | mismatch in oracle run |
-| R-002 | “100% parity” is interpreted as an unqualified claim | High | High | Documentation | claim levels and scoped reports | public release language omits scope |
-| R-003 | Direct Oxigraph re-exports prevent later compatibility fixes | Medium | High | Safe API | decide before 0.2; snapshot public API | wrapper becomes necessary |
-| R-004 | Redland C ownership is reproduced unsafely | Medium | High | C ABI | isolate crate, handle invariants, sanitizers | first pointer/callback API |
-| R-005 | Legacy storage plug-ins cannot be reproduced | High | Medium | Storage | per-backend decisions and migration tools | backend inventory review |
-| R-006 | Native Redland oracle is platform/version dependent | Medium | High | Compatibility | pin/checksum builds and metadata | cross-platform diff disagreement |
-| R-007 | Eager APIs cause unbounded memory use | Medium | Medium | Safe API | streaming-by-default gates | large fixture exceeds budget |
-| R-008 | Oxigraph upgrade changes behavior or MSRV | Medium | High | Safe API | pin versions; full suite before upgrades | dependency update proposed |
-| R-009 | ABI surface freezes before semantics stabilize | Medium | High | C ABI | begin C ABI only after 0.6 | 0.7 work starts with open mappings |
-| R-010 | Upstream conformance claims hide facade defects | Medium | High | RDF/SPARQL | run manifests through Oxiland API | Oxigraph-only evidence proposed |
-| R-011 | Test matrix becomes too slow to gate releases | Medium | Medium | Tooling | fast PR set plus required release/nightly sets | required CI exceeds target latency |
-| R-012 | Accepted deviations accumulate indefinitely | Medium | High | Compatibility | owner and review milestone required | deviation misses review date |
-| R-013 | `unsafe` or callbacks allow panic/re-entry bugs | Medium | High | C ABI | panic boundaries, re-entry tests, local safety proofs | callback support lands |
-| R-014 | Downstream consumers depend on undocumented quirks | High | Medium | Compatibility | select consumers early and capture fixtures | first downstream test failure |
-| R-015 | Platform packaging diverges from tested workspace builds | Medium | High | Tooling | clean-install artifact tests | packaging introduced |
+`mitigated` means a tested control reduces exposure; it does not mean the risk
+can never recur. `closed` requires the underlying exposure to be removed.
 
-## Escalation rules
+## Register
 
-A risk blocks a release when:
+| ID | Risk | L | I | Status | Owner | Preventive response | Trigger / early signal | Contingency |
+|---|---|:---:|:---:|---|---|---|---|---|
+| R-001 | Oxigraph semantics differ from Redland in edge cases | H | H | `active` | Compatibility | native oracle and normalized differential fixtures | first unexplained mismatch | add private adapter or publish reviewed deviation |
+| R-002 | “100% parity” becomes an unqualified claim | H | H | `active` | Documentation | chartered claim levels and scoped reports | release text omits inventory/platform/evidence scope | block or correct release communication |
+| R-003 | Direct Oxigraph term re-exports prevent a compatibility fix | M | H | `monitoring` | Safe API | ADR-004 trigger, API snapshot, fixture-first review | required behavior cannot be represented | wrapper migration with 0.x migration guide |
+| R-004 | Redland C ownership is reproduced unsafely | M | H | `monitoring` | C ABI | separate crate, handle invariants, sanitizers | first pointer or callback API | stop ABI expansion and redesign handle contract |
+| R-005 | Legacy storage plug-ins cannot be reproduced | H | M | `monitoring` | Storage | per-backend disposition and migration paths | backend inventory review finds hard dependency | publish capability error or optional integration decision |
+| R-006 | Native Redland oracle depends on platform or build versions | M | H | `active` | Compatibility | pin and checksum sources/build metadata | fixture differs across oracle builds | separate platform profiles and investigate before accepting |
+| R-007 | Facades materialize unbounded input or output | M | H | `active` | Safe API | streaming core, early-stop and memory gates | large fixture exceeds budget or API returns full collection | redesign before stabilizing affected facade |
+| R-008 | Oxigraph upgrade changes behavior, features, or MSRV | M | H | `active` | Safe API | exact release pin and full-suite upgrade gate | dependency update or security advisory | hold upgrade, adapt privately, or revise supported matrix |
+| R-009 | C ABI freezes before Rust semantics stabilize | M | H | `monitoring` | C ABI | 0.6 accounting gate before 0.7 | ABI work starts with open mappings | keep symbols experimental or defer ABI milestone |
+| R-010 | Upstream conformance claims hide facade defects | M | H | `active` | RDF/SPARQL | run manifests through public Oxiland APIs | Oxigraph-only evidence is proposed | reject verification state until facade suite runs |
+| R-011 | Required CI becomes too slow or costly | M | M | `monitoring` | Tooling | tier fast PR, release, and scheduled suites | median PR signal exceeds agreed budget | shard/cache suites without weakening release gates |
+| R-012 | Accepted deviations accumulate without review | M | H | `active` | Compatibility | owner, impact, workaround, review milestone | review milestone passes | reopen affected claim and block release if material |
+| R-013 | `unsafe`, callback re-entry, or panic creates FFI defects | M | H | `monitoring` | C ABI | local safety proofs, panic boundaries, re-entry tests | C callback support lands | quarantine affected symbol and run focused audit |
+| R-014 | Downstream consumers depend on undocumented quirks | H | M | `monitoring` | Compatibility | select consumers early and capture fixtures | first downstream build/test failure | classify quirk and add adapter or limitation |
+| R-015 | Packaged artifacts differ from workspace builds | M | H | `active` | Tooling | package dry-run and clean-install tests | packaged smoke test diverges | block publish and repair package manifest/workflow |
+| R-016 | 0.x persistent data becomes unreadable or partially updated | M | H | `active` | Storage | label format unstable, export guidance, reopen/failure tests | format change, failed Fjall write, or upgrade request | preserve old reader/export tool; block destructive migration |
+| R-017 | Parser failure leaves a model partially loaded unexpectedly | H | H | `active` | RDF/SPARQL | resolve ADR-007 before facade publication | valid prefix followed by malformed input | expose explicit partial-progress contract or stage safely |
+| R-018 | Format aliases or auto-detection select the wrong syntax | M | M | `active` | RDF/SPARQL | curated table, ambiguity errors, ADR-008 | alias collision or misleading extension/MIME | require explicit format and publish corrected mapping |
+| R-019 | Planning outruns implementation and evidence | M | H | `active` | Documentation | separate charter/roadmap/milestone/parity authority | planned feature described as available | correct claim and add consistency check/review gate |
 
-- its impact is high and its trigger has occurred without a tested mitigation;
-- it can invalidate the milestone's compatibility claim;
-- it can cause data loss, memory unsafety, or ABI corruption;
-- its mitigation depends on an unresolved architecture decision.
+## Release-blocking rule
 
-Closing a risk requires evidence that the trigger is removed or the mitigation
-is operating. Rewording the risk or moving it to known limitations is not
-closure.
+A risk blocks a release when any of these is true:
 
-## Current focus
+- impact is high and its trigger has occurred without a tested response;
+- it invalidates the milestone outcome or a published compatibility claim;
+- it can cause data loss, memory unsafety, silent semantic corruption, or ABI
+  corruption;
+- its response depends on an unresolved decision required by the milestone;
+- the release would make the risky behavior harder to change or recover from.
 
-For 0.2, R-001, R-008, and R-010 remain active. R-003 and R-007 are mitigated
-for the 0.1 surface by ADR-004/ADR-005 and the public-API snapshot, but stay
-monitored for later facades. R-004, R-009, R-013, and R-015 remain monitored
-until their workstreams begin.
+The release report lists all active high-impact risks and explains why each is
+controlled or blocking.
 
+## Review and status changes
+
+At review:
+
+1. confirm likelihood and impact against current implementation;
+2. inspect triggers and linked evidence;
+3. verify the preventive response is actually running;
+4. create or update the contingency owner and next action;
+5. change status only with a reason and evidence link.
+
+Closing a risk requires evidence that the exposure is gone. Renaming it as a
+known limitation is not closure. A regression may move a mitigated or closed
+risk back to active.
+
+## Current 0.2 focus
+
+The 0.2 release pays particular attention to R-001, R-006, R-007, R-008,
+R-010, R-017, R-018, and R-019. ADR-007 and ADR-008 are mandatory controls for
+R-017 and R-018. R-003 remains monitored under ADR-004. C-specific risks remain
+monitored until their workstream begins but are reviewed if a safe API choice
+would constrain later ownership or ABI behavior.

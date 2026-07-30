@@ -15,15 +15,15 @@ only when its evidence gates are satisfied.
 
 | Version | Outcome | Depends on | State |
 |---|---|---|---|
-| 0.1 | Trusted core model | — | Complete |
-| 0.2 | Redland-shaped RDF I/O | 0.1 | Planned |
-| 0.3 | Complete query/result workflows | 0.2 | Planned |
-| 0.4 | Durable storage and transactions | 0.3 | Planned |
-| 0.5 | Streams, utilities, and observability | 0.4 | Planned |
-| 0.6 | Accounted safe Rust parity | 0.5 | Planned |
-| 0.7 | Auditable C ABI preview | 0.6 | Planned |
-| 0.8 | Downstream C compatibility | 0.7 | Planned |
-| 0.9 | 1.0 release candidate | 0.8 | Planned |
+| 0.1 | Trusted core model | — | `complete` |
+| 0.2 | Redland-shaped RDF I/O | 0.1 | `planned` |
+| 0.3 | Complete query/result workflows | 0.2 | `planned` |
+| 0.4 | Durable storage and transactions | 0.3 | `planned` |
+| 0.5 | Streams, utilities, and observability | 0.4 | `planned` |
+| 0.6 | Accounted safe Rust parity | 0.5 | `planned` |
+| 0.7 | Auditable C ABI preview | 0.6 | `planned` |
+| 0.8 | Downstream C compatibility | 0.7 | `planned` |
+| 0.9 | 1.0 release candidate | 0.8 | `planned` |
 
 States are `planned`, `in progress`, `blocked`, or `complete`. A state changes
 only after the evidence links are added to the root
@@ -56,6 +56,8 @@ Deliverables:
 - Basic SPARQL query execution.
 - Public error model and feature flags.
 - Initial parity inventory and documentation.
+- Experimental Fjall-backed persistence via `Model::open`, without a stable
+  on-disk compatibility or transaction promise.
 - Named-graph-aware removal and containment operations.
 - Streaming `Model::find` via `StatementMatches` (ADR-005).
 - Rustdoc examples showing construction, CRUD, contexts, and SPARQL.
@@ -70,13 +72,18 @@ Evidence gates:
 - Direct Oxigraph term re-exports (ADR-004) and streaming find (ADR-005) are
   accepted.
 
-Not in this milestone: polished parser/serializer facades, durable storage,
-transactions, or a C ABI.
+Not in this milestone: polished parser/serializer facades, stable durable-store
+guarantees, transactions, backup/migration workflows, or a C ABI. The
+experimental Fjall path is intentionally promoted to a supported storage
+contract only in 0.4.
 
 ## 0.2 — RDF input and output
 
 Outcome: match Redland parser and serializer workflows through safe,
 stream-oriented APIs.
+
+State: planned
+Execution specification: [milestone 0.2](milestones/0.2.md)
 
 Deliverables:
 
@@ -90,6 +97,7 @@ Deliverables:
 
 Evidence gates:
 
+- Parser output/atomicity and format-discovery decisions are accepted.
 - Round-trip tests exist for every supported syntax.
 - Parser errors preserve useful source locations.
 - Supported and unsupported Redland syntax names are documented.

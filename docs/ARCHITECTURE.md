@@ -9,6 +9,9 @@ claim that planned crates or modules already exist.
 
 ## Design principles
 
+These principles refine the [project charter](CHARTER.md); the charter wins if
+the documents ever conflict.
+
 1. Safe Rust is the primary implementation surface.
 2. Oxigraph owns RDF representation, parsing, serialization, storage, and
    SPARQL execution wherever its semantics satisfy the compatibility contract.
@@ -183,11 +186,10 @@ not reverse an accepted decision only through code changes.
 
 ## Open architecture questions
 
-- Should safe APIs continue re-exporting Oxigraph terms or introduce
-  compatibility wrappers before 1.0?
 - What transaction abstraction can cover memory and fjall consistently?
 - Can query cancellation be implemented without modifying Oxigraph?
 - Which Redland factory registrations are safe and useful in Rust?
 - Which C handles need reference counting to reproduce observed aliasing?
 
-These questions are tracked as decision candidates, not implicit TODOs.
+Term re-exports are governed by ADR-004 and revisited only on its evidence
+trigger. The remaining questions are decision candidates, not implicit TODOs.
