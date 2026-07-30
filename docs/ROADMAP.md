@@ -132,7 +132,7 @@ backend capabilities.
 
 Deliverables:
 
-- Stable memory and redb storage constructors.
+- Stable memory and fjall storage constructors.
 - Storage options with typed configuration.
 - Transactions, sync, bulk loading, and graph clearing.
 - Storage capability reporting.
@@ -149,7 +149,7 @@ Evidence gates:
 - Concurrent reader/writer behavior is tested and documented.
 - A persistent store created by each supported prior Oxiland minor version can
   be opened or migrated.
-- redb remains the durable backend and the default build stays free of native C++ deps.
+- fjall remains the durable backend and the default build stays free of native C++ deps.
 
 Depends on: stable model, I/O, and update behavior from 0.1–0.3.
 

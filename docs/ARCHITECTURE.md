@@ -171,7 +171,7 @@ Dependency review records:
 - license and minimum supported Rust version;
 - default features and native build requirements;
 - maintenance and security posture;
-- effect on WebAssembly and pure-Rust redb builds;
+- effect on WebAssembly and pure-Rust fjall builds;
 - whether it crosses the safe/C boundary.
 
 ## Architecture decision records
@@ -185,7 +185,7 @@ not reverse an accepted decision only through code changes.
 
 - Should safe APIs continue re-exporting Oxigraph terms or introduce
   compatibility wrappers before 1.0?
-- What transaction abstraction can cover memory and redb consistently?
+- What transaction abstraction can cover memory and fjall consistently?
 - Can query cancellation be implemented without modifying Oxigraph?
 - Which Redland factory registrations are safe and useful in Rust?
 - Which C handles need reference counting to reproduce observed aliasing?

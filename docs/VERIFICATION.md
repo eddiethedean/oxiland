@@ -92,6 +92,7 @@ Required on every PR and on `main`/release:
 
 - stable Rust checks (fmt, Clippy, tests, docs, examples, inventory,
   public-API snapshot);
+- dedicated Fjall persistence tests;
 - Rust 1.87 MSRV Clippy and tests.
 
 The intended broader matrix still includes:

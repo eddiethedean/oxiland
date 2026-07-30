@@ -33,7 +33,7 @@ Inventory revision:
 | Nodes | Verified (0.1 slice) | Unstarted | 0.1/0.7 | Oxigraph term re-exports plus InvalidRdf helpers (ADR-004) |
 | Statements | Verified (0.1 slice) | Unstarted | 0.1/0.7 | triples and `StatementPattern` matching |
 | Model | Verified (0.1 slice) | Unstarted | 0.1/0.7 | default and named-graph CRUD, size, streaming find |
-| Storage | Partial | Unstarted | 0.4/0.8 | memory default; redb persistence via `Model::open` |
+| Storage | Partial | Unstarted | 0.4/0.8 | memory default; fjall persistence via `Model::open` |
 | Streams / iterators | Verified (find) | Unstarted | 0.5/0.7 | `StatementMatches` streaming iterator (ADR-005) |
 | Parser | Primitive only | Unstarted | 0.2/0.7 | Oxigraph primitive re-export; facade pending |
 | Serializer | Primitive only | Unstarted | 0.2/0.7 | Oxigraph primitive re-export; facade pending |
@@ -54,7 +54,8 @@ Inventory revision:
   parse errors, and unsupported storage backends.
 - Doctests cover construction, CRUD, and SPARQL on public types.
 - Examples `quick_start` and `contexts` run in CI.
-- CI gates: Check + MSRV (1.87) on every PR and `main`/release.
+- CI gates: Check, Fjall persistence, and MSRV (1.87) on every PR and
+  `main`/release.
 - Oxigraph 0.5.9 is pinned with default features disabled.
 - ADR-004 (term re-exports) and ADR-005 (streaming find) are accepted.
 

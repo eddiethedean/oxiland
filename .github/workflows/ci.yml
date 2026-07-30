@@ -56,6 +56,25 @@ jobs:
       - name: Public API snapshot
         run: scripts/generate-public-api.sh check
 
+  fjall:
+    name: Fjall
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: fjall
+
+      - name: Test Fjall persistence
+        run: cargo test fjall
+
   msrv:
     name: MSRV (1.87)
     runs-on: ubuntu-latest

@@ -1,60 +1,52 @@
 use std::path::Path;
-use std::sync::Arc;
 
+use fjall::{Config, Keyspace, Partition, PartitionCreateOptions, PersistMode};
 use oxigraph::io::{RdfFormat, RdfParser};
 use oxigraph::model::Quad;
 use oxigraph::store::Store;
-use redb::{Database, ReadableTable, TableDefinition};
 
 use crate::{Error, Result};
 
-const QUADS: TableDefinition<'_, &str, ()> = TableDefinition::new("oxiland_quads");
+const QUADS_PARTITION: &str = "oxiland_quads";
 
-/// Durable quad storage backed by [redb](https://crates.io/crates/redb).
+/// Durable quad storage backed by [Fjall](https://github.com/fjall-rs/fjall).
 ///
-/// Oxigraph still provides the in-memory query engine; redb holds the durable
+/// Oxigraph still provides the in-memory query engine; Fjall holds the durable
 /// copy of every quad.
 #[derive(Clone)]
 pub(crate) struct DiskStore {
-    db: Arc<Database>,
+    keyspace: Keyspace,
+    quads: Partition,
 }
 
 impl DiskStore {
     pub(crate) fn open(path: &Path) -> Result<Self> {
-        if let Some(parent) = path.parent() {
-            if !parent.as_os_str().is_empty() {
-                std::fs::create_dir_all(parent).map_err(|error| Error::OpenStore {
-                    path: path.to_owned(),
-                    message: error.to_string(),
-                })?;
-            }
-        }
-
-        let db = Database::create(path).map_err(|error| Error::OpenStore {
+        std::fs::create_dir_all(path).map_err(|error| Error::OpenStore {
             path: path.to_owned(),
             message: error.to_string(),
         })?;
 
-        Ok(Self { db: Arc::new(db) })
+        let keyspace = Config::new(path).open().map_err(|error| Error::OpenStore {
+            path: path.to_owned(),
+            message: error.to_string(),
+        })?;
+        let quads = keyspace
+            .open_partition(QUADS_PARTITION, PartitionCreateOptions::default())
+            .map_err(|error| Error::OpenStore {
+                path: path.to_owned(),
+                message: error.to_string(),
+            })?;
+
+        Ok(Self { keyspace, quads })
     }
 
     pub(crate) fn load_into(&self, store: &Store) -> Result<()> {
-        let txn = self
-            .db
-            .begin_read()
-            .map_err(|error| Error::Storage(error.to_string()))?;
-        let table = match txn.open_table(QUADS) {
-            Ok(table) => table,
-            Err(redb::TableError::TableDoesNotExist(_)) => return Ok(()),
-            Err(error) => return Err(Error::Storage(error.to_string())),
-        };
-
-        for entry in table
-            .iter()
-            .map_err(|error| Error::Storage(error.to_string()))?
-        {
+        for entry in self.quads.iter() {
             let (key, _) = entry.map_err(|error| Error::Storage(error.to_string()))?;
-            let quad = parse_quad(key.value())?;
+            let key = std::str::from_utf8(&key).map_err(|error| {
+                Error::Storage(format!("persisted quad key was not UTF-8: {error}"))
+            })?;
+            let quad = parse_quad(key)?;
             store
                 .insert(&quad)
                 .map_err(|error| Error::Storage(error.to_string()))?;
@@ -64,37 +56,21 @@ impl DiskStore {
 
     pub(crate) fn insert(&self, quad: &Quad) -> Result<()> {
         let key = quad_key(quad);
-        let txn = self
-            .db
-            .begin_write()
+        self.quads
+            .insert(key.as_bytes(), [])
             .map_err(|error| Error::Storage(error.to_string()))?;
-        {
-            let mut table = txn
-                .open_table(QUADS)
-                .map_err(|error| Error::Storage(error.to_string()))?;
-            table
-                .insert(key.as_str(), ())
-                .map_err(|error| Error::Storage(error.to_string()))?;
-        }
-        txn.commit()
+        self.keyspace
+            .persist(PersistMode::SyncAll)
             .map_err(|error| Error::Storage(error.to_string()))
     }
 
     pub(crate) fn remove(&self, quad: &Quad) -> Result<()> {
         let key = quad_key(quad);
-        let txn = self
-            .db
-            .begin_write()
+        self.quads
+            .remove(key.as_bytes())
             .map_err(|error| Error::Storage(error.to_string()))?;
-        {
-            let mut table = txn
-                .open_table(QUADS)
-                .map_err(|error| Error::Storage(error.to_string()))?;
-            table
-                .remove(key.as_str())
-                .map_err(|error| Error::Storage(error.to_string()))?;
-        }
-        txn.commit()
+        self.keyspace
+            .persist(PersistMode::SyncAll)
             .map_err(|error| Error::Storage(error.to_string()))
     }
 }

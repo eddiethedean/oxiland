@@ -16,7 +16,7 @@ First release of the Oxiland safe Rust core model.
 - Streaming `Model::find` via `StatementMatches` (ADR-005)
 - Basic SPARQL `Query` execution (ASK/SELECT) with parse vs evaluation errors
 - Oxigraph term re-exports plus `terms::named_node` / `terms::blank_node` helpers (ADR-004)
-- Optional `redb` persistence via `Model::open`
+- Fjall persistence via `Model::open`
 - 0.1 compatibility inventory, public API snapshot, and CI/release workflows
 
 ### Compatibility claims

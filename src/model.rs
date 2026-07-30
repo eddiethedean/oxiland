@@ -44,8 +44,8 @@ impl Iterator for StatementMatches {
 /// An RDF graph model backed by an Oxigraph store.
 ///
 /// In-memory models use Oxigraph alone. Persistent models opened with
-/// [`Model::open`] keep an Oxigraph working set and a [redb](https://www.redb.org/)
-/// durable copy of every quad.
+/// [`Model::open`] keep an Oxigraph working set and a
+/// [Fjall](https://github.com/fjall-rs/fjall) durable copy of every quad.
 ///
 /// Cloning a [`Model`] clones the store handle and shares the same dataset; it
 /// does not deep-copy statements. `Model` is `Send` and `Sync`.
@@ -93,7 +93,7 @@ impl Model {
 
     /// Opens or creates a persistent model at `path`.
     ///
-    /// Quads are stored in a redb database and loaded into an Oxigraph
+    /// Quads are stored in a Fjall keyspace and loaded into an Oxigraph
     /// in-memory working set for querying. On-disk format compatibility across
     /// Oxiland versions is not guaranteed in 0.x; see ADR-006.
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
@@ -121,9 +121,9 @@ impl Model {
     /// Unknown backend names return [`Error::Unsupported`].
     pub fn storage_backend_available(name: &str) -> Result<bool> {
         match name {
-            "memory" | "redb" => Ok(true),
-            "rocksdb" => Err(Error::Unsupported(
-                "rocksdb backend was replaced by redb; use Model::open".into(),
+            "memory" | "fjall" => Ok(true),
+            "rocksdb" | "redb" => Err(Error::Unsupported(
+                "storage backend was replaced by fjall; use Model::open".into(),
             )),
             other => Err(Error::Unsupported(format!(
                 "storage backend '{other}' is not recognized"

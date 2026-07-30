@@ -145,7 +145,7 @@ State: proposed
 Decision deadline: before 0.4
 
 Question: does Oxiland promise only logical dataset compatibility, or any
-on-disk compatibility across Oxigraph/Oxiland versions for the redb-backed
+on-disk compatibility across Oxigraph/Oxiland versions for the fjall-backed
 `Model::open` store?
 
 Evaluation criteria:

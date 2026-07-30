@@ -18,7 +18,7 @@ paths, and—later in the 0.x series—a separately audited C compatibility laye
 
 - Familiar Redland concepts with Rust ownership and error handling.
 - Oxigraph-backed RDF terms, datasets, parsing primitives, and SPARQL.
-- In-memory operation by default, with optional redb persistence.
+- In-memory operation by default, with optional [Fjall](https://github.com/fjall-rs/fjall) persistence.
 - No `unsafe` code in the primary crate.
 - Compatibility claims backed by an API inventory and differential tests
   rather than an unqualified percentage.
@@ -35,7 +35,7 @@ paths, and—later in the 0.x series—a separately audited C compatibility laye
 | Partial statement matching | Available; streaming `StatementMatches` |
 | SPARQL query execution | Basic ASK/SELECT support |
 | RDF parser and serializer primitives | Re-exported; Redland-style facade planned for 0.2 |
-| Persistent redb model | Available via `Model::open` |
+| Persistent Fjall model | Available via `Model::open` |
 | SPARQL Update and complete result adapters | Planned for 0.3 |
 | Full safe Rust Redland accounting | Planned for 0.6 |
 | C source and ABI compatibility | Planned for 0.7–0.9 |
@@ -131,14 +131,14 @@ The complete example is runnable with `cargo run --example contexts`.
 
 ## Persistent storage
 
-`Model::open` stores quads in a [redb](https://www.redb.org/) database and keeps
+`Model::open` stores quads in a [Fjall](https://github.com/fjall-rs/fjall) keyspace and keeps
 an Oxigraph in-memory working set for querying:
 
 ```rust,no_run
 use oxiland::Model;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let model = Model::open("./data/oxiland.redb")?;
+    let model = Model::open("./data/oxiland-store")?;
     assert!(model.is_empty()?);
     Ok(())
 }

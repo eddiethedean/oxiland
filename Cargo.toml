@@ -22,7 +22,7 @@ default = []
 
 [dependencies]
 oxigraph = { version = "=0.5.9", default-features = false }
-redb = "2.6"
+fjall = "2.11"
 thiserror = "2"
 
 [dev-dependencies]

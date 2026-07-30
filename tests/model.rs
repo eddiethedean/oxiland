@@ -196,14 +196,18 @@ fn unsupported_storage_backend_is_explicit() {
         Model::storage_backend_available("rocksdb"),
         Err(Error::Unsupported(_))
     ));
+    assert!(matches!(
+        Model::storage_backend_available("redb"),
+        Err(Error::Unsupported(_))
+    ));
     assert!(Model::storage_backend_available("memory").unwrap());
-    assert!(Model::storage_backend_available("redb").unwrap());
+    assert!(Model::storage_backend_available("fjall").unwrap());
 }
 
 #[test]
-fn redb_model_round_trips_statements() {
+fn fjall_model_round_trips_statements() {
     let dir = tempfile::tempdir().unwrap();
-    let path = dir.path().join("store.redb");
+    let path = dir.path().join("store");
     {
         let model = Model::open(&path).unwrap();
         assert!(model.add(example_statement()).unwrap());
