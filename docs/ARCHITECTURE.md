@@ -81,8 +81,8 @@ sentinel pointers.
 - Models own cloneable Oxigraph store handles; cloning a model does not clone
   its dataset.
 - Borrowed results may not outlive their model or query execution context.
-- Iterator APIs should stream. A temporary eager `Vec` API must be labeled and
-  have a removal/replacement milestone.
+- Iterator APIs should stream. `Model::find` returns `StatementMatches`
+  (ADR-005). Parser and query streams follow in later milestones.
 - Blank-node identity is scoped by the parser or dataset operation that creates
   it; adapters must not derive identity from labels alone.
 - User-provided callbacks are invoked outside internal locks whenever possible.

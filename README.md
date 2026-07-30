@@ -9,9 +9,10 @@ SPARQL engine; Oxiland supplies Redland-oriented concepts, behavior, migration
 paths, and—later in the 0.x series—a separately audited C compatibility layer.
 
 > [!IMPORTANT]
-> Oxiland is currently an early 0.1 implementation. The core model works, but
-> the crate does **not** yet provide complete Redland API, behavioral, source,
-> or ABI compatibility. See the [parity ledger](PARITY.md) for verified status.
+> Oxiland 0.1 provides the trusted core model surface. It does **not** yet
+> provide complete Redland API accounting, differential behavioral parity,
+> source, or ABI compatibility. See the [parity ledger](PARITY.md) and
+> [0.1 report](docs/reports/0.1.md).
 
 ## Why Oxiland?
 
@@ -30,9 +31,9 @@ paths, and—later in the 0.x series—a separately audited C compatibility laye
 | RDF named nodes, blank nodes, literals, triples, and quads | Available through Oxigraph types |
 | In-memory model | Available |
 | Default-graph CRUD | Available |
-| Named-graph/context insertion and matching | Partial |
-| Partial statement matching | Available; currently eager |
-| SPARQL query execution | Basic support |
+| Named-graph/context CRUD and matching | Available |
+| Partial statement matching | Available; streaming `StatementMatches` |
+| SPARQL query execution | Basic ASK/SELECT support |
 | RDF parser and serializer primitives | Re-exported; Redland-style facade planned for 0.2 |
 | Persistent RocksDB model | Optional `rocksdb` feature |
 | SPARQL Update and complete result adapters | Planned for 0.3 |
@@ -120,19 +121,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         GraphName::NamedNode(graph),
     )?;
 
-    let matches = model.find(StatementPattern {
-        subject: Some(subject.as_ref().into()),
-        ..StatementPattern::default()
-    })?;
+    let matches = model
+        .find(StatementPattern {
+            subject: Some(subject.as_ref().into()),
+            ..StatementPattern::default()
+        })
+        .collect::<Result<Vec<_>, _>>()?;
 
     assert_eq!(matches.len(), 1);
     Ok(())
 }
 ```
 
-`Model::find` currently collects matching quads into a `Vec`. A lazy streaming
-replacement is a 0.1/0.5 design priority and is tracked in the
-[execution plan](docs/EXECUTION.md).
+`Model::find` returns a streaming `StatementMatches` iterator over a store
+snapshot (ADR-005).
 
 The complete example is runnable with `cargo run --example contexts`.
 
@@ -221,6 +223,7 @@ and release criteria.
 
 - [Planning index](docs/README.md)
 - [Parity ledger](PARITY.md)
+- [0.1 compatibility report](docs/reports/0.1.md)
 - [0.x roadmap](docs/ROADMAP.md)
 - [Execution plan and current backlog](docs/EXECUTION.md)
 - [Architecture](docs/ARCHITECTURE.md)
@@ -228,6 +231,7 @@ and release criteria.
 - [Verification and release gates](docs/VERIFICATION.md)
 - [Architecture decisions](docs/DECISIONS.md)
 - [Risk register](docs/RISKS.md)
+- [0.1 inventory](compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
 
 The parity ledger describes what exists now. Planning documents describe the
 intended path and must not be read as implemented functionality.
@@ -238,17 +242,12 @@ Run the default local checks:
 
 ```console
 cargo fmt --check
-cargo clippy --all-targets -- -D warnings
-cargo test
-cargo doc --no-deps
-```
-
-Also test feature-minimal and RocksDB builds when changing storage or feature
-behavior:
-
-```console
-cargo test --no-default-features
+cargo clippy --all-targets --all-features -- -D warnings
 cargo test --all-features
+cargo test --no-default-features
+cargo doc --no-deps --all-features
+python3 scripts/check-inventory.py
+scripts/generate-public-api.sh check
 ```
 
 Compatibility work should be implemented as a vertical slice: inventory
@@ -268,7 +267,7 @@ facade, storage, or FFI change:
 5. update the parity ledger and planning evidence.
 
 The most valuable current tasks are listed in the
-[0.1 backlog](docs/EXECUTION.md#current-01-backlog).
+[0.2 backlog](docs/EXECUTION.md#current-02-backlog).
 
 ## License
 

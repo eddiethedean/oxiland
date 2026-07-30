@@ -15,7 +15,7 @@ only when its evidence gates are satisfied.
 
 | Version | Outcome | Depends on | State |
 |---|---|---|---|
-| 0.1 | Trusted core model | — | In progress |
+| 0.1 | Trusted core model | — | Complete |
 | 0.2 | Redland-shaped RDF I/O | 0.1 | Planned |
 | 0.3 | Complete query/result workflows | 0.2 | Planned |
 | 0.4 | Durable storage and transactions | 0.3 | Planned |
@@ -44,6 +44,11 @@ Each release must:
 
 Outcome: establish the safe Rust vocabulary and a dependable in-memory graph.
 
+State: complete  
+Evidence: [parity ledger](../PARITY.md),
+[0.1 compatibility report](reports/0.1.md),
+[inventory](../compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
+
 Deliverables:
 
 - `World`, RDF terms, statements, models, contexts, and pattern matching.
@@ -52,7 +57,7 @@ Deliverables:
 - Public error model and feature flags.
 - Initial parity inventory and documentation.
 - Named-graph-aware removal and containment operations.
-- Borrowed or lazy pattern iteration, or a documented temporary eager boundary.
+- Streaming `Model::find` via `StatementMatches` (ADR-005).
 - Rustdoc examples showing construction, CRUD, contexts, and SPARQL.
 
 Evidence gates:
@@ -62,7 +67,8 @@ Evidence gates:
 - Rust 1.87 and stable Rust are tested.
 - Every exposed item has Rustdoc documentation.
 - 0.1 inventory rows cite implementation and test locations.
-- The temporary eager-query and direct-type-re-export decisions are documented.
+- Direct Oxigraph term re-exports (ADR-004) and streaming find (ADR-005) are
+  accepted.
 
 Not in this milestone: polished parser/serializer facades, durable storage,
 transactions, or a C ABI.

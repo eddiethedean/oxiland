@@ -1,7 +1,7 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 0.1
+Current milestone: 0.2 (0.1 complete)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -74,23 +74,33 @@ it enables. Code without mapping or evidence remains `implemented`, not
 - Test packaged artifacts from a clean environment.
 - Mark the milestone complete only after evidence is durable and linked.
 
-## Current 0.1 backlog
+## Completed 0.1 backlog
+
+| Priority | Deliverable | Evidence |
+|---:|---|---|
+| P0 | Curated Redland API inventory for 0.1 | `compatibility/inventory/…0.1.json`, `scripts/check-inventory.py` |
+| P0 | Model/context CRUD semantics | `tests/model.rs` named-graph isolation |
+| P0 | Direct Oxigraph term re-exports | ADR-004 |
+| P0 | Streaming `Model::find` | ADR-005, `StatementMatches` |
+| P1 | Stable error categories | `SparqlParse` / `SparqlEvaluation` / `InvalidRdf` / `Unsupported` tests |
+| P1 | Thread-safety and clone semantics | Rustdoc + Send/Sync and clone-sharing tests |
+| P1 | CI for Rust 1.87 and stable | `.github/workflows/ci.yml` |
+| P1 | Public-API snapshot tooling | `api/oxiland-public-api.txt`, `scripts/generate-public-api.sh` |
+| P2 | Runnable examples and doctests | examples in CI; crate doctests |
+| P2 | 0.1 compatibility report | `docs/reports/0.1.md` |
+
+## Current 0.2 backlog
 
 Priority is ordered; a lower item should not force the public shape of an
 unresolved higher item.
 
 | Priority | Deliverable | Completion evidence |
 |---:|---|---|
-| P0 | Generate canonical Redland API inventory | versioned manifest and repeatable command |
-| P0 | Finish model/context CRUD semantics | default/named graph integration tests |
-| P0 | Decide direct Oxigraph term re-exports | accepted decision record |
-| P0 | Replace or explicitly time-box eager `Model::find` | iterator test or deviation |
-| P1 | Expand stable error categories | failure-path tests |
-| P1 | Document thread-safety and clone semantics | Rustdoc assertions/examples |
-| P1 | Establish CI for Rust 1.87 and stable | required checks |
-| P1 | Add public-API snapshot tooling | checked-in baseline |
-| P2 | Add runnable examples and doctests | examples execute in CI |
-| P2 | Create 0.1 compatibility report | inventory and test counts |
+| P0 | Safe `Parser` / `Serializer` facades | public API + round-trip tests |
+| P0 | Syntax discovery by name, MIME, extension | lookup tests and unsupported errors |
+| P1 | Reader/writer/string/file/base-IRI entry points | integration tests |
+| P1 | Bounded streaming parse path | large-input memory test |
+| P2 | Document supported vs unsupported Redland syntax names | compatibility notes |
 
 ## Definition of ready
 

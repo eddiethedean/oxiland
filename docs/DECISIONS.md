@@ -76,40 +76,68 @@ Consequences:
 
 Revisit when: never; a replacement must preserve equally explicit claims.
 
+### ADR-004 — Public RDF terms re-export Oxigraph types
+
+State: accepted  
+Milestone: 0.1
+
+Context: Oxiland needs RDF terms immediately, while Redland-specific node
+construction and introspection may later require wrappers.
+
+Decision: re-export Oxigraph RDF term types from `oxiland::terms` for 0.1 and
+provide thin helpers (`named_node`, `blank_node`) that map construction
+failures into [`Error::InvalidRdf`]. Introduce owned wrappers only when a
+verified Redland behavior cannot be expressed through Oxigraph types plus
+adapters.
+
+Alternatives:
+
+- Wrap every term type now (higher conversion cost, earlier ABI handle design).
+- Hide Oxigraph types entirely behind Oxiland-only constructors.
+
+Consequences:
+
+- Callers interoperate with the Oxigraph ecosystem without adapters.
+- Public API snapshots include Oxigraph type names via re-exports.
+- A later wrapper migration is a breaking change and must be gated by evidence.
+
+Evidence: `src/lib.rs`, `tests/model.rs` invalid-input cases, API snapshot in
+`api/oxiland-public-api.txt`.
+
+Revisit when: a differential fixture requires Redland node behavior that
+Oxigraph types cannot represent, or before expanding the C handle model in 0.7.
+
+### ADR-005 — Model matching uses standard fallible iterators
+
+State: accepted  
+Milestone: 0.1
+
+Context: Redland statement matching returns streams. Eager `Vec` collection
+creates unbounded memory risk (R-007) and blocks early termination.
+
+Decision: [`Model::find`] returns [`StatementMatches`], a standard
+`Iterator<Item = Result<Quad>>` backed by an Oxigraph store snapshot. Parser
+and query result streaming shapes remain open until 0.2/0.3; lending iterators
+and callback visitors are deferred unless standard iterators prove insufficient.
+
+Alternatives:
+
+- Keep eager `Vec` with a documented removal milestone.
+- Lending iterators or visitor callbacks for zero-copy access.
+
+Consequences:
+
+- Matching is lazy and supports early termination.
+- Snapshot semantics mean results do not borrow the live model.
+- Future C stream mapping can wrap the same iterator adapter pattern.
+
+Evidence: `src/model.rs`,
+`tests/model.rs::find_streams_without_full_materialization`.
+
+Revisit when: zero-copy lending access is required, or query/parser streams in
+0.2–0.5 need a shared streaming trait.
+
 ## Proposed decisions
-
-### ADR-004 — Public RDF terms: re-export or wrapper
-
-State: proposed  
-Decision deadline: before 0.2 public facade expansion
-
-Question: should Oxiland continue directly re-exporting Oxigraph RDF terms, or
-introduce Oxiland-owned wrappers that can reproduce Redland-specific behavior?
-
-Evaluation criteria:
-
-- ability to express Redland node construction and introspection;
-- API stability across Oxigraph upgrades;
-- conversion and allocation overhead;
-- blank-node and literal semantics;
-- ergonomics for the broader Oxigraph ecosystem;
-- impact on future C handles.
-
-### ADR-005 — Streaming API shape
-
-State: proposed  
-Decision deadline: 0.1 completion
-
-Question: should model, parser, and query streams use standard iterators,
-lending iterators, callback visitors, or separate owned/borrowed adapters?
-
-Evaluation criteria:
-
-- no unbounded materialization;
-- clear error propagation;
-- model/query lifetime safety;
-- cancellation and early termination;
-- future C stream mapping.
 
 ### ADR-006 — Persistent storage compatibility boundary
 
@@ -147,4 +175,3 @@ Evidence: tests, prototypes, or source references.
 
 Revisit when: concrete trigger.
 ```
-

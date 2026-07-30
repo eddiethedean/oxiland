@@ -39,6 +39,8 @@ closure.
 
 ## Current focus
 
-For 0.1, R-001, R-003, R-007, R-008, and R-010 are active. R-004, R-009,
-R-013, and R-015 remain monitored until their workstreams begin.
+For 0.2, R-001, R-008, and R-010 remain active. R-003 and R-007 are mitigated
+for the 0.1 surface by ADR-004/ADR-005 and the public-API snapshot, but stay
+monitored for later facades. R-004, R-009, R-013, and R-015 remain monitored
+until their workstreams begin.
 

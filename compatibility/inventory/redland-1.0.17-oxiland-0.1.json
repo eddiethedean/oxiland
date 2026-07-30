@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "milestone": "0.1",
+  "redland_api": "1.0.17",
+  "redland_manual": "1.0.18",
+  "oxiland_version": "0.1.0",
+  "oxigraph_version": "0.5.9",
+  "generated_by": "scripts/check-inventory.py",
+  "notes": "0.1 ships a curated inventory slice for core model/world/query symbols. Full header-derived generation lands with the Redland oracle harness.",
+  "entries": [
+    {
+      "id": "librdf.world.new",
+      "symbol": "librdf_new_world",
+      "kind": "function",
+      "subsystem": "world",
+      "safe_rust": "World::new",
+      "implementation": "src/world.rs",
+      "tests": ["tests/model.rs::world_features_are_shared_across_clones"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.world.set_feature",
+      "symbol": "librdf_world_set_feature",
+      "kind": "function",
+      "subsystem": "world",
+      "safe_rust": "World::set_feature",
+      "implementation": "src/world.rs",
+      "tests": ["tests/model.rs::world_features_are_shared_across_clones"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.world.get_feature",
+      "symbol": "librdf_world_get_feature",
+      "kind": "function",
+      "subsystem": "world",
+      "safe_rust": "World::feature",
+      "implementation": "src/world.rs",
+      "tests": ["tests/model.rs::world_features_are_shared_across_clones"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.uri.new",
+      "symbol": "librdf_new_uri",
+      "kind": "function",
+      "subsystem": "uri",
+      "safe_rust": "terms::named_node / terms::NamedNode",
+      "implementation": "src/lib.rs",
+      "tests": ["tests/model.rs::invalid_iri_maps_to_invalid_rdf_error"],
+      "state": "implemented",
+      "notes": "Validated Oxigraph named nodes; helper parity beyond construction is unreviewed."
+    },
+    {
+      "id": "librdf.node.from_uri_string",
+      "symbol": "librdf_new_node_from_uri_string",
+      "kind": "function",
+      "subsystem": "nodes",
+      "safe_rust": "terms::named_node",
+      "implementation": "src/lib.rs",
+      "tests": ["tests/model.rs::invalid_iri_maps_to_invalid_rdf_error"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.node.from_blank",
+      "symbol": "librdf_new_node_from_blank_identifier",
+      "kind": "function",
+      "subsystem": "nodes",
+      "safe_rust": "terms::blank_node",
+      "implementation": "src/lib.rs",
+      "tests": ["tests/model.rs::invalid_blank_node_id_maps_to_invalid_rdf_error"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.node.from_literal",
+      "symbol": "librdf_new_node_from_literal",
+      "kind": "function",
+      "subsystem": "nodes",
+      "safe_rust": "terms::Literal",
+      "implementation": "src/lib.rs",
+      "tests": ["tests/model.rs::model_supports_redland_style_crud_and_matching"],
+      "state": "implemented",
+      "notes": "Direct Oxigraph Literal re-export (ADR-004)."
+    },
+    {
+      "id": "librdf.statement.new",
+      "symbol": "librdf_new_statement",
+      "kind": "function",
+      "subsystem": "statements",
+      "safe_rust": "terms::Triple",
+      "implementation": "src/lib.rs",
+      "tests": ["tests/model.rs::model_supports_redland_style_crud_and_matching"],
+      "state": "implemented"
+    },
+    {
+      "id": "librdf.statement.match",
+      "symbol": "librdf_statement_match",
+      "kind": "function",
+      "subsystem": "statements",
+      "safe_rust": "StatementPattern",
+      "implementation": "src/model.rs",
+      "tests": ["tests/model.rs::model_supports_redland_style_crud_and_matching"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.model.new",
+      "symbol": "librdf_new_model",
+      "kind": "function",
+      "subsystem": "model",
+      "safe_rust": "Model::new",
+      "implementation": "src/model.rs",
+      "tests": ["tests/model.rs::model_supports_redland_style_crud_and_matching"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.model.add_statement",
+      "symbol": "librdf_model_add_statement",
+      "kind": "function",
+      "subsystem": "model",
+      "safe_rust": "Model::add",
+      "implementation": "src/model.rs",
+      "tests": ["tests/model.rs::model_supports_redland_style_crud_and_matching"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.model.remove_statement",
+      "symbol": "librdf_model_remove_statement",
+      "kind": "function",
+      "subsystem": "model",
+      "safe_rust": "Model::remove",
+      "implementation": "src/model.rs",
+      "tests": ["tests/model.rs::model_supports_redland_style_crud_and_matching"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.model.contains_statement",
+      "symbol": "librdf_model_contains_statement",
+      "kind": "function",
+      "subsystem": "model",
+      "safe_rust": "Model::contains",
+      "implementation": "src/model.rs",
+      "tests": ["tests/model.rs::model_supports_redland_style_crud_and_matching"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.model.size",
+      "symbol": "librdf_model_size",
+      "kind": "function",
+      "subsystem": "model",
+      "safe_rust": "Model::len",
+      "implementation": "src/model.rs",
+      "tests": ["tests/model.rs::model_supports_redland_style_crud_and_matching"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.model.find_statements",
+      "symbol": "librdf_model_find_statements",
+      "kind": "function",
+      "subsystem": "model",
+      "safe_rust": "Model::find -> StatementMatches",
+      "implementation": "src/model.rs",
+      "tests": [
+        "tests/model.rs::model_supports_redland_style_crud_and_matching",
+        "tests/model.rs::find_streams_without_full_materialization"
+      ],
+      "state": "verified",
+      "notes": "Streaming iterator over a store snapshot (ADR-005)."
+    },
+    {
+      "id": "librdf.model.context_add_statement",
+      "symbol": "librdf_model_context_add_statement",
+      "kind": "function",
+      "subsystem": "model",
+      "safe_rust": "Model::add_to_graph",
+      "implementation": "src/model.rs",
+      "tests": ["tests/model.rs::named_graph_crud_is_isolated_from_default_graph"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.model.context_remove_statement",
+      "symbol": "librdf_model_context_remove_statement",
+      "kind": "function",
+      "subsystem": "model",
+      "safe_rust": "Model::remove_from_graph",
+      "implementation": "src/model.rs",
+      "tests": ["tests/model.rs::named_graph_crud_is_isolated_from_default_graph"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.model.find_statements_in_context",
+      "symbol": "librdf_model_find_statements_in_context",
+      "kind": "function",
+      "subsystem": "model",
+      "safe_rust": "Model::find with StatementPattern.graph_name",
+      "implementation": "src/model.rs",
+      "tests": ["tests/model.rs::named_graph_crud_is_isolated_from_default_graph"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.model.contains_in_context",
+      "symbol": "librdf_model_contains_statement",
+      "kind": "function",
+      "subsystem": "model",
+      "safe_rust": "Model::contains_in_graph",
+      "implementation": "src/model.rs",
+      "tests": ["tests/model.rs::named_graph_crud_is_isolated_from_default_graph"],
+      "state": "verified",
+      "notes": "Named-graph containment; Redland often folds this into context-aware contains workflows."
+    },
+    {
+      "id": "librdf.query.new",
+      "symbol": "librdf_new_query",
+      "kind": "function",
+      "subsystem": "query",
+      "safe_rust": "Query::new",
+      "implementation": "src/query.rs",
+      "tests": ["tests/model.rs::model_supports_contexts_and_sparql"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.query.execute",
+      "symbol": "librdf_query_execute",
+      "kind": "function",
+      "subsystem": "query",
+      "safe_rust": "Query::execute",
+      "implementation": "src/query.rs",
+      "tests": [
+        "tests/model.rs::model_supports_contexts_and_sparql",
+        "tests/model.rs::sparql_parse_errors_are_distinct_from_evaluation"
+      ],
+      "state": "verified",
+      "notes": "Basic ASK/SELECT execution; limit/offset/update facades are 0.3."
+    },
+    {
+      "id": "librdf.storage.memory",
+      "symbol": "librdf_new_storage",
+      "kind": "function",
+      "subsystem": "storage",
+      "safe_rust": "Model::new / Model::storage_backend_available",
+      "implementation": "src/model.rs",
+      "tests": ["tests/model.rs::unsupported_storage_backend_is_explicit"],
+      "state": "implemented",
+      "notes": "In-memory default; optional RocksDB via feature flag. Full storage matrix is 0.4."
+    }
+  ]
+}

@@ -16,6 +16,22 @@ pub enum FeatureValue {
 ///
 /// Redland requires explicit world initialization. Oxiland resources are RAII
 /// managed, so construction is sufficient and shutdown happens on drop.
+///
+/// `World` is cheap to clone: clones share the same feature registry. It is
+/// `Send` and `Sync`.
+///
+/// # Examples
+///
+/// ```
+/// use oxiland::{FeatureValue, World};
+///
+/// let world = World::new();
+/// world.set_feature("http://example.com/feature", FeatureValue::Boolean(true));
+/// assert_eq!(
+///     world.feature("http://example.com/feature"),
+///     Some(FeatureValue::Boolean(true))
+/// );
+/// ```
 #[derive(Clone, Debug, Default)]
 pub struct World {
     features: Arc<RwLock<HashMap<String, FeatureValue>>>,

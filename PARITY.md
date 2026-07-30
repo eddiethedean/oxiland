@@ -1,13 +1,19 @@
 # Redland parity ledger
 
-Current milestone: 0.1  
-Ledger maturity: subsystem bootstrap; symbol-level inventory not generated yet
+Current milestone: 0.1 (complete)  
+Ledger maturity: curated 0.1 inventory slice; full header-derived generation
+pending with the oracle harness
 
 Target: the documented Redland `librdf` 1.0.17 API (manual labeled 1.0.18).
 
 Planned sequencing and completion rules are documented in the
 [0.x roadmap](docs/ROADMAP.md) and
 [compatibility plan](docs/COMPATIBILITY.md).
+
+Inventory revision:
+[`compatibility/inventory/redland-1.0.17-oxiland-0.1.json`](compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
+
+0.1 compatibility report: [`docs/reports/0.1.md`](docs/reports/0.1.md)
 
 ## Status vocabulary
 
@@ -18,22 +24,20 @@ Planned sequencing and completion rules are documented in the
 - `not-applicable`: legacy mechanism replaced safely with rationale.
 - `excluded`: intentionally unsupported with an approved impact assessment.
 
-`Partial` below is a temporary subsystem summary, not an inventory state.
-
 ## Subsystem summary
 
 | Redland subsystem | Safe Rust | C ABI | Target | Current evidence / gap |
 |---|---|---|---:|---|
-| World / lifecycle | Partial | Unstarted | 0.1/0.7 | RAII world and feature registry; factories/logging pending |
-| URI | Partial | Unstarted | 0.1/0.7 | validated Oxigraph named nodes; helper parity unreviewed |
-| Nodes | Partial | Unstarted | 0.1/0.7 | Oxigraph term exports; wrapper decision open |
-| Statements | Partial | Unstarted | 0.1/0.7 | triples and partial matching; lifecycle inventory pending |
-| Model | Partial | Unstarted | 0.1/0.7 | default CRUD, size, patterns, contexts; context CRUD gaps |
-| Storage | Partial | Unstarted | 0.4/0.8 | memory implemented; optional RocksDB constructor |
-| Streams / iterators | Partial | Unstarted | 0.5/0.7 | current matching materializes a `Vec` |
+| World / lifecycle | Verified (0.1 slice) | Unstarted | 0.1/0.7 | RAII world and feature registry |
+| URI | Implemented | Unstarted | 0.1/0.7 | validated named nodes; helper parity beyond construction open |
+| Nodes | Verified (0.1 slice) | Unstarted | 0.1/0.7 | Oxigraph term re-exports plus InvalidRdf helpers (ADR-004) |
+| Statements | Verified (0.1 slice) | Unstarted | 0.1/0.7 | triples and `StatementPattern` matching |
+| Model | Verified (0.1 slice) | Unstarted | 0.1/0.7 | default and named-graph CRUD, size, streaming find |
+| Storage | Partial | Unstarted | 0.4/0.8 | memory default; optional RocksDB; capability probe |
+| Streams / iterators | Verified (find) | Unstarted | 0.5/0.7 | `StatementMatches` streaming iterator (ADR-005) |
 | Parser | Primitive only | Unstarted | 0.2/0.7 | Oxigraph primitive re-export; facade pending |
 | Serializer | Primitive only | Unstarted | 0.2/0.7 | Oxigraph primitive re-export; facade pending |
-| SPARQL query/results | Partial | Unstarted | 0.3/0.7 | basic execution; full result/configuration surface pending |
+| SPARQL query/results | Partial | Unstarted | 0.3/0.7 | ASK/SELECT execution; parse vs evaluation errors |
 | Query update | Unstarted | Unstarted | 0.3/0.7 | Oxigraph capability not yet exposed |
 | Digests | Unstarted | Unstarted | 0.5/0.7 | inventory and mapping pending |
 | Hashes / lists | Unreviewed | Unstarted | 0.5/0.7 | likely Rust replacements; rationale required |
@@ -44,20 +48,26 @@ Planned sequencing and completion rules are documented in the
 
 ## Current evidence
 
-- Three integration tests cover world construction, model CRUD/pattern
-  matching, named-graph insertion, and SPARQL `ASK`.
-- `cargo test`, Clippy with warnings denied, and Rustdoc pass locally.
+- Inventory: 22 curated 0.1 entries (18 verified, 4 implemented).
+- Integration tests cover world features, default CRUD, named-graph isolation,
+  streaming find, SPARQL ASK/SELECT, invalid IRI/blank-node input, SPARQL
+  parse errors, and unsupported storage backends.
+- Doctests cover construction, CRUD, and SPARQL on public types.
+- Examples `quick_start` and `contexts` run in CI.
+- CI gates: fmt, Clippy (`-D warnings`), tests (all-features and
+  no-default-features), docs, inventory check, and public-API snapshot on
+  Rust 1.87 and stable.
 - Oxigraph 0.5.9 is pinned with default features disabled.
+- ADR-004 (term re-exports) and ADR-005 (streaming find) are accepted.
 
-This evidence validates only the named workflows. It is not yet differential
-evidence against Redland.
+This evidence validates the 0.1 safe-core claim. It is not differential
+evidence against native Redland.
 
 ## Next ledger upgrade
 
-The 0.1 P0 task is to replace this subsystem bootstrap with a generated,
-versioned symbol/type/enum inventory. Each row will carry stable IDs,
-implementation locations, fixture IDs, state, platform/features, and evidence
-revisions as specified by the [compatibility plan](docs/COMPATIBILITY.md).
+Generate the remaining Redland symbols from pinned headers once the oracle
+harness lands. Expand verified rows only when differential or standards
+fixtures exist for the claimed behavior.
 
 “100% parity” is reached only when every public Redland function is represented
 in a generated symbol inventory, has a documented mapping or intentional

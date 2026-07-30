@@ -6,9 +6,12 @@ pub enum Error {
     /// An RDF term or IRI was invalid.
     #[error("invalid RDF value: {0}")]
     InvalidRdf(String),
-    /// A SPARQL query or update could not be parsed or evaluated.
-    #[error("SPARQL error: {0}")]
-    Sparql(String),
+    /// A SPARQL query could not be parsed.
+    #[error("SPARQL parse error: {0}")]
+    SparqlParse(String),
+    /// A SPARQL query could not be evaluated.
+    #[error("SPARQL evaluation error: {0}")]
+    SparqlEvaluation(String),
     /// The storage backend failed.
     #[error("storage error: {0}")]
     Storage(String),
