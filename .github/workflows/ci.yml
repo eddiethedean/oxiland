@@ -5,6 +5,15 @@ on:
     branches: [main]
   pull_request:
   workflow_call:
+    inputs:
+      include_rocksdb:
+        description: Build and test the optional rocksdb feature
+        type: boolean
+        default: true
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_call' }}
 
 env:
   CARGO_TERM_COLOR: always
@@ -12,59 +21,101 @@ env:
 
 jobs:
   check:
-    name: Check (${{ matrix.rust }})
+    name: Check
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        rust: ["1.87", "stable"]
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: ${{ matrix.rust }}
           components: rustfmt, clippy
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ matrix.rust }}
+          shared-key: check
+
+      - name: Format
+        run: cargo fmt --check
+
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Test
+        run: cargo test
+
+      - name: Docs
+        run: cargo doc --no-deps
+
+      - name: Examples
+        run: |
+          cargo run --example quick_start
+          cargo run --example contexts
+
+      - name: Inventory
+        run: python3 scripts/check-inventory.py
+
+      - name: Public API snapshot
+        run: scripts/generate-public-api.sh check
+
+  msrv:
+    name: MSRV (1.87)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.87
+        with:
+          components: clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: msrv
+
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Test
+        run: cargo test
+
+  rocksdb:
+    name: RocksDB
+    if: >-
+      (github.event_name == 'workflow_call' && inputs.include_rocksdb) ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: rocksdb
 
       - name: Install RocksDB build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake clang libclang-dev
 
-      - name: Format
-        if: matrix.rust == 'stable'
-        run: cargo fmt --check
-
-      - name: Clippy
+      - name: Clippy (all features)
         run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Test (all features)
         run: cargo test --all-features
 
-      - name: Test (no default features)
-        run: cargo test --no-default-features
-
-      - name: Docs
+      - name: Docs (all features)
         run: cargo doc --no-deps --all-features
-
-      - name: Examples
-        if: matrix.rust == 'stable'
-        run: |
-          cargo run --example quick_start
-          cargo run --example contexts
-
-      - name: Inventory
-        if: matrix.rust == 'stable'
-        run: python3 scripts/check-inventory.py
-
-      - name: Public API snapshot
-        if: matrix.rust == 'stable'
-        run: scripts/generate-public-api.sh check

@@ -54,9 +54,8 @@ Inventory revision:
   parse errors, and unsupported storage backends.
 - Doctests cover construction, CRUD, and SPARQL on public types.
 - Examples `quick_start` and `contexts` run in CI.
-- CI gates: fmt, Clippy (`-D warnings`), tests (all-features and
-  no-default-features), docs, inventory check, and public-API snapshot on
-  Rust 1.87 and stable.
+- CI gates: default-feature Check + MSRV (1.87) on every PR; RocksDB
+  `--all-features` once on `main`/release; inventory and public-API snapshot.
 - Oxigraph 0.5.9 is pinned with default features disabled.
 - ADR-004 (term re-exports) and ADR-005 (streaming find) are accepted.
 

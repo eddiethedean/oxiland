@@ -19,7 +19,8 @@ verified Redland compatibility.
 The live subsystem-level status remains in the root
 [parity ledger](../PARITY.md). Plans describe intended work; the ledger records
 only work that has landed and been verified. Milestone reports live under
-[`reports/`](reports/), starting with [0.1](reports/0.1.md).
+[`reports/`](reports/), starting with [0.1](reports/0.1.md). The
+[0.1.0 release checklist](reports/0.1.0-release.md) covers publishing steps.
 
 ## Document authority
 

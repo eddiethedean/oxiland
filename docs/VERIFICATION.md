@@ -88,10 +88,19 @@ Conformance categories include:
 
 ## CI matrix
 
-The intended required matrix includes:
+Required on every PR:
 
-- Rust 1.87 and stable Rust;
-- no-default-features, default, and all-features builds;
+- stable Rust default-feature checks (fmt, Clippy, tests, docs, examples,
+  inventory, public-API snapshot);
+- Rust 1.87 MSRV Clippy and tests.
+
+Required on `main` pushes and release tags:
+
+- the PR set above;
+- one RocksDB/`--all-features` job (Clippy, tests, docs).
+
+The intended broader matrix still includes:
+
 - Linux, macOS, and Windows for the safe API;
 - sanitizer-enabled Linux/macOS C ABI tests;
 - documentation, formatting, Clippy, dependency policy, and public-API checks.

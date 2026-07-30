@@ -53,11 +53,11 @@ performed against a known engine version.
 
 ## Installation
 
-Until Oxiland is published, add it as a local or Git dependency:
+Add Oxiland to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-oxiland = { path = "../oxiland" }
+oxiland = "0.1.0"
 ```
 
 The default build uses Oxigraph's in-memory backend and does not compile
@@ -65,7 +65,7 @@ RocksDB. Enable persistent storage explicitly:
 
 ```toml
 [dependencies]
-oxiland = { path = "../oxiland", features = ["rocksdb"] }
+oxiland = { version = "0.1.0", features = ["rocksdb"] }
 ```
 
 ## Quick start
@@ -222,6 +222,7 @@ and release criteria.
 ## Project documentation
 
 - [Planning index](docs/README.md)
+- [Changelog](CHANGELOG.md)
 - [Parity ledger](PARITY.md)
 - [0.1 compatibility report](docs/reports/0.1.md)
 - [0.x roadmap](docs/ROADMAP.md)
@@ -242,13 +243,23 @@ Run the default local checks:
 
 ```console
 cargo fmt --check
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test --all-features
-cargo test --no-default-features
-cargo doc --no-deps --all-features
+cargo clippy --all-targets -- -D warnings
+cargo test
+cargo doc --no-deps
 python3 scripts/check-inventory.py
 scripts/generate-public-api.sh check
 ```
+
+When changing storage or feature flags, also run the RocksDB path:
+
+```console
+cargo clippy --all-targets --all-features -- -D warnings
+cargo test --all-features
+cargo doc --no-deps --all-features
+```
+
+CI mirrors this split: PRs run the default path plus MSRV; `main` and
+release tags additionally build the RocksDB feature once.
 
 Compatibility work should be implemented as a vertical slice: inventory
 mapping, public API, implementation, positive and failure tests, differential
@@ -273,7 +284,7 @@ The most valuable current tasks are listed in the
 
 Oxiland is licensed under either of:
 
-- Apache License, Version 2.0
-- MIT License
+- [Apache License, Version 2.0](LICENSE-APACHE)
+- [MIT License](LICENSE-MIT)
 
 at your option.
