@@ -33,9 +33,10 @@ source/ABI and behavioral compatibility surface.
 | Concept parity | workflow mapping and examples | 0.2 |
 | Safe API accounting | complete inventory classification | 0.6 |
 | Safe behavioral parity | differential fixtures for mapped behavior | 0.6 |
-| C source compatibility | clean builds against Oxiland headers | 0.7 |
-| C ABI compatibility | symbol, layout, calling, and lifecycle tests | 0.8 |
-| Downstream compatibility | selected real consumers pass unchanged | 0.8 |
+| Python package usability | Pythonic API + installable wheels + pytest | 0.7 |
+| C source compatibility | clean builds against Oxiland headers | 0.8 |
+| C ABI compatibility | symbol, layout, calling, and lifecycle tests | 0.9 |
+| Downstream compatibility | selected real consumers pass unchanged | 0.9 |
 
 Claims are subsystem- and platform-scoped until 1.0. For example, “parser
 behavior verified on Linux” does not imply full storage ABI compatibility on

@@ -45,7 +45,9 @@ Context: Redland's pointer ownership and callback conventions require `unsafe`
 code, while the primary Rust API can remain safe.
 
 Decision: keep the main `oxiland` crate free of unsafe code. Introduce
-`oxiland-capi` no earlier than 0.7 as the only legacy ABI boundary.
+`oxiland-capi` no earlier than 0.8 as the only legacy C ABI boundary. The
+planned Python package (roadmap 0.7) binds the safe Rust crate directly and is
+not layered on `oxiland-capi`.
 
 Consequences:
 
@@ -105,7 +107,7 @@ Evidence: `src/lib.rs`, `tests/model.rs` invalid-input cases, API snapshot in
 `api/oxiland-public-api.txt`.
 
 Revisit when: a differential fixture requires Redland node behavior that
-Oxigraph types cannot represent, or before expanding the C handle model in 0.7.
+Oxigraph types cannot represent, or before expanding the C handle model in 0.8.
 
 ### ADR-005 — Model matching uses standard fallible iterators
 
@@ -325,6 +327,23 @@ Evaluation criteria:
 - crash consistency;
 - user expectations from Redland stores;
 - release and support cost.
+
+### ADR-013 — Python package is Pythonic, not a thin Rust mirror
+
+State: proposed  
+Decision deadline: before 0.7 public beta
+
+Question: how closely should the PyPI package mirror Rust builders versus
+idiomatic Python (kwargs, context managers, exception types, iterators)?
+
+Evaluation criteria:
+
+- ergonomics for Python RDF/SPARQL applications;
+- maintenance cost of dual surfaces;
+- typing and documentation quality;
+- whether rdflib or other ecosystem interop is in scope for 0.7;
+- clear non-goals (no C ABI layering; no claim of Redland Python binding
+  drop-in unless separately evidenced).
 
 ## ADR template
 

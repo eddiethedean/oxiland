@@ -51,8 +51,9 @@ A longer comparison (including Sophia and native Redland) is in
 | Syntax discovery by name, MIME type, and extension | Available via `Syntax` |
 | Persistent Fjall model | Experimental via `Model::open` (unstable on-disk format until 0.4) |
 | SPARQL Update and results serialization | Available; XML/JSON/CSV/TSV + graph serialize helper |
+| Python package (Pythonic PyPI API) | Planned for 0.7 |
 | Full safe Rust Redland accounting | Planned for 0.6 |
-| C source and ABI compatibility | Planned for 0.7–0.9 |
+| C source and ABI compatibility | Planned for 0.8–0.9 |
 
 “Available” means the current public workflow is implemented and tested. It
 does not imply full subsystem parity with Redland.
@@ -225,10 +226,10 @@ Rust application
 Oxiland safe facade ──> Oxigraph RDF, storage, I/O, and SPARQL
       ▲
       │
-Future oxiland-capi (0.7+)
+Future oxiland (PyPI, 0.7+) and oxiland-capi (0.8+)
 ```
 
-Roadmap highlights: 0.4 durable storage contracts, 0.7 C ABI
+Roadmap highlights: 0.4 durable storage contracts, 0.7 Python package, 0.8 C ABI
 preview. Full plan: [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Development

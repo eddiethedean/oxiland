@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Roadmap adds **0.7 Pythonic Python package** (not a 1:1 Rust port); C ABI
+  preview moves to 0.8, downstream C to 0.9, RC to 0.10
+
 ## [0.3.0] - 2026-07-30
 
 Redland-shaped SPARQL query, update, and results over Oxigraph 0.5.9.

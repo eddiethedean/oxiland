@@ -28,7 +28,9 @@ the documents ever conflict.
 ```text
 Rust callers ──> oxiland safe facade ──> Oxigraph
                        │
-C callers ──> oxiland-capi (0.7+) ─────┘
+Python ──> oxiland (PyPI, 0.7+) ───────┤
+                       │
+C callers ──> oxiland-capi (0.8+) ─────┘
                        │
               allocation/callback shim
 
@@ -38,8 +40,9 @@ Downstream consumers ──┘
 ```
 
 Dependency arrows point inward toward the safe facade and Oxigraph. The safe
-crate never depends on the C ABI crate, native Redland, test harnesses, or the
-CLI.
+crate never depends on the C ABI crate, the Python package, native Redland,
+test harnesses, or the CLI. The Python package binds the safe Rust crate
+directly; it is not layered on `oxiland-capi`.
 
 ## Intended workspace
 
@@ -48,8 +51,9 @@ oxiland/
 ├── src/                 Safe Rust facade
 ├── tests/               Rust integration tests
 ├── docs/                Plans and compatibility documentation
+├── python/              Pythonic PyPI package (0.7+; name TBD)
 ├── crates/
-│   ├── oxiland-capi/    C ABI and opaque handle management (0.7+)
+│   ├── oxiland-capi/    C ABI and opaque handle management (0.8+)
 │   └── oxiland-cli/     rdfproc-compatible workflows (0.6+)
 ├── compatibility/
 │   ├── inventory/       Generated Redland API manifests
@@ -71,6 +75,7 @@ The additional crates and directories are planned, not present yet.
 | `world` | factories, shared features, and logging hooks | global mutable runtime |
 | `utility` | URI, digest, file, vocabulary, and Unicode helpers | RDF engine logic |
 | `oxiland-capi` | opaque handles and C ownership translation | RDF semantics |
+| `python/` (PyPI) | idiomatic Python API over the safe facade | C ABI ownership; 1:1 Rust mirroring |
 | `oxiland-cli` | command parsing and human-facing output | reusable domain behavior |
 
 The facade should use owned and borrowed variants consistently. Fallible

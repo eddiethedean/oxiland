@@ -26,8 +26,12 @@ Oxiland serves three audiences, in priority order:
    compatibility library and a realistic path away from a legacy native
    dependency.
 
-The safe Rust API is the product foundation. The C layer is an adapter over that
-foundation, not an independent implementation.
+A **Python package** (roadmap 0.7) extends the first audience to Python
+application authors with idiomatic interfaces over the same safe facade. It is
+not a substitute for the C ABI track.
+
+The safe Rust API is the product foundation. The Python package and the C layer
+are adapters over that foundation, not independent RDF engines.
 
 ## Product promises
 
@@ -55,6 +59,7 @@ In scope:
 - RDF terms, datasets, contexts, parsing, serialization, SPARQL, storage,
   streams, utilities, logging, and the `rdfproc` class of workflows;
 - safe Rust migration APIs;
+- a later Pythonic PyPI package over the safe facade (not a 1:1 Rust mirror);
 - a later C source/ABI compatibility layer for an explicitly published
   platform and symbol matrix;
 - tooling needed to inventory, compare, package, and verify those claims.

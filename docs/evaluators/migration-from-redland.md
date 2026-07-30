@@ -60,8 +60,10 @@ Design detail: [docs/design/0.3-query-api.md](../design/0.3-query-api.md).
 ## C source and ABI
 
 Not available. A separately audited `oxiland-capi` is planned no earlier than
-0.7 ([ADR-002](../DECISIONS.md)). Do not schedule a binary drop-in migration on
-0.3 timelines.
+0.8 ([ADR-002](../DECISIONS.md)). A Pythonic PyPI package is planned for 0.7 and
+binds the safe Rust facade directly—not a mechanical port of every Rust
+builder, and not layered on the C ABI. Do not schedule a binary drop-in C
+migration on 0.3 timelines.
 
 ## Suggested migration sequence
 
@@ -70,4 +72,4 @@ Not available. A separately audited `oxiland-capi` is planned no earlier than
    milestone.
 3. Port tests to Oxiland public APIs with differential fixtures where needed.
 4. Keep native Redland as an oracle for contested behavior until fixtures pass.
-5. Defer storage-plugin and C ABI work until their milestones.
+5. Defer storage-plugin, Python package, and C ABI work until their milestones.

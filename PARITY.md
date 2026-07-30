@@ -35,22 +35,22 @@ Inventory revisions:
 
 | Redland subsystem | Safe Rust | C ABI | Target | Current evidence / gap |
 |---|---|---|---:|---|
-| World / lifecycle | Verified (0.1 slice) | Unstarted | 0.1/0.7 | RAII world and feature registry |
-| URI | Implemented | Unstarted | 0.1/0.7 | validated named nodes; helper parity beyond construction open |
-| Nodes | Verified (0.1 slice) | Unstarted | 0.1/0.7 | Oxigraph term re-exports plus InvalidRdf helpers (ADR-004) |
-| Statements | Verified (0.1 slice) | Unstarted | 0.1/0.7 | triples and `StatementPattern` matching |
-| Model | Verified (0.1 slice) | Unstarted | 0.1/0.7 | default and named-graph CRUD, size, streaming find |
-| Storage | Partial | Unstarted | 0.4/0.8 | memory default; fjall persistence via `Model::open` |
-| Streams / iterators | Verified (find + parse + query) | Unstarted | 0.5/0.7 | `StatementMatches`, parser, and query result streams |
-| Parser | Verified (0.2 slice) | Unstarted | 0.2/0.7 | `Parser` facade, Syntax discovery, progressive/collecting load |
-| Serializer | Verified (0.2 slice) | Unstarted | 0.2/0.7 | `Serializer` facade, prefixes, graph/dataset checks |
-| SPARQL query/results | Verified (0.3 slice) | Unstarted | 0.3/0.7 | Query builder, streaming results, ResultsFormat |
-| Query update | Verified (0.3 slice) | Unstarted | 0.3/0.7 | `Update` facade; write-locked Fjall resync with compensated rollback |
-| Digests | Unstarted | Unstarted | 0.5/0.7 | inventory and mapping pending |
-| Hashes / lists | Unreviewed | Unstarted | 0.5/0.7 | likely Rust replacements; rationale required |
-| Heuristics / files / Unicode | Partial (I/O Unicode) | Unstarted | 0.5/0.7 | Unicode literals covered in 0.2 I/O tests |
-| Logging | Unstarted | Unstarted | 0.5/0.7 | callback and `tracing` design pending |
-| Storage plug-ins | Unreviewed | Unstarted | 0.4/0.8 | per-backend decisions required |
+| World / lifecycle | Verified (0.1 slice) | Unstarted | 0.1/0.8 | RAII world and feature registry |
+| URI | Implemented | Unstarted | 0.1/0.8 | validated named nodes; helper parity beyond construction open |
+| Nodes | Verified (0.1 slice) | Unstarted | 0.1/0.8 | Oxigraph term re-exports plus InvalidRdf helpers (ADR-004) |
+| Statements | Verified (0.1 slice) | Unstarted | 0.1/0.8 | triples and `StatementPattern` matching |
+| Model | Verified (0.1 slice) | Unstarted | 0.1/0.8 | default and named-graph CRUD, size, streaming find |
+| Storage | Partial | Unstarted | 0.4/0.9 | memory default; fjall persistence via `Model::open` |
+| Streams / iterators | Verified (find + parse + query) | Unstarted | 0.5/0.8 | `StatementMatches`, parser, and query result streams |
+| Parser | Verified (0.2 slice) | Unstarted | 0.2/0.8 | `Parser` facade, Syntax discovery, progressive/collecting load |
+| Serializer | Verified (0.2 slice) | Unstarted | 0.2/0.8 | `Serializer` facade, prefixes, graph/dataset checks |
+| SPARQL query/results | Verified (0.3 slice) | Unstarted | 0.3/0.8 | Query builder, streaming results, ResultsFormat |
+| Query update | Verified (0.3 slice) | Unstarted | 0.3/0.8 | `Update` facade; write-locked Fjall resync with compensated rollback |
+| Digests | Unstarted | Unstarted | 0.5/0.8 | inventory and mapping pending |
+| Hashes / lists | Unreviewed | Unstarted | 0.5/0.8 | likely Rust replacements; rationale required |
+| Heuristics / files / Unicode | Partial (I/O Unicode) | Unstarted | 0.5/0.8 | Unicode literals covered in 0.2 I/O tests |
+| Logging | Unstarted | Unstarted | 0.5/0.8 | callback and `tracing` design pending |
+| Storage plug-ins | Unreviewed | Unstarted | 0.4/0.9 | per-backend decisions required |
 | `rdfproc` utility | Unstarted | n/a | 0.6 | CLI workflow inventory pending |
 
 ## Current evidence
@@ -74,7 +74,8 @@ Inventory revisions:
 Generate the remaining Redland symbols from pinned headers once the broader
 oracle harness expands. Expand verified rows only when differential or standards
 fixtures exist for the claimed behavior. Next development focus: **0.4**
-storage/transactions.
+storage/transactions, then utilities (0.5), safe-API accounting (0.6), the
+**Pythonic Python package (0.7)**, and C ABI (0.8+).
 
 “100% parity” is reached only when every public Redland function is represented
 in a generated symbol inventory, has a documented mapping or intentional

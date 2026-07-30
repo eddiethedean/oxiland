@@ -44,8 +44,9 @@ Default `GraphTarget::DefaultGraph` **rejects** named-graph input. Use
 
 ASK, SELECT, CONSTRUCT, DESCRIBE, Update, dataset selection, limit/offset, and
 SPARQL Results serialization shipped in **0.3**. Storage transactions and
-durable on-disk contracts are **0.4**.
-Track [milestones](../milestones/0.3.md) and the [roadmap](../ROADMAP.md).
+durable on-disk contracts are **0.4**. A Pythonic PyPI package is planned for
+**0.7** (not a 1:1 Rust port). Track [milestones](../milestones/0.3.md) and the
+[roadmap](../ROADMAP.md).
 
 ## Where do I report bugs or security issues?
 

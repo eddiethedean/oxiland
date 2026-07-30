@@ -1,7 +1,7 @@
 # Oxiland 0.x roadmap
 
 Status: active  
-Applies to: Oxiland 0.1 through 0.9  
+Applies to: Oxiland 0.1 through 0.10  
 Companion plans: [architecture](ARCHITECTURE.md),
 [compatibility](COMPATIBILITY.md), [verification](VERIFICATION.md), and
 [execution](EXECUTION.md)
@@ -21,14 +21,18 @@ only when its evidence gates are satisfied.
 | 0.4 | Durable storage and transactions | 0.3 | `planned` |
 | 0.5 | Streams, utilities, and observability | 0.4 | `planned` |
 | 0.6 | Accounted safe Rust parity | 0.5 | `planned` |
-| 0.7 | Auditable C ABI preview | 0.6 | `planned` |
-| 0.8 | Downstream C compatibility | 0.7 | `planned` |
-| 0.9 | 1.0 release candidate | 0.8 | `planned` |
+| 0.7 | Pythonic package on PyPI | 0.4 (sequenced after 0.6) | `planned` |
+| 0.8 | Auditable C ABI preview | 0.6 | `planned` |
+| 0.9 | Downstream C compatibility | 0.8 | `planned` |
+| 0.10 | 1.0 release candidate | 0.9 | `planned` |
 
 States are `planned`, `in progress`, `blocked`, or `complete`. A state changes
 only after the evidence links are added to the root
 [parity ledger](parity.md).
 
+0.7 may begin design against the 0.4 storage contract, but it is sequenced after
+0.6 so the Python surface maps a reviewed safe Rust API rather than a moving
+facade. 0.8 (C ABI) remains gated on 0.6 independently of Python.
 ## Rules for every milestone
 
 Each release must:
@@ -222,7 +226,61 @@ Evidence gates:
 
 Depends on: all high-level safe API milestones.
 
-## 0.7 — C ABI preview
+## 0.7 — Python package
+
+Outcome: ship a maintained PyPI package with **Pythonic** interfaces over the
+safe Rust facade—not a mechanical 1:1 port of every Rust type and builder.
+
+State: planned  
+Depends on: 0.4 storage/query foundation; sequenced after 0.6 safe-API
+accounting
+
+Deliverables:
+
+- A separate installable package (working name `oxiland`, published to PyPI)
+  built against the Rust crate (for example PyO3 / maturin), not against
+  `oxiland-capi`.
+- Idiomatic Python surface for models, terms, I/O, SPARQL query/update, and
+  results: keyword arguments, properties, context managers where acquisition
+  and release apply, and iterators that follow the iterator protocol.
+- A documented exception hierarchy aligned with Oxiland error categories
+  (not raw stringly Rust error text as the only API).
+- Type hints and packaging that support static checkers (PEP 561 / stub or
+  inline annotations).
+- `pathlib.Path` / path-like acceptance for file entry points; buffer/bytes
+  and text paths that match Python I/O norms.
+- Streaming result and parse consumers that do not force full materialization
+  when the Rust facade streams.
+- Python examples and a short user guide that teach the Python API on its own
+  terms (not “call this Rust method under another name”).
+- An explicit design note for what is *not* mirrored 1:1 from Rust (builders
+  flattened to functions/kwargs, ownership differences, naming).
+- Optional interop story evaluated and recorded (for example converting to/from
+  common Python RDF types); first release may ship without rdflib integration
+  if the ADR rejects it for scope.
+
+Evidence gates:
+
+- Wheel (or equivalent) builds and installs cleanly in CI on the published
+  platform matrix.
+- Pytest covers model CRUD, parse/serialize, ASK/SELECT/Update, and failure
+  paths through the Python API.
+- Public Python APIs have type information checked in CI.
+- Docs and examples run as part of the Python package verification.
+- The package does **not** claim CPython ABI stability tied to `oxiland-capi`,
+  and does not present itself as a drop-in for legacy Redland Python bindings
+  unless a later decision adds that claim with fixtures.
+- A design/ADR records the Pythonic-vs-thin-binding boundary before the
+  first public beta.
+
+Not in this milestone: wrapping every Oxigraph or Redland Python API; a pure
+ctypes/`cffi` binding of the C ABI; guaranteeing behavioral identity with
+rdflib; or freezing the Python API for 1.0 before 0.10 soak.
+
+Depends on: durable models and query/update from 0.3–0.4, and reviewed safe
+Rust mappings from 0.6 before a non-experimental PyPI release.
+
+## 0.8 — C ABI preview
 
 Outcome: run representative existing C consumers against an auditable Oxiland
 compatibility library.
@@ -249,7 +307,7 @@ Evidence gates:
 
 Depends on: 0.6 safe API accounting and stable ownership semantics.
 
-## 0.8 — C compatibility and ecosystem validation
+## 0.9 — C compatibility and ecosystem validation
 
 Outcome: prove broad source and behavioral compatibility using real consumers.
 
@@ -273,15 +331,15 @@ Evidence gates:
 - Performance regressions above agreed budgets have decisions, not silent
   waivers.
 
-Depends on: a sanitizer-clean 0.7 ABI preview.
+Depends on: a sanitizer-clean 0.8 ABI preview.
 
-## 0.9 — Release candidate
+## 0.10 — Release candidate
 
 Outcome: freeze and validate the design intended for 1.0.
 
 Deliverables:
 
-- API and ABI stabilization.
+- API and ABI stabilization (Rust, Python package, and C where promised).
 - Cross-platform packaging and installation documentation.
 - Upgrade guide for Redland users.
 - Security, fuzzing, interoperability, and performance hardening.
@@ -291,6 +349,7 @@ Deliverables:
 Evidence gates:
 
 - Rust public-API snapshots and C ABI snapshots are enforced in CI.
+- Python package versioning and wheel matrix are documented and green.
 - The full conformance and differential matrix is green.
 - Documentation includes complete examples for supported Redland workflows.
 - Release candidates receive real downstream testing.
@@ -302,10 +361,11 @@ Evidence gates:
 ## 1.0 readiness
 
 Version 1.0 is eligible only when both safe Rust accounting and the promised C
-compatibility surface meet their published definitions. “Powered by Oxigraph”
-does not imply that every historical Redland storage plug-in can be reproduced;
-where exact implementation parity is impossible, 1.0 must provide compatible
-observable behavior or an explicit, narrowly justified exclusion.
+compatibility surface meet their published definitions, and the Python package
+(if still in the 1.0 promise) meets its published PyPI contract. “Powered by
+Oxigraph” does not imply that every historical Redland storage plug-in can be
+reproduced; where exact implementation parity is impossible, 1.0 must provide
+compatible observable behavior or an explicit, narrowly justified exclusion.
 
 The release decision consumes the evidence defined above; elapsed time,
 inventory percentages alone, or a green unit-test suite are insufficient.

@@ -20,6 +20,7 @@ A passing test in one layer does not substitute for the others.
 | Conformance | RDF and SPARQL standards | `compatibility/conformance/` |
 | Differential | Oxiland versus native Redland | `compatibility/fixtures/` |
 | C contract | headers, symbols, allocation, callbacks | `crates/oxiland-capi/tests/` |
+| Python package | wheels, typing, pytest | `python/` (planned) |
 | Downstream | real language bindings and applications | CI-managed manifests |
 | Fuzz/property | malformed inputs and lifecycle sequences | `fuzz/` |
 
@@ -146,9 +147,10 @@ Additional phase gates:
 | 0.3 | SPARQL query/update conformance and differential fixtures |
 | 0.4 | persistence, transaction, and reopen matrix |
 | 0.6 | complete safe-API inventory and public-API snapshot |
-| 0.7 | exported symbols, C examples, and sanitizers |
-| 0.8 | selected downstream consumers |
-| 0.9 | Rust API and C ABI snapshots plus release-candidate soak |
+| 0.7 | Python wheels, type checks, and pytest matrix |
+| 0.8 | exported symbols, C examples, and sanitizers |
+| 0.9 | selected downstream C consumers |
+| 0.10 | Rust API, Python package, and C ABI snapshots plus RC soak |
 
 Flaky tests are quarantined only with an owner, issue, expiry milestone, and a
 replacement signal. Quarantined compatibility tests do not count as passing.
@@ -165,7 +167,7 @@ compatible API unusable. Benchmarks track:
 - peak memory on large streams;
 - C-call and callback overhead.
 
-Budgets are established before 0.8 from representative workloads. Benchmark
+Budgets are established before 0.9 from representative workloads. Benchmark
 noise does not block a release unless it exceeds a documented threshold over
 repeated runs.
 

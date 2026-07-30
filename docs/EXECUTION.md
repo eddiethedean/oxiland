@@ -20,6 +20,7 @@ owns the operating model and current work order.
 | RDF/SPARQL | syntax and query behavior | W3C conformance |
 | Compatibility | inventory, mappings, deviations | parity ledger and differential tests |
 | Storage | persistence, transactions, migration | backend matrix |
+| Python | Pythonic PyPI package over the safe facade | wheels, pytest, typing |
 | C ABI | handles, symbols, headers, callbacks | ABI tests and sanitizers |
 | Tooling | CLI, generators, packaging, CI | clean-install/downstream tests |
 | Documentation | migration, examples, decisions | built docs and link checks |
@@ -171,8 +172,8 @@ Work is done when:
 - Review the current milestone after each completed vertical slice.
 - Review dependency and Oxigraph upgrade decisions before each minor release.
 - Review accepted deviations and high risks at every milestone boundary.
-- Review 1.0 scope after 0.6 and again after 0.8; do not defer incompatible
-  safe-API corrections until 0.9.
+- Review 1.0 scope after 0.6, after 0.7 (Python), and again after 0.9; do not
+  defer incompatible safe-API corrections until 0.10.
 
 ## Progress reporting
 
