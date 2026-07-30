@@ -1,8 +1,11 @@
+use std::path::Path;
+
 use oxiland::io::{GraphTarget, Parser, Serializer, Syntax};
 use oxiland::sparql::CancellationToken;
-use oxiland::terms::{self, GraphName, Literal, NamedNode, NamedOrBlankNode, Triple};
+use oxiland::terms::{GraphName, Literal, NamedNode, NamedOrBlankNode, Triple};
 use oxiland::{
-    Error, Model, Query, QueryResults, ResultsFormat, Update, serialize_query_results_to_string,
+    Error, Model, Query, QueryResults, ResultsFormat, Update, serialize_graph_results_to_writer,
+    serialize_query_results_to_string,
 };
 
 fn load_alice(model: &Model) {
@@ -101,8 +104,24 @@ fn parse_versus_evaluation_errors() {
     };
     assert!(matches!(err, Error::SparqlParse(_)));
 
-    // Valid syntax that fails evaluation is uncommon without federation; ensure
-    // the category mapping path still distinguishes parse failures above.
+    // Cooperative cancel surfaces as SparqlEvaluation while draining solutions.
+    for i in 0..50 {
+        model
+            .add(Triple::new(
+                NamedNode::new(format!("https://example.com/s{i}")).unwrap(),
+                NamedNode::new("https://example.com/p").unwrap(),
+                Literal::from(i),
+            ))
+            .unwrap();
+    }
+    let token = CancellationToken::new();
+    let results = Query::new("SELECT ?s WHERE { ?s <https://example.com/p> ?o }")
+        .cancellation_token(token.clone())
+        .execute(&model)
+        .unwrap();
+    token.cancel();
+    let err = serialize_query_results_to_string(results, ResultsFormat::Json).unwrap_err();
+    assert!(matches!(err, Error::SparqlEvaluation(_)));
 }
 
 #[test]
@@ -129,10 +148,23 @@ fn limit_and_offset_slice_select() {
     };
     assert_eq!(solutions.count(), 2);
 
-    let err = Query::new("ASK { ?s ?p ?o }")
-        .limit(1)
-        .unwrap()
-        .execute(&model);
+    // API limit/offset replace in-query LIMIT/OFFSET rather than nesting Slice.
+    let results = Query::new(
+        "SELECT ?s WHERE { ?s <https://example.com/p> ?o } ORDER BY ?s LIMIT 100 OFFSET 0",
+    )
+    .limit(1)
+    .unwrap()
+    .execute(&model)
+    .unwrap();
+    let QueryResults::Solutions(solutions) = results else {
+        panic!("expected solutions");
+    };
+    assert_eq!(solutions.count(), 1);
+
+    let err = Query::new("ASK { ?s ?p ?o }").limit(1);
+    assert!(matches!(err, Err(Error::Unsupported(_))));
+
+    let err = Query::new("PREFIX ex: <https://example.com/> ASK { ?s ?p ?o }").limit(1);
     assert!(matches!(err, Err(Error::Unsupported(_))));
 }
 
@@ -178,6 +210,31 @@ fn dataset_default_graph_restricts_matches() {
     let row = solutions.next().unwrap().unwrap();
     assert_eq!(
         row.get("o"),
+        Some(&Literal::new_simple_literal("named").into())
+    );
+
+    let results =
+        Query::new("SELECT ?o WHERE { <https://example.com/a> <https://example.com/p> ?o }")
+            .default_graph_as_union()
+            .execute(&model)
+            .unwrap();
+    let QueryResults::Solutions(solutions) = results else {
+        panic!("expected solutions");
+    };
+    assert_eq!(solutions.count(), 2);
+
+    let named = NamedOrBlankNode::from(NamedNode::new("https://example.com/g").unwrap());
+    let results = Query::new(
+        "SELECT ?o WHERE { GRAPH <https://example.com/g> { <https://example.com/a> <https://example.com/p> ?o } }",
+    )
+    .available_named_graphs([named])
+    .execute(&model)
+    .unwrap();
+    let QueryResults::Solutions(mut solutions) = results else {
+        panic!("expected solutions");
+    };
+    assert_eq!(
+        solutions.next().unwrap().unwrap().get("o"),
         Some(&Literal::new_simple_literal("named").into())
     );
 }
@@ -264,6 +321,33 @@ fn update_insert_delete_data() {
 
     let err = Update::new("NOT UPDATE").execute(&model).unwrap_err();
     assert!(matches!(err, Error::SparqlParse(_)));
+
+    let g = GraphName::NamedNode(NamedNode::new("https://example.com/g").unwrap());
+    let err = Update::new("INSERT DATA { <https://example.com/a> <https://example.com/p> \"x\" }")
+        .default_graph([g])
+        .execute(&model)
+        .unwrap_err();
+    assert!(matches!(err, Error::Unsupported(_)));
+
+    Update::new("INSERT DATA { <https://example.com/a> <https://example.com/p> \"x\" }")
+        .execute(&model)
+        .unwrap();
+    Update::new("DELETE { ?s ?p ?o } INSERT { ?s ?p \"y\" } WHERE { ?s ?p ?o }")
+        .default_graph_as_union()
+        .execute(&model)
+        .unwrap();
+    assert!(
+        model
+            .contains(
+                Triple::new(
+                    NamedNode::new("https://example.com/a").unwrap(),
+                    NamedNode::new("https://example.com/p").unwrap(),
+                    Literal::new_simple_literal("y"),
+                )
+                .as_ref()
+            )
+            .unwrap()
+    );
 }
 
 #[test]
@@ -326,22 +410,20 @@ fn serialize_ask_and_select_results_formats() {
     let err = serialize_query_results_to_string(graph, ResultsFormat::Json).unwrap_err();
     assert!(matches!(err, Error::Unsupported(_)));
 
-    // Graph results still serialize via RDF Serializer.
     let results = Query::new(
         "CONSTRUCT { ?s <https://example.com/label> ?o } WHERE { ?s <https://example.com/name> ?o }",
     )
     .execute(&model)
     .unwrap();
-    let QueryResults::Graph(graph) = results else {
-        panic!("expected graph");
-    };
-    let constructed = Model::new().unwrap();
-    for triple in graph {
-        constructed.add(triple.unwrap()).unwrap();
-    }
-    let turtle = Serializer::for_syntax(Syntax::Turtle)
-        .serialize_model_to_string(&constructed)
-        .unwrap();
+    let turtle = String::from_utf8(
+        serialize_graph_results_to_writer(
+            results,
+            &Serializer::for_syntax(Syntax::Turtle),
+            Vec::new(),
+        )
+        .unwrap(),
+    )
+    .unwrap();
     assert!(turtle.contains("Alice"));
 }
 
@@ -379,6 +461,51 @@ fn prefix_and_base_iri_configure_parsing() {
         .unwrap();
     assert!(matches!(results, QueryResults::Solutions(_)));
 
-    let _ = terms::named_node("https://example.com/g").unwrap();
-    let _ = NamedOrBlankNode::from(NamedNode::new("https://example.com/g").unwrap());
+    let err = match Query::new("SELECT * WHERE {}").base_iri("not a valid iri") {
+        Err(error) => error,
+        Ok(_) => panic!("expected InvalidRdf"),
+    };
+    assert!(matches!(err, Error::InvalidRdf(_)));
+
+    let err =
+        match Update::new("INSERT DATA { <https://example.com/a> <https://example.com/p> \"x\" }")
+            .prefix("ex", ":::bad")
+        {
+            Err(error) => error,
+            Ok(_) => panic!("expected InvalidRdf"),
+        };
+    assert!(matches!(err, Error::InvalidRdf(_)));
+}
+
+#[test]
+fn query_results_debug_does_not_drain() {
+    let model = Model::new().unwrap();
+    load_alice(&model);
+    let results = Query::new(
+        "SELECT ?name WHERE { <https://example.com/alice> <https://example.com/name> ?name }",
+    )
+    .execute(&model)
+    .unwrap();
+    let debug = format!("{results:?}");
+    assert!(debug.contains("Solutions"));
+    let QueryResults::Solutions(mut solutions) = results else {
+        panic!("expected solutions");
+    };
+    assert!(solutions.next().is_some());
+}
+
+#[test]
+fn sparql_fixture_smoke() {
+    let model = Model::new().unwrap();
+    let path =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("compatibility/fixtures/sparql/smoke.ttl");
+    Parser::for_syntax(Syntax::Turtle)
+        .load_path_collecting(&model, path)
+        .unwrap();
+    assert!(matches!(
+        Query::new("ASK { ?s <https://example.com/name> ?o }")
+            .execute(&model)
+            .unwrap(),
+        QueryResults::Boolean(true)
+    ));
 }

@@ -289,15 +289,38 @@ impl Model {
         }
     }
 
-    /// After SPARQL Update mutates the Oxigraph store, resync Fjall if present.
-    pub(crate) fn sync_disk_from_store(&self) -> Result<()> {
-        let Some(disk) = &self.disk else {
-            return Ok(());
-        };
+    /// Runs a store-mutating SPARQL Update under the write lock, then resyncs
+    /// Fjall. If durable sync fails, the in-memory store is reloaded from disk
+    /// so memory and durability stay aligned.
+    pub(crate) fn run_sparql_update(
+        &self,
+        update: impl FnOnce(&Store) -> Result<()>,
+    ) -> Result<()> {
         let _guard = self
             .write_lock
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        disk.replace_all_from_store(&self.store)
+        update(&self.store)?;
+        let Some(disk) = &self.disk else {
+            return Ok(());
+        };
+        if let Err(error) = disk.replace_all_from_store(&self.store) {
+            if let Err(reload_error) = self.reload_store_from_disk_unlocked(disk) {
+                return Err(Error::Storage(format!(
+                    "durable sync failed after SPARQL Update ({error}); rollback from disk also failed ({reload_error})"
+                )));
+            }
+            return Err(Error::Storage(format!(
+                "durable sync failed after SPARQL Update; in-memory store rolled back to disk: {error}"
+            )));
+        }
+        Ok(())
+    }
+
+    fn reload_store_from_disk_unlocked(&self, disk: &DiskStore) -> Result<()> {
+        self.store
+            .clear()
+            .map_err(|error| Error::Storage(error.to_string()))?;
+        disk.load_into(&self.store)
     }
 }

@@ -256,10 +256,12 @@ Milestone: 0.3
 Context: ADR-005 left query streaming open. Callers must not be forced to
 collect full solution or graph result sets.
 
-Decision: re-export Oxigraph `QueryResults` (`Boolean`, `Solutions`,
-`Graph`) as the facade result type. Document early-stop by dropping iterators.
-`oxiland::sparql` remains an escape hatch; inventory cites the owned `Query` /
-`Update` / `ResultsFormat` surface.
+Decision: own a thin `QueryResults` enum that wraps Oxigraph's streaming
+variants (`Boolean`, `Solutions`, `Graph`) so the facade can provide a useful
+[`Debug`] without draining iterators. Document early-stop by dropping iterators.
+`oxiland::sparql` remains an escape hatch (including Oxigraph's own
+`QueryResults`); inventory cites the owned `Query` / `Update` / `ResultsFormat`
+surface.
 
 Alternatives: wrap every row in owned Oxiland enums; lending iterators.
 

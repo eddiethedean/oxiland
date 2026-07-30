@@ -2,18 +2,50 @@
 //!
 //! See ADR-009–ADR-012 and `docs/design/0.3-query-api.md`.
 
+use std::fmt;
 use std::io::Write;
 
 use oxigraph::model::{GraphName, NamedOrBlankNode};
 use oxigraph::sparql::results::{QueryResultsFormat, QueryResultsSerializer};
-use oxigraph::sparql::{CancellationToken, PreparedSparqlQuery, SparqlEvaluator};
+use oxigraph::sparql::{
+    CancellationToken, PreparedSparqlQuery, QuerySolutionIter, QueryTripleIter, SparqlEvaluator,
+};
 use spargebra::algebra::GraphPattern;
 use spargebra::{Query as SparqlAlgebraQuery, SparqlParser};
 
+use crate::io::Serializer;
 use crate::{Error, Model, Result};
 
-/// Results returned by a SPARQL query (Oxigraph enum; ADR-010).
-pub type QueryResults<'a> = oxigraph::sparql::QueryResults<'a>;
+/// Results returned by a SPARQL query (ADR-010).
+///
+/// Wraps Oxigraph iterators. [`Debug`] prints the variant without draining
+/// streaming results.
+pub enum QueryResults<'a> {
+    /// ASK result.
+    Boolean(bool),
+    /// SELECT solution stream.
+    Solutions(QuerySolutionIter<'a>),
+    /// CONSTRUCT / DESCRIBE triple stream.
+    Graph(QueryTripleIter<'a>),
+}
+
+impl fmt::Debug for QueryResults<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Boolean(value) => f.debug_tuple("Boolean").field(value).finish(),
+            Self::Solutions(_) => f.write_str("Solutions(..)"),
+            Self::Graph(_) => f.write_str("Graph(..)"),
+        }
+    }
+}
+
+fn map_query_results(results: oxigraph::sparql::QueryResults<'_>) -> QueryResults<'_> {
+    match results {
+        oxigraph::sparql::QueryResults::Boolean(value) => QueryResults::Boolean(value),
+        oxigraph::sparql::QueryResults::Solutions(solutions) => QueryResults::Solutions(solutions),
+        oxigraph::sparql::QueryResults::Graph(graph) => QueryResults::Graph(graph),
+    }
+}
 
 /// Dataset configuration applied at execute time (ADR-009).
 #[derive(Clone, Debug, Default)]
@@ -21,6 +53,12 @@ struct DatasetConfig {
     default_graphs: Option<Vec<GraphName>>,
     default_as_union: bool,
     named_graphs: Option<Vec<NamedOrBlankNode>>,
+}
+
+impl DatasetConfig {
+    fn is_configured(&self) -> bool {
+        self.default_as_union || self.default_graphs.is_some() || self.named_graphs.is_some()
+    }
 }
 
 /// A SPARQL query configured before execution (ADR-009).
@@ -110,6 +148,8 @@ impl Query {
     }
 
     /// Sets the base IRI used while parsing the query.
+    ///
+    /// Invalid IRIs return [`Error::InvalidRdf`].
     pub fn base_iri(mut self, base_iri: impl Into<String>) -> Result<Self> {
         let base_iri = base_iri.into();
         let _ = SparqlParser::new()
@@ -120,6 +160,8 @@ impl Query {
     }
 
     /// Adds a default IRI prefix used while parsing the query.
+    ///
+    /// Invalid IRIs return [`Error::InvalidRdf`].
     pub fn prefix(
         mut self,
         prefix_name: impl Into<String>,
@@ -135,13 +177,21 @@ impl Query {
     }
 
     /// Sets an API-level result limit (algebra `Slice`; ADR-009).
+    ///
+    /// Replaces any in-query `LIMIT`/`OFFSET` slice on SELECT/CONSTRUCT/DESCRIBE.
+    /// ASK queries return [`Error::Unsupported`] here (not only at execute).
     pub fn limit(mut self, limit: usize) -> Result<Self> {
+        self.ensure_not_ask_for_slice()?;
         self.limit = Some(limit);
         Ok(self)
     }
 
     /// Sets an API-level result offset (algebra `Slice`; ADR-009).
+    ///
+    /// Replaces any in-query `LIMIT`/`OFFSET` slice on SELECT/CONSTRUCT/DESCRIBE.
+    /// ASK queries return [`Error::Unsupported`] here (not only at execute).
     pub fn offset(mut self, offset: usize) -> Result<Self> {
+        self.ensure_not_ask_for_slice()?;
         self.offset = offset;
         Ok(self)
     }
@@ -185,13 +235,25 @@ impl Query {
     /// Parses and executes the query against a model.
     ///
     /// Parse failures return [`Error::SparqlParse`]. Evaluation failures return
-    /// [`Error::SparqlEvaluation`].
+    /// [`Error::SparqlEvaluation`]. Invalid configured base/prefix IRIs return
+    /// [`Error::InvalidRdf`].
     pub fn execute<'a>(&self, model: &'a Model) -> Result<QueryResults<'a>> {
         let prepared = self.prepare()?;
-        prepared
+        let results = prepared
             .on_store(model.store())
             .execute()
-            .map_err(|error| Error::SparqlEvaluation(error.to_string()))
+            .map_err(|error| Error::SparqlEvaluation(error.to_string()))?;
+        Ok(map_query_results(results))
+    }
+
+    fn ensure_not_ask_for_slice(&self) -> Result<()> {
+        if looks_like_ask_query(&self.text) {
+            return Err(Error::Unsupported(
+                "API-level limit/offset cannot be applied to ASK queries; put LIMIT in the query text if needed"
+                    .into(),
+            ));
+        }
+        Ok(())
     }
 
     fn prepare(&self) -> Result<PreparedSparqlQuery> {
@@ -199,12 +261,12 @@ impl Query {
         if let Some(base_iri) = &self.base_iri {
             parser = parser
                 .with_base_iri(base_iri)
-                .map_err(|error| Error::SparqlParse(error.to_string()))?;
+                .map_err(|error| Error::InvalidRdf(error.to_string()))?;
         }
         for (name, iri) in &self.prefixes {
             parser = parser
                 .with_prefix(name, iri)
-                .map_err(|error| Error::SparqlParse(error.to_string()))?;
+                .map_err(|error| Error::InvalidRdf(error.to_string()))?;
         }
         let mut algebra = parser
             .parse_query(&self.text)
@@ -251,6 +313,8 @@ impl Update {
     }
 
     /// Sets the base IRI used while parsing the update.
+    ///
+    /// Invalid IRIs return [`Error::InvalidRdf`].
     pub fn base_iri(mut self, base_iri: impl Into<String>) -> Result<Self> {
         let base_iri = base_iri.into();
         let _ = SparqlParser::new()
@@ -261,6 +325,8 @@ impl Update {
     }
 
     /// Adds a default IRI prefix used while parsing the update.
+    ///
+    /// Invalid IRIs return [`Error::InvalidRdf`].
     pub fn prefix(
         mut self,
         prefix_name: impl Into<String>,
@@ -276,6 +342,10 @@ impl Update {
     }
 
     /// Restricts USING-style dataset default graphs when applicable.
+    ///
+    /// Only SPARQL Update operations that expose USING datasets (for example
+    /// `DELETE/INSERT`) honor this. `INSERT DATA` / `DELETE DATA` return
+    /// [`Error::Unsupported`] at execute time if dataset configuration is set.
     #[must_use]
     pub fn default_graph(mut self, graphs: impl IntoIterator<Item = GraphName>) -> Self {
         self.dataset.default_graphs = Some(graphs.into_iter().collect());
@@ -300,19 +370,21 @@ impl Update {
 
     /// Parses and executes the update against a model.
     ///
-    /// On success, Fjall-backed models resync their durable copy from the
-    /// in-memory store.
+    /// Execution holds the model write lock. On Fjall-backed models, the durable
+    /// copy is resynced after a successful update with compensated
+    /// inserts/deletes so a mid-sync failure restores the pre-update on-disk
+    /// key set; memory is then reloaded from that snapshot.
     pub fn execute(self, model: &Model) -> Result<()> {
         let mut evaluator = SparqlEvaluator::new();
         if let Some(base_iri) = &self.base_iri {
             evaluator = evaluator
                 .with_base_iri(base_iri)
-                .map_err(|error| Error::SparqlParse(error.to_string()))?;
+                .map_err(|error| Error::InvalidRdf(error.to_string()))?;
         }
         for (name, iri) in &self.prefixes {
             evaluator = evaluator
                 .with_prefix(name, iri)
-                .map_err(|error| Error::SparqlParse(error.to_string()))?;
+                .map_err(|error| Error::InvalidRdf(error.to_string()))?;
         }
         if let Some(token) = &self.cancellation {
             evaluator = evaluator.with_cancellation_token(token.clone());
@@ -320,14 +392,25 @@ impl Update {
         let mut prepared = evaluator
             .parse_update(&self.text)
             .map_err(|error| Error::SparqlParse(error.to_string()))?;
+
+        let mut applied_dataset = false;
         for dataset in prepared.using_datasets_mut() {
             apply_dataset(dataset, &self.dataset);
+            applied_dataset = true;
         }
-        prepared
-            .on_store(model.store())
-            .execute()
-            .map_err(|error| Error::SparqlEvaluation(error.to_string()))?;
-        model.sync_disk_from_store()
+        if self.dataset.is_configured() && !applied_dataset {
+            return Err(Error::Unsupported(
+                "Update dataset configuration requires DELETE/INSERT operations that expose USING datasets; INSERT DATA and DELETE DATA do not accept dataset overrides"
+                    .into(),
+            ));
+        }
+
+        model.run_sparql_update(|store| {
+            prepared
+                .on_store(store)
+                .execute()
+                .map_err(|error| Error::SparqlEvaluation(error.to_string()))
+        })
     }
 }
 
@@ -411,7 +494,8 @@ impl ResultsFormat {
 
 /// Serializes ASK or SELECT [`QueryResults`] to a writer.
 ///
-/// Graph results are not SPARQL Results documents—use [`crate::io::Serializer`].
+/// Graph results are not SPARQL Results documents—use
+/// [`serialize_graph_results_to_writer`].
 pub fn serialize_query_results_to_writer<W: Write>(
     results: QueryResults<'_>,
     format: ResultsFormat,
@@ -439,7 +523,7 @@ pub fn serialize_query_results_to_writer<W: Write>(
                 .map_err(|error| Error::Serialize(error.to_string()))
         }
         QueryResults::Graph(_) => Err(Error::Unsupported(
-            "graph query results must be serialized with oxiland::io::Serializer, not ResultsFormat"
+            "graph query results must be serialized with serialize_graph_results_to_writer / oxiland::io::Serializer, not ResultsFormat"
                 .into(),
         )),
     }
@@ -454,6 +538,92 @@ pub fn serialize_query_results_to_string(
     String::from_utf8(buffer).map_err(|error| Error::Serialize(error.to_string()))
 }
 
+/// Serializes CONSTRUCT/DESCRIBE [`QueryResults::Graph`] with an RDF
+/// [`Serializer`].
+///
+/// Evaluation errors from the graph iterator map to [`Error::SparqlEvaluation`].
+pub fn serialize_graph_results_to_writer<W: Write>(
+    results: QueryResults<'_>,
+    serializer: &Serializer,
+    writer: W,
+) -> Result<W> {
+    let QueryResults::Graph(graph) = results else {
+        return Err(Error::Unsupported(
+            "serialize_graph_results_to_writer requires QueryResults::Graph".into(),
+        ));
+    };
+    let mut triples = Vec::new();
+    for triple in graph {
+        triples.push(triple.map_err(|error| Error::SparqlEvaluation(error.to_string()))?);
+    }
+    serializer.serialize_triples_to_writer(writer, triples)
+}
+
+fn looks_like_ask_query(text: &str) -> bool {
+    let trimmed = strip_sparql_prologue(text).trim_start();
+    let Some(rest) = trimmed.get(..3) else {
+        return false;
+    };
+    if !rest.eq_ignore_ascii_case("ask") {
+        return false;
+    }
+    match trimmed.as_bytes().get(3) {
+        None => true,
+        Some(b) => b.is_ascii_whitespace() || *b == b'{',
+    }
+}
+
+/// Skips leading comments and BASE/PREFIX declarations for early ASK checks.
+fn strip_sparql_prologue(text: &str) -> &str {
+    let bytes = text.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        while i < bytes.len() && bytes[i].is_ascii_whitespace() {
+            i += 1;
+        }
+        if i >= bytes.len() {
+            break;
+        }
+        if bytes[i] == b'#' {
+            while i < bytes.len() && bytes[i] != b'\n' {
+                i += 1;
+            }
+            continue;
+        }
+        let rest = &text[i..];
+        if rest.len() >= 4
+            && rest.is_char_boundary(4)
+            && rest[..4].eq_ignore_ascii_case("base")
+            && rest
+                .as_bytes()
+                .get(4)
+                .is_some_and(|b| b.is_ascii_whitespace() || *b == b'<')
+        {
+            if let Some(rel) = rest.find('>') {
+                i += rel + 1;
+                continue;
+            }
+            break;
+        }
+        if rest.len() >= 6
+            && rest.is_char_boundary(6)
+            && rest[..6].eq_ignore_ascii_case("prefix")
+            && rest
+                .as_bytes()
+                .get(6)
+                .is_some_and(|b| b.is_ascii_whitespace())
+        {
+            if let Some(rel) = rest.find('>') {
+                i += rel + 1;
+                continue;
+            }
+            break;
+        }
+        break;
+    }
+    &text[i..]
+}
+
 fn apply_slice(
     mut query: SparqlAlgebraQuery,
     offset: usize,
@@ -466,12 +636,12 @@ fn apply_slice(
         SparqlAlgebraQuery::Select { pattern, .. }
         | SparqlAlgebraQuery::Construct { pattern, .. }
         | SparqlAlgebraQuery::Describe { pattern, .. } => {
-            let inner = std::mem::replace(
+            let inner = strip_slices(std::mem::replace(
                 pattern,
                 GraphPattern::Bgp {
                     patterns: Vec::new(),
                 },
-            );
+            ));
             *pattern = GraphPattern::Slice {
                 inner: Box::new(inner),
                 start: offset,
@@ -484,6 +654,14 @@ fn apply_slice(
                 .into(),
         )),
     }
+}
+
+/// Removes existing `Slice` layers so API limit/offset replace in-query limits.
+fn strip_slices(mut pattern: GraphPattern) -> GraphPattern {
+    while let GraphPattern::Slice { inner, .. } = pattern {
+        pattern = *inner;
+    }
+    pattern
 }
 
 fn apply_dataset(dataset: &mut oxigraph::sparql::QueryDataset, config: &DatasetConfig) {

@@ -16,8 +16,11 @@ Redland-shaped SPARQL query, update, and results over Oxigraph 0.5.9.
 - `Query` builder: base IRI, prefixes, limit/offset (algebra `Slice`), dataset
   selection, and cancellation token (ADR-009, ADR-012)
 - Streaming ASK / SELECT / CONSTRUCT / DESCRIBE via `QueryResults` (ADR-010)
-- `Update` facade with Fjall durable resync after successful execute
-- `ResultsFormat` (XML/JSON/CSV/TSV) plus serialize helpers (ADR-011)
+- `Update` facade with write-locked Fjall durable resync (rollback on sync
+  failure)
+- `ResultsFormat` (XML/JSON/CSV/TSV) plus ASK/SELECT serialize helpers and
+  `serialize_graph_results_to_writer` (ADR-011)
+- Owned `QueryResults` wrapper with non-draining `Debug` (ADR-010)
 - Inventory `redland-1.0.17-oxiland-0.3.json`, design doc, ADRs 009–012
 - Examples `construct` and `update`; SPARQL facade smoke harness
 - Compatibility report `docs/reports/0.3.md`
@@ -27,6 +30,16 @@ Redland-shaped SPARQL query, update, and results over Oxigraph 0.5.9.
 - crates.io description covers query/update/results
 - User SPARQL guide documents 0.3 configuration and serialization
 
+### Fixed
+
+- Update executes under the model write lock; Fjall resync compensates on
+  mid-sync failure and rolls memory back to the pre-update disk snapshot
+- Update dataset configuration returns `Unsupported` when USING datasets are
+  unavailable (e.g. `INSERT DATA`)
+- API `limit`/`offset` replace in-query `Slice` layers instead of nesting
+- ASK rejects API `limit`/`offset` at builder time (including after PREFIX/BASE)
+- Invalid query/update base IRI and prefix map to `InvalidRdf` consistently
+- SPARQL smoke harness exercises `compatibility/fixtures/sparql/smoke.ttl`
 ## [0.2.0] - 2026-07-30
 
 Redland-shaped RDF input and output over Oxigraph 0.5.9.

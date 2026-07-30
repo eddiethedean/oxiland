@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""SPARQL smoke fixture for Oxiland 0.3 (ASK via cargo example path).
+"""SPARQL smoke fixture for Oxiland 0.3.
 
-Emits a versioned JSON result. Prefer rasqal/rapper when available; otherwise
-classify as oxiland-only pass with an honest note.
+Loads `compatibility/fixtures/sparql/smoke.ttl` through the curated
+`sparql_fixture_smoke` integration test. Prefer rasqal when available for
+differential expansion; until then classify honestly as oxiland-facade.
 """
 
 from __future__ import annotations
@@ -18,21 +19,17 @@ FIXTURE = ROOT / "compatibility" / "fixtures" / "sparql" / "smoke.ttl"
 
 
 def main() -> int:
-    FIXTURE.parent.mkdir(parents=True, exist_ok=True)
-    if not FIXTURE.exists():
-        FIXTURE.write_text(
-            '<https://example.com/alice> <https://example.com/name> "Alice" .\n',
-            encoding="utf-8",
-        )
+    if not FIXTURE.is_file():
+        print(f"missing SPARQL smoke fixture: {FIXTURE}", file=sys.stderr)
+        return 1
 
-    # Run a tiny Rust one-shot through cargo test filter as smoke evidence.
     proc = subprocess.run(
         [
             "cargo",
             "test",
             "--test",
             "query",
-            "ask_select_construct_describe_positive_paths",
+            "sparql_fixture_smoke",
             "--",
             "--exact",
         ],
@@ -48,7 +45,10 @@ def main() -> int:
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "status": status,
         "classification": "oxiland-facade",
-        "notes": "Curated facade smoke; Rasqal differential expands when oracle fixtures land.",
+        "notes": (
+            "Runs tests/query.rs::sparql_fixture_smoke against smoke.ttl. "
+            "Rasqal differential expands when oracle fixtures land."
+        ),
         "cargo_exit_code": proc.returncode,
         "stderr_tail": proc.stderr[-500:],
     }

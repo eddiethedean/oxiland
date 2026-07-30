@@ -44,7 +44,7 @@
     },
     {
       "id": "librdf.query.dataset",
-      "symbol": "librdf_query_set_limit (dataset / default graph workflows)",
+      "symbol": "librdf_query (FROM / FROM NAMED / dataset selection)",
       "kind": "function",
       "subsystem": "query",
       "safe_rust": "Query::default_graph / default_graph_as_union / available_named_graphs",
@@ -97,11 +97,11 @@
       "symbol": "librdf_query_results_to_string2",
       "kind": "function",
       "subsystem": "query",
-      "safe_rust": "ResultsFormat / serialize_query_results_to_string",
+      "safe_rust": "ResultsFormat / serialize_query_results_to_string / serialize_graph_results_to_writer",
       "implementation": "src/query.rs",
       "tests": ["tests/query.rs::serialize_ask_and_select_results_formats"],
       "state": "verified",
-      "notes": "Xml/Json/Csv/Tsv (ADR-011)."
+      "notes": "Xml/Json/Csv/Tsv for ASK/SELECT; graph results use RDF Serializer (ADR-011)."
     },
     {
       "id": "librdf.model.update",
@@ -114,7 +114,8 @@
         "tests/query.rs::update_insert_delete_data",
         "tests/query.rs::fjall_update_persists"
       ],
-      "state": "verified"
+      "state": "verified",
+      "notes": "Write-locked Update + Fjall resync; INSERT DATA rejects dataset overrides."
     },
     {
       "id": "librdf.query.cancel",
@@ -123,7 +124,10 @@
       "subsystem": "query",
       "safe_rust": "Query::cancellation_token / Update::cancellation_token",
       "implementation": "src/query.rs",
-      "tests": ["tests/query.rs::cancellation_token_is_accepted"],
+      "tests": [
+        "tests/query.rs::cancellation_token_is_accepted",
+        "tests/query.rs::parse_versus_evaluation_errors"
+      ],
       "state": "verified",
       "notes": "Token supported; wall-clock timeout is caller-driven (ADR-012)."
     }

@@ -42,7 +42,9 @@ if let QueryResults::Solutions(mut solutions) = results {
 
 ## CONSTRUCT / DESCRIBE
 
-Graph results stream as `QueryResults::Graph`. Serialize them with the 0.2 RDF
+Graph results stream as `QueryResults::Graph`. Serialize them with
+[`serialize_graph_results_to_writer`](https://docs.rs/oxiland/latest/oxiland/fn.serialize_graph_results_to_writer.html)
+and the 0.2 RDF
 [`Serializer`](https://docs.rs/oxiland/latest/oxiland/io/struct.Serializer.html),
 not SPARQL Results formats.
 
@@ -64,15 +66,20 @@ Update::new(
 ```
 
 Fjall-backed models (`Model::open`) resync durable storage after a successful
-update. Runnable: `cargo run --example update`.
+update under the write lock; sync failure restores the pre-update on-disk key
+set and rolls memory back to that snapshot. Dataset builders on Update require
+operations that expose USING datasets (typically `DELETE/INSERT`); `INSERT DATA`,
+`DELETE DATA`, and similar ops return `Unsupported`.
+Runnable: `cargo run --example update`.
 
 ## Configuration
 
 | Builder method | Effect |
 |---|---|
-| `base_iri` / `prefix` | Parsing defaults |
-| `limit` / `offset` | Algebra `Slice` for SELECT/CONSTRUCT/DESCRIBE (not ASK) |
-| `default_graph` / `default_graph_as_union` / `available_named_graphs` | Dataset selection |
+| `base_iri` / `prefix` | Parsing defaults (`InvalidRdf` on bad IRIs) |
+| `limit` / `offset` | Algebra `Slice` for SELECT/CONSTRUCT/DESCRIBE (not ASK; replaces in-query limits) |
+| `default_graph` / `default_graph_as_union` | Dataset selection (Query and Update) |
+| `available_named_graphs` | Query-only named-graph availability |
 | `cancellation_token` | Cooperative cancel (ADR-012); wall-clock timeout is caller-driven |
 
 ## Result serialization
@@ -80,6 +87,7 @@ update. Runnable: `cargo run --example update`.
 [`ResultsFormat`](https://docs.rs/oxiland/latest/oxiland/enum.ResultsFormat.html)
 covers XML, JSON, CSV, and TSV for ASK/SELECT via
 `serialize_query_results_to_string` / `serialize_query_results_to_writer`.
+Graph results use `serialize_graph_results_to_writer`.
 
 ## Escape hatch
 

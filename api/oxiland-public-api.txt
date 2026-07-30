@@ -45,6 +45,9 @@ oxiland::Query::new
 oxiland::Query::offset
 oxiland::Query::prefix
 oxiland::QueryResults
+oxiland::QueryResults::Boolean
+oxiland::QueryResults::Graph
+oxiland::QueryResults::Solutions
 oxiland::ResultsFormat
 oxiland::ResultsFormat::Csv
 oxiland::ResultsFormat::Json
@@ -63,6 +66,7 @@ oxiland::Update::default_graph_as_union
 oxiland::Update::execute
 oxiland::Update::new
 oxiland::Update::prefix
+oxiland::serialize_graph_results_to_writer
 oxiland::serialize_query_results_to_string
 oxiland::serialize_query_results_to_writer
 oxiland::Result

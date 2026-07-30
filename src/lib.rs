@@ -40,8 +40,8 @@ mod world;
 pub use error::{Error, ParseError, Result};
 pub use model::{Model, StatementMatches, StatementPattern};
 pub use query::{
-    Query, QueryResults, ResultsFormat, Update, serialize_query_results_to_string,
-    serialize_query_results_to_writer,
+    Query, QueryResults, ResultsFormat, Update, serialize_graph_results_to_writer,
+    serialize_query_results_to_string, serialize_query_results_to_writer,
 };
 pub use world::{FeatureValue, World};
 
