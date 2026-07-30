@@ -14,7 +14,7 @@ and evidence process on top of the same engine. See
 
 ## Is Oxiland “Redland-compatible”?
 
-Only in evidence-scoped senses documented in [PARITY.md](../../PARITY.md). It is
+Only in evidence-scoped senses documented in the [parity ledger](../parity.md). It is
 **not** C source/ABI compatible in 0.2, and not a 100% `librdf` port. crates.io
 describes Redland-*shaped* workflows, not drop-in parity.
 
@@ -48,8 +48,8 @@ Track [milestones/0.3.md](../milestones/0.3.md).
 ## Where do I report bugs or security issues?
 
 - General bugs and questions: GitHub Issues
-- Security: [SECURITY.md](../../SECURITY.md) (private email, not public issues)
-- Conduct: [CODE_OF_CONDUCT.md](../../CODE_OF_CONDUCT.md)
+- Security: [security policy](../security.md) (private email, not public issues)
+- Conduct: [code of conduct](../code-of-conduct.md)
 
 ## Performance guidance?
 

@@ -1,0 +1,90 @@
+site_name: Oxiland
+site_description: Safe Redland-shaped RDF models, SPARQL, and stream-oriented RDF I/O on Oxigraph
+site_url: https://oxiland.readthedocs.io/
+repo_url: https://github.com/eddiethedean/oxiland
+repo_name: eddiethedean/oxiland
+edit_uri: edit/main/docs/
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - content.code.copy
+    - content.action.edit
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Users:
+      - Getting started: users/getting-started.md
+      - RDF I/O: users/io.md
+      - SPARQL: users/sparql.md
+      - Persistence: users/persistence.md
+      - FAQ: users/faq.md
+  - Evaluators:
+      - Positioning: evaluators/positioning.md
+      - Migration from Redland: evaluators/migration-from-redland.md
+      - Compatibility contract: COMPATIBILITY.md
+      - Parity ledger: parity.md
+      - 0.2 compatibility report: reports/0.2.md
+  - Contributors:
+      - Contributing: contributing.md
+      - Charter: CHARTER.md
+      - Roadmap: ROADMAP.md
+      - Execution: EXECUTION.md
+      - Architecture: ARCHITECTURE.md
+      - Verification: VERIFICATION.md
+      - Decisions: DECISIONS.md
+      - Risks: RISKS.md
+      - Milestone 0.3: milestones/0.3.md
+      - Milestone 0.2: milestones/0.2.md
+      - Design 0.2 I/O API: design/0.2-io-api.md
+  - Project:
+      - Security: security.md
+      - Code of conduct: code-of-conduct.md
+      - 0.2.0 release checklist: reports/0.2.0-release.md
+      - 0.1 compatibility report: reports/0.1.md
+      - 0.1.0 release checklist: reports/0.1.0-release.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/eddiethedean/oxiland
+    - icon: fontawesome/brands/rust
+      link: https://crates.io/crates/oxiland

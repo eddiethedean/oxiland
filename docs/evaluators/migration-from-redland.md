@@ -4,15 +4,15 @@ This page helps maintainers map Redland `librdf` workflows to Oxiland 0.2.
 It is **not** a complete symbol-by-symbol porting guide (that is a 0.6
 accounting goal). Inventories remain authoritative for claimed rows:
 
-- [0.1 core inventory](../../compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
-- [0.2 I/O inventory](../../compatibility/inventory/redland-1.0.17-oxiland-0.2.json)
+- [0.1 core inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
+- [0.2 I/O inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.2.json)
 
 ## Mindset
 
 1. Map **workflows**, not pointer ownership.
 2. Expect typed `Result` and iterators instead of sentinel pointers.
 3. Treat unknown factories/options as `Error::Unsupported`, not silent no-ops.
-4. Check the [parity ledger](../../PARITY.md) before asserting behavioral parity.
+4. Check the [parity ledger](../parity.md) before asserting behavioral parity.
 
 ## Core model (0.1)
 

@@ -5,7 +5,7 @@ especially when they turn one Redland workflow into a complete, tested,
 documented vertical slice.
 
 Start with the [project charter](docs/CHARTER.md), then use the
-[documentation index](docs/README.md#contributors) for the current milestone and
+[documentation index](docs/index.md#contributors) for the current milestone and
 applicable decisions. User-facing guides live under
 [`docs/users/`](docs/users/); do not treat planning ADRs as the product manual.
 

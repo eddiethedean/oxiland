@@ -27,7 +27,7 @@ only when its evidence gates are satisfied.
 
 States are `planned`, `in progress`, `blocked`, or `complete`. A state changes
 only after the evidence links are added to the root
-[parity ledger](../PARITY.md).
+[parity ledger](parity.md).
 
 ## Rules for every milestone
 
@@ -45,9 +45,9 @@ Each release must:
 Outcome: establish the safe Rust vocabulary and a dependable in-memory graph.
 
 State: complete  
-Evidence: [parity ledger](../PARITY.md),
+Evidence: [parity ledger](parity.md),
 [0.1 compatibility report](reports/0.1.md),
-[inventory](../compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
+[inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
 
 Deliverables:
 
@@ -84,9 +84,9 @@ stream-oriented APIs.
 
 State: complete
 Execution specification: [milestone 0.2](milestones/0.2.md)
-Evidence: [parity ledger](../PARITY.md),
+Evidence: [parity ledger](parity.md),
 [0.2 compatibility report](reports/0.2.md),
-[inventory](../compatibility/inventory/redland-1.0.17-oxiland-0.2.json)
+[inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.2.json)
 
 Deliverables:
 

@@ -8,8 +8,8 @@ calendar estimates until the API inventory and differential harness reveal the
 true compatibility surface.
 
 The [project charter](CHARTER.md) constrains scope, the
-[roadmap](ROADMAP.md) defines release outcomes, and files under
-[`milestones/`](milestones/) define executable work packages. This document
+[roadmap](ROADMAP.md) defines release outcomes, and
+[milestone plans](milestones/0.2.md) define executable work packages. This document
 owns the operating model and current work order.
 
 ## Workstreams
@@ -120,7 +120,7 @@ The detailed acceptance criteria and dependency map live in the
 
 ## Current 0.3 backlog
 
-See the [roadmap 0.3 section](ROADMAP.md#03--query-and-results) and the
+See the [roadmap 0.3 section](ROADMAP.md#03-query-and-results) and the
 [milestone 0.3 stub](milestones/0.3.md). Work-package details expand as design
 spikes land; until then:
 

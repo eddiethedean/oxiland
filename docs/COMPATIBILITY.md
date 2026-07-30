@@ -1,7 +1,7 @@
 # Compatibility plan
 
 Status: active contract  
-Normative ledger: [`PARITY.md`](../PARITY.md)  
+Normative ledger: [`parity.md`](parity.md) (canonical root file: [`PARITY.md`](https://github.com/eddiethedean/oxiland/blob/main/PARITY.md))  
 Verification method: [`VERIFICATION.md`](VERIFICATION.md)
 
 ## Target

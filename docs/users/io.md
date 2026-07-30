@@ -71,5 +71,5 @@ buffer a second full copy of the dataset.
 ## See also
 
 - Design notes: [docs/design/0.2-io-api.md](../design/0.2-io-api.md)
-- Format dispositions: [format-matrix.json](../../compatibility/baseline/format-matrix.json)
+- Format dispositions: [format-matrix.json](https://github.com/eddiethedean/oxiland/blob/main/compatibility/baseline/format-matrix.json)
 - Redland I/O mapping: [migration guide](../evaluators/migration-from-redland.md)

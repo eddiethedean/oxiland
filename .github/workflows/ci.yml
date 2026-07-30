@@ -59,6 +59,11 @@ jobs:
       - name: Documentation links
         run: python3 scripts/check-docs.py
 
+      - name: MkDocs build
+        run: |
+          python3 -m pip install -r docs/requirements.txt
+          mkdocs build --strict
+
       - name: Public API snapshot
         run: scripts/generate-public-api.sh check
 

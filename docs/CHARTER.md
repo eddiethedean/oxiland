@@ -105,7 +105,7 @@ The project tracks independent compatibility claims:
 Each claim is scoped by subsystem, platform, enabled features, and evidence
 revision. The normative definitions are in
 [`COMPATIBILITY.md`](COMPATIBILITY.md); current evidence is in
-[`PARITY.md`](../PARITY.md). “Redland compatible” without that scope is not a
+[`parity ledger`](parity.md). “Redland compatible” without that scope is not a
 release claim.
 
 ## Foundation invariants
@@ -174,4 +174,4 @@ documentation if externally observable.
 
 The roadmap owns release outcomes, milestone plans own executable work,
 the parity ledger owns current verified status, and reports preserve historical
-evidence. The [planning index](README.md) defines the complete authority order.
+evidence. The [planning index](index.md) defines the complete authority order.

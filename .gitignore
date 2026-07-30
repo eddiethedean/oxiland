@@ -2,3 +2,4 @@
 Cargo.lock
 .DS_Store
 compatibility/harness/*-result.json
+/site

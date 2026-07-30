@@ -3,6 +3,7 @@
 [![CI](https://github.com/eddiethedean/oxiland/actions/workflows/ci.yml/badge.svg)](https://github.com/eddiethedean/oxiland/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/oxiland.svg)](https://crates.io/crates/oxiland)
 [![Docs.rs](https://docs.rs/oxiland/badge.svg)](https://docs.rs/oxiland)
+[![Documentation Status](https://readthedocs.org/projects/oxiland/badge/?version=latest)](https://oxiland.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue.svg)](LICENSE-APACHE)
 
 **Oxiland** is a safe Rust facade for Redland-shaped RDF workflows—models,
@@ -201,11 +202,14 @@ you need an archival copy. Details:
 
 ## Documentation
 
+Published guides: [oxiland.readthedocs.io](https://oxiland.readthedocs.io/).
+API reference: [docs.rs/oxiland](https://docs.rs/oxiland).
+
 | Audience | Start here |
 |---|---|
-| **Users** | [Getting started](docs/users/getting-started.md) · [docs index](docs/README.md#users) |
+| **Users** | [Getting started](docs/users/getting-started.md) · [docs hub](docs/index.md) |
 | **Evaluators** | [Positioning](docs/evaluators/positioning.md) · [Parity ledger](PARITY.md) |
-| **Contributors** | [CONTRIBUTING.md](CONTRIBUTING.md) · [Planning docs](docs/README.md#contributors) |
+| **Contributors** | [CONTRIBUTING.md](CONTRIBUTING.md) · [Planning docs](docs/index.md#contributors) |
 
 Also: [Changelog](CHANGELOG.md) · [FAQ](docs/users/faq.md) ·
 [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
