@@ -2,9 +2,11 @@
 
 [![CI](https://github.com/eddiethedean/oxiland/actions/workflows/ci.yml/badge.svg)](https://github.com/eddiethedean/oxiland/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/oxiland.svg)](https://crates.io/crates/oxiland)
-[![Docs.rs](https://docs.rs/oxiland/badge.svg)](https://docs.rs/oxiland)
-[![Documentation Status](https://readthedocs.org/projects/oxiland/badge/?version=latest)](https://oxiland.readthedocs.io/en/latest/?badge=latest)
-[![License](https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue.svg)](LICENSE-APACHE)
+[![docs.rs](https://img.shields.io/docsrs/oxiland)](https://docs.rs/oxiland)
+[![Read the Docs](https://readthedocs.org/projects/oxiland/badge/?version=latest)](https://oxiland.readthedocs.io/en/latest/)
+[![MSRV](https://img.shields.io/crates/msrv/oxiland)](https://crates.io/crates/oxiland)
+[![License](https://img.shields.io/crates/l/oxiland)](LICENSE-APACHE)
+[![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/eddiethedean/oxiland)
 
 **Oxiland** is a safe Rust facade for Redland-shaped RDF workflows—models,
 contexts, statement matching, SPARQL ASK/SELECT, and stream-oriented Turtle /
