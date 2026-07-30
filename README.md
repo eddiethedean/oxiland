@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/eddiethedean/oxiland/actions/workflows/ci.yml/badge.svg)](https://github.com/eddiethedean/oxiland/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/oxiland.svg)](https://crates.io/crates/oxiland)
-[![docs.rs](https://img.shields.io/docsrs/oxiland)](https://docs.rs/oxiland)
-[![Read the Docs](https://readthedocs.org/projects/oxiland/badge/?version=latest)](https://oxiland.readthedocs.io/en/latest/)
+[![API docs (docs.rs)](https://img.shields.io/docsrs/oxiland?label=API%20docs)](https://docs.rs/oxiland)
+[![Guides (Read the Docs)](https://img.shields.io/readthedocs/oxiland?label=Guides)](https://oxiland.readthedocs.io/en/latest/)
 [![MSRV](https://img.shields.io/crates/msrv/oxiland)](https://crates.io/crates/oxiland)
 [![License](https://img.shields.io/crates/l/oxiland)](LICENSE-APACHE)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/eddiethedean/oxiland)
