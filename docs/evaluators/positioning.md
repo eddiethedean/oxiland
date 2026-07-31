@@ -45,7 +45,7 @@ inventory-backed claims matter.
 
 ## Compared to Redland (`librdf`)
 
-| | Oxiland 0.8 | Native Redland |
+| | Oxiland 0.9 | Native Redland |
 |---|---|---|
 | Language | Safe Rust + Python package + C preview | C (+ bindings) |
 | Memory | Rust ownership; opaque C handles in the preview | Manual / library conventions |
@@ -55,11 +55,11 @@ inventory-backed claims matter.
 | CLI | `oxiland-cli` rdfproc-shaped (not binary drop-in) | `rdfproc` |
 | Utilities / logging | Digests, URI helpers, vocab, World log handlers | librdf digests/logs/hashes |
 | Safe-API accounting | Header-derived inventory classified (0.6+) | N/A |
-| C consumers | Source-compat preview (0.8 allowlist); not ABI drop-in | Yes |
-| Drop-in ABI | No (planned 0.9 evidence) | N/A |
+| C consumers | Expanded source-compat preview (0.9 allowlist); not ABI drop-in | Yes |
+| Drop-in ABI | No | N/A |
 
-Oxiland targets measurable migration over time. Tip **0.8** offers an auditable
-C source-compat preview for a frozen allowlist; it does **not** claim to replace
+Oxiland targets measurable migration over time. Tip **0.9** offers an auditable
+expanded C source-compat preview; it does **not** claim to replace
 Redland in production C stacks as an ABI drop-in.
 
 ## What Oxiland optimizes for

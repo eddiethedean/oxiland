@@ -8,8 +8,8 @@ description: Build typed, local RDF applications with SPARQL, persistent dataset
 
 !!! info "Release status"
 
-    This documentation tip describes **0.8.0** (unreleased). crates.io and PyPI
-    still publish **0.7.0** until the 0.8 tag. Use registry pins for published
+    This documentation tip describes **0.9.0** (unreleased). crates.io and PyPI
+    still publish **0.8.0** until the 0.9 tag. Use registry pins for published
     installs, or a git/path checkout for tip APIs.
 
 <section class="hero" aria-labelledby="hero-title">
@@ -150,7 +150,7 @@ model.
 
 !!! info "Compatibility claims are evidence-scoped"
 
-    Oxiland provides Redland-shaped workflows. Tip **0.8** ships a C
+    Oxiland provides Redland-shaped workflows. Tip **0.9** ships an expanded C
     **source-compat preview**—not an ABI drop-in for existing `librdf`
     binaries, and not an rdflib adapter. Start with the
     [positioning guide](evaluators/positioning.md) and verify each claim in the

@@ -121,13 +121,13 @@ Guide: [python.md](../users/python.md).
 ## C source and ABI
 
 A separately audited `oxiland-capi` **source-compat preview** is available in
-tip **0.8** ([ADR-002](../DECISIONS.md), [ADR-022](../DECISIONS.md)). Build it
+tip **0.9**. Build it
 from this repository—it is not published on crates.io. It is **not** a binary
-or ABI drop-in for existing Redland shared libraries; only the frozen allowlist
+or ABI drop-in for existing Redland shared libraries; only its declared allowlist
 is declared. See the [C ABI guide](../users/c-abi.md) and
 [limitations](../users/c-abi-limitations.md). Inventory rows for the preview
 live in the
-[0.8 inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.8.json)
+[0.9 inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.9.json)
 (`c_abi` / `c_state`).
 
 A Pythonic PyPI package ships independently (`pip install oxiland`) and binds

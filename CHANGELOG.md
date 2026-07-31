@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-07-31
+
+Expanded C source-compatibility, optional durable-store adapters, and
+downstream validation.
+
+### Added
+
+- Expanded `oxiland-capi` allowlist, lifecycle helpers, and C downstream
+  smoke coverage
+- Optional `redb`, RocksDB, SQLite, and LMDB durable-store adapters behind
+  explicit Cargo features, with backend conformance coverage
+- Downstream C consumer harnesses and a 0.9 release checklist
+
+### Changed
+
+- Crate and Python package versions are aligned at `0.9.0`
+- CLI and C API storage feature flags forward to the core crate
+- Active release documentation now distinguishes the published 0.8 line from
+  the unreleased 0.9 tip
+
+### Fixed
+
+- Core builds and tests correctly with default features disabled
+- C handles are validated before dereference or free, and logging callbacks may
+  re-enter the API without holding the logger lock
+- Invalid C language tags fail explicitly; digest input validation rejects null
+  buffers with nonzero lengths
+- Multi-key durable-store replacement operations are atomic on supported
+  backends and iterator errors are no longer silently discarded
+
 ## [0.8.0] - 2026-07-31
 
 Auditable C ABI source-compat preview and sealed durable-store adapter (ADR-022/023).

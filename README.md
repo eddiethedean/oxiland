@@ -9,8 +9,8 @@
 [![License](https://img.shields.io/crates/l/oxiland)](LICENSE-APACHE)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/eddiethedean/oxiland)
 
-> **Release status:** crates.io and PyPI currently publish **0.7.0** (see badges).
-> This repository tip is **0.8.0** (unreleased). Use registry pins for the last
+> **Release status:** crates.io and PyPI currently publish **0.8.0** (see badges).
+> This repository tip is **0.9.0** (unreleased). Use registry pins for the last
 > published release, or depend on this git checkout for tip APIs.
 
 Oxiland is an embedded RDF toolkit for Rust and Python. It provides validated
@@ -18,13 +18,13 @@ RDF terms, in-memory and persistent datasets, named graphs, SPARQL 1.1, and
 streaming RDF input and output through a compact, typed API—without running a
 database server.
 
-Tip **0.8.0** adds three published-style surfaces plus a build-from-source C
-preview:
+Tip **0.9.0** expands the C source-compatibility surface and adds optional
+durable-store adapters:
 
 | Surface | Install | Best for |
 |---|---|---|
-| Rust library | `oxiland = "0.7.0"` from crates.io, or path/git for tip 0.8 | Native applications and services |
-| Python package | `python -m pip install oxiland` (PyPI **0.7.0** until 0.8 tags) | Python data pipelines and embedded RDF applications |
+| Rust library | `oxiland = "0.8.0"` from crates.io, or path/git for tip 0.9 | Native applications and services |
+| Python package | `python -m pip install oxiland` (PyPI **0.8.0** until 0.9 tags) | Python data pipelines and embedded RDF applications |
 | Command line | `cargo install oxiland-cli` | Store inspection, imports, exports, and scripted queries |
 | C ABI preview | Build from this repo: `cargo build -p oxiland-capi` | Redland-**shaped** C **source** preview (not on crates.io; not ABI drop-in) |
 
@@ -43,7 +43,7 @@ Rust crate forbids unsafe code.
 - RDF and SPARQL result serialization;
 - digest, IRI, file-URI, Unicode, namespace, vocabulary, and logging utilities;
 - Python wheels for CPython 3.10–3.14 with bundled type information;
-- C source-compat preview (`oxiland-capi`) for a frozen allowlist (tip 0.8);
+- C source-compat preview (`oxiland-capi`) for an expanded allowlist (tip 0.9);
 - Redland workflow migration guidance and inventory-backed compatibility claims.
 
 ## Install
@@ -56,10 +56,10 @@ Oxiland requires Rust **1.87 or newer**.
 
 ```toml
 [dependencies]
-oxiland = "0.7.0"
+oxiland = "0.8.0"
 ```
 
-**This repository tip (0.8.0 APIs, including sealed storage selection):**
+**This repository tip (0.9.0 APIs, including optional storage adapters):**
 
 ```toml
 [dependencies]
@@ -71,7 +71,7 @@ Enable `tracing` only when `World` log records should also be emitted as
 
 ```toml
 [dependencies]
-oxiland = { version = "0.7.0", features = ["tracing"] }
+oxiland = { version = "0.8.0", features = ["tracing"] }
 ```
 
 ### Python
@@ -80,7 +80,7 @@ oxiland = { version = "0.7.0", features = ["tracing"] }
 python -m pip install oxiland
 ```
 
-Published wheels are **0.7.0** until the 0.8 tag ships. They support CPython
+Published wheels are **0.8.0** until the 0.9 tag ships. They support CPython
 3.10–3.14 on the released platform matrix and have no required Python
 dependencies. See the [Python installation guide](docs/users/python-installation.md).
 
@@ -91,7 +91,7 @@ cargo install oxiland-cli
 oxiland-cli --help
 ```
 
-Installs the last published CLI from crates.io (**0.7.0** today).
+Installs the last published CLI from crates.io (**0.8.0** today).
 
 ### C ABI preview (tip only)
 
@@ -206,8 +206,8 @@ Published guides are available at
 
 ## Compatibility and scope
 
-Oxiland supports Redland-shaped concepts and migration workflows. Tip **0.8.0**
-ships a **C source-compat preview** (`oxiland-capi`) for a frozen allowlist—it
+Oxiland supports Redland-shaped concepts and migration workflows. Tip **0.9.0**
+ships an expanded **C source-compat preview** (`oxiland-capi`)—it
 is **not** an ABI drop-in for existing Redland binaries. The Python package is
 not an rdflib adapter. Every compatibility statement is scoped by subsystem,
 platform, and evidence in the [parity ledger](PARITY.md).
@@ -220,12 +220,12 @@ value.
 ## Stability and support
 
 Oxiland is pre-1.0. Minor 0.x releases may contain documented public API
-changes. Persistent format v1 is reopen-compatible across 0.4.x–0.8.x patch
+changes. Persistent format v1 is reopen-compatible across 0.4.x–0.9.x patch
 lines; export standards RDF before major upgrades. See the
 [support policy](SUPPORT.md) and [changelog](CHANGELOG.md).
 
-Until `v0.8.0` is tagged, registry installs remain **0.7.0** while this tip
-documents 0.8 APIs.
+Until `v0.9.0` is tagged, registry installs remain **0.8.0** while this tip
+documents 0.9 APIs.
 
 Report suspected vulnerabilities privately according to
 [SECURITY.md](SECURITY.md), not in a public issue.

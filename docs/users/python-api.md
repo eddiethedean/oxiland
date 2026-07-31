@@ -1,10 +1,10 @@
 # Python API reference
 
-This page is the compact reference for Oxiland tip **0.8.0**. All public symbols
+This page is the compact reference for Oxiland tip **0.9.0**. All public symbols
 are available from `oxiland` unless a vocabulary submodule is shown. The wheel
 ships PEP 561 declarations, so the signatures below are also available through
-IDE completion and static type checkers. Published PyPI wheels remain **0.7.0**
-until the 0.8 tag; tip-only symbols below require a checkout build.
+IDE completion and static type checkers. Published PyPI wheels remain **0.8.0**
+until the 0.9 tag; tip-only symbols below require a checkout build.
 
 ## Import and version
 

@@ -12,7 +12,7 @@ for your platform/Python, it may attempt a source build and fail. Use CPython
 3.10–3.14 on a platform with published wheels, or build from a git checkout with
 maturin ([Python installation guide](python-installation.md)).
 
-PyPI currently publishes **0.7.0**; tip **0.8.0** is unreleased until tagged.
+PyPI currently publishes **0.8.0**; tip **0.9.0** is unreleased until tagged.
 
 ## Why not use Oxigraph directly?
 
@@ -31,9 +31,9 @@ replication, tenant isolation, or managed backups. See the
 ## Is Oxiland “Redland-compatible”?
 
 Only in evidence-scoped senses documented in the [parity ledger](../parity.md).
-Tip **0.8** ships a C **source-compat preview** (`oxiland-capi`) against a
-frozen allowlist—**not** ABI drop-in compatibility with existing `librdf`
-shared libraries. Full symbol closure and ABI claims are **0.9** work. Oxiland
+Tip **0.9** ships an expanded C **source-compat preview** (`oxiland-capi`)—
+still **not** ABI drop-in compatibility with existing `librdf` shared libraries.
+Oxiland
 is not a 100% `librdf` port and not an rdflib adapter. “Safe-API accounting”
 means inventoried symbols are **classified**, not that behavior is drop-in.
 See the [C ABI guide](c-abi.md) and [limitations](c-abi-limitations.md).

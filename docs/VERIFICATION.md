@@ -19,7 +19,7 @@ A passing test in one layer does not substitute for the others.
 | Rust integration | public workflows and feature combinations | `tests/` |
 | Conformance | RDF and SPARQL standards | `compatibility/conformance/` |
 | Differential | Oxiland versus native Redland | `compatibility/fixtures/` |
-| C contract *(0.8 preview)* | headers, symbols, allocation, callbacks | `crates/oxiland-capi/tests/` |
+| C contract *(0.9 preview)* | headers, symbols, allocation, callbacks | `crates/oxiland-capi/tests/` |
 | Python package | wheels, typing, pytest | `python/` |
 | Downstream | real language bindings and applications | CI-managed manifests |
 | Fuzz/property *(planned expansion)* | malformed inputs and lifecycle sequences | `fuzz/` |
@@ -97,7 +97,7 @@ Required on every PR and on `main`/release:
 - dedicated Fjall persistence tests;
 - Rust 1.87 MSRV Clippy and tests;
 - RustSec audits for the workspace and Python extension lockfiles;
-- non-breaking semver compatibility against 0.6.0 (forced to minor-release
+- non-breaking semver compatibility against 0.8.0 (forced to minor-release
   policy for the pre-1.0 API) and packaged-crate verification;
 - Python pytest, Pyright, and runnable examples;
 - Linux, macOS, and Windows wheel builds for CPython 3.10–3.14;
@@ -121,7 +121,7 @@ RustSec results reproducible on clean runners.
 Security advisories are blocking on tip CI (the same reusable workflow release
 runs). Tip also validates package-version alignment, `cargo publish --dry-run`
 for the library crate, and the full 15-wheel release matrix after per-OS install
-smokes. As of the 0.7.0 preflight, PyO3 is at 0.29.0. Oxigraph 0.5.9 still
+smokes. PyO3 is at 0.29.0. Oxigraph 0.5.9 still
 constrains `quick-xml` to 0.37 (RUSTSEC-2026-0194 / RUSTSEC-2026-0195); tip CI
 allows **only** those two IDs, and `scripts/check-security-exceptions.py` fails
 as soon as the Oxigraph/`quick-xml` graph changes so the waiver must be

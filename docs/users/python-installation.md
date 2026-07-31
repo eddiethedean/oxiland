@@ -2,7 +2,7 @@
 
 !!! info "Release status"
 
-    PyPI currently publishes **0.7.0**. This tip is **0.8.0** (unreleased) until
+    PyPI currently publishes **0.8.0**. This tip is **0.9.0** (unreleased) until
     the tag. Pin published wheels as shown below; build from a git checkout for
     tip APIs.
 
@@ -31,7 +31,7 @@ Create an isolated environment and upgrade `pip` before installing:
     python3 -m venv .venv
     source .venv/bin/activate
     python -m pip install --upgrade pip
-    python -m pip install oxiland==0.7.0
+    python -m pip install oxiland==0.8.0
     ```
 
 === "Windows PowerShell"
@@ -40,7 +40,7 @@ Create an isolated environment and upgrade `pip` before installing:
     py -m venv .venv
     .venv\Scripts\Activate.ps1
     python -m pip install --upgrade pip
-    python -m pip install oxiland==0.7.0
+    python -m pip install oxiland==0.8.0
     ```
 
 Confirm the installed runtime before deployment:
@@ -52,7 +52,7 @@ python -c "import oxiland; print(oxiland.__version__)"
 ```python
 import oxiland
 
-assert tuple(map(int, oxiland.__version__.split("."))) >= (0, 7, 0)
+assert tuple(map(int, oxiland.__version__.split("."))) >= (0, 8, 0)
 assert oxiland.Model().backend == "memory"
 ```
 
@@ -63,7 +63,7 @@ application:
 
 ```text
 # requirements.in
-oxiland==0.7.0
+oxiland==0.8.0
 ```
 
 For environments that require artifact integrity, download the wheel and
@@ -101,7 +101,7 @@ supported runtime or build from a repository checkout.
 ## Building from a checkout
 
 Source builds are a contributor and platform-porting workflow—and the way to
-evaluate tip **0.8** before the PyPI tag. They require a Rust toolchain,
+evaluate tip **0.9** before the PyPI tag. They require a Rust toolchain,
 Maturin, and the repository source:
 
 ```console
