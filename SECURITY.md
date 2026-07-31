@@ -4,12 +4,13 @@
 
 | Version | Supported |
 |---|---|
+| 0.7.x | Yes |
 | 0.6.x | Yes |
-| 0.5.x | Security fixes only when practical; prefer upgrading to 0.6 |
-| 0.4.x | Security fixes only when practical; prefer upgrading to 0.6 |
-| 0.3.x | Security fixes only when practical; prefer upgrading to 0.6 |
-| 0.2.x | Security fixes only when practical; prefer upgrading to 0.6 |
-| 0.1.x | Security fixes only when practical; prefer upgrading to 0.6 |
+| 0.5.x | Security fixes only when practical; prefer upgrading to 0.7 |
+| 0.4.x | Security fixes only when practical; prefer upgrading to 0.7 |
+| 0.3.x | Security fixes only when practical; prefer upgrading to 0.7 |
+| 0.2.x | Security fixes only when practical; prefer upgrading to 0.7 |
+| 0.1.x | Security fixes only when practical; prefer upgrading to 0.7 |
 | < 0.1 | No |
 
 Oxiland is pre-1.0. Public APIs and on-disk formats may change; security fixes

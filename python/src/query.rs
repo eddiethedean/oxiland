@@ -1,25 +1,28 @@
-use std::collections::HashMap;
-
+use oxigraph::model::GraphName as OxGraphName;
 use oxigraph::sparql::{QuerySolutionIter, QueryTripleIter};
 use oxiland::{
     Model, Query, QueryResults, ResultsFormat, Update, serialize_query_results_to_string,
 };
 use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
-use pyo3::types::PyList;
+use pyo3::types::{PyBytes, PySequence, PyString};
 
 use crate::error::map_error;
 use crate::model::PyModel;
 use crate::terms::{PyTriple, extract_graph_name, term_to_py, triple_to_py};
 
-/// Holds a model so Oxigraph iterators remain valid (store handle is shared).
+/// Owns a boxed model so Oxigraph iterators remain valid after transmute.
+///
+/// # Safety
+/// The Oxigraph store handle inside [`Model`] is reference-counted. The boxed
+/// model is allocated before `execute` and kept alive for the iterator
+/// lifetime; the `'static` transmute is only sound while `_model` lives.
 struct ModelGuard {
-    _model: Model,
+    _model: Box<Model>,
 }
 
 #[pyclass(name = "Solution", module = "oxiland", frozen)]
 pub struct PySolution {
-    values: HashMap<String, oxigraph::model::Term>,
     ordered: Vec<(String, Option<oxigraph::model::Term>)>,
 }
 
@@ -27,19 +30,18 @@ pub struct PySolution {
 impl PySolution {
     fn __getitem__(&self, py: Python<'_>, key: &Bound<'_, PyAny>) -> PyResult<PyObject> {
         if let Ok(index) = key.extract::<usize>() {
-            let term = self
-                .ordered
-                .get(index)
-                .and_then(|(_, t)| t.as_ref())
-                .ok_or_else(|| pyo3::exceptions::PyKeyError::new_err(index))?;
-            return term_to_py(py, term);
+            return match self.ordered.get(index) {
+                None => Err(pyo3::exceptions::PyKeyError::new_err(index)),
+                Some((_, None)) => Ok(py.None()),
+                Some((_, Some(term))) => term_to_py(py, term),
+            };
         }
         if let Ok(name) = key.extract::<String>() {
-            let term = self
-                .values
-                .get(&name)
-                .ok_or_else(|| pyo3::exceptions::PyKeyError::new_err(name))?;
-            return term_to_py(py, term);
+            return match self.ordered.iter().find(|(n, _)| n == &name) {
+                None => Err(pyo3::exceptions::PyKeyError::new_err(name)),
+                Some((_, None)) => Ok(py.None()),
+                Some((_, Some(term))) => term_to_py(py, term),
+            };
         }
         Err(pyo3::exceptions::PyTypeError::new_err(
             "Solution key must be str or int",
@@ -47,9 +49,10 @@ impl PySolution {
     }
 
     fn get(&self, py: Python<'_>, name: &str) -> PyResult<Option<PyObject>> {
-        match self.values.get(name) {
-            Some(term) => Ok(Some(term_to_py(py, term)?)),
+        match self.ordered.iter().find(|(n, _)| n == name) {
             None => Ok(None),
+            Some((_, None)) => Ok(None),
+            Some((_, Some(term))) => Ok(Some(term_to_py(py, term)?)),
         }
     }
 
@@ -62,7 +65,8 @@ impl PySolution {
     }
 
     fn __repr__(&self) -> String {
-        format!("Solution({:?})", self.values.keys().collect::<Vec<_>>())
+        let names: Vec<&str> = self.ordered.iter().map(|(n, _)| n.as_str()).collect();
+        format!("Solution({names:?})")
     }
 }
 
@@ -96,17 +100,13 @@ impl PySolutionsIter {
             }
             Some(Ok(solution)) => {
                 let variables = solution.variables();
-                let mut values = HashMap::new();
                 let mut ordered = Vec::with_capacity(variables.len());
                 for (idx, variable) in variables.iter().enumerate() {
                     let name = variable.as_str().to_owned();
                     let term = solution.get(idx).cloned();
-                    if let Some(ref t) = term {
-                        values.insert(name.clone(), t.clone());
-                    }
                     ordered.push((name, term));
                 }
-                Ok(Some(PySolution { values, ordered }))
+                Ok(Some(PySolution { ordered }))
             }
             Some(Err(error)) => Err(map_error(oxiland::Error::SparqlEvaluation(
                 error.to_string(),
@@ -151,6 +151,27 @@ impl PyTriplesIter {
     }
 }
 
+fn extract_graphs(graphs: &Bound<'_, PyAny>) -> PyResult<Vec<OxGraphName>> {
+    if graphs.is_instance_of::<PyString>() || graphs.is_instance_of::<PyBytes>() {
+        return Err(pyo3::exceptions::PyTypeError::new_err(
+            "default_graph must be a graph name or a sequence of graph names",
+        ));
+    }
+    if let Ok(graph) = extract_graph_name(graphs) {
+        return Ok(vec![graph]);
+    }
+    if let Ok(seq) = graphs.downcast::<PySequence>() {
+        let mut out = Vec::with_capacity(seq.len()?);
+        for i in 0..seq.len()? {
+            out.push(extract_graph_name(&seq.get_item(i)?)?);
+        }
+        return Ok(out);
+    }
+    Err(pyo3::exceptions::PyTypeError::new_err(
+        "default_graph must be a graph name or a sequence of graph names",
+    ))
+}
+
 #[pyfunction]
 #[pyo3(signature = (model, sparql, *, base_iri=None, limit=None, offset=None, default_graph=None, default_graph_as_union=false))]
 #[allow(clippy::too_many_arguments)]
@@ -178,24 +199,17 @@ fn query(
         q = q.default_graph_as_union();
     }
     if let Some(graphs) = default_graph {
-        let list = if let Ok(seq) = graphs.downcast::<PyList>() {
-            let mut out = Vec::new();
-            for item in seq.iter() {
-                out.push(extract_graph_name(&item)?);
-            }
-            out
-        } else {
-            vec![extract_graph_name(graphs)?]
-        };
-        q = q.default_graph(list);
+        q = q.default_graph(extract_graphs(graphs)?);
     }
 
-    // SAFETY: `guard` owns a Model clone that shares the store handle. The
-    // Oxigraph iterators borrow that store; we keep `guard` alive in the
-    // Python iterator and transmute the lifetime to `'static`.
-    let guard_model = model.inner.clone();
-    let model_ptr: *const Model = &guard_model;
-    let results = unsafe { q.execute(&*model_ptr) }.map_err(map_error)?;
+    // SAFETY: box the model before execute so the iterator's borrow target has
+    // a stable address; keep the box alive in ModelGuard for the Python
+    // iterator lifetime after transmute to `'static`.
+    let guard = Box::new(model.inner.clone());
+    let results = {
+        let model_ptr: *const Model = guard.as_ref();
+        unsafe { q.execute(&*model_ptr) }.map_err(map_error)?
+    };
 
     match results {
         QueryResults::Boolean(value) => Ok(value.into_py_any(py)?),
@@ -203,9 +217,7 @@ fn query(
             let iter: QuerySolutionIter<'static> = unsafe { std::mem::transmute(iter) };
             let obj = PySolutionsIter {
                 state: SolutionsState::Live {
-                    _guard: ModelGuard {
-                        _model: guard_model,
-                    },
+                    _guard: ModelGuard { _model: guard },
                     iter,
                 },
             };
@@ -215,9 +227,7 @@ fn query(
             let iter: QueryTripleIter<'static> = unsafe { std::mem::transmute(iter) };
             let obj = PyTriplesIter {
                 state: TriplesState::Live {
-                    _guard: ModelGuard {
-                        _model: guard_model,
-                    },
+                    _guard: ModelGuard { _model: guard },
                     iter,
                 },
             };
@@ -243,16 +253,7 @@ fn update(
         u = u.default_graph_as_union();
     }
     if let Some(graphs) = default_graph {
-        let list = if let Ok(seq) = graphs.downcast::<PyList>() {
-            let mut out = Vec::new();
-            for item in seq.iter() {
-                out.push(extract_graph_name(&item)?);
-            }
-            out
-        } else {
-            vec![extract_graph_name(graphs)?]
-        };
-        u = u.default_graph(list);
+        u = u.default_graph(extract_graphs(graphs)?);
     }
     u.execute(&model.inner).map_err(map_error)
 }

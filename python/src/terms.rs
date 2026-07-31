@@ -215,6 +215,24 @@ impl PyTriple {
     fn __repr__(&self) -> String {
         format!("Triple({:?})", self.inner)
     }
+
+    fn __hash__(&self) -> u64 {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        let mut hasher = DefaultHasher::new();
+        self.inner.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Err(pyo3::exceptions::PyTypeError::new_err(
+                "Triple only supports == and !=",
+            )),
+        }
+    }
 }
 
 #[pyclass(name = "Quad", module = "oxiland", frozen)]
@@ -272,6 +290,24 @@ impl PyQuad {
     fn __repr__(&self) -> String {
         format!("Quad({:?})", self.inner)
     }
+
+    fn __hash__(&self) -> u64 {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        let mut hasher = DefaultHasher::new();
+        self.inner.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(self.inner == other.inner),
+            CompareOp::Ne => Ok(self.inner != other.inner),
+            _ => Err(pyo3::exceptions::PyTypeError::new_err(
+                "Quad only supports == and !=",
+            )),
+        }
+    }
 }
 
 #[pyclass(name = "DefaultGraph", module = "oxiland", frozen)]
@@ -289,8 +325,14 @@ impl PyDefaultGraph {
         "DefaultGraph()"
     }
 
-    fn __richcmp__(&self, _other: &Self, op: CompareOp) -> bool {
-        matches!(op, CompareOp::Eq)
+    fn __richcmp__(&self, _other: &Self, op: CompareOp) -> PyResult<bool> {
+        match op {
+            CompareOp::Eq => Ok(true),
+            CompareOp::Ne => Ok(false),
+            _ => Err(pyo3::exceptions::PyTypeError::new_err(
+                "DefaultGraph only supports == and !=",
+            )),
+        }
     }
 }
 

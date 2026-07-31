@@ -132,18 +132,24 @@ impl PyNamespace {
     }
 }
 
-fn add_vocab_module(
+fn register_submodule(
+    py: Python<'_>,
     parent: &Bound<'_, PyModule>,
+    parent_name: &str,
     name: &str,
     pairs: &[(&str, &str)],
 ) -> PyResult<()> {
-    let py = parent.py();
     let module = PyModule::new(py, name)?;
+    let qualname = format!("{parent_name}.{name}");
+    module.setattr("__name__", &qualname)?;
+    module.setattr("__package__", &qualname)?;
     for (key, iri) in pairs {
         module.add(*key, *iri)?;
     }
-    parent.add_submodule(&module)?;
-    // Ensure `import oxiland.vocab.rdf` style works when attached under vocab.
+    py.import("sys")?
+        .getattr("modules")?
+        .set_item(&qualname, &module)?;
+    parent.setattr(name, &module)?;
     Ok(())
 }
 
@@ -153,62 +159,74 @@ pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(digest_hex, m)?)?;
     m.add_function(wrap_pyfunction!(digest_bytes, m)?)?;
 
-    let vocab = PyModule::new(m.py(), "vocab")?;
-    add_vocab_module(
+    let py = m.py();
+    let sys_modules = py.import("sys")?.getattr("modules")?;
+    let vocab = PyModule::new(py, "vocab")?;
+    vocab.setattr("__name__", "oxiland.vocab")?;
+    vocab.setattr("__package__", "oxiland.vocab")?;
+    sys_modules.set_item("oxiland.vocab", &vocab)?;
+
+    register_submodule(
+        py,
         &vocab,
+        "oxiland.vocab",
         "rdf",
         &[
             ("NS", rdf::NS),
-            ("type", "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-            (
-                "Property",
-                "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
-            ),
+            ("type", rdf::type_().as_str()),
+            ("Property", rdf::property().as_str()),
         ],
     )?;
-    add_vocab_module(
+    register_submodule(
+        py,
         &vocab,
+        "oxiland.vocab",
         "rdfs",
         &[
             ("NS", rdfs::NS),
-            ("label", "http://www.w3.org/2000/01/rdf-schema#label"),
-            ("Class", "http://www.w3.org/2000/01/rdf-schema#Class"),
+            ("label", rdfs::label().as_str()),
+            ("Class", rdfs::class().as_str()),
         ],
     )?;
-    add_vocab_module(
+    register_submodule(
+        py,
         &vocab,
+        "oxiland.vocab",
         "xsd",
         &[
             ("NS", xsd::NS),
-            ("string", "http://www.w3.org/2001/XMLSchema#string"),
-            ("integer", "http://www.w3.org/2001/XMLSchema#integer"),
+            ("string", xsd::string().as_str()),
+            ("integer", xsd::integer().as_str()),
         ],
     )?;
-    add_vocab_module(
+    register_submodule(
+        py,
         &vocab,
+        "oxiland.vocab",
         "owl",
         &[
             ("NS", owl::NS),
-            ("Class", "http://www.w3.org/2002/07/owl#Class"),
-            ("Ontology", "http://www.w3.org/2002/07/owl#Ontology"),
+            ("Class", owl::class().as_str()),
+            ("Ontology", owl::ontology().as_str()),
         ],
     )?;
-    add_vocab_module(
+    register_submodule(
+        py,
         &vocab,
+        "oxiland.vocab",
         "dc",
         &[
             ("NS", dc::NS),
-            ("title", "http://purl.org/dc/terms/title"),
-            ("creator", "http://purl.org/dc/terms/creator"),
+            ("title", dc::title().as_str()),
+            ("creator", dc::creator().as_str()),
         ],
     )?;
-    m.add_submodule(&vocab)?;
-    let _ = (
-        rdf::type_(),
-        rdfs::label(),
-        xsd::string(),
-        owl::class(),
-        dc::title(),
-    );
+
+    // Maturin editable/wheel layouts may expose the extension as
+    // `oxiland.oxiland` while the import root is package `oxiland`.
+    m.setattr("vocab", &vocab)?;
+    if let Ok(pkg) = sys_modules.get_item("oxiland") {
+        let _ = pkg.setattr("vocab", &vocab);
+    }
     Ok(())
 }

@@ -91,10 +91,11 @@ See [cli.md](../users/cli.md) and [redland-symbol-map.md](redland-symbol-map.md)
 ## C source and ABI
 
 Not available. A separately audited `oxiland-capi` is planned no earlier than
-0.8 ([ADR-002](../DECISIONS.md)). A Pythonic PyPI package is planned for 0.7 and
-binds the safe Rust facade directly—not a mechanical port of every Rust
-builder, and not layered on the C ABI. Do not schedule a binary drop-in C
-migration on 0.4 timelines for storage; keep C ABI on 0.8+.
+0.8 ([ADR-002](../DECISIONS.md)). A Pythonic PyPI package **ships in 0.7**
+(`pip install oxiland`) and binds the safe Rust facade directly—not a
+mechanical port of every Rust builder, and not layered on the C ABI. Do not
+schedule a binary drop-in C migration on 0.4 timelines for storage; keep C ABI
+on 0.8+.
 
 ## Suggested migration sequence
 
@@ -103,4 +104,4 @@ migration on 0.4 timelines for storage; keep C ABI on 0.8+.
    inventory (no unclassified symbols).
 3. Port tests to Oxiland public APIs with differential fixtures where needed.
 4. Keep native Redland as an oracle for contested behavior until fixtures pass.
-5. Defer Python package and C ABI work until their milestones.
+5. Prefer the 0.7 PyPI package for Python callers; keep C ABI work on 0.8+.

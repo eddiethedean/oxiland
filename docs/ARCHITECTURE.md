@@ -53,7 +53,7 @@ oxiland/
 ├── src/                 Safe Rust facade
 ├── tests/               Rust integration tests
 ├── docs/                Plans and compatibility documentation
-├── python/              Pythonic PyPI package (0.7+; name TBD)
+├── python/              Pythonic PyPI package (`oxiland`, 0.7+)
 ├── crates/
 │   ├── oxiland-capi/    C ABI and opaque handle management (0.8+)
 │   └── oxiland-cli/     rdfproc-compatible workflows (0.6+)

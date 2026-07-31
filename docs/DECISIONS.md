@@ -46,8 +46,8 @@ code, while the primary Rust API can remain safe.
 
 Decision: keep the main `oxiland` crate free of unsafe code. Introduce
 `oxiland-capi` no earlier than 0.8 as the only legacy C ABI boundary. The
-planned Python package (roadmap 0.7) binds the safe Rust crate directly and is
-not layered on `oxiland-capi`.
+Python package (ships 0.7) binds the safe Rust crate directly and is not layered
+on `oxiland-capi`.
 
 Consequences:
 
@@ -342,8 +342,12 @@ Decision:
 - Map `Error` variants (`src/error.rs`) to a typed exception hierarchy under
   `OxilandError` (not stringly-only failures).
 - Accept `pathlib.Path` / path-like and `str`/`bytes` for file and buffer I/O.
-- Support CPython **3.10–3.13**; wheel matrix via cibuildwheel (manylinux
-  x86_64/aarch64, macOS x86_64/aarch64, Windows x86_64).
+- Support CPython **3.10–3.13**; wheel builds via **maturin-action** on
+  ubuntu/macOS/windows hosts (CPython 3.10–3.13). Residual platforms
+  (dedicated aarch64 manylinux runners, etc.) remain optional expansions;
+  0.7.0 publishes **wheels only** (`maturin publish --no-sdist`) because the
+  path dependency on the Rust crate cannot ship a usable sdist from `python/`
+  alone.
 - **Defer rdflib interop** for 0.7 (no convert helpers, no store adapter, no
   behavioral-identity claim). Revisit in a later ADR if needed.
 - Do **not** claim Redland Python binding drop-in compatibility or CPython ABI

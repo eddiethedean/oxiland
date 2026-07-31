@@ -13,7 +13,7 @@ Pythonic PyPI package over the frozen safe Rust facade (ADR-017).
 
 ### Added
 
-- `python/` maturin + PyO3 package published as `oxiland` on PyPI
+- `python/` maturin + PyO3 package packaged for PyPI as `oxiland`
 - Idiomatic Python APIs for terms, `Model`, parse/serialize, SPARQL
   query/update, transactions, and curated digests/vocab helpers
 - Typed exception hierarchy aligned with Rust `Error` categories

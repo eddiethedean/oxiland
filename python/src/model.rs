@@ -295,6 +295,7 @@ impl PyTransaction {
 
     #[pyo3(signature = (statement, graph=None))]
     fn add(&self, statement: &Bound<'_, PyAny>, graph: Option<&Bound<'_, PyAny>>) -> PyResult<()> {
+        self.ensure_entered()?;
         let triple = extract_triple(statement)?;
         let graph_name = match graph {
             None => OxGraphName::DefaultGraph,
@@ -306,6 +307,7 @@ impl PyTransaction {
     }
 
     fn insert_quad(&self, quad: &PyQuad) -> PyResult<()> {
+        self.ensure_entered()?;
         self.ops
             .lock()
             .unwrap()
@@ -319,6 +321,7 @@ impl PyTransaction {
         statement: &Bound<'_, PyAny>,
         graph: Option<&Bound<'_, PyAny>>,
     ) -> PyResult<()> {
+        self.ensure_entered()?;
         let triple = extract_triple(statement)?;
         let graph_name = match graph {
             None => OxGraphName::DefaultGraph,
@@ -329,16 +332,38 @@ impl PyTransaction {
         Ok(())
     }
 
+    fn remove_quad(&self, quad: &PyQuad) -> PyResult<()> {
+        self.ensure_entered()?;
+        self.ops
+            .lock()
+            .unwrap()
+            .push(TxnOp::Remove(quad.inner.clone()));
+        Ok(())
+    }
+
     fn clear(&self) -> PyResult<()> {
+        self.ensure_entered()?;
         self.ops.lock().unwrap().push(TxnOp::Clear);
         Ok(())
     }
 
     fn clear_graph(&self, graph: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.ensure_entered()?;
         self.ops
             .lock()
             .unwrap()
             .push(TxnOp::ClearGraph(extract_graph_name(graph)?));
+        Ok(())
+    }
+}
+
+impl PyTransaction {
+    fn ensure_entered(&self) -> PyResult<()> {
+        if !self.entered {
+            return Err(map_error(oxiland::Error::Unsupported(
+                "transaction methods require an active `with model.transaction()` block".into(),
+            )));
+        }
         Ok(())
     }
 }

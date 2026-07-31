@@ -37,7 +37,6 @@ Repository = "https://github.com/eddiethedean/oxiland"
 [tool.maturin]
 features = ["pyo3/extension-module"]
 module-name = "oxiland"
-include = ["oxiland.pyi", "py.typed", "LICENSE-APACHE", "LICENSE-MIT"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

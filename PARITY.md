@@ -68,7 +68,7 @@ See [`docs/reports/0.6.md`](docs/reports/0.6.md).
 - Inventory: full 0.6 header-derived manifest + curated 0.1–0.5 slices.
 - Integration tests + `tests/accounting.rs` + `oxiland-cli` tests.
 - CLI smoke: `compatibility/harness/cli_smoke.py`.
-- Public API snapshot + `cargo semver-checks` vs 0.5.0.
+- Public API snapshot + `cargo semver-checks` vs 0.6.0.
 - ADR-004–ADR-021 accepted as applicable.
 - Oxigraph 0.5.9 remains pinned with default features disabled.
 
