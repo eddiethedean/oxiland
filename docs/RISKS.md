@@ -35,6 +35,7 @@ can never recur. `closed` requires the underlying exposure to be removed.
 | R-018 | Format aliases or auto-detection select the wrong syntax | M | M | `monitoring` | RDF/SPARQL | closed Syntax table, ADR-008 | alias collision or misleading extension/MIME | require explicit format and publish corrected mapping |
 | R-019 | Planning outruns implementation and evidence | M | H | `active` | Documentation | separate charter/roadmap/milestone/parity authority | planned feature described as available | correct claim and add consistency check/review gate |
 | R-020 | Oxigraph 0.5.9 pins vulnerable `quick-xml` 0.37 in RDF/XML and SPARQL XML paths | M | H | `active` | Safe API | Tip/release CI share a narrow, self-expiring ignore for RUSTSEC-2026-0194/0195 verified by `scripts/check-security-exceptions.py` | Oxigraph releases a line that accepts `quick-xml` 0.41+ (main already uses 0.41) | upgrade Oxigraph under the full compatibility suite; remove the tip ignores |
+| R-021 | Optional storage engines weaken durability or strand backend-specific data | M | H | `active` | Storage | ADR-022, sealed adapter, shared conformance/crash matrix, versioned layout markers, RDF export path | first non-Fjall adapter, dependency removal, wrong-backend open, or divergent transaction result | do not promote/freeze the adapter; preserve its reader/export feature and migrate through standards RDF |
 
 ## Release-blocking rule
 
@@ -71,7 +72,9 @@ package (0.7) remains a monitoring item for wheel/pytest regressions. Safe-API
 accounting from 0.6 remains a monitoring item. Stream, utility, and logging
 risks for the curated 0.5 slice were addressed under ADR-013–ADR-016 and remain
 monitoring items. Storage/transaction risks under ADR-006 were addressed in 0.4
-(format v1 + migrate). Query/result risks R-001, R-006, R-007, R-008, R-010, and
+(format v1 + migrate); proposed ADR-022 reopens storage architecture work, so
+R-021 is active before any additional backend is promoted. Query/result risks
+R-001, R-006, R-007, R-008, R-010, and
 R-012 were addressed for the 0.3 facade slice and remain monitoring items.
 R-017 and R-018 remain monitoring items under ADR-007 and ADR-008. R-003 remains
 monitored under ADR-004. R-020 remains active for 0.7.0: PyO3 was upgraded to 0.29.0, but the remaining

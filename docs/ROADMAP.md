@@ -4,7 +4,8 @@ Status: active
 Applies to: Oxiland 0.1 through 0.10  
 Companion plans: [architecture](ARCHITECTURE.md),
 [compatibility](COMPATIBILITY.md), [verification](VERIFICATION.md), and
-[execution](EXECUTION.md)
+[execution](EXECUTION.md). Durable backend expansion is specified separately in
+the [storage backend plan](design/storage-backend-expansion.md).
 
 The 0.x series is compatibility-driven. Minor versions may change Rust APIs,
 but every breaking change requires migration notes, and RDF/SPARQL behavior
@@ -33,6 +34,13 @@ only after the evidence links are added to the root
 0.7 may begin design against the 0.4 storage contract, but it is sequenced after
 0.6 so the Python surface maps a reviewed safe Rust API rather than a moving
 facade. 0.8 (C ABI) remains gated on 0.6 independently of Python.
+
+Storage backend expansion is a cross-cutting 0.8–0.10 track. 0.8 extracts and
+proves a backend-neutral durable adapter before the C ABI freezes backend
+selection; 0.9 implements and validates optional adapters; 0.10 stabilizes the
+supported matrix and its migration guarantees. Fjall remains the default and
+format-v1 compatibility baseline throughout this work.
+
 ## Rules for every milestone
 
 Each release must:
@@ -312,6 +320,10 @@ compatibility library.
 Deliverables:
 
 - A separate `oxiland-capi` workspace crate.
+- A sealed durable-store adapter boundary with Fjall running through it; no
+  backend-native type crosses the safe facade or C ABI.
+- Typed backend selection and availability/capability discovery that can name a
+  known but disabled optional adapter without treating it as an unknown store.
 - Generated `librdf.h`-compatible declarations.
 - Opaque handles, allocation rules, callbacks, and error translation.
 - `cdylib` and `staticlib` artifacts.
@@ -328,6 +340,9 @@ Evidence gates:
 - Every exported pointer type has allocation, aliasing, and destruction tests.
 - Null, invalid UTF-8, callback re-entry, and double-free defenses are tested.
 - No `unsafe` block lacks a local safety argument.
+- The existing Fjall format-v1 and storage transaction suites pass through the
+  common backend conformance harness.
+- The default build remains free of native C/C++ storage dependencies.
 
 Depends on: 0.6 safe API accounting and stable ownership semantics.
 
@@ -338,6 +353,13 @@ Outcome: prove broad source and behavioral compatibility using real consumers.
 Deliverables:
 
 - Complete applicable C symbol implementations.
+- First-party optional storage adapters for redb, RocksDB, SQLite, and LMDB,
+  each behind an explicit Cargo feature and selected through the common API.
+- Evidence-backed promote/defer/reject decisions for sled, LevelDB, MDBX, and
+  SurrealKV; no evaluation backend is advertised as supported before it passes
+  the common crash, reopen, transaction, and platform gates.
+- Consistent backend selection and capability discovery in Rust, the CLI,
+  Python, and C, plus standards-RDF and evaluated direct-copy migration paths.
 - Differential harnesses that execute the same cases against both libraries.
 - Builds of selected Redland language bindings and downstream applications.
 - Performance and memory baselines.
@@ -354,6 +376,10 @@ Evidence gates:
 - Source and ABI claims are separately measured on each supported platform.
 - Performance regressions above agreed budgets have decisions, not silent
   waivers.
+- Every promoted storage adapter passes the shared conformance suite and its
+  documented feature/platform build matrix.
+- Opening a store with the wrong backend fails before any files are initialized
+  or mutated.
 
 Depends on: a sanitizer-clean 0.8 ABI preview.
 
@@ -364,6 +390,10 @@ Outcome: freeze and validate the design intended for 1.0.
 Deliverables:
 
 - API and ABI stabilization (Rust, Python package, and C where promised).
+- Freeze the supported storage backend identities, feature names,
+  `StorageCapabilities`, and per-backend layout-reader policy intended for 1.0.
+- Accept or reject a safe public custom-backend trait after the sealed adapter
+  has been exercised by the first-party matrix.
 - Cross-platform packaging and installation documentation.
 - Upgrade guide for Redland users.
 - Security, fuzzing, interoperability, and performance hardening.
@@ -381,6 +411,8 @@ Evidence gates:
 - No release-blocking item remains in the risk register.
 - A clean environment can install, link, execute, and uninstall every artifact.
 - At least one release-candidate soak period completes without an ABI reset.
+- Every supported durable layout has a tested reader/export path, and removing
+  an adapter cannot strand the only readable copy of user data.
 
 ## 1.0 readiness
 

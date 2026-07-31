@@ -114,9 +114,13 @@ The detailed acceptance criteria and dependency map live in the
 ### Immediate next actions
 
 1. Begin 0.8 C ABI preview design against the frozen 0.6/0.7 facade.
-2. Keep Python wheels/pytest green on main as the 0.7 surface evolves in patches.
-3. Expand SPARQL differential fixtures beyond the facade smoke harness.
-4. Keep format v1 / ADR-006 migration notes current as later milestones land.
+2. Resolve proposed ADR-022 and extract Fjall behind the sealed durable-store
+   adapter before the C ABI freezes storage selection.
+3. Build the reusable backend conformance harness from the existing Fjall
+   reopen, transaction, failure, and concurrency tests.
+4. Keep Python wheels/pytest green on main as the 0.7 surface evolves in patches.
+5. Expand SPARQL differential fixtures beyond the facade smoke harness.
+6. Keep format v1 / ADR-006 migration notes current as later milestones land.
 
 ## Completed 0.7 backlog
 
@@ -149,8 +153,22 @@ The detailed acceptance criteria and dependency map live in the
 
 ## Current 0.8 backlog
 
-See the [roadmap 0.8 section](ROADMAP.md). Work-package details expand as design
-spikes land.
+See the [roadmap 0.8 section](ROADMAP.md) and the
+[storage backend expansion plan](design/storage-backend-expansion.md).
+
+| Priority | Deliverable | Exit evidence |
+|---:|---|---|
+| P0 | C ABI handle and ownership design | C handle matrix and panic/allocator contract reviewed |
+| P0 | SB-01 backend contract / ADR-022 | Adapter invariants, selection API, capability semantics, and format policy accepted |
+| P0 | SB-02 Fjall adapter extraction | Unchanged format-v1 reopen/migration tests pass through the adapter |
+| P0 | SB-03 backend conformance harness | Memory and Fjall run through a reusable registered-backend suite |
+| P1 | Backend identity across Rust/C/Python/CLI | Known-disabled, unknown, wrong-layout, and capability cases have one canonical registry |
+| P1 | redb integration spike | MSRV, locking, read-only, batch atomicity, crash, and packaging findings recorded for 0.9 |
+
+The 0.9 storage queue is redb, RocksDB, SQLite, and LMDB as first-party
+optional adapters. sled, LevelDB, MDBX, and SurrealKV receive bounded
+evaluation packages and are promoted only with the same conformance evidence.
+Native adapters never enter default features.
 
 ## Completed 0.6 backlog
 

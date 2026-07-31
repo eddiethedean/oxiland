@@ -88,6 +88,7 @@ nav:
       - Contributing: contributing.md
       - Charter: CHARTER.md
       - Roadmap: ROADMAP.md
+      - Storage backend plan: design/storage-backend-expansion.md
       - Execution: EXECUTION.md
       - Architecture: ARCHITECTURE.md
       - Verification: VERIFICATION.md

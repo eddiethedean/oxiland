@@ -75,7 +75,8 @@ automation. Planned for later milestones: `crates/oxiland-capi` and a dedicated
 | Component | Owns | Must not own |
 |---|---|---|
 | `terms` | RDF type exports and compatibility constructors | storage or parsing |
-| `model` | datasets, contexts, storage, transactions, streams | syntax detection |
+| `model` | datasets, contexts, transactions, streams, and backend-independent persistence policy | syntax detection or native engine calls |
+| `storage` | backend identities, open options, capabilities, and the sealed durable adapter boundary | RDF/SPARQL semantics or silent backend substitution |
 | `io` | parser/serializer configuration and byte I/O | persistent-store policy |
 | `query` | query/update configuration and result adapters | C allocation |
 | `world` | factories, shared features, and logging hooks | global mutable runtime |
@@ -176,6 +177,13 @@ API, decide whether it can be soundly represented as:
 Factory names are data in Redland programs. Unknown names must produce an
 explicit error and preserved diagnostic context.
 
+Durable storage follows the staged
+[backend expansion plan](design/storage-backend-expansion.md): extract a sealed
+adapter and conformance harness in 0.8, add optional first-party engines in 0.9,
+then decide whether a public user-supplied backend trait is supportable before
+0.10. This revisits ADR-006 without weakening its Fjall format-v1 promise or
+ADR-018's rejection of arbitrary native plug-in registration.
+
 ## Dependency policy
 
 Oxigraph is pinned intentionally within each Oxiland release. Upgrades require
@@ -201,6 +209,9 @@ not reverse an accepted decision only through code changes.
 ## Open architecture questions
 
 - Which C handles need reference counting to reproduce observed aliasing?
+- Can the sealed durable-store adapter become a public custom-backend trait
+  without freezing engine-specific lifetimes, transactions, or unsafe open
+  requirements into the 1.0 facade (proposed ADR-022)?
 
 Resolved recently: Redland factory registration disposition for safe Rust
 (ADR-018); `oxiland-cli` rdfproc workflows (ADR-019); naming freeze intent

@@ -32,6 +32,7 @@ tradeoffs are reviewed.
 | [ADR-019](#adr-019-oxiland-cli-rdfproc-workflow-surface) | `oxiland-cli` rdfproc workflow surface |
 | [ADR-020](#adr-020-10-naming-and-module-freeze-intent) | 1.0 naming and module freeze intent |
 | [ADR-021](#adr-021-header-derived-inventory-generation) | Header-derived inventory generation |
+| [ADR-022](#adr-022-sealed-durable-adapter-and-optional-backend-matrix) | Sealed durable adapter and optional backend matrix |
 
 ## Decision states
 
@@ -341,7 +342,63 @@ Revisit when: a first-class timeout API is required for C consumers.
 
 ## Proposed decisions
 
-_(none)_
+### ADR-022 — Sealed durable adapter and optional backend matrix
+
+State: proposed
+Decision deadline: before the first 0.8 storage/C ABI implementation slice
+
+Context: ADR-006 made Fjall the only supported durable engine and explicitly
+set this revisit trigger. Applications may need a different embedded
+key-value engine for pure-Rust policy, existing native dependencies,
+operational tooling, file layout, or workload characteristics. Adding engine
+branches directly to `Model` would duplicate transaction/error behavior and
+freeze backend details into the future C ABI.
+
+Proposed decision:
+
+- Extract Fjall behind a private sealed durable-store adapter and make its
+  existing format-v1 suite the initial conformance baseline.
+- Keep `Model::open(path)` selecting Fjall for compatibility; add explicit
+  typed backend selection through `OpenOptions`.
+- Plan first-party optional adapters for redb, RocksDB, SQLite, and LMDB. Keep
+  native engines out of default features.
+- Run bounded promotion evaluations for sled, LevelDB, MDBX, and SurrealKV
+  because they fit the embedded byte-key model but have stability, binding,
+  capability, or packaging questions.
+- Require atomic batch commit, durable sync, full scan, layout validation,
+  crash recovery, and common error/capability semantics from every promoted
+  backend.
+- Preserve standards RDF as the cross-backend archive. Native directories are
+  neither auto-detected nor treated as mutually portable.
+- Decide separately before 0.10 whether the proven sealed adapter can become a
+  safe public user-supplied trait. Dynamic native plug-in loading remains out
+  of scope.
+
+Alternatives:
+
+- Keep Fjall as the only durable engine.
+- Add one-off engine-specific `Model` implementations and constructors.
+- Publish a custom backend trait immediately, before multiple implementations
+  have tested its semantic and object-safety boundary.
+- Treat remote/server databases as if they obeyed the local synchronous path
+  contract.
+
+Consequences:
+
+- Storage selection becomes a 0.8–0.10 cross-cutting track and must be designed
+  before C ABI backend identifiers stabilize.
+- The CI and package matrix grows only for explicitly enabled adapters.
+- A popular engine can still be deferred or rejected if it cannot satisfy the
+  common durability contract; canonical names never silently fall back.
+- Existing Fjall users keep their constructor and format-v1 reader.
+
+Planned evidence:
+[storage backend expansion plan](design/storage-backend-expansion.md), sealed
+adapter prototype, shared backend conformance tests, dependency/platform
+reviews, and per-evaluation promotion records.
+
+Revisit when: the 0.8 adapter and conformance harness are complete, before each
+0.9 adapter promotion, and at the 0.10 public-trait/API freeze decision.
 
 ## Accepted decisions (continued)
 
