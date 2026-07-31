@@ -15,7 +15,7 @@ and evidence process on top of the same engine. See
 ## Is Oxiland “Redland-compatible”?
 
 Only in evidence-scoped senses documented in the [parity ledger](../parity.md). It is
-**not** C source/ABI compatible in 0.4, and not a 100% `librdf` port. crates.io
+**not** C source/ABI compatible in 0.5, and not a 100% `librdf` port. crates.io
 describes Redland-*shaped* workflows, not drop-in parity.
 
 ## What does “Verified” mean in the parity ledger?
@@ -48,8 +48,9 @@ Default `GraphTarget::DefaultGraph` **rejects** named-graph input. Use
 
 ASK, SELECT, CONSTRUCT, DESCRIBE, Update, dataset selection, limit/offset, and
 SPARQL Results serialization shipped in **0.3**. Durable on-disk contracts and
-storage transactions shipped in **0.4**. A Pythonic PyPI package is planned for
-**0.7** (not a 1:1 Rust port). Track [milestones](../milestones/0.3.md) and the
+storage transactions shipped in **0.4**. Utilities, digests, vocabulary helpers,
+and World logging shipped in **0.5**. A Pythonic PyPI package is planned for
+**0.7** (not a 1:1 Rust port). Track [milestones](../milestones/0.5.md) and the
 [roadmap](../ROADMAP.md).
 
 ## Where do I report bugs or security issues?

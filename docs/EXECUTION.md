@@ -1,7 +1,7 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 0.5 (0.4 complete)
+Current milestone: 0.6 (0.5 complete)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -113,9 +113,19 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Begin 0.5 streams/utilities/observability design and inventory.
+1. Begin 0.6 safe-API accounting inventory expansion.
 2. Expand SPARQL differential fixtures beyond the facade smoke harness.
-3. Keep format v1 / ADR-006 migration notes current as 0.5 lands.
+3. Keep format v1 / ADR-006 migration notes current as later milestones land.
+
+## Completed 0.5 backlog
+
+| Priority | Deliverable | Notes |
+|---:|---|---|
+| P0 | ADR-013–ADR-016 | Streams policy, logging, digests, hash/list |
+| P0 | Utility module | URI/file/Unicode/digest/namespace/vocab |
+| P0 | World logging | Handlers + optional `tracing` |
+| P1 | Inventory + digest smoke | `redland-1.0.17-oxiland-0.5.json` |
+| P2 | Migration example | `examples/std_replacements.rs` |
 
 ## Completed 0.4 backlog
 
@@ -126,9 +136,9 @@ The detailed acceptance criteria and dependency map live in the
 | P1 | Storage capability reporting | `StorageCapabilities` + legacy disposition |
 | P2 | Import/export for archival | N-Quads helpers + transactional load |
 
-## Current 0.5 backlog
+## Current 0.6 backlog
 
-See the [roadmap 0.5 section](ROADMAP.md). Work-package details expand as design
+See the [roadmap 0.6 section](ROADMAP.md). Work-package details expand as design
 spikes land.
 
 ## Completed 0.3 backlog

@@ -2,7 +2,7 @@
 
 Status: active design baseline  
 Current implementation: single `oxiland` crate on Oxigraph 0.5.9  
-Next review gate: before expanding stream/utility contracts in 0.5
+Next review gate: before expanding safe-API accounting contracts in 0.6
 
 This document specifies dependency direction and safety boundaries. It does not
 claim that planned crates or modules already exist.
@@ -194,6 +194,7 @@ not reverse an accepted decision only through code changes.
 ## Open architecture questions
 
 - What stream/utility surface is required for 0.5 Redland workflow parity?
+  (Resolved in 0.5; see ADR-013–ADR-016 and `docs/design/0.5-streams-utilities.md`.)
 - Can query cancellation be implemented without modifying Oxigraph?
   (Resolved in 0.3 via Oxigraph `CancellationToken`; see ADR-012.)
 - Which Redland factory registrations are safe and useful in Rust?

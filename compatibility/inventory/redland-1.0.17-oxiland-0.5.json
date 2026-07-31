@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "milestone": "0.5",
+  "redland_api": "1.0.17",
+  "redland_manual": "1.0.18",
+  "oxiland_version": "0.5.0",
+  "oxigraph_version": "0.5.9",
+  "generated_by": "scripts/check-inventory.py",
+  "notes": "0.5 curated inventory slice for streams policy, utilities, digests, vocab, logging, and hash/list disposition (ADR-013–ADR-016).",
+  "entries": [
+    {
+      "id": "librdf.stream.policy",
+      "symbol": "librdf_stream / iterator early stop",
+      "kind": "function",
+      "subsystem": "streams",
+      "safe_rust": "StatementMatches / QuadStream / QueryResults (ADR-013)",
+      "implementation": "docs/design/0.5-streams-utilities.md",
+      "tests": [
+        "tests/utility.rs::find_early_stop_evidence_matrix",
+        "tests/model.rs::find_streams_without_full_materialization",
+        "tests/io.rs::parser_streams_and_supports_early_stop",
+        "tests/query.rs::select_and_construct_support_early_stop"
+      ],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.uri.join",
+      "symbol": "librdf_uri helpers / resolve",
+      "kind": "function",
+      "subsystem": "uri",
+      "safe_rust": "utility::join_iri / relativize_iri / resolve_iri",
+      "implementation": "src/utility/uri.rs",
+      "tests": ["tests/utility.rs::uri_join_and_relativize"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.uri.filename",
+      "symbol": "librdf_uri filename / file URI",
+      "kind": "function",
+      "subsystem": "uri",
+      "safe_rust": "utility::path_to_file_uri / file_uri_to_path",
+      "implementation": "src/utility/uri.rs",
+      "tests": ["tests/utility.rs::file_uri_round_trip"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.unicode.normalize",
+      "symbol": "librdf unicode helpers",
+      "kind": "function",
+      "subsystem": "unicode",
+      "safe_rust": "utility::normalize_nfc / normalize_nfkc",
+      "implementation": "src/utility/unicode.rs",
+      "tests": ["tests/utility.rs::unicode_normalization_helpers"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.digest.md5_sha",
+      "symbol": "librdf_digest factories",
+      "kind": "function",
+      "subsystem": "digests",
+      "safe_rust": "utility::DigestAlgorithm / digest_bytes / digest_hex / digest_path",
+      "implementation": "src/utility/digest.rs",
+      "tests": [
+        "tests/utility.rs::digest_hex_known_vectors",
+        "tests/utility.rs::digest_from_name_and_unsupported",
+        "tests/utility.rs::digest_path_reads_file"
+      ],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.namespace.prefix",
+      "symbol": "librdf_serializer namespaces / prefixes",
+      "kind": "function",
+      "subsystem": "namespaces",
+      "safe_rust": "utility::Namespace + utility::vocab",
+      "implementation": "src/utility/namespace.rs",
+      "tests": ["tests/utility.rs::namespace_expand_and_vocab_constants"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.world.log",
+      "symbol": "librdf_world log levels / handlers",
+      "kind": "function",
+      "subsystem": "logging",
+      "safe_rust": "World::set_log_handler / log / LogLevel / LogFacility",
+      "implementation": "src/world.rs",
+      "tests": [
+        "tests/utility.rs::logging_filters_and_preserves_order",
+        "tests/utility.rs::world_clones_share_log_handler"
+      ],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.hash.map",
+      "symbol": "librdf_hash",
+      "kind": "type",
+      "subsystem": "hashes",
+      "safe_rust": "std::collections::HashMap (ADR-016)",
+      "implementation": "examples/std_replacements.rs",
+      "tests": ["tests/utility.rs::hash_list_std_replacements_documented"],
+      "state": "not-applicable",
+      "notes": "Use HashMap; see migration-from-redland.md."
+    },
+    {
+      "id": "librdf.list.seq",
+      "symbol": "librdf_list",
+      "kind": "type",
+      "subsystem": "lists",
+      "safe_rust": "Vec / Iterator (ADR-016)",
+      "implementation": "examples/std_replacements.rs",
+      "tests": ["tests/utility.rs::hash_list_std_replacements_documented"],
+      "state": "not-applicable",
+      "notes": "Use Vec and Rust iterators."
+    },
+    {
+      "id": "librdf.memory.free",
+      "symbol": "librdf_free_* manual memory",
+      "kind": "function",
+      "subsystem": "memory",
+      "safe_rust": "RAII Drop / ownership (ADR-016)",
+      "implementation": "docs/evaluators/migration-from-redland.md",
+      "tests": ["tests/utility.rs::hash_list_std_replacements_documented"],
+      "state": "not-applicable",
+      "notes": "No free functions; Rust ownership replaces manual free."
+    }
+  ]
+}

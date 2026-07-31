@@ -7,7 +7,7 @@ accounting goal). Inventories remain authoritative for claimed rows:
 - [0.1 core inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
 - [0.2 I/O inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.2.json)
 - [0.3 query inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.3.json)
-- [0.4 storage inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.4.json)
+- [0.5 storage/utilities inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.5.json)
 
 ## Mindset
 
@@ -57,6 +57,21 @@ Design detail: [docs/design/0.2-io-api.md](../design/0.2-io-api.md).
 | Cancel | `CancellationToken` (wall-clock timeout is caller-driven) |
 
 Design detail: [docs/design/0.3-query-api.md](../design/0.3-query-api.md).
+
+## Utilities, digests, logging (0.5)
+
+| Redland concept | Oxiland |
+|---|---|
+| Digests (MD5/SHA) | `utility::DigestAlgorithm`, `digest_hex` / `digest_path` |
+| URI join / file URI | `utility::join_iri`, `path_to_file_uri`, `file_uri_to_path` |
+| Unicode normalize | `utility::normalize_nfc` / `normalize_nfkc` |
+| Namespaces / vocab IRIs | `utility::Namespace`, `utility::vocab::{rdf,rdfs,xsd,owl,dc}` |
+| World logging | `World::set_log_handler`, `LogLevel`, `LogFacility` (optional feature `tracing`) |
+| `librdf_hash` | **not-applicable** — use `std::collections::HashMap` (ADR-016) |
+| `librdf_list` | **not-applicable** — use `Vec` / iterators (ADR-016) |
+| `librdf_free_*` | **not-applicable** — Rust ownership / `Drop` |
+
+Demo: `cargo run --example std_replacements`.
 
 ## C source and ABI
 

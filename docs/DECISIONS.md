@@ -373,6 +373,95 @@ Evidence: `docs/design/0.4-storage-api.md`, `src/persist.rs`,
 
 Revisit when: introducing format v2 or a second durable backend.
 
+### ADR-013 — Shared streaming policy without a unifying trait
+
+State: accepted  
+Date: 2026-07-30  
+Milestone: 0.5
+
+Context: ADR-005 and ADR-010 left open whether find/parse/query streams should
+share a trait. Three mature iterator shapes already exist.
+
+Decision: document a shared fallible-iterator policy (lazy
+`Iterator<Item = Result<_>>`, early-stop by drop) without introducing a unifying
+trait. Lending iterators and Redland callback visitors remain deferred.
+
+Alternatives: unifying `FallibleStream` trait; callback visitors.
+
+Consequences: no API churn for existing streams; 0.5 inventory verifies the
+policy via early-stop tests. C ABI stream handles remain 0.8.
+
+Evidence: `docs/design/0.5-streams-utilities.md`, `docs/users/streams.md`,
+`tests/model.rs`, `tests/io.rs`, `tests/query.rs`.
+
+Revisit when: C ABI or inventory forces a shared trait.
+
+### ADR-014 — World logging facade and optional tracing
+
+State: accepted  
+Date: 2026-07-30  
+Milestone: 0.5
+
+Context: Redland exposes log levels/facilities and callbacks. Oxiland needs a
+safe Rust equivalent without a global mutable logger.
+
+Decision: attach logging to `World` (`LogLevel`, `LogFacility`,
+`set_log_handler`, `log`). Clones share handler state. Optional Cargo feature
+`tracing` also emits `tracing` events. Callback ordering is synchronous and
+deterministic for a single composed handler.
+
+Alternatives: `log` crate only; process-global logger; no callbacks.
+
+Consequences: tests can assert ordering; apps opt into `tracing` when desired.
+
+Evidence: `src/world.rs`, `tests/utility.rs`.
+
+Revisit when: async/structured logging requirements exceed sync callbacks.
+
+### ADR-015 — Closed digest algorithm set
+
+State: accepted  
+Date: 2026-07-30  
+Milestone: 0.5
+
+Context: Redland digests include MD5/SHA family helpers used in workflows, not
+only security contexts.
+
+Decision: support `md5`, `sha1`, and `sha256` via `utility::DigestAlgorithm`.
+Unknown names return `Error::Unsupported`. Digests are always available in the
+default build.
+
+Alternatives: feature-gated crypto; OpenSSL bindings; open-ended algorithm
+registry.
+
+Consequences: small always-on deps (`md-5`, `sha1`, `sha2`); security-sensitive
+callers should prefer SHA-256.
+
+Evidence: `src/utility/digest.rs`, `tests/utility.rs`.
+
+Revisit when: inventory requires additional algorithms.
+
+### ADR-016 — Hashes and lists map to standard Rust collections
+
+State: accepted  
+Date: 2026-07-30  
+Milestone: 0.5
+
+Context: Redland ships custom hash and list types tied to manual memory.
+
+Decision: inventory curated hash/list/manual-memory symbols as
+`not-applicable`. Callers use `HashMap`, `Vec`, and Rust iterators. Migration
+examples document the mapping; Oxiland does not ship collection wrappers.
+
+Alternatives: thin wrapper types; retain Redland-shaped mutable lists.
+
+Consequences: simpler API; 0.6 accounting still lists remaining symbols.
+
+Evidence: `docs/evaluators/migration-from-redland.md`,
+`examples/std_replacements.rs`, inventory 0.5 `not-applicable` rows.
+
+Revisit when: C ABI needs explicit list/hash handles.
+
 ## ADR template
 
 ```markdown

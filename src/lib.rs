@@ -36,6 +36,7 @@ mod model;
 mod persist;
 mod query;
 pub mod storage;
+pub mod utility;
 mod world;
 
 pub use error::{Error, ParseError, Result};
@@ -45,7 +46,7 @@ pub use query::{
     serialize_query_results_to_string, serialize_query_results_to_writer,
 };
 pub use storage::{OpenOptions, StorageBackend, StorageCapabilities};
-pub use world::{FeatureValue, World};
+pub use world::{FeatureValue, LogFacility, LogLevel, LogRecord, World};
 
 /// RDF term, triple, quad, and graph-name types used by Oxiland.
 ///

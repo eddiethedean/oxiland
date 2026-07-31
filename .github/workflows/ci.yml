@@ -55,6 +55,7 @@ jobs:
           cargo run --example construct
           cargo run --example update
           cargo run --example persistent_transaction
+          cargo run --example std_replacements
 
       - name: Inventory
         run: python3 scripts/check-inventory.py
@@ -78,6 +79,9 @@ jobs:
 
       - name: SPARQL facade smoke
         run: python3 compatibility/harness/sparql_smoke.py
+
+      - name: Utility digest smoke
+        run: python3 compatibility/harness/utility_digest_smoke.py
 
   io-conformance:
     name: RDF I/O conformance

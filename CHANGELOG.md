@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-30
+
+Streams policy documentation, utilities, digests, vocabulary helpers, and World
+logging over Oxigraph 0.5.9.
+
+### Added
+
+- Documented fallible-iterator stream policy (ADR-013); user guide
+  `docs/users/streams.md`
+- `oxiland::utility`: URI join/file helpers, Unicode NFC/NFKC, digests
+  (MD5/SHA-1/SHA-256), `Namespace`, curated `vocab` constants (ADR-015)
+- `World` logging: `LogLevel`, `LogFacility`, handlers; optional `tracing`
+  feature (ADR-014)
+- Hash/list → std migration example `std_replacements` (ADR-016)
+- Inventory `redland-1.0.17-oxiland-0.5.json`, design doc, ADRs 013–016
+- Compatibility report `docs/reports/0.5.md`; utility digest smoke harness
+
+### Changed
+
+- crates.io description covers utilities
+- Parity ledger marks digests/logging/heuristics/hashes for 0.5
+
 ## [0.4.0] - 2026-07-30
 
 Durable Fjall storage contract, transactions, and archival helpers over Oxigraph
