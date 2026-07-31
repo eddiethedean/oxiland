@@ -6,6 +6,7 @@ use oxigraph::io::{RdfParseError, RdfParser, RdfSyntaxError, ReaderQuadParser, S
 use oxigraph::model::{GraphName, Quad};
 
 use crate::io::Syntax;
+use crate::io::bom::{BomStrippingReader, strip_utf8_bom_bytes, strip_utf8_bom_str};
 use crate::io::location::SourceLocation;
 use crate::{Error, Model, Result};
 
@@ -56,34 +57,46 @@ impl Parser {
     }
 
     /// Streams quads from any [`Read`] source.
-    pub fn parse_reader<R: Read>(&self, reader: R) -> Result<QuadStream<R>> {
+    ///
+    /// A leading UTF-8 BOM is skipped when present.
+    pub fn parse_reader<R: Read>(&self, reader: R) -> Result<QuadStream<BomStrippingReader<R>>> {
         Ok(QuadStream {
-            inner: QuadStreamInner::Reader(self.build()?.for_reader(reader)),
+            inner: QuadStreamInner::Reader(
+                self.build()?.for_reader(BomStrippingReader::new(reader)),
+            ),
             graph_target: self.graph_target.clone(),
         })
     }
 
     /// Streams quads from an in-memory byte slice.
+    ///
+    /// A leading UTF-8 BOM is skipped when present.
     pub fn parse_slice<'a>(
         &self,
         slice: &'a (impl AsRef<[u8]> + ?Sized),
     ) -> Result<SliceStream<'a>> {
+        let bytes = strip_utf8_bom_bytes(slice.as_ref());
         Ok(SliceStream {
-            inner: self.build()?.for_slice(slice),
+            inner: self.build()?.for_slice(bytes),
             graph_target: self.graph_target.clone(),
         })
     }
 
     /// Streams quads from a UTF-8 string.
+    ///
+    /// A leading Unicode BOM is skipped when present.
     pub fn parse_str<'a>(&self, input: &'a str) -> Result<SliceStream<'a>> {
-        self.parse_slice(input.as_bytes())
+        self.parse_slice(strip_utf8_bom_str(input).as_bytes())
     }
 
     /// Streams quads from a filesystem path.
     ///
     /// The path is diagnostic context only; the caller must select [`Syntax`]
     /// explicitly unless using [`Parser::parse_path_with_extension`].
-    pub fn parse_path(&self, path: impl AsRef<Path>) -> Result<QuadStream<BufReader<File>>> {
+    pub fn parse_path(
+        &self,
+        path: impl AsRef<Path>,
+    ) -> Result<QuadStream<BomStrippingReader<BufReader<File>>>> {
         let path = path.as_ref();
         let file = File::open(path).map_err(|error| io_with_path(error, path))?;
         self.parse_reader(BufReader::new(file))
@@ -96,7 +109,7 @@ impl Parser {
     /// [`GraphTarget::DefaultGraph`].
     pub fn parse_path_with_extension(
         path: impl AsRef<Path>,
-    ) -> Result<(Syntax, QuadStream<BufReader<File>>)> {
+    ) -> Result<(Syntax, QuadStream<BomStrippingReader<BufReader<File>>>)> {
         let path = path.as_ref();
         let extension = path
             .extension()

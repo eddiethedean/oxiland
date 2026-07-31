@@ -2,7 +2,8 @@ use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
+use std::thread::ThreadId;
 
 use oxigraph::io::{RdfFormat, RdfParser, RdfSerializer};
 use oxigraph::model::{
@@ -10,6 +11,7 @@ use oxigraph::model::{
 };
 use oxigraph::store::{QuadIter, Store, Transaction as OxigraphTransaction};
 
+use crate::io::BomStrippingReader;
 use crate::persist::{self, DiskStore};
 use crate::storage::{OpenOptions, StorageBackend, StorageCapabilities};
 use crate::{Error, Result};
@@ -169,6 +171,22 @@ pub struct Model {
     lock: Arc<RwLock<()>>,
     read_only: bool,
     in_transaction: Arc<AtomicBool>,
+    txn_owner: Arc<Mutex<Option<ThreadId>>>,
+}
+
+struct InTransactionGuard<'a> {
+    model: &'a Model,
+}
+
+impl Drop for InTransactionGuard<'_> {
+    fn drop(&mut self) {
+        self.model.in_transaction.store(false, Ordering::Release);
+        *self
+            .model
+            .txn_owner
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = None;
+    }
 }
 
 impl Model {
@@ -181,6 +199,7 @@ impl Model {
                 lock: Arc::new(RwLock::new(())),
                 read_only: false,
                 in_transaction: Arc::new(AtomicBool::new(false)),
+                txn_owner: Arc::new(Mutex::new(None)),
             })
             .map_err(|error| Error::Storage(error.to_string()))
     }
@@ -193,14 +212,23 @@ impl Model {
     /// Opens a persistent model with typed options (ADR-006).
     pub fn open_with(options: OpenOptions) -> Result<Self> {
         let path = options.path();
-        if options.is_read_only() && options.can_create() && !path.exists() {
-            return Err(Error::OpenStore {
-                path: path.to_owned(),
-                message: "read-only open cannot create a missing store".into(),
-            });
+        if options.is_read_only() {
+            if !path.exists() {
+                return Err(Error::OpenStore {
+                    path: path.to_owned(),
+                    message: "read-only open requires an existing store path".into(),
+                });
+            }
+            if !persist::looks_like_fjall_store(path) {
+                return Err(Error::OpenStore {
+                    path: path.to_owned(),
+                    message: "read-only open cannot initialize a new Oxiland store".into(),
+                });
+            }
         }
         let disk = DiskStore::open_with_create(path, options.can_create())?;
-        disk.ensure_format_v1(path)?;
+        let allow_init = !options.is_read_only() && options.can_create();
+        disk.ensure_format_v1(path, allow_init)?;
         let store = Store::new().map_err(|error| Error::OpenStore {
             path: path.to_owned(),
             message: error.to_string(),
@@ -212,14 +240,17 @@ impl Model {
             lock: Arc::new(RwLock::new(())),
             read_only: options.is_read_only(),
             in_transaction: Arc::new(AtomicBool::new(false)),
+            txn_owner: Arc::new(Mutex::new(None)),
         })
     }
 
     /// Migrates a pre-0.4 experimental Fjall directory to format v1, then opens it.
     pub fn migrate_legacy_store(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
-        let disk = DiskStore::open_with_create(path, false)?;
-        disk.migrate_legacy_to_v1()?;
+        {
+            let disk = DiskStore::open_with_create(path, false)?;
+            disk.migrate_legacy_to_v1()?;
+        }
         Self::open_with(OpenOptions::fjall(path))
     }
 
@@ -250,6 +281,11 @@ impl Model {
     }
 
     pub(crate) fn with_read_lock<R>(&self, f: impl FnOnce() -> R) -> R {
+        if self.same_thread_in_transaction() {
+            // Avoid deadlocking on the non-reentrant RwLock held by transaction().
+            // Reads see the committed working set, not uncommitted txn mutations.
+            return f();
+        }
         let _guard = self
             .lock
             .read()
@@ -260,6 +296,17 @@ impl Model {
     /// Reports whether a named storage backend is available in this build.
     pub fn storage_backend_available(name: &str) -> Result<bool> {
         StorageBackend::from_name(name).map(|_| true)
+    }
+
+    fn same_thread_in_transaction(&self) -> bool {
+        if !self.in_transaction.load(Ordering::Acquire) {
+            return false;
+        }
+        let owner = self
+            .txn_owner
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        *owner == Some(std::thread::current().id())
     }
 
     fn ensure_writable(&self) -> Result<()> {
@@ -278,11 +325,25 @@ impl Model {
     }
 
     /// Runs `f` inside an Oxigraph transaction; Fjall models sync on commit.
+    ///
+    /// Same-thread `Model` reads (`len` / `find` / `Query::execute`) during the
+    /// callback see the last committed working set and do not deadlock. Use
+    /// [`ModelTransaction`] methods for in-transaction mutations. Nested
+    /// `transaction` / auto-commit writes return [`Error::Unsupported`].
     pub fn transaction<R>(
         &self,
         f: impl FnOnce(&mut ModelTransaction<'_>) -> Result<R>,
     ) -> Result<R> {
-        self.ensure_writable()?;
+        if self.read_only {
+            return Err(Error::Unsupported(
+                "model was opened read-only; mutating APIs are unavailable".into(),
+            ));
+        }
+        if self.same_thread_in_transaction() {
+            return Err(Error::Unsupported(
+                "nested Model::transaction is unsupported".into(),
+            ));
+        }
         let _guard = self
             .lock
             .write()
@@ -296,37 +357,43 @@ impl Model {
                 "nested Model::transaction is unsupported".into(),
             ));
         }
-        let outcome = (|| {
-            let oxi = self
-                .store
-                .start_transaction()
-                .map_err(|error| Error::Storage(error.to_string()))?;
-            let mut tx = ModelTransaction { inner: oxi };
-            let value = f(&mut tx)?;
-            let ModelTransaction { inner } = tx;
-            inner
-                .commit()
-                .map_err(|error| Error::Storage(error.to_string()))?;
-            if let Some(disk) = &self.disk {
-                if let Err(error) = disk.replace_all_from_store(&self.store) {
-                    if let Err(reload_error) = self.reload_store_from_disk_unlocked(disk) {
-                        return Err(Error::Storage(format!(
-                            "durable sync failed after transaction ({error}); rollback from disk also failed ({reload_error})"
-                        )));
-                    }
+        *self
+            .txn_owner
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(std::thread::current().id());
+        let _txn_flag = InTransactionGuard { model: self };
+        let oxi = self
+            .store
+            .start_transaction()
+            .map_err(|error| Error::Storage(error.to_string()))?;
+        let mut tx = ModelTransaction { inner: oxi };
+        let value = f(&mut tx)?;
+        let ModelTransaction { inner } = tx;
+        inner
+            .commit()
+            .map_err(|error| Error::Storage(error.to_string()))?;
+        if let Some(disk) = &self.disk {
+            if let Err(error) = disk.replace_all_from_store(&self.store) {
+                if let Err(reload_error) = self.reload_store_from_disk_unlocked(disk) {
                     return Err(Error::Storage(format!(
-                        "durable sync failed after transaction; in-memory store rolled back to disk: {error}"
+                        "durable sync failed after transaction ({error}); rollback from disk also failed ({reload_error})"
                     )));
                 }
+                return Err(Error::Storage(format!(
+                    "durable sync failed after transaction; in-memory store rolled back to disk: {error}"
+                )));
             }
-            Ok(value)
-        })();
-        self.in_transaction.store(false, Ordering::Release);
-        outcome
+        }
+        Ok(value)
     }
 
     /// Forces a durable sync (Fjall `SyncAll`). No-op success for memory models.
     pub fn sync(&self) -> Result<()> {
+        if self.same_thread_in_transaction() {
+            return Err(Error::Unsupported(
+                "sync is unavailable while a Model::transaction is open on this thread".into(),
+            ));
+        }
         let _guard = self
             .lock
             .write()
@@ -421,6 +488,9 @@ impl Model {
     }
 
     /// Imports N-Quads from a path inside a transaction (atomic on success).
+    ///
+    /// Quads are **merged** into the existing model (RDF union); this does not
+    /// clear the store first. A leading UTF-8 BOM is skipped when present.
     pub fn import_nquads_from_path(&self, path: impl AsRef<Path>) -> Result<usize> {
         let path = path.as_ref();
         let file = File::open(path).map_err(|error| {
@@ -429,9 +499,10 @@ impl Model {
                 format!("{}: {}", path.display(), error),
             ))
         })?;
+        let reader = BomStrippingReader::new(BufReader::new(file));
         let quads = RdfParser::from_format(RdfFormat::NQuads)
             .rename_blank_nodes()
-            .for_reader(BufReader::new(file))
+            .for_reader(reader)
             .collect::<std::result::Result<Vec<_>, _>>()
             .map_err(|error| Error::parse(error.to_string(), None))?;
         let total = quads.len();

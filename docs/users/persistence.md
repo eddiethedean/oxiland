@@ -38,7 +38,8 @@ roll back the Oxigraph working set without writing a new durable snapshot.
 
 Prefer `Parser::load_transactional` (or `Model::import_nquads_from_path`) when a
 mid-parse failure must not leave durable partial data. Progressive `load_into`
-still syncs each successful insert.
+still syncs each successful insert. Import merges quads into the existing model
+(RDF union); clear first if you need a replace restore.
 
 ## Read-only and capabilities
 

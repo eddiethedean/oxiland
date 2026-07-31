@@ -138,6 +138,8 @@ items = [
     "oxiland::World::new",
     "oxiland::World::set_feature",
     "oxiland::io",
+    "oxiland::io::BomStrippingReader",
+    "oxiland::io::BomStrippingReader::new",
     "oxiland::io::GraphTarget",
     "oxiland::io::GraphTarget::Dataset",
     "oxiland::io::GraphTarget::DefaultGraph",

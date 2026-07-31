@@ -28,17 +28,18 @@ inventory-backed claims matter.
 
 ## Compared to Redland (`librdf`)
 
-| | Oxiland 0.3 | Native Redland |
+| | Oxiland 0.4 | Native Redland |
 |---|---|---|
 | Language | Safe Rust | C (+ bindings) |
 | Memory | Rust ownership | Manual / library conventions |
-| I/O | Streaming facades for five syntaxes | Raptor factories (broad) |
+| I/O | Streaming facades for five syntaxes; transactional load | Raptor factories (broad) |
 | SPARQL | Query/Update builders, streaming results, ResultsFormat | Rasqal (broader) |
+| Storage | Supported Fjall format v1 + memory; transactions | Storage plugins |
 | C consumers | Not yet | Yes |
 | Drop-in ABI | No | N/A |
 
 Oxiland targets measurable migration over time. It does **not** claim to replace
-Redland in production C stacks in 0.3.
+Redland in production C stacks in 0.4.
 
 ## What Oxiland optimizes for
 

@@ -1,12 +1,13 @@
 # Migration from Redland
 
-This page helps maintainers map Redland `librdf` workflows to Oxiland 0.3.
+This page helps maintainers map Redland `librdf` workflows to Oxiland 0.4.
 It is **not** a complete symbol-by-symbol porting guide (that is a 0.6
 accounting goal). Inventories remain authoritative for claimed rows:
 
 - [0.1 core inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
 - [0.2 I/O inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.2.json)
 - [0.3 query inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.3.json)
+- [0.4 storage inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.4.json)
 
 ## Mindset
 
@@ -26,7 +27,7 @@ accounting goal). Inventories remain authoritative for claimed rows:
 | Contexts | `add_to_graph` / `GraphName` |
 | Find / streams | `Model::find` → `StatementMatches` |
 | Storage “memory” | `Model::new` |
-| Storage plugins | Not mapped; Fjall via `Model::open` is experimental |
+| Storage plugins | Not 1:1; Fjall via `Model::open` / `OpenOptions` is the supported durable backend (format v1) |
 
 ## Parser / serializer (0.2)
 
@@ -34,7 +35,7 @@ accounting goal). Inventories remain authoritative for claimed rows:
 |---|---|
 | `librdf_new_parser` / name / MIME | `Syntax::from_name` / `from_media_type` → `Parser::for_syntax` |
 | Parse as stream | `Parser::parse_reader` / `parse_str` / `parse_path` |
-| Parse into model | `load_into` (progressive) or `load_collecting` |
+| Parse into model | `load_into` (progressive), `load_collecting`, or `load_transactional` (0.4) |
 | Guess / sniff | Unsupported — explicit `Syntax` or extension API |
 | `librdf_new_serializer` | `Serializer::for_syntax` |
 | Namespaces | `Serializer::with_prefix` (Turtle/TriG/RDF/XML only) |
@@ -63,7 +64,7 @@ Not available. A separately audited `oxiland-capi` is planned no earlier than
 0.8 ([ADR-002](../DECISIONS.md)). A Pythonic PyPI package is planned for 0.7 and
 binds the safe Rust facade directly—not a mechanical port of every Rust
 builder, and not layered on the C ABI. Do not schedule a binary drop-in C
-migration on 0.3 timelines.
+migration on 0.4 timelines for storage; keep C ABI on 0.8+.
 
 ## Suggested migration sequence
 

@@ -7,11 +7,13 @@
 //! Oxigraph primitives remain available under [`primitives`] for advanced use;
 //! they are not evidence for Redland-shaped facade completeness.
 
+mod bom;
 mod format;
 mod location;
 mod parser;
 mod serializer;
 
+pub use bom::BomStrippingReader;
 pub use format::Syntax;
 pub use location::SourceLocation;
 pub use parser::{GraphTarget, Parser, QuadStream, SliceStream};

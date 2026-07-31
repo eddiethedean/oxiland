@@ -15,7 +15,7 @@ and evidence process on top of the same engine. See
 ## Is Oxiland “Redland-compatible”?
 
 Only in evidence-scoped senses documented in the [parity ledger](../parity.md). It is
-**not** C source/ABI compatible in 0.3, and not a 100% `librdf` port. crates.io
+**not** C source/ABI compatible in 0.4, and not a 100% `librdf` port. crates.io
 describes Redland-*shaped* workflows, not drop-in parity.
 
 ## What does “Verified” mean in the parity ledger?
@@ -27,8 +27,12 @@ or differential fixture passes. Read the inventory JSON and milestone report.
 ## Parse left data in my model / on disk
 
 You used `Parser::load_into` (progressive). On failure, already-inserted quads
-remain (and on Fjall they are durable). Use `load_collecting` for
-parse-then-insert batching, or clear the model/store and retry. See [io.md](io.md).
+remain (and on Fjall they are durable). Use `load_transactional` for atomic
+import, `load_collecting` for parse-then-insert batching without a store
+transaction, or clear the model/store and retry. See [io.md](io.md).
+
+`Model::import_nquads_from_path` merges into the existing model; it does not
+replace the store.
 
 ## `text/plain` / `.xml` / `guess` returns Unsupported
 

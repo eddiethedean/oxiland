@@ -19,7 +19,7 @@ that pin moves; this is intentional for the Oxigraph 0.5.9 compatibility matrix.
 
 ```toml
 [dependencies]
-oxiland = "0.3.0"
+oxiland = "0.4.0"
 ```
 
 ## Workflow 1 — Build a model and ASK

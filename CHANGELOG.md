@@ -35,7 +35,20 @@ Durable Fjall storage contract, transactions, and archival helpers over Oxigraph
 
 ### Fixed
 
-- Progressive-load docs point at transactional import for atomic durability
+- Panic inside `Model::transaction` clears the in-transaction flag via `Drop`
+  so the model stays writable afterward
+- Same-thread `len` / `find` / `Query::execute` during a transaction no longer
+  deadlock on the non-reentrant `RwLock` (reads see the last committed set)
+- `OpenOptions::create(false)` rejects empty / non-store directories instead of
+  initializing Fjall there
+- Read-only open refuses to initialize format metadata on empty paths
+- UTF-8 BOM stripped for RDF parse streams, transactional load, and N-Quads
+  import (`io::BomStrippingReader`)
+- `clear_quads` compensates on SyncAll failure like insert/replace
+- `migrate_legacy_store` drops the migrate handle before reopening
+- Docs: transactional import is available; import merges (union); migration /
+  getting-started / positioning / ADR-007 aligned with 0.4
+- Public API snapshot tracks `BomStrippingReader`
 
 ## [0.3.0] - 2026-07-30
 

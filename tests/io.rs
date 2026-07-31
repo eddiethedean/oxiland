@@ -496,15 +496,16 @@ fn named_graph_target_accepts_matching_named_quads() {
 #[test]
 fn progressive_load_annotates_partial_data_on_io_failure() {
     struct BoomAfterFirstTriple {
-        delivered: bool,
+        offset: usize,
     }
     impl Read for BoomAfterFirstTriple {
         fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-            if !self.delivered {
-                self.delivered = true;
-                let chunk = b"<https://example.com/a> <https://example.com/p> \"ok\" .\n";
-                buf[..chunk.len()].copy_from_slice(chunk);
-                return Ok(chunk.len());
+            const CHUNK: &[u8] = b"<https://example.com/a> <https://example.com/p> \"ok\" .\n";
+            if self.offset < CHUNK.len() {
+                let n = (CHUNK.len() - self.offset).min(buf.len());
+                buf[..n].copy_from_slice(&CHUNK[self.offset..self.offset + n]);
+                self.offset += n;
+                return Ok(n);
             }
             Err(std::io::Error::other("boom after first triple"))
         }
@@ -512,12 +513,46 @@ fn progressive_load_annotates_partial_data_on_io_failure() {
 
     let model = Model::new().unwrap();
     let err = Parser::for_syntax(Syntax::NTriples)
-        .load_into(&model, BoomAfterFirstTriple { delivered: false })
+        .load_into(&model, BoomAfterFirstTriple { offset: 0 })
         .unwrap_err();
     assert!(matches!(err, Error::Io(_)));
     assert!(
         err.to_string().contains("partial load"),
         "error should document partial load: {err}"
+    );
+    assert_eq!(model.len().unwrap(), 1);
+}
+
+#[test]
+fn parse_str_and_slice_strip_utf8_bom() {
+    let turtle = "\u{feff}<https://example.com/s> <https://example.com/p> \"bom\" .\n";
+    let quads = Parser::for_syntax(Syntax::Turtle)
+        .parse_str(turtle)
+        .unwrap()
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    assert_eq!(quads.len(), 1);
+
+    let mut bytes = vec![0xEF, 0xBB, 0xBF];
+    bytes.extend_from_slice(b"<https://example.com/s> <https://example.com/p> \"bom\" .\n");
+    let quads = Parser::for_syntax(Syntax::NTriples)
+        .parse_slice(&bytes)
+        .unwrap()
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    assert_eq!(quads.len(), 1);
+}
+
+#[test]
+fn load_transactional_strips_utf8_bom() {
+    let mut bytes = vec![0xEF, 0xBB, 0xBF];
+    bytes.extend_from_slice(b"<https://example.com/s> <https://example.com/p> \"bom-tx\" .\n");
+    let model = Model::new().unwrap();
+    assert_eq!(
+        Parser::for_syntax(Syntax::Turtle)
+            .load_transactional(&model, &bytes[..])
+            .unwrap(),
+        1
     );
     assert_eq!(model.len().unwrap(), 1);
 }

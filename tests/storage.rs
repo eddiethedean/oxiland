@@ -213,6 +213,76 @@ fn open_create_false_missing_path_fails() {
 }
 
 #[test]
+fn open_create_false_empty_dir_fails() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("empty");
+    fs::create_dir_all(&path).unwrap();
+    let err = Model::open_with(OpenOptions::fjall(&path).create(false));
+    assert!(matches!(err, Err(Error::OpenStore { .. })));
+}
+
+#[test]
+fn read_only_empty_dir_fails_without_init() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("ro-empty");
+    fs::create_dir_all(&path).unwrap();
+    let err = Model::open_with(OpenOptions::fjall(&path).read_only(true));
+    assert!(matches!(err, Err(Error::OpenStore { .. })));
+}
+
+#[test]
+fn transaction_panic_clears_in_transaction_flag() {
+    let model = Model::new().unwrap();
+    let panicked = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let _: oxiland::Result<()> = model.transaction(|_tx| {
+            panic!("force unwind");
+        });
+    }));
+    assert!(panicked.is_err());
+    assert!(model.add(statement("after-panic")).unwrap());
+    assert_eq!(model.len().unwrap(), 1);
+}
+
+#[test]
+fn same_thread_reads_during_transaction_do_not_deadlock() {
+    let model = Model::new().unwrap();
+    model.add(statement("seed")).unwrap();
+    model
+        .transaction(|tx| {
+            // Uncommitted mutation is not visible via Model::len (committed set).
+            tx.add(statement("txn-only"))?;
+            assert_eq!(model.len()?, 1);
+            assert!(model.contains(statement("seed").as_ref())?);
+            assert!(!model.contains(statement("txn-only").as_ref())?);
+            Ok(())
+        })
+        .unwrap();
+    assert_eq!(model.len().unwrap(), 2);
+}
+
+#[test]
+fn nested_transaction_is_unsupported() {
+    let model = Model::new().unwrap();
+    let err = model.transaction(|_tx| model.transaction(|_inner| Ok(())));
+    assert!(matches!(err, Err(Error::Unsupported(_))));
+}
+
+#[test]
+fn import_merges_and_strips_utf8_bom() {
+    let dir = tempfile::tempdir().unwrap();
+    let archive = dir.path().join("bom.nq");
+    let mut bytes = vec![0xEF, 0xBB, 0xBF];
+    bytes.extend_from_slice(b"<https://example.com/s> <https://example.com/p> \"from-file\" .\n");
+    fs::write(&archive, bytes).unwrap();
+    let model = Model::new().unwrap();
+    model.add(statement("keep")).unwrap();
+    assert_eq!(model.import_nquads_from_path(&archive).unwrap(), 1);
+    assert_eq!(model.len().unwrap(), 2);
+    assert!(model.contains(statement("keep").as_ref()).unwrap());
+    assert!(model.contains(statement("from-file").as_ref()).unwrap());
+}
+
+#[test]
 fn find_under_concurrent_writers_stays_consistent() {
     use std::sync::Arc;
     use std::thread;

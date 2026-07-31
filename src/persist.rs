@@ -50,6 +50,14 @@ impl DiskStore {
                 path: path.to_owned(),
                 message: "path does not exist and OpenOptions::create(false)".into(),
             });
+        } else if !looks_like_fjall_store(path) {
+            // create(false) must not initialize Fjall in an empty or unrelated directory.
+            return Err(Error::OpenStore {
+                path: path.to_owned(),
+                message:
+                    "path is not an existing Fjall/Oxiland store and OpenOptions::create(false)"
+                        .into(),
+            });
         }
 
         let keyspace = Config::new(path).open().map_err(|error| Error::OpenStore {
@@ -66,7 +74,9 @@ impl DiskStore {
         Ok(Self { keyspace, quads })
     }
 
-    pub(crate) fn ensure_format_v1(&self, path: &Path) -> Result<()> {
+    /// Ensures format v1 metadata. When `allow_init` is false, refuses to write
+    /// new meta (read-only / create(false) opens of empty stores).
+    pub(crate) fn ensure_format_v1(&self, path: &Path, allow_init: bool) -> Result<()> {
         match self.read_format_version()? {
             Some(version) if version == FORMAT_VERSION => Ok(()),
             Some(version) => Err(Error::Unsupported(format!(
@@ -78,8 +88,14 @@ impl DiskStore {
                         "store at {} looks like a pre-0.4 experimental Oxiland directory; call Model::migrate_legacy_store before opening",
                         path.display()
                     )))
-                } else {
+                } else if allow_init {
                     self.write_format_v1_meta()
+                } else {
+                    Err(Error::OpenStore {
+                        path: path.to_owned(),
+                        message: "store has no Oxiland format metadata and initialization is not allowed (read-only or create(false))"
+                            .into(),
+                    })
                 }
             }
         }
@@ -183,7 +199,18 @@ impl DiskStore {
                 .remove(key.as_bytes())
                 .map_err(|error| Error::Storage(error.to_string()))?;
         }
-        self.sync()
+        if let Err(error) = self.keyspace.persist(PersistMode::SyncAll) {
+            for key in &keys {
+                let _ = self.quads.insert(key.as_bytes(), []);
+            }
+            if let Err(compensate_err) = self.keyspace.persist(PersistMode::SyncAll) {
+                return Err(Error::Storage(format!(
+                    "durable clear sync failed ({error}); compensation persist also failed ({compensate_err})"
+                )));
+            }
+            return Err(Error::Storage(error.to_string()));
+        }
+        Ok(())
     }
 
     pub(crate) fn insert(&self, quad: &Quad) -> Result<()> {
@@ -334,6 +361,35 @@ impl DiskStore {
         }
         Ok(())
     }
+}
+
+/// Heuristic: directory already contains Fjall/LSM artifacts (not empty / unrelated).
+pub(crate) fn looks_like_fjall_store(path: &Path) -> bool {
+    if !path.is_dir() {
+        return false;
+    }
+    const MARKERS: &[&str] = &["keyspace", "partitions", "journals", "blobs"];
+    for marker in MARKERS {
+        if path.join(marker).exists() {
+            return true;
+        }
+    }
+    // Fallback: any non-hidden entry suggests an existing keyspace layout.
+    std::fs::read_dir(path)
+        .ok()
+        .map(|mut entries| {
+            entries.any(|entry| {
+                entry
+                    .ok()
+                    .map(|e| {
+                        let name = e.file_name();
+                        let name = name.to_string_lossy();
+                        !name.starts_with('.')
+                    })
+                    .unwrap_or(false)
+            })
+        })
+        .unwrap_or(false)
 }
 
 fn quad_key(quad: &Quad) -> String {

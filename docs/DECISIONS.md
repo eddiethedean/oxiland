@@ -161,7 +161,9 @@ Decision:
 - An explicitly named collecting path (`Parser::load_collecting`) buffers the
   complete successful quad set and inserts only after parse success. If a later
   insert fails, quads newly inserted by that call are removed best-effort.
-- True transactional atomic load remains deferred to 0.4.
+- As of 0.4, `Parser::load_transactional` / `load_path_transactional` parse
+  fully then insert inside `Model::transaction` (durable sync on Fjall commit).
+  Progressive and collecting paths remain available.
 
 Alternatives:
 
@@ -174,16 +176,17 @@ Consequences:
 - Callers choose streaming honesty versus buffered all-or-nothing by API name.
 - R-017 is mitigated by documentation and error text rather than false
   atomicity.
-- 0.4 can add transactional load without breaking the streaming core.
+- 0.4 added transactional load without breaking the streaming core.
 
 Evidence: `src/io/parser.rs`,
 `tests/io.rs::progressive_load_leaves_partial_data_on_failure`,
 `tests/io.rs::progressive_load_annotates_partial_data_on_io_failure`,
 `tests/io.rs::collecting_load_is_all_or_nothing`,
+`tests/storage.rs::transactional_load_is_atomic_on_parse_failure`,
 [docs/design/0.2-io-api.md](design/0.2-io-api.md).
 
-Revisit when: 0.4 transactions land, or differential fixtures require Redland
-callback-equivalent atomicity.
+Revisit when: differential fixtures require Redland callback-equivalent
+atomicity beyond `load_transactional`.
 
 ### ADR-008 — Built-in RDF format identity and discovery
 

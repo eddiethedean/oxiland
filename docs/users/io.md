@@ -50,8 +50,12 @@ load_collecting  → parse fully first; insert only after a successful parse
 
 Progressive load is honest about partial progress. On Fjall-backed models each
 successful insert is durable, so a failed progressive load can leave data on
-disk. Prefer `load_collecting` when you need parse-then-insert batching without
-transactions (true transactional import is planned for 0.4).
+disk. Prefer `load_transactional` / `load_path_transactional` when atomic import
+is required, or `load_collecting` when you need parse-then-insert batching
+without a store transaction.
+
+`Model::import_nquads_from_path` merges N-Quads into the existing model (RDF
+union); it does not clear first.
 
 Demo: `cargo run --example progressive_load`.
 

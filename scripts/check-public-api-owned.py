@@ -34,6 +34,7 @@ MODULES = {
     ROOT / "src" / "query.rs": "oxiland",
     ROOT / "src" / "storage.rs": "oxiland",
     ROOT / "src" / "world.rs": "oxiland",
+    ROOT / "src" / "io" / "bom.rs": "oxiland::io",
     ROOT / "src" / "io" / "format.rs": "oxiland::io",
     ROOT / "src" / "io" / "parser.rs": "oxiland::io",
     ROOT / "src" / "io" / "serializer.rs": "oxiland::io",
