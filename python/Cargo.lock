@@ -356,7 +356,7 @@ dependencies = [
 
 [[package]]
 name = "oxiland"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "fjall",
  "md-5",
@@ -370,7 +370,7 @@ dependencies = [
 
 [[package]]
 name = "oxiland-py"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "oxigraph",
  "oxiland",

@@ -156,6 +156,7 @@ nav:
       - Compatibility contract: COMPATIBILITY.md
       - Parity ledger: parity.md
       - Current report (0.8): reports/0.8.md
+      - 0.8.0 release checklist: reports/0.8.0-release.md
   - Project:
       - Community:
           - Code of conduct: code-of-conduct.md

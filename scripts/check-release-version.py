@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Require a release tag to match every independently published package."""
+"""Require a release tag to match every package manifest and local lock entry."""
 
 from __future__ import annotations
 
@@ -17,6 +17,10 @@ MANIFESTS = {
     "oxiland-py crate": ROOT / "python/Cargo.toml",
     "PyPI oxiland": ROOT / "python/pyproject.toml",
 }
+LOCK_PACKAGES = {
+    ROOT / "Cargo.lock": ("oxiland", "oxiland-cli", "oxiland-capi"),
+    ROOT / "python/Cargo.lock": ("oxiland", "oxiland-py"),
+}
 
 
 def main() -> int:
@@ -28,7 +32,20 @@ def main() -> int:
     versions: dict[str, str] = {}
     for package, path in MANIFESTS.items():
         with path.open("rb") as source:
-            versions[package] = tomllib.load(source)["package" if path.name == "Cargo.toml" else "project"]["version"]
+            table = "package" if path.name == "Cargo.toml" else "project"
+            versions[package] = tomllib.load(source)[table]["version"]
+
+    for path, package_names in LOCK_PACKAGES.items():
+        with path.open("rb") as source:
+            locked = {
+                package["name"]: package["version"]
+                for package in tomllib.load(source)["package"]
+                if "source" not in package
+            }
+        for package_name in package_names:
+            versions[f"{path.relative_to(ROOT)} {package_name}"] = locked.get(
+                package_name, "<missing>"
+            )
 
     mismatches = {
         package: version for package, version in versions.items() if version != expected
