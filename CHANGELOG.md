@@ -41,6 +41,8 @@ and streaming I/O (ADR-017).
   reuses those verified wheels through Trusted Publishing after crates.io
 - Python extension upgraded to PyO3 0.29.0 to remove the 0.25 iterator and
   closure soundness advisories
+- Tip CI runs the same unwaived `cargo audit`, version alignment,
+  `cargo publish --dry-run`, and full 15-wheel checks used before release
 
 ## [0.6.0] - 2026-07-30
 

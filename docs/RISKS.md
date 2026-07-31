@@ -34,7 +34,7 @@ can never recur. `closed` requires the underlying exposure to be removed.
 | R-017 | Parser failure leaves a model partially loaded unexpectedly | H | H | `monitoring` | RDF/SPARQL | ADR-007 progressive vs collecting APIs | callers assume silent atomicity | document path; add 0.4 transactions |
 | R-018 | Format aliases or auto-detection select the wrong syntax | M | M | `monitoring` | RDF/SPARQL | closed Syntax table, ADR-008 | alias collision or misleading extension/MIME | require explicit format and publish corrected mapping |
 | R-019 | Planning outruns implementation and evidence | M | H | `active` | Documentation | separate charter/roadmap/milestone/parity authority | planned feature described as available | correct claim and add consistency check/review gate |
-| R-020 | Oxigraph 0.5.9 pins vulnerable `quick-xml` 0.37 in RDF/XML and SPARQL XML paths | M | H | `active` | Safe API | PR audit exceptions are exact and self-expiring; the unwaived release audit blocks publishing | Oxigraph releases its current `quick-xml` 0.41 dependency or an equivalent supported patch | upgrade Oxigraph under the full compatibility suite; do not waive RUSTSEC-2026-0194/0195 for release |
+| R-020 | Oxigraph 0.5.9 pins vulnerable `quick-xml` 0.37 in RDF/XML and SPARQL XML paths | M | H | `active` | Safe API | Tip CI runs unwaived `cargo audit` on both lockfiles (same gate as release) | Oxigraph releases a line that accepts `quick-xml` 0.41+ or an equivalent supported patch | upgrade Oxigraph under the full compatibility suite; do not ignore RUSTSEC-2026-0194/0195 |
 
 ## Release-blocking rule
 
@@ -74,6 +74,6 @@ monitoring items. Storage/transaction risks under ADR-006 were addressed in 0.4
 (format v1 + migrate). Query/result risks R-001, R-006, R-007, R-008, R-010, and
 R-012 were addressed for the 0.3 facade slice and remain monitoring items.
 R-017 and R-018 remain monitoring items under ADR-007 and ADR-008. R-003 remains
-monitored under ADR-004. R-020 is a current 0.7.0 release blocker: PyO3 was
-upgraded to 0.29.0, but the remaining `quick-xml` advisories require a released
-Oxigraph dependency line that accepts `quick-xml` 0.41 or later.
+monitored under ADR-004. R-020 is a current 0.7.0 release blocker: PyO3 was upgraded to 0.29.0, but the
+remaining `quick-xml` advisories fail tip CI's unwaived `cargo audit` until a
+released Oxigraph dependency line accepts `quick-xml` 0.41 or later.

@@ -175,8 +175,13 @@ jobs:
       - name: Check semver against 0.6.0
         run: cargo semver-checks check-release -p oxiland --baseline-version 0.6.0 --release-type minor
 
+      - name: Verify package versions are aligned
+        run: |
+          version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)"
+          python scripts/check-release-version.py "v${version}"
+
       - name: Verify publishable library crate
-        run: cargo package -p oxiland --locked
+        run: cargo publish -p oxiland --locked --dry-run
 
   security:
     name: Dependency audit
@@ -201,14 +206,12 @@ jobs:
       - name: Install cargo-audit
         run: cargo install cargo-audit --locked --version 0.22.2
 
-      - name: Verify narrow upstream security exception
-        run: python3 scripts/check-security-exceptions.py
-
+      # Same gate as release: no advisory ignores on tip.
       - name: Audit Rust workspace
-        run: cargo audit --file Cargo.lock --ignore RUSTSEC-2026-0194 --ignore RUSTSEC-2026-0195
+        run: cargo audit --file Cargo.lock
 
       - name: Audit Python native extension
-        run: cargo audit --file python/Cargo.lock --ignore RUSTSEC-2026-0194 --ignore RUSTSEC-2026-0195
+        run: cargo audit --file python/Cargo.lock
 
   python:
     name: Python
@@ -357,6 +360,34 @@ jobs:
           assert not dist.requires or all("extra ==" in item for item in dist.requires)
           assert any("sboms/oxiland-py.cyclonedx.json" in str(item) for item in dist.files or [])
           PY
+
+  release-readiness:
+    name: Release readiness
+    needs: [python-wheels, python-wheel-smoke, security, semver-package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.14"
+
+      - name: Download all wheels
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - name: Validate full release wheel set
+        run: |
+          version="$(sed -n 's/^version = "\(.*\)"/\1/p' python/pyproject.toml | head -n1)"
+          python scripts/check-python-wheels.py dist --version "$version" --copies-per-abi 3
 
   io-conformance:
     name: RDF I/O conformance

@@ -21,41 +21,9 @@ jobs:
     name: CI
     uses: ./.github/workflows/ci.yml
 
-  security:
-    name: Release dependency audit
-    needs: ci
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4
-        with:
-          toolchain: stable
-
-      - name: Cache cargo tools
-        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
-        with:
-          shared-key: security
-
-      - name: Install cargo-audit
-        run: cargo install cargo-audit --locked --version 0.22.2
-
-      - name: Audit Rust workspace without exceptions
-        run: cargo audit --file Cargo.lock
-
-      - name: Audit Python native extension without exceptions
-        run: cargo audit --file python/Cargo.lock
-
   publish:
     name: Publish crates
-    needs: [ci, security]
+    needs: [ci]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
