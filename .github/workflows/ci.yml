@@ -120,19 +120,28 @@ jobs:
 
       - name: Develop install
         working-directory: python
-        run: maturin develop
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -U pip maturin pytest pyright
+          maturin develop
 
       - name: Pytest
         working-directory: python
-        run: pytest -q
+        run: |
+          source .venv/bin/activate
+          pytest -q
 
       - name: Type check
         working-directory: python
-        run: pyright
+        run: |
+          source .venv/bin/activate
+          pyright
 
       - name: Examples
         working-directory: python
         run: |
+          source .venv/bin/activate
           python examples/quick_start.py
           python examples/parse_serialize.py
           python examples/select.py
@@ -170,7 +179,9 @@ jobs:
       - name: Smoke install wheel
         shell: bash
         run: |
-          pip install python/target/wheels/oxiland-*$(python -c 'import sys; print(f"cp3{sys.version_info.minor}")')*.whl || pip install python/target/wheels/oxiland-*.whl
+          set -euo pipefail
+          wheel=$(ls python/target/wheels/oxiland-*-cp311-*.whl | head -n 1)
+          pip install "$wheel"
           python -c "import oxiland; assert oxiland.__version__ == '0.7.0'"
 
       - name: Upload wheels
