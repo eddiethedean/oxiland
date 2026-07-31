@@ -4,6 +4,7 @@
 /target
 /python/target
 /python/.venv
+/python/dist/
 __pycache__/
 .ontocode/
 compatibility/harness/*-result.json

@@ -13,10 +13,15 @@ trap 'rm -rf "$STAGE"' EXIT
 mkdir -p "$STAGE/include" "$STAGE/lib" "$STAGE/lib/pkgconfig"
 cp crates/oxiland-capi/include/librdf.h "$STAGE/include/"
 cp target/debug/liboxiland_capi.* "$STAGE/lib/" 2>/dev/null || true
-# Prefer .dylib / .so
-shopt -s nullglob
-LIBS=(target/debug/liboxiland_capi.dylib target/debug/liboxiland_capi.so)
-LIB="${LIBS[0]:-}"
+# Select the platform-specific shared library produced by Cargo. Do not leave
+# missing candidates as literal array entries: CI runs this smoke on Linux.
+LIB=""
+for candidate in target/debug/liboxiland_capi.so target/debug/liboxiland_capi.dylib; do
+  if [[ -f "$candidate" ]]; then
+    LIB="$candidate"
+    break
+  fi
+done
 if [[ -z "$LIB" ]]; then
   echo "error: built shared library missing" >&2
   exit 1
