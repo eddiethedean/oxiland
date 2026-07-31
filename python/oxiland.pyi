@@ -1,8 +1,8 @@
-"""Type stubs for the oxiland Python package (ADR-017)."""
+"""Public type information for the Oxiland Python package."""
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Mapping
 from os import PathLike
 from typing import Any, Optional, Union
 

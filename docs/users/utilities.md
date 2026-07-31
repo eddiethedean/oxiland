@@ -1,9 +1,13 @@
 # Utilities and logging
 
-Oxiland provides Redland-shaped helpers under
+Oxiland provides focused application helpers under
 [`oxiland::utility`](https://docs.rs/oxiland/latest/oxiland/utility/) plus
 logging on [`World`](https://docs.rs/oxiland/latest/oxiland/struct.World.html)
 (optional `tracing` feature).
+
+These helpers use the same `oxiland::Result` and typed error categories as the
+model, I/O, and SPARQL APIs. They do not configure global process logging or
+silently accept unknown algorithms and malformed IRIs.
 
 ## Digests
 
@@ -17,6 +21,8 @@ assert_eq!(
 ```
 
 Supported names: `md5`, `sha1`, `sha256`. Others return `Error::Unsupported`.
+MD5 and SHA-1 are provided for compatibility workflows; do not select them for
+new security-sensitive integrity or authentication designs.
 
 ## URI and file helpers
 
@@ -72,8 +78,25 @@ world.log(LogLevel::Warn, LogFacility::Utility, "heads up");
 Enable the Cargo feature `tracing` to also emit `tracing` events. Cloned
 `World` values share the same handler and minimum log level.
 
+The handler executes in the calling process. Keep it bounded, avoid re-entering
+expensive RDF operations from a log callback, and redact query text, paths, and
+literal values according to the application's data policy. Oxiland does not
+install a subscriber or choose log destinations for the application.
+
 ## Hashes and lists
 
 Redland hash/list types are replaced by `HashMap`, `Vec`, and Rust iterators.
 See [migration from Redland](../evaluators/migration-from-redland.md) and
 `cargo run --example std_replacements`.
+
+## Production guidance
+
+- Validate external algorithm names, IRIs, and paths at the application edge.
+- Use `path_to_file_uri` and `file_uri_to_path` for conversion, not authorization;
+  authorize the resolved path separately.
+- Record digest algorithm names alongside stored digests.
+- Treat vocabulary constants as IRIs, not schema validation.
+- Keep logging callbacks non-blocking and free of sensitive payloads.
+
+See [Rust production operations](rust-production.md) and the
+[security policy](../security.md).

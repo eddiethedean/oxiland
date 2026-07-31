@@ -1,4 +1,4 @@
-//! Oxiland CLI — rdfproc-shaped workflows over the safe facade (ADR-019).
+//! Command-line workflows for local Oxiland RDF datasets (ADR-019).
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -16,7 +16,7 @@ use oxiland::{
 #[command(
     name = "oxiland-cli",
     version,
-    about = "rdfproc-shaped workflows over Oxiland (not a binary drop-in)"
+    about = "Import, inspect, query, and export local RDF datasets"
 )]
 struct Cli {
     /// Suppress informational messages.
@@ -48,7 +48,7 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    /// Parse RDF into the store (collecting / all-or-nothing load).
+    /// Parse the complete RDF input before inserting it into the store.
     Parse {
         path: PathBuf,
         #[arg(long)]

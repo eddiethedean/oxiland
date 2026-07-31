@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.7.0] - 2026-07-31
 
-Pythonic PyPI package over the frozen safe Rust facade (ADR-017).
+First-class typed Python package for embedded RDF models, persistence, SPARQL,
+and streaming I/O (ADR-017).
 
 ### Added
 
@@ -18,14 +19,26 @@ Pythonic PyPI package over the frozen safe Rust facade (ADR-017).
   query/update, transactions, and curated digests/vocab helpers
 - Typed exception hierarchy aligned with Rust `Error` categories
 - PEP 561 stubs (`oxiland.pyi` / `py.typed`); pytest + pyright CI
-- Wheel builds on Linux/macOS/Windows for CPython 3.10–3.13
-- User guide `docs/users/python.md` and runnable `python/examples/`
+- Wheel builds on Linux/macOS/Windows for CPython 3.10–3.14
+- Standalone Python documentation track and runnable `python/examples/`
 - ADR-017 accepted; milestone/design/report docs for 0.7
 
 ### Changed
 
 - Crate version `0.7.0` (Rust + `oxiland-cli` + PyPI aligned)
 - Parity ledger / roadmap mark 0.7 complete; next focus 0.8 C ABI
+- Project, Rust, Python, CLI, production, contributor, support, security,
+  architecture, and verification documentation upgraded into task-oriented
+  product contracts
+- Crate, wheel, module, and CLI descriptions now lead with their user-facing
+  RDF capabilities; Redland mapping remains an explicit migration surface
+
+### Fixed
+
+- Python transactions reject independently-created nested contexts so an inner
+  context cannot commit through an outer rollback
+- Wheel CI installs every advertised OS/interpreter artifact; PyPI publication
+  reuses those verified wheels through Trusted Publishing after crates.io
 
 ## [0.6.0] - 2026-07-30
 

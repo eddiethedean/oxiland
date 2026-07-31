@@ -1,4 +1,4 @@
-# Architecture plan
+# Architecture
 
 Status: active design baseline  
 Current implementation: Cargo workspace — library crate `oxiland` plus
@@ -6,8 +6,9 @@ Current implementation: Cargo workspace — library crate `oxiland` plus
 member). Oxigraph 0.5.9 remains the RDF engine.  
 Next review gate: before C ABI preview (0.8)
 
-This document specifies dependency direction and safety boundaries. It does not
-claim that planned crates or modules already exist.
+This document specifies the implemented dependency direction, ownership model,
+and safety boundaries, then labels future C ABI components explicitly. It is a
+design contract rather than an item-level API reference.
 
 ## Design principles
 
@@ -46,13 +47,13 @@ crate never depends on the C ABI crate, the Python package, native Redland,
 test harnesses, or the CLI. The Python package binds the safe Rust crate
 directly; it is not layered on `oxiland-capi`.
 
-## Intended workspace
+## Repository and planned workspace
 
 ```text
 oxiland/
 ├── src/                 Safe Rust facade
 ├── tests/               Rust integration tests
-├── docs/                Plans and compatibility documentation
+├── docs/                User, evaluator, contributor, and archive documentation
 ├── python/              Pythonic PyPI package (`oxiland`, 0.7+)
 ├── crates/
 │   ├── oxiland-capi/    C ABI and opaque handle management (0.8+)
@@ -64,8 +65,10 @@ oxiland/
 └── fuzz/                Parser, FFI, and lifecycle fuzz targets
 ```
 
-The additional crates under `crates/` for C ABI and the `fuzz/` tree are
-planned, not present yet. The `python/` package is present as of 0.7.
+Implemented in 0.7: the root Rust library, `crates/oxiland-cli`, `python/`,
+tests, documentation, compatibility inventory/fixtures/harness, and release
+automation. Planned for later milestones: `crates/oxiland-capi` and a dedicated
+`fuzz/` tree. Planned paths must not be cited as current user capabilities.
 
 ## Component responsibilities
 
@@ -207,3 +210,13 @@ surface (ADR-013–ADR-016); query cancellation via Oxigraph `CancellationToken`
 
 Term re-exports are governed by ADR-004 and revisited only on its evidence
 trigger. The remaining questions are decision candidates, not implicit TODOs.
+
+## Reading this architecture
+
+- Public Rust signatures and item semantics: [docs.rs](https://docs.rs/oxiland)
+- Python contract: [Python API](users/python-api.md)
+- Storage deployment: [Rust](users/rust-production.md) and
+  [Python](users/python-production.md) production guides
+- Current verified claims: [parity ledger](parity.md)
+- Durable design rationale: [decision log](DECISIONS.md)
+- Future sequencing: [roadmap](ROADMAP.md)

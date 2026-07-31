@@ -2,22 +2,38 @@
 
 ## One-sentence summary
 
-Oxiland is a **safe, Redland-shaped facade** on pinned Oxigraph—not a second RDF
-engine, not a C drop-in today, and not a kitchen-sink Rust RDF toolkit.
+Oxiland is an embedded RDF toolkit for Rust and Python, powered by a pinned
+Oxigraph engine and differentiated by its compact facade, persistent-store
+contract, CLI, and evidence-backed Redland migration path.
+
+## Choose by requirement
+
+| Requirement | Best starting point |
+|---|---|
+| A documented Rust facade with explicit storage/I/O/query contracts | Oxiland Rust crate |
+| A typed Python wheel with embedded persistence and no Python runtime dependencies | Oxiland Python package |
+| Direct access to the complete Oxigraph engine surface | Oxigraph |
+| A trait-oriented modular Rust RDF ecosystem | Sophia |
+| Existing `librdf` C ABI and storage plug-ins | Native Redland |
+| Measured migration from Redland workflows | Oxiland migration and parity documentation |
+
+This is a boundary guide, not a universal benchmark. Validate syntax support,
+store lifecycle, query behavior, target artifacts, and operational limits
+against the application's own requirements.
 
 ## Compared to Oxigraph
 
 | | Oxiland | Oxigraph |
 |---|---|---|
-| Role | Compatibility-oriented facade | RDF/SPARQL engine |
+| Role | Application-focused Rust/Python packages and CLI | RDF/SPARQL engine |
 | API style | Redland concepts (Model, contexts, Syntax facades) | Native store / SPARQL / I/O types |
 | Compatibility evidence | Inventories, parity ledger, milestone reports | Upstream standards tests |
 | C ABI path | Planned separate crate (0.8+) | Not the product goal |
-| Python path | Pythonic PyPI package (`pip install oxiland`, 0.7+) | Native Python APIs vary |
-| When to pick | Migrating Redland *workflows* into Rust/Python; want explicit unsupported errors | New apps that only need the engine |
+| Python path | Typed PyPI package with its own API and production guide | Use the upstream Python surface when direct engine access is preferred |
+| When to pick | The documented Oxiland facade, storage contract, CLI, or migration evidence adds value | Only the native engine API is required |
 
-Oxiland **depends on** Oxigraph. Choosing Oxiland always includes Oxigraph’s
-semantics for standards machinery.
+Oxiland **depends on** Oxigraph. Choosing Oxiland includes Oxigraph’s standards
+machinery but not every upstream escape hatch in the Oxiland stability promise.
 
 ## Compared to Sophia
 
@@ -50,3 +66,7 @@ Redland in production C stacks in 0.7.
 2. Honest, scoped compatibility claims
 3. Standards-correct RDF/SPARQL via Oxigraph
 4. A coherent Rust (and Pythonic) API
+5. Explicit production and failure semantics for supported workflows
+
+Before adopting a persistent store, read the Rust or Python production guide.
+Before making a compatibility claim, read the parity ledger and current report.

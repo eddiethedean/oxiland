@@ -6,9 +6,9 @@ Review: at every minor milestone and before changing the 1.0 promise
 
 ## Mission
 
-Oxiland provides a safe, maintained Rust successor to Redland `librdf`, using
-Oxigraph for RDF and SPARQL standards machinery while preserving the Redland
-workflows that real applications depend on.
+Oxiland provides maintained, production-oriented RDF packages for Rust and
+Python, using Oxigraph for standards machinery while preserving the Redland
+workflows that migrating applications depend on.
 
 The project succeeds by making compatibility precise and testable. It does not
 try to reproduce Redland's internal architecture, expose all of Oxigraph, or
@@ -16,28 +16,31 @@ describe an aspiration as shipped behavior.
 
 ## People and jobs to be done
 
-Oxiland serves three audiences, in priority order:
+Oxiland serves four audiences:
 
 1. **Rust application authors** who want Redland-shaped RDF concepts without C
    ownership and memory-management hazards.
-2. **Maintainers migrating Redland software** who need an explicit mapping,
+2. **Python application authors** who need a typed embedded RDF package with
+   persistence, streaming I/O, SPARQL, and production guidance.
+3. **Maintainers migrating Redland software** who need an explicit mapping,
    known deviations, and evidence for each supported workflow.
-3. **Existing C consumers** who eventually need a separately audited
+4. **Existing C consumers** who eventually need a separately audited
    compatibility library and a realistic path away from a legacy native
    dependency.
 
-A **Python package** (ships 0.7 as `oxiland` on PyPI) extends the first audience
-to Python application authors with idiomatic interfaces over the same safe
-facade. It is not a substitute for the C ABI track.
-
-The safe Rust API is the product foundation. The Python package and the C layer
-are adapters over that foundation, not independent RDF engines.
+The safe Rust API is the implementation foundation. The Rust crate, Python
+package, and CLI are first-class products in their own ecosystems, with their
+own installation, API, typing, documentation, and release verification. The
+future C layer is a compatibility boundary over the same foundation, not an
+independent RDF engine.
 
 ## Product promises
 
 Oxiland aims to provide:
 
 - safe, documented Rust APIs for applicable Redland concepts;
+- a typed, documented Python API designed for Python workflows rather than
+  mechanical Rust mirroring;
 - standards-correct RDF and SPARQL behavior through Oxigraph;
 - explicit capabilities and useful typed failures for unsupported behavior;
 - streaming interfaces for potentially unbounded data;
@@ -86,7 +89,7 @@ When goals compete, use this order:
 1. Memory safety and data integrity.
 2. Honest, observable compatibility.
 3. RDF/SPARQL correctness.
-4. A coherent Rust API.
+4. Coherent public APIs in each supported language.
 5. Diagnosability and operational clarity.
 6. Bounded resource use.
 7. Performance.

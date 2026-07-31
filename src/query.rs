@@ -1,4 +1,4 @@
-//! Redland-shaped SPARQL query, update, and results (0.3).
+//! SPARQL query, update, streaming results, and result serialization.
 //!
 //! See ADR-009–ADR-012 and `docs/design/0.3-query-api.md`.
 

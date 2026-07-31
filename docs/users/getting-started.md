@@ -1,7 +1,7 @@
-# Getting started
+# Rust getting started
 
-This guide gets you from install to common workflows in Rust, then points to the
-Python track.
+This guide gets Rust users from install to common workflows. Python users have
+a complete, independent [Python documentation track](python.md).
 
 ## Install the toolchain
 
@@ -14,7 +14,9 @@ rustc --version   # >= 1.87
 
 If your organization pins an older toolchain, you cannot evaluate the Rust crate
 until that pin moves; this is intentional for the Oxigraph 0.5.9 compatibility
-matrix. The [Python package](python.md) only needs CPython 3.10–3.13.
+matrix. The [Python package](python.md) only needs CPython 3.10–3.14.
+
+For a Rust-only application, no system Oxigraph or Redland library is required.
 
 ## Create a project and add the dependency
 
@@ -35,14 +37,14 @@ Optional: enable `features = ["tracing"]` to bridge World logging to the
 ## Workflow 1 — Build a model and ASK
 
 ```rust
-use oxiland::terms::{Literal, NamedNode, Triple};
+use oxiland::terms::{Literal, Triple, named_node};
 use oxiland::{Model, Query, QueryResults};
 
 fn main() -> oxiland::Result<()> {
     let model = Model::new()?;
     model.add(Triple::new(
-        NamedNode::new("https://example.com/alice")?,
-        NamedNode::new("https://example.com/name")?,
+        named_node("https://example.com/alice")?,
+        named_node("https://example.com/name")?,
         Literal::new_simple_literal("Alice"),
     ))?;
 
@@ -57,14 +59,14 @@ From a checkout: `cargo run --example quick_start`.
 ## Workflow 2 — SELECT bindings
 
 ```rust
-use oxiland::terms::{Literal, NamedNode, Triple};
+use oxiland::terms::{Literal, Triple, named_node};
 use oxiland::{Model, Query, QueryResults};
 
 fn main() -> oxiland::Result<()> {
     let model = Model::new()?;
     model.add(Triple::new(
-        NamedNode::new("https://example.com/alice")?,
-        NamedNode::new("https://example.com/name")?,
+        named_node("https://example.com/alice")?,
+        named_node("https://example.com/name")?,
         Literal::new_simple_literal("Alice"),
     ))?;
 
@@ -111,14 +113,38 @@ fn main() -> oxiland::Result<()> {
 
 From a checkout: `cargo run --example parse_serialize`.
 
-## Python track
+## Choose storage deliberately
+
+`Model::new()` is process-local and disappears when the model is dropped.
+`Model::open(path)` creates or opens a persistent local store. For production,
+prefer typed `OpenOptions` with `create(false)` so a missing configured store
+fails instead of initializing an empty dataset.
+
+See [Persistence](persistence.md) and
+[Rust production operations](rust-production.md) before deploying durable
+state.
+
+## Handle errors by category
+
+Application code can use `oxiland::Result<T>` and match `Error` variants at a
+boundary. Avoid matching diagnostic strings. Parse errors, SPARQL parse errors,
+evaluation failures, storage failures, I/O errors, and unsupported capabilities
+have separate variants.
+
+Errors may occur while advancing lazy RDF or SPARQL iterators, so handle the
+item-level `Result` rather than assuming iterator construction validates all
+input.
+
+## Python package
 
 ```console
 pip install oxiland
 ```
 
-See the [Python guide](python.md) and
-[python/examples/](https://github.com/eddiethedean/oxiland/tree/main/python/examples).
+Start with the [Python overview](python.md), then use the dedicated guides for
+[installation](python-installation.md), [models](python-models.md),
+[RDF I/O and SPARQL](python-data.md), and
+[production operations](python-production.md).
 
 ## What to read next
 
@@ -127,5 +153,6 @@ See the [Python guide](python.md) and
 - SPARQL Update / results: [sparql.md](sparql.md)
 - I/O and progressive load: [io.md](io.md)
 - Persistence: [persistence.md](persistence.md)
+- Production operations: [rust-production.md](rust-production.md)
 - CLI: [cli.md](cli.md)
 - Common failures: [faq.md](faq.md)

@@ -5,12 +5,12 @@ build-backend = "maturin"
 [project]
 name = "oxiland"
 version = "0.7.0"
-description = "Pythonic RDF models, SPARQL, and streaming I/O on Oxigraph"
+description = "Embedded RDF datasets, SPARQL, persistence, and streaming I/O for Python"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0 OR MIT" }
 authors = [{ name = "Odo Matthews", email = "odosmatthews@gmail.com" }]
-keywords = ["rdf", "sparql", "oxigraph", "redland", "semantic-web"]
+keywords = ["rdf", "sparql", "semantic-web", "knowledge-graph", "graph-database"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -21,6 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Rust",
     "Topic :: Software Development :: Libraries",
 ]
@@ -30,9 +31,11 @@ dependencies = []
 dev = ["pytest>=8.0", "pyright>=1.1"]
 
 [project.urls]
-Homepage = "https://github.com/eddiethedean/oxiland"
+Homepage = "https://oxiland.readthedocs.io/en/latest/users/python/"
 Documentation = "https://oxiland.readthedocs.io/"
 Repository = "https://github.com/eddiethedean/oxiland"
+Changelog = "https://github.com/eddiethedean/oxiland/blob/main/CHANGELOG.md"
+Issues = "https://github.com/eddiethedean/oxiland/issues"
 
 [tool.maturin]
 features = ["pyo3/extension-module"]

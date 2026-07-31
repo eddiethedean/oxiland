@@ -8,9 +8,9 @@ Upgrade with `rustup update stable`.
 ## Why does `pip install oxiland` try to build from source?
 
 0.7.0 publishes **wheels only** (no sdist). If pip cannot find a wheel for your
-platform/Python, it may attempt a source build and fail. Use CPython 3.10–3.13
+platform/Python, it may attempt a source build and fail. Use CPython 3.10–3.14
 on a platform with published wheels, or build from a git checkout with maturin
-([Python guide](python.md)).
+([Python installation guide](python-installation.md)).
 
 ## Why not use Oxigraph directly?
 
@@ -18,6 +18,13 @@ If you do not need Redland-shaped APIs, inventories, or migration mapping, use
 [Oxigraph](https://oxigraph.org/). Oxiland adds a compatibility-oriented facade
 and evidence process on top of the same engine. See
 [positioning](../evaluators/positioning.md).
+
+## Is Oxiland a network database?
+
+No. In Rust and Python, a persistent model is an embedded local store inside
+the application process. Oxiland does not provide a server, authentication,
+replication, tenant isolation, or managed backups. See the
+[Rust](rust-production.md) or [Python](python-production.md) production guide.
 
 ## Is Oxiland “Redland-compatible”?
 
@@ -34,10 +41,12 @@ or differential fixture passes. Read the inventory JSON and milestone report.
 
 ## Parse left data in my model / on disk
 
-You used `Parser::load_into` (progressive). On failure, already-inserted quads
-remain (and on Fjall they are durable). Use `load_transactional` for atomic
-import, `load_collecting` for parse-then-insert batching without a store
-transaction, or clear the model/store and retry. See [io.md](io.md).
+You used a progressive load. On failure, already-inserted quads remain (and on
+Fjall they are durable). In Python, use
+`load_path(model, path, transactional=True)` for atomic import or keep the
+default `collecting=True` for parse-then-insert behavior. In Rust, use
+`load_transactional` or `load_collecting`. See the
+[Python data guide](python-data.md) or [Rust I/O guide](io.md).
 
 `Model::import_nquads_from_path` merges into the existing model; it does not
 replace the store.
@@ -49,8 +58,13 @@ extension (`.nt`, `.ttl`, `application/rdf+xml`, …).
 
 ## Named graphs vanished / parse error on N-Quads
 
-Default `GraphTarget::DefaultGraph` **rejects** named-graph input. Use
-`GraphTarget::Dataset` for TriG/N-Quads datasets.
+The default graph target **rejects** named-graph input. Rust callers can use
+`GraphTarget::Dataset` for TriG/N-Quads datasets. The Python 0.7 API does not
+expose that target; load one compatible graph with `graph=` or create named
+graphs programmatically. See [Python RDF I/O](python-data.md#stream-a-document).
+
+The 0.7 CLI has the same dataset-import limitation. Rust callers can use
+`Parser::parse_path_with_extension` or configure `GraphTarget::Dataset`.
 
 ## Fjall store uses a lot of RAM
 
@@ -67,9 +81,16 @@ outside an entered context raise `UnsupportedError`.
 Format v1 reopen is promised for patch releases in **0.4.x–0.7.x**. See
 [persistence](persistence.md).
 
+## Can multiple processes write the same store path?
+
+Do not use a shared writable directory as an inter-process coordination
+mechanism. Keep one owning application/service per store and expose controlled
+network concurrency above it. `Model` sharing and locks are in-process
+guarantees.
+
 ## Where do I report bugs or security issues?
 
-- General bugs and questions: GitHub Issues
+- General bugs and questions: [GitHub Issues](https://github.com/eddiethedean/oxiland/issues)
 - Security: [security policy](../security.md) (private email, not public issues)
 - Support expectations: [support](../support.md)
 - Conduct: [code of conduct](../code-of-conduct.md)

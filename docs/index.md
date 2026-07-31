@@ -1,30 +1,47 @@
 # Oxiland documentation
 
-Safe Rust and Python APIs for RDF models, named graphs, SPARQL, and streaming
-RDF I/O—on pinned Oxigraph.
+Production-oriented Python and Rust APIs for RDF models, named graphs, SPARQL,
+persistence, and streaming RDF I/O.
 
 | Path | Time | Link |
 |---|---|---|
-| Rust in five minutes | Install + ASK | [Getting started](users/getting-started.md) |
 | Python in five minutes | `pip install` + ASK | [Python](users/python.md) |
+| Deploy the Python package | Storage, backups, failures, upgrades | [Production operations](users/python-production.md) |
+| Python API | Typed public surface | [API reference](users/python-api.md) |
+| Rust in five minutes | Install + ASK | [Rust overview](users/rust.md) |
+| Deploy a Rust service | Storage, concurrency, backups, query budgets | [Production operations](users/rust-production.md) |
+| Command line | Imports, inspection, queries, scripting | [CLI guide](users/cli.md) |
 | Copy-paste examples | Rust + Python | [Examples](users/examples.md) |
-| API reference | rustdoc / stubs | [docs.rs](https://docs.rs/oxiland) · [Python API](users/python-api.md) |
+| Rust API | rustdoc | [docs.rs](https://docs.rs/oxiland) |
 
 Compatibility claims are evidence-scoped. See the [parity ledger](parity.md).
 
-## Users
+## Python
 
-1. [Getting started](users/getting-started.md) — Rust bootstrap and first workflows
-2. [Python](users/python.md) — PyPI package (`pip install oxiland`)
-3. [Python API](users/python-api.md) — stubs and key types
-4. [Examples](users/examples.md) — runnable Rust and Python scripts
-5. [RDF I/O](users/io.md) — syntaxes, GraphTarget, progressive vs collecting load
-6. [SPARQL](users/sparql.md) — Query, Update, and results
-7. [Persistence](users/persistence.md) — Fjall format v1, transactions, archival export
-8. [CLI](users/cli.md) — `oxiland-cli` rdfproc-shaped workflows
-9. [Streams](users/streams.md) — fallible iterators and early stop
-10. [Utilities and logging](users/utilities.md) — digests, URI helpers, World logs
-11. [FAQ and troubleshooting](users/faq.md)
+1. [Overview](users/python.md) — install, first model, and package capabilities
+2. [Installation and compatibility](users/python-installation.md) — wheels, reproducible deployment, and source builds
+3. [Models and RDF terms](users/python-models.md) — values, graphs, CRUD, matching, and transactions
+4. [RDF I/O and SPARQL](users/python-data.md) — syntax support, import modes, queries, and updates
+5. [Production operations](users/python-production.md) — lifecycle, durability, backups, upgrades, and security boundaries
+6. [API reference](users/python-api.md) — public classes, functions, signatures, and errors
+
+## Rust
+
+1. [Overview](users/rust.md) — public surface, models, storage, and errors
+2. [Getting started](users/getting-started.md) — project bootstrap and first workflows
+3. [RDF I/O](users/io.md) — syntaxes, graph targets, and import semantics
+4. [SPARQL](users/sparql.md) — queries, updates, datasets, and result formats
+5. [Persistence](users/persistence.md) — format v1, transactions, and archival export
+6. [Streams](users/streams.md) — fallible iterators, ownership, and early stop
+7. [Utilities and logging](users/utilities.md) — digests, IRIs, namespaces, and observability
+8. [Production operations](users/rust-production.md) — lifecycle, concurrency, capacity, backup, and upgrades
+9. [Rust API reference](https://docs.rs/oxiland)
+
+## Command line
+
+1. [CLI guide](users/cli.md) — install, store selection, commands, automation, and failure behavior
+2. [Examples](users/examples.md) — runnable Python and Rust programs
+3. [FAQ and troubleshooting](users/faq.md)
 
 ## Evaluators
 

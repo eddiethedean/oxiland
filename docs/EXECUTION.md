@@ -124,8 +124,8 @@ The detailed acceptance criteria and dependency map live in the
 |---:|---|---|
 | P0 | ADR-017 | Pythonic package; rdflib deferred |
 | P0 | `python/` maturin + PyO3 | path-depends on safe crate |
-| P0 | Pytest + typing + wheels CI | CPython 3.10–3.13 |
-| P1 | User guide + examples | `docs/users/python.md` |
+| P0 | Pytest + typing + wheels CI | CPython 3.10–3.14 |
+| P1 | Standalone Python documentation + examples | Python nav track under `docs/users/`; `python/examples/` |
 | P1 | Compatibility report | `docs/reports/0.7.md` |
 
 ## Completed 0.5 backlog

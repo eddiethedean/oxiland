@@ -55,17 +55,27 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Users:
+  - Python:
+      - Overview: users/python.md
+      - Installation and compatibility: users/python-installation.md
+      - Models and RDF terms: users/python-models.md
+      - RDF I/O and SPARQL: users/python-data.md
+      - Production operations: users/python-production.md
+      - API reference: users/python-api.md
+      - Examples: users/examples.md
+  - Rust:
+      - Overview: users/rust.md
       - Getting started: users/getting-started.md
-      - Python: users/python.md
-      - Python API: users/python-api.md
       - Examples: users/examples.md
       - RDF I/O: users/io.md
       - SPARQL: users/sparql.md
       - Persistence: users/persistence.md
-      - CLI: users/cli.md
       - Streams: users/streams.md
       - Utilities and logging: users/utilities.md
+      - Production operations: users/rust-production.md
+      - API reference: https://docs.rs/oxiland
+  - Command line:
+      - CLI guide: users/cli.md
       - FAQ: users/faq.md
   - Evaluators:
       - Positioning: evaluators/positioning.md
@@ -81,6 +91,7 @@ nav:
       - Execution: EXECUTION.md
       - Architecture: ARCHITECTURE.md
       - Verification: VERIFICATION.md
+      - Compatibility contract: COMPATIBILITY.md
       - Decisions: DECISIONS.md
       - Risks: RISKS.md
   - Project:

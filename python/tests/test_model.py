@@ -10,6 +10,7 @@ from oxiland import (
     Model,
     NamedNode,
     Triple,
+    UnsupportedError,
 )
 
 
@@ -90,3 +91,26 @@ def test_transaction_commit_and_rollback() -> None:
     except RuntimeError:
         pass
     assert model.is_empty() is True
+
+
+def test_nested_transaction_is_rejected_and_outer_rolls_back() -> None:
+    model = Model()
+    outer_statement = _alice()
+    inner_statement = Triple(
+        NamedNode("https://example.com/bob"),
+        NamedNode("https://example.com/name"),
+        Literal("Bob"),
+    )
+
+    with pytest.raises(UnsupportedError, match="nested transaction"):
+        with model.transaction() as outer:
+            outer.add(outer_statement)
+            with model.transaction() as inner:
+                inner.add(inner_statement)
+
+    assert model.is_empty() is True
+
+    # The rejected nested enter must not leave the model permanently locked out.
+    with model.transaction() as txn:
+        txn.add(outer_statement)
+    assert model.contains(outer_statement) is True

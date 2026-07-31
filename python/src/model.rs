@@ -1,4 +1,5 @@
-use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 
 use oxigraph::model::{GraphName as OxGraphName, NamedNodeRef, NamedOrBlankNodeRef, Quad, TermRef};
 use oxiland::storage::OpenOptions;
@@ -14,6 +15,7 @@ use crate::terms::{
 #[pyclass(name = "Model", module = "oxiland")]
 pub struct PyModel {
     pub(crate) inner: Model,
+    transaction_active: Arc<AtomicBool>,
 }
 
 #[pymethods]
@@ -22,6 +24,7 @@ impl PyModel {
     fn new() -> PyResult<Self> {
         Ok(Self {
             inner: Model::new().map_err(map_error)?,
+            transaction_active: Arc::new(AtomicBool::new(false)),
         })
     }
 
@@ -37,6 +40,7 @@ impl PyModel {
         let options = OpenOptions::fjall(path).read_only(read_only).create(create);
         Ok(Self {
             inner: Model::open_with(options).map_err(map_error)?,
+            transaction_active: Arc::new(AtomicBool::new(false)),
         })
     }
 
@@ -47,6 +51,7 @@ impl PyModel {
     ) -> PyResult<Self> {
         Ok(Self {
             inner: Model::migrate_legacy_store(path_buf(path)?).map_err(map_error)?,
+            transaction_active: Arc::new(AtomicBool::new(false)),
         })
     }
 
@@ -201,6 +206,7 @@ impl PyModel {
         PyTransaction {
             model: self.inner.clone(),
             ops: Mutex::new(Vec::new()),
+            transaction_active: Arc::clone(&self.transaction_active),
             entered: false,
         }
     }
@@ -246,13 +252,19 @@ enum TxnOp {
 pub struct PyTransaction {
     model: Model,
     ops: Mutex<Vec<TxnOp>>,
+    transaction_active: Arc<AtomicBool>,
     entered: bool,
 }
 
 #[pymethods]
 impl PyTransaction {
     fn __enter__(mut slf: PyRefMut<'_, Self>) -> PyResult<PyRefMut<'_, Self>> {
-        if slf.entered {
+        if slf.entered
+            || slf
+                .transaction_active
+                .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+                .is_err()
+        {
             return Err(map_error(oxiland::Error::Unsupported(
                 "nested transaction is unsupported".into(),
             )));
@@ -267,29 +279,38 @@ impl PyTransaction {
         exc_value: Option<&Bound<'_, PyAny>>,
         _traceback: Option<&Bound<'_, PyAny>>,
     ) -> PyResult<bool> {
-        self.entered = false;
+        self.ensure_entered()?;
         if exc_value.is_some() {
-            self.ops.lock().unwrap().clear();
+            self.ops
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .clear();
+            self.finish();
             return Ok(false);
         }
-        let ops = std::mem::take(&mut *self.ops.lock().unwrap());
-        self.model
-            .transaction(|txn| {
-                for op in ops {
-                    match op {
-                        TxnOp::Add(quad) => {
-                            txn.insert_quad(quad)?;
-                        }
-                        TxnOp::Remove(quad) => {
-                            txn.remove_quad(&quad)?;
-                        }
-                        TxnOp::Clear => txn.clear()?,
-                        TxnOp::ClearGraph(g) => txn.clear_graph(g)?,
+        let ops = std::mem::take(
+            &mut *self
+                .ops
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner),
+        );
+        let result = self.model.transaction(|txn| {
+            for op in ops {
+                match op {
+                    TxnOp::Add(quad) => {
+                        txn.insert_quad(quad)?;
                     }
+                    TxnOp::Remove(quad) => {
+                        txn.remove_quad(&quad)?;
+                    }
+                    TxnOp::Clear => txn.clear()?,
+                    TxnOp::ClearGraph(g) => txn.clear_graph(g)?,
                 }
-                Ok(())
-            })
-            .map_err(map_error)?;
+            }
+            Ok(())
+        });
+        self.finish();
+        result.map_err(map_error)?;
         Ok(false)
     }
 
@@ -302,7 +323,10 @@ impl PyTransaction {
             Some(g) => extract_graph_name(g)?,
         };
         let quad = Quad::new(triple.subject, triple.predicate, triple.object, graph_name);
-        self.ops.lock().unwrap().push(TxnOp::Add(quad));
+        self.ops
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .push(TxnOp::Add(quad));
         Ok(())
     }
 
@@ -310,7 +334,7 @@ impl PyTransaction {
         self.ensure_entered()?;
         self.ops
             .lock()
-            .unwrap()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
             .push(TxnOp::Add(quad.inner.clone()));
         Ok(())
     }
@@ -328,7 +352,10 @@ impl PyTransaction {
             Some(g) => extract_graph_name(g)?,
         };
         let quad = Quad::new(triple.subject, triple.predicate, triple.object, graph_name);
-        self.ops.lock().unwrap().push(TxnOp::Remove(quad));
+        self.ops
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .push(TxnOp::Remove(quad));
         Ok(())
     }
 
@@ -336,14 +363,17 @@ impl PyTransaction {
         self.ensure_entered()?;
         self.ops
             .lock()
-            .unwrap()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
             .push(TxnOp::Remove(quad.inner.clone()));
         Ok(())
     }
 
     fn clear(&self) -> PyResult<()> {
         self.ensure_entered()?;
-        self.ops.lock().unwrap().push(TxnOp::Clear);
+        self.ops
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .push(TxnOp::Clear);
         Ok(())
     }
 
@@ -351,7 +381,7 @@ impl PyTransaction {
         self.ensure_entered()?;
         self.ops
             .lock()
-            .unwrap()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
             .push(TxnOp::ClearGraph(extract_graph_name(graph)?));
         Ok(())
     }
@@ -365,6 +395,19 @@ impl PyTransaction {
             )));
         }
         Ok(())
+    }
+
+    fn finish(&mut self) {
+        self.entered = false;
+        self.transaction_active.store(false, Ordering::Release);
+    }
+}
+
+impl Drop for PyTransaction {
+    fn drop(&mut self) {
+        if self.entered {
+            self.transaction_active.store(false, Ordering::Release);
+        }
     }
 }
 

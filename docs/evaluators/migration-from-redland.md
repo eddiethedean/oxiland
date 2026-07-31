@@ -23,6 +23,19 @@ Earlier curated slices remain available for historical milestone evidence:
 3. Treat unknown factories/options as `Error::Unsupported`, not silent no-ops.
 4. Check the [parity ledger](../parity.md) before asserting behavioral parity.
 
+## Assess before porting
+
+Inventory the application rather than translating headers wholesale:
+
+| Question | Why it matters |
+|---|---|
+| Which parsers, query forms, storage backends, and feature URIs are used? | Determines verified mappings and explicit exclusions |
+| Does the application require C source or ABI compatibility? | Not available in 0.7; safe Rust/Python migration can proceed separately |
+| Which data must survive an upgrade? | Requires N-Quads export, restore rehearsal, and format planning |
+| Are inputs or queries untrusted? | Requires application budgets and isolation beyond library semantics |
+| Which errors and callback orders affect control flow? | Must be covered by differential fixtures, not assumed from successful cases |
+| Can the migration be rolled back? | Determines dual-run, backup, and cutover design |
+
 ## Core model (0.1)
 
 | Redland concept | Oxiland |
@@ -120,3 +133,18 @@ on 0.8+.
 3. Port tests to Oxiland public APIs with differential fixtures where needed.
 4. Keep native Redland as an oracle for contested behavior until fixtures pass.
 5. Prefer the 0.7 PyPI package for Python callers; keep C ABI work on 0.8+.
+
+## Production cutover
+
+1. Export the source dataset in a standards format that preserves named graphs.
+2. Import into an isolated Oxiland store and record processed counts.
+3. Run application-owned queries plus the relevant differential fixtures.
+4. Compare failure behavior as well as successful output.
+5. Capacity-test memory, disk, and representative query/update latency.
+6. Define one store owner, backup retention, restore rehearsal, and rollback.
+7. Cut over only after the published compatibility scope matches the actual
+   workflows in use.
+
+Use the [Rust](../users/rust-production.md) or
+[Python](../users/python-production.md) production runbook for the target
+package.

@@ -1,10 +1,10 @@
-# Compatibility plan
+# Compatibility contract
 
 Status: active contract  
 Normative ledger: [`parity.md`](parity.md) (canonical root file: [`PARITY.md`](https://github.com/eddiethedean/oxiland/blob/main/PARITY.md))  
 Verification method: [`VERIFICATION.md`](VERIFICATION.md)
 
-## Target
+## Baseline and target
 
 The baseline is Redland `librdf` 1.0.17 and the reference manual labeled
 1.0.18. Raptor and Rasqal behavior is in scope when exposed through a public

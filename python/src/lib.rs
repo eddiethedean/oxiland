@@ -1,4 +1,4 @@
-//! Pythonic Oxiland bindings (ADR-017).
+//! Native implementation of the Oxiland Python package.
 
 mod error;
 mod io;

@@ -48,17 +48,36 @@ jobs:
           fi
           echo "Publishing oxiland + oxiland-cli + PyPI oxiland $tag"
 
-      - name: Package dry run
-        run: cargo publish -p oxiland --dry-run
-
       - name: Publish to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
-          cargo publish -p oxiland
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          version_exists() {
+            curl --fail --silent --show-error \
+              "https://crates.io/api/v1/crates/$1/$tag" >/dev/null
+          }
+
+          if version_exists oxiland; then
+            echo "oxiland $tag is already on crates.io; skipping"
+          else
+            cargo publish -p oxiland --dry-run
+            cargo publish -p oxiland
+          fi
+
+          if version_exists oxiland-cli; then
+            echo "oxiland-cli $tag is already on crates.io; skipping"
+            exit 0
+          fi
+
           # CLI depends on the just-published oxiland version on crates.io.
           for i in 1 2 3 4 5 6 7 8; do
             if cargo publish -p oxiland-cli; then
+              exit 0
+            fi
+            if version_exists oxiland-cli; then
+              echo "oxiland-cli $tag became visible after attempt $i"
               exit 0
             fi
             echo "oxiland-cli publish attempt $i failed; waiting for crates.io index…"
@@ -68,15 +87,15 @@ jobs:
 
   publish-pypi:
     name: Publish PyPI
-    needs: ci
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+    needs: [ci, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: pypi
+      url: https://pypi.org/project/oxiland/
     permissions:
       contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -91,24 +110,43 @@ jobs:
             echo "Tag '$tag' must match python/pyproject.toml ($py_version) and python/Cargo.toml ($py_crate_version)"
             exit 1
           fi
-          echo "Publishing PyPI oxiland $tag on ${{ matrix.os }}"
+          echo "Publishing PyPI oxiland $tag with Trusted Publishing"
+
+      - name: Download release wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: |
-            3.10
-            3.11
-            3.12
-            3.13
+          python-version: "3.14"
 
-      - name: Build and publish wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          working-directory: python
-          command: publish
-          args: --non-interactive --no-sdist --skip-existing -i 3.10 3.11 3.12 3.13
-          manylinux: auto
-          sccache: "true"
+      - name: Validate release wheel set
         env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import zipfile
+
+          version = os.environ["RELEASE_VERSION"].removeprefix("v")
+          wheels = sorted(Path("dist").glob(f"oxiland-{version}-*.whl"))
+          assert len(wheels) == 15, wheels
+          expected_abis = {"cp310", "cp311", "cp312", "cp313", "cp314"}
+          for abi in expected_abis:
+              matches = [wheel for wheel in wheels if f"-{abi}-" in wheel.name]
+              assert len(matches) == 3, (abi, matches)
+          for wheel in wheels:
+              names = zipfile.ZipFile(wheel).namelist()
+              assert any(name.endswith("/py.typed") for name in names), wheel
+          PY
+
+      - name: Publish wheels to PyPI
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+        with:
+          packages-dir: dist
+          skip-existing: true

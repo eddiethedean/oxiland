@@ -1,143 +1,133 @@
-# Python package
+# Oxiland for Python
 
-Oxiland’s PyPI package provides a **Pythonic** API over the safe Rust facade.
-It is not a 1:1 mirror of Rust builders, not a Redland Python drop-in, and does
-not integrate with rdflib in 0.7.
+Oxiland is a complete Python toolkit for local RDF datasets: create and
+validate terms, manage default and named graphs, query with SPARQL, stream RDF
+files, and keep durable stores on disk.
 
-## Install
+The Python package is distributed independently on PyPI, has no required
+Python dependencies, and includes type information for static analysis and IDE
+completion.
+
+## Start in five minutes
+
+Install a wheel into a virtual environment:
 
 ```console
-pip install oxiland
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install oxiland
 ```
 
-| Requirement | Detail |
-|---|---|
-| CPython | **3.10–3.13** |
-| Platforms | Published **wheels** for Linux / macOS / Windows (CI matrix hosts) |
-| Source builds | **No sdist** on PyPI in 0.7.0 — install needs a matching wheel |
+On Windows PowerShell, activate with `.venv\Scripts\Activate.ps1`.
 
-If `pip` tries to build from source and fails, you are on an unsupported
-platform/Python combination for the published wheels. Use a supported CPython
-or build from a git checkout with [maturin](https://www.maturin.rs/) (see
-[Contributing](../contributing.md)).
-
-## Quick start
+Create a dataset and query it:
 
 ```python
 from oxiland import Literal, Model, NamedNode, Triple, query
 
+EX = "https://example.com/"
 model = Model()
+
 model.add(
     Triple(
-        NamedNode("https://example.com/alice"),
-        NamedNode("https://example.com/name"),
-        Literal("Alice"),
+        NamedNode(f"{EX}alice"),
+        NamedNode(f"{EX}name"),
+        Literal("Alice", language="en"),
     )
 )
+
 assert query(model, "ASK { ?s ?p ?o }") is True
+
+for row in query(model, "SELECT ?s ?name WHERE { ?s <https://example.com/name> ?name }"):
+    print(row["s"].value, row["name"].value)
 ```
 
-Runnable scripts (from a checkout):
+## Package capabilities
 
-```console
-cd python
-python examples/quick_start.py
-python examples/select.py
-python examples/parse_serialize.py
-python examples/persistent.py
-```
+| Area | Production-facing capability |
+|---|---|
+| RDF values | Validated IRIs, blank nodes, literals, triples, quads, and graph names |
+| Models | In-memory and persistent datasets with default and named graphs |
+| Writes | Idempotent add/remove, clear operations, and atomic transactions |
+| Reads | Exact containment, lazy pattern matching, and dataset length |
+| RDF I/O | Turtle, N-Triples, N-Quads, TriG, and RDF/XML |
+| SPARQL | ASK, SELECT, CONSTRUCT, DESCRIBE, Update, and result serialization |
+| Operations | Read-only open, explicit sync, N-Quads backup/restore, typed failures |
+| Developer experience | CPython 3.10–3.14 wheels and bundled PEP 561 type information |
 
-## Models and contexts
-
-```python
-from oxiland import Model, NamedNode, Literal, Triple
-
-model = Model()
-graph = NamedNode("https://example.com/people")
-model.add(
-    Triple(
-        NamedNode("https://example.com/alice"),
-        NamedNode("https://example.com/name"),
-        Literal("Alice"),
-    ),
-    graph=graph,
-)
-
-for quad in model.find(subject=NamedNode("https://example.com/alice")):
-    print(quad.graph)
-```
-
-`Model.find(...)` returns a lazy iterator of `Quad` values.
-
-### Persistence and transactions
+## Choose the right model
 
 ```python
 from pathlib import Path
-from oxiland import Model, NamedNode, Literal, Triple
+from oxiland import Model
 
-model = Model.open(Path("./data/store"))
-with model.transaction() as txn:
-    txn.add(
+scratch = Model()                              # process-local, in memory
+catalog = Model.open(Path("var/catalog"))     # durable local dataset
+replica = Model.open(
+    Path("var/catalog"),
+    read_only=True,
+    create=False,
+)
+```
+
+Use an in-memory model for request-scoped transformations, tests, and caches.
+Use a persistent model when data must survive restarts. A persistent store is a
+local embedded database, not a remote service: your application owns its path,
+permissions, backup policy, and process lifecycle.
+
+## Atomic writes
+
+```python
+with catalog.transaction() as tx:
+    tx.clear_graph(NamedNode(f"{EX}staging"))
+    tx.add(
         Triple(
-            NamedNode("https://example.com/alice"),
-            NamedNode("https://example.com/name"),
-            Literal("Alice"),
-        )
+            NamedNode(f"{EX}alice"),
+            NamedNode(f"{EX}status"),
+            Literal("active"),
+        ),
+        graph=NamedNode(f"{EX}staging"),
     )
-model.sync()
 ```
 
-Transaction methods require an active `with` block. On exception, the context
-manager discards buffered operations (no commit). Format v1 reopen covers
-**0.4.x–0.7.x** patch lines ([persistence](persistence.md)).
+The block commits as one unit. If Python leaves it with an exception, no
+buffered operation is committed. Transactions must be used as context managers
+and cannot be nested on the same `Model`.
 
-## Parse and serialize
+## Stream large results
+
+`Model.find()`, `parse()`, `parse_path()`, SELECT, CONSTRUCT, and DESCRIBE are
+lazy. Process their iterators directly instead of converting them to lists when
+the result might be large:
 
 ```python
-from oxiland import Model, load, serialize
-
-model = Model()
-load(model, '<https://example.com/a> <https://example.com/p> "x" .', "turtle")
-print(serialize(model, "ntriples"))
+for quad in catalog.find(predicate=NamedNode(f"{EX}status")):
+    handle(quad)
 ```
 
-`parse(data, syntax)` streams quads without requiring a model. Path helpers
-accept `pathlib.Path` and other `PathLike` objects.
+Dropping an iterator early is supported. The iterator owns the state required
+to continue reading.
 
-## SPARQL
+## Python documentation track
 
-```python
-from oxiland import query, update, serialize_results
+1. [Installation and compatibility](python-installation.md)
+2. [Models and RDF terms](python-models.md)
+3. [RDF I/O and SPARQL](python-data.md)
+4. [Production operations](python-production.md)
+5. [API reference](python-api.md)
+6. [Runnable examples](examples.md#python-pythonexamples)
 
-assert query(model, "ASK { ?s ?p ?o }") is True
+The [support policy](../support.md), [security policy](../security.md), and
+[changelog](https://github.com/eddiethedean/oxiland/blob/main/CHANGELOG.md)
+apply to the Python distribution.
 
-for row in query(model, "SELECT ?s ?p ?o WHERE { ?s ?p ?o }"):
-    print(row["s"], row["p"], row["o"])
+## Scope
 
-update(model, "DELETE WHERE { ?s ?p ?o }")
-print(serialize_results(model, "ASK { ?s ?p ?o }", "json"))
-```
+The public Python contract is the API documented in this track and shipped in
+the wheel's PEP 561 stubs. The implementation uses a native RDF engine, but
+Python callers do not need a Rust toolchain or knowledge of the Rust API.
 
-`SELECT` returns a `SolutionsIter`; `CONSTRUCT`/`DESCRIBE` return a
-`TriplesIter`. Both are lazy. Unbound variables are `None` (not `KeyError`).
-
-## Errors
-
-Failures raise subclasses of `OxilandError` (`InvalidRdfError`, `ParseError`,
-`SparqlParseError`, `StorageError`, `OpenStoreError`, `UnsupportedError`, and
-others) aligned with the Rust `Error` categories. `ParseError` exposes
-`.message` / `.location`; `OpenStoreError` exposes `.path` / `.message`.
-
-## What is not mirrored
-
-- Rust `Query` / `Parser` / `Serializer` builders → kwargs on functions
-- Query cancellation tokens
-- `Model.store` / advanced Oxigraph escapes
-- World logging handlers
-- rdflib conversion (deferred)
-
-## See also
-
-- [Python API landing](python-api.md)
-- [Examples index](examples.md)
-- Design: [0.7-python-api.md](../design/0.7-python-api.md)
+Oxiland is not an rdflib adapter or a drop-in for historical Redland Python
+bindings. Query cancellation tokens, custom storage engines, and rdflib object
+conversion are not exposed in 0.7.0. Unsupported operations fail explicitly
+instead of silently changing semantics.

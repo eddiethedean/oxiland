@@ -3,13 +3,14 @@ name = "oxiland-cli"
 version = "0.7.0"
 edition = "2024"
 rust-version = "1.87"
-description = "rdfproc-shaped command workflows over the Oxiland safe Rust facade"
+description = "Import, inspect, query, and export local RDF datasets"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
 repository = "https://github.com/eddiethedean/oxiland"
-homepage = "https://github.com/eddiethedean/oxiland"
+homepage = "https://oxiland.readthedocs.io/en/latest/users/cli/"
+documentation = "https://oxiland.readthedocs.io/en/latest/users/cli/"
 authors = ["Odo Matthews <odosmatthews@gmail.com>"]
-keywords = ["rdf", "sparql", "redland", "cli"]
+keywords = ["rdf", "sparql", "semantic-web", "cli"]
 categories = ["command-line-utilities"]
 publish = true
 

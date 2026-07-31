@@ -1,12 +1,30 @@
 # Contributing to Oxiland
 
-Oxiland is early-stage and compatibility-driven. Contributions are welcome.
+Oxiland is a multi-surface RDF project with a Rust library, Python package,
+command-line tool, compatibility evidence, and published documentation.
+Contributions are welcome.
 
 Start with the [project charter](https://github.com/eddiethedean/oxiland/blob/main/docs/CHARTER.md),
 then use the [documentation index](https://oxiland.readthedocs.io/en/latest/)
 for roadmap and decisions. User-facing guides live under
 [`docs/users/`](https://github.com/eddiethedean/oxiland/tree/main/docs/users);
 do not treat planning ADRs as the product manual.
+
+## Repository map
+
+| Path | Purpose |
+|---|---|
+| `src/` | Public Rust facade and implementation |
+| `tests/`, `examples/` | Rust integration evidence and runnable workflows |
+| `python/` | Maturin/PyO3 Python package, stubs, tests, and examples |
+| `crates/oxiland-cli/` | Command-line package and workflow tests |
+| `docs/users/` | Task-oriented product documentation |
+| `docs/evaluators/` | Positioning and migration guidance |
+| `compatibility/` | Inventories, conformance fixtures, and oracle harnesses |
+| `api/` | Curated public API snapshot |
+| `docs/design/`, `docs/reports/` | Design and historical evidence archives |
+
+Before editing, check `git status` and preserve unrelated local changes.
 
 ## Fast path (docs, bugs, small fixes)
 
@@ -59,6 +77,7 @@ cargo doc --no-deps
 python3 scripts/check-inventory.py
 python3 scripts/check-docs.py
 scripts/generate-public-api.sh check
+mkdocs build --strict
 ```
 
 For Python package changes (`python/`):
@@ -68,8 +87,20 @@ cd python
 python3 -m venv .venv && source .venv/bin/activate
 pip install maturin pytest pyright
 maturin develop
-pytest
+pytest -q
 pyright
+python examples/quick_start.py
+python examples/select.py
+python examples/parse_serialize.py
+python examples/persistent.py
+maturin build --release
+```
+
+For CLI changes:
+
+```console
+cargo test -p oxiland-cli
+cargo run -p oxiland-cli -- --help
 ```
 
 Also run milestone-specific conformance, differential, storage, sanitizer, or
@@ -122,6 +153,21 @@ Keep document roles separate:
 
 Plans must label future work as planned. Historical reports should not be
 silently rewritten to describe later implementation.
+
+User documentation should:
+
+- start from a user task rather than implementation provenance;
+- state prerequisites, return values, failure behavior, and resource costs;
+- distinguish in-memory examples from persistent production workflows;
+- include operational limits and unsupported behavior near the relevant task;
+- use copyable examples that compile or clearly mark illustrative placeholders;
+- link to authoritative API, support, security, and upgrade contracts;
+- avoid claims such as “fast”, “complete”, or “compatible” without evidence and
+  scope.
+
+Run both the local-link checker and strict MkDocs build after navigation or
+cross-document changes. For `python/README.md` or a crate README, also build the
+artifact and inspect its packaged metadata.
 
 ## Pull request checklist
 

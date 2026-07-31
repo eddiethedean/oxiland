@@ -275,8 +275,8 @@ Deliverables:
   and text paths that match Python I/O norms.
 - Streaming result and parse consumers that do not force full materialization
   when the Rust facade streams.
-- Python examples and a short user guide that teach the Python API on its own
-  terms (not “call this Rust method under another name”).
+- Python examples and a standalone documentation track that teach installation,
+  models, I/O, SPARQL, operations, and the API on Python's own terms.
 - An explicit design note for what is *not* mirrored 1:1 from Rust (builders
   flattened to functions/kwargs, ownership differences, naming).
 - Optional interop story evaluated and recorded (for example converting to/from

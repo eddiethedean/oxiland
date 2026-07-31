@@ -1,9 +1,10 @@
-//! A safe Rust successor to the Redland `librdf` API, powered by Oxigraph.
+//! Embedded RDF datasets, SPARQL, persistence, and streaming I/O for Rust.
 //!
-//! Oxiland follows Redland's object model without copying its manual-memory
-//! ownership rules into safe Rust. Oxigraph RDF term types are re-exported so
-//! callers can move data into and out of the underlying RDF ecosystem without
-//! adapters (see ADR-004).
+//! Oxiland provides a safe application facade powered by Oxigraph. RDF term
+//! types are re-exported so callers can move data into and out of the broader
+//! Oxigraph ecosystem without adapters. Redland workflow mappings are retained
+//! as an evidence-scoped migration surface without copying manual-memory
+//! ownership rules into Rust (ADR-004).
 //!
 //! # Module layout (1.0 naming freeze intent — ADR-020)
 //!
@@ -85,8 +86,9 @@ pub mod terms {
 
 /// Oxigraph SPARQL primitives for advanced use cases.
 ///
-/// Prefer [`Query`], [`Update`], and [`ResultsFormat`] for Redland-shaped
-/// workflows. This module is an escape hatch, not the compatibility surface.
+/// Prefer [`Query`], [`Update`], and [`ResultsFormat`] for the documented
+/// Oxiland API. This module is an engine escape hatch, not the compatibility
+/// or stability surface.
 pub mod sparql {
     pub use oxigraph::sparql::results::{QueryResultsFormat, QueryResultsSerializer};
     pub use oxigraph::sparql::{

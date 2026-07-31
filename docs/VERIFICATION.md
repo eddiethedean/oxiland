@@ -1,4 +1,4 @@
-# Verification plan
+# Verification and quality gates
 
 Status: active quality contract  
 Applies to: local development, CI, differential infrastructure, and releases
@@ -19,10 +19,10 @@ A passing test in one layer does not substitute for the others.
 | Rust integration | public workflows and feature combinations | `tests/` |
 | Conformance | RDF and SPARQL standards | `compatibility/conformance/` |
 | Differential | Oxiland versus native Redland | `compatibility/fixtures/` |
-| C contract | headers, symbols, allocation, callbacks | `crates/oxiland-capi/tests/` |
+| C contract *(planned 0.8+)* | headers, symbols, allocation, callbacks | `crates/oxiland-capi/tests/` |
 | Python package | wheels, typing, pytest | `python/` |
 | Downstream | real language bindings and applications | CI-managed manifests |
-| Fuzz/property | malformed inputs and lifecycle sequences | `fuzz/` |
+| Fuzz/property *(planned expansion)* | malformed inputs and lifecycle sequences | `fuzz/` |
 
 Planned locations are created with the milestone that first needs them.
 
@@ -94,9 +94,13 @@ Required on every PR and on `main`/release:
 - stable Rust checks (fmt, Clippy, tests, docs, examples, inventory,
   documentation links, public-API snapshot);
 - dedicated Fjall persistence tests;
-- Rust 1.87 MSRV Clippy and tests.
+- Rust 1.87 MSRV Clippy and tests;
+- Python pytest, Pyright, and runnable examples;
+- Linux, macOS, and Windows wheel builds for CPython 3.10–3.14;
+- install/import smoke tests for every produced wheel;
+- RDF I/O conformance and compatibility harness smokes.
 
-The intended broader matrix still includes:
+Planned broader coverage includes:
 
 - Linux, macOS, and Windows for the safe API;
 - sanitizer-enabled Linux/macOS C ABI tests;
@@ -127,7 +131,30 @@ python3 scripts/check-docs.py
 scripts/generate-public-api.sh check
 ```
 
-Milestones may add native or long-running commands to this baseline.
+For Python changes:
+
+```text
+cd python
+maturin develop
+pytest -q
+pyright
+python examples/quick_start.py
+python examples/select.py
+python examples/parse_serialize.py
+python examples/persistent.py
+maturin build --release
+```
+
+For documentation changes:
+
+```text
+python3 scripts/check-docs.py
+mkdocs build --strict
+```
+
+Milestones may add native or long-running commands to this baseline. Release
+artifact checks must operate on the built crate, CLI, or wheel rather than only
+the workspace source tree.
 
 ## Release gates by phase
 

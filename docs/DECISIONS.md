@@ -368,12 +368,12 @@ Decision:
 - Map `Error` variants (`src/error.rs`) to a typed exception hierarchy under
   `OxilandError` (not stringly-only failures).
 - Accept `pathlib.Path` / path-like and `str`/`bytes` for file and buffer I/O.
-- Support CPython **3.10–3.13**; wheel builds via **maturin-action** on
-  ubuntu/macOS/windows hosts (CPython 3.10–3.13). Residual platforms
+- Support CPython **3.10–3.14**; wheel builds via **maturin-action** on
+  ubuntu/macOS/windows hosts (CPython 3.10–3.14). Residual platforms
   (dedicated aarch64 manylinux runners, etc.) remain optional expansions;
-  0.7.0 publishes **wheels only** (`maturin publish --no-sdist`) because the
-  path dependency on the Rust crate cannot ship a usable sdist from `python/`
-  alone.
+  0.7.0 publishes the CI-verified wheels through PyPI Trusted Publishing and
+  does not publish an sdist because the path dependency on the Rust crate
+  cannot ship a usable source archive from `python/` alone.
 - **Defer rdflib interop** for 0.7 (no convert helpers, no store adapter, no
   behavioral-identity claim). Revisit in a later ADR if needed.
 - Do **not** claim Redland Python binding drop-in compatibility or CPython ABI
