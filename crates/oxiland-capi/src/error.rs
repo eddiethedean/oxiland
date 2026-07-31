@@ -40,6 +40,12 @@ impl FfiDefault for i32 {
     }
 }
 
+impl FfiDefault for usize {
+    fn ffi_default() -> Self {
+        0
+    }
+}
+
 impl FfiDefault for () {
     fn ffi_default() -> Self {}
 }

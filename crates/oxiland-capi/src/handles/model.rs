@@ -37,15 +37,17 @@ pub extern "C" fn librdf_new_model(
         let Some(storage) = (unsafe { borrow_handle(storage, TAG_STORAGE) }) else {
             return ptr::null_mut();
         };
-        let model = match storage.inner.backend {
-            StorageBackend::Memory => Model::new(),
-            StorageBackend::Fjall => {
-                let Some(path) = storage.inner.path.as_ref() else {
-                    set_last_error("fjall storage missing path");
-                    return ptr::null_mut();
-                };
-                Model::open_with(OpenOptions::fjall(path))
-            }
+        let model = if storage.inner.backend == StorageBackend::Memory {
+            Model::new()
+        } else {
+            let Some(path) = storage.inner.path.as_ref() else {
+                set_last_error(format!(
+                    "{} storage missing path",
+                    storage.inner.backend.name()
+                ));
+                return ptr::null_mut();
+            };
+            Model::open_with(OpenOptions::new(storage.inner.backend, path))
         };
         match model {
             Ok(model) => {
@@ -266,5 +268,144 @@ pub extern "C" fn librdf_model_find_statements(
                 current: None,
             },
         )
+    })
+}
+
+/// Syncs durable storage. Returns nonzero on error.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_sync(model: *mut librdf_model) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        match model.inner.model.sync() {
+            Ok(()) => 0,
+            Err(error) => {
+                set_last_error(error.to_string());
+                -1
+            }
+        }
+    })
+}
+
+/// Returns a stream of all statements in the model.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_as_stream(model: *mut librdf_model) -> *mut librdf_stream {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return ptr::null_mut();
+        };
+        let mut statements = Vec::new();
+        for item in model.inner.model.find(StatementPattern::default()) {
+            match item {
+                Ok(quad) => {
+                    let triple =
+                        oxigraph::model::Triple::new(quad.subject, quad.predicate, quad.object);
+                    statements.push(StatementInner::from_triple(triple));
+                }
+                Err(error) => {
+                    set_last_error(error.to_string());
+                    return ptr::null_mut();
+                }
+            }
+        }
+        box_handle(
+            TAG_STREAM,
+            StreamInner {
+                statements,
+                index: 0,
+                current: None,
+            },
+        )
+    })
+}
+
+/// Adds a triple from three nodes (does not take ownership of the nodes).
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_add(
+    model: *mut librdf_model,
+    subject: *mut crate::handles::node::librdf_node,
+    predicate: *mut crate::handles::node::librdf_node,
+    object: *mut crate::handles::node::librdf_node,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        let Some(subject) = (unsafe { borrow_handle(subject, crate::handles::TAG_NODE) }) else {
+            return -1;
+        };
+        let Some(predicate) = (unsafe { borrow_handle(predicate, crate::handles::TAG_NODE) })
+        else {
+            return -1;
+        };
+        let Some(object) = (unsafe { borrow_handle(object, crate::handles::TAG_NODE) }) else {
+            return -1;
+        };
+        let Some(s) = subject.inner.as_named_or_blank() else {
+            set_last_error("subject must be IRI or blank");
+            return -1;
+        };
+        let Some(p) = predicate.inner.as_named() else {
+            set_last_error("predicate must be IRI");
+            return -1;
+        };
+        let triple = oxigraph::model::Triple::new(s, p, object.inner.term.clone());
+        match model.inner.model.add(triple) {
+            Ok(_) => 0,
+            Err(error) => {
+                set_last_error(error.to_string());
+                -1
+            }
+        }
+    })
+}
+
+/// Serializes the model as Turtle to a malloc'd string.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_to_string(
+    model: *mut librdf_model,
+    _base_uri: *mut crate::handles::uri::librdf_uri,
+) -> *mut u8 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return ptr::null_mut();
+        };
+        match oxiland::io::Serializer::for_syntax(oxiland::io::Syntax::Turtle)
+            .serialize_model_to_string(&model.inner.model)
+        {
+            Ok(text) => crate::alloc::strdup_c(&text).cast(),
+            Err(error) => {
+                set_last_error(error.to_string());
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+/// Executes a SPARQL Update string against the model.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_update(model: *mut librdf_model, update_string: *const u8) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        let Some(update_string) =
+            (unsafe { crate::handles::cstr_required(update_string.cast(), "update_string") })
+        else {
+            return -1;
+        };
+        match oxiland::Update::new(update_string).execute(&model.inner.model) {
+            Ok(()) => 0,
+            Err(error) => {
+                set_last_error(error.to_string());
+                -1
+            }
+        }
     })
 }

@@ -1,7 +1,7 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 0.9 (0.8 complete)
+Current milestone: 0.10 (0.9 complete)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -113,11 +113,10 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Begin 0.9 C compatibility: expand beyond the 0.8 preview allowlist toward
-   applicable symbol closure and downstream consumer evidence.
-2. Implement first-party optional storage adapters (redb first; then RocksDB,
-   SQLite, LMDB) behind Cargo features, using the sealed DurableStore contract.
-3. Promote or defer evaluation backends only with shared conformance evidence.
+1. Begin 0.10 release-candidate freeze: API/ABI snapshots, soak, and supported
+   backend matrix stabilization.
+2. Keep Python wheels and C ABI evidence green on tip.
+3. Review 1.0 scope after the 0.9 close.
 4. Keep Python wheels/pytest and the C ABI preview green on main.
 5. Expand SPARQL differential fixtures beyond the facade smoke harness.
 6. Keep format v1 / ADR-006 migration notes current as later milestones land.
@@ -163,7 +162,7 @@ The detailed acceptance criteria and dependency map live in the
 | P1 | Storage capability reporting | `StorageCapabilities` + legacy disposition |
 | P2 | Import/export for archival | N-Quads helpers + transactional load |
 
-## Current 0.9 backlog
+## Completed 0.9 backlog
 
 See the [roadmap 0.9 section](ROADMAP.md) and the
 [storage backend expansion plan](design/storage-backend-expansion.md).
@@ -236,6 +235,13 @@ Work is done when:
 - Review accepted deviations and high risks at every milestone boundary.
 - Review 1.0 scope after 0.6, after 0.7 (Python), and again after 0.9; do not
   defer incompatible safe-API corrections until 0.10.
+- Freeze the Redland parity denominator and supported target/build-profile
+  matrix before 0.10 qualification begins. Track every remaining in-scope
+  deviation as a 0.10 blocker; do not close one by narrowing the denominator.
+- Freeze the Redland comparison workloads, datasets, measurement protocol, and
+  performance target/profile matrix before 0.10 qualification. Track every
+  tie, inconclusive result, and loss as a blocker; do not average it away or
+  delete the case after measurement.
 
 ## Progress reporting
 
@@ -248,6 +254,8 @@ Report counts separately:
 - open deviations by severity;
 - blocking risks and decisions;
 - supported downstream consumers.
+- required Redland comparison benchmarks won/total, including per-case median
+  ratios and confidence intervals;
 
 Progress reports link to evidence revisions. Percent-complete estimates without
 a denominator are not project status.

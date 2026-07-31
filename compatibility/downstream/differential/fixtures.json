@@ -1,0 +1,14 @@
+[
+  {
+    "id": "ask-populated",
+    "turtle": "<http://example.org/s> <http://example.org/p> \"v\" .",
+    "sparql": "ASK { ?s ?p ?o }",
+    "ask_expected": true
+  },
+  {
+    "id": "ask-empty",
+    "turtle": "",
+    "sparql": "ASK { ?s ?p ?o }",
+    "ask_expected": false
+  }
+]

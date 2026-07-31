@@ -79,6 +79,9 @@ jobs:
       - name: Test
         run: cargo test --workspace --all-features --locked
 
+      - name: Test core without default features
+        run: cargo test -p oxiland --no-default-features --locked
+
       - name: Rust documentation
         run: cargo doc --workspace --all-features --no-deps --locked
 
@@ -172,8 +175,8 @@ jobs:
       - name: Install cargo-semver-checks
         run: cargo install cargo-semver-checks --locked --version 0.49.0
 
-      - name: Check semver against 0.7.0
-        run: cargo semver-checks check-release -p oxiland --baseline-version 0.7.0 --release-type minor
+      - name: Check semver against 0.8.0
+        run: cargo semver-checks check-release -p oxiland --baseline-version 0.8.0 --release-type minor
 
       - name: Verify package versions are aligned
         run: |
@@ -453,10 +456,13 @@ jobs:
       - name: Storage matrix
         run: |
           cargo test --locked --test storage
-          cargo test --locked --test backend_conformance
+          cargo test --locked --features "storage-fjall,storage-redb,storage-sqlite,storage-lmdb" --test backend_conformance
+
+      - name: Optional RocksDB adapter
+        run: cargo test --locked --features "storage-fjall,storage-rocksdb" --test backend_conformance
 
   capi:
-    name: C ABI preview
+    name: C ABI
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -488,6 +494,11 @@ jobs:
 
       - name: Exported symbol allowlist
         run: scripts/check-capi-symbols.sh debug
+
+      - name: Downstream smokes
+        run: |
+          chmod +x compatibility/downstream/run-smokes.sh
+          compatibility/downstream/run-smokes.sh
 
       - name: Compile and run representative C example
         run: |

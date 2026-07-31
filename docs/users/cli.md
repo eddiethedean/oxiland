@@ -37,7 +37,7 @@ the command exits.
 
 | Option | Default | Meaning |
 |---|---|---|
-| `-s, --storage <TYPE>` | `fjall` | `fjall` or `memory` (`mem` is accepted) |
+| `-s, --storage <TYPE>` | `fjall` | `fjall`, `memory` (`mem` is accepted), or an optional backend compiled into `oxiland-cli` |
 | `-n, --new` | off | Allow creation of a missing persistent store |
 | `-q, --quiet` | off | Suppress informational status on stderr |
 | `-o, --output <SYNTAX>` | `nquads` | RDF syntax for `print`, `find`, graph queries, and default `serialize` |

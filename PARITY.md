@@ -1,7 +1,7 @@
 # Redland parity ledger
 
-Last completed milestone: 0.8
-Current development milestone: 0.9 (`planned`)
+Last completed milestone: 0.9
+Current development milestone: 0.10 (`planned`)
 Ledger maturity: header-derived full public `librdf` 1.0.17 function inventory
 (0.6); Python package usability evidence (0.7); C ABI source-compat preview
 accounting (0.8); curated 0.1–0.5 slices retained for historical evidence
@@ -75,17 +75,18 @@ function in the 0.6 inventory is **classified** (not that behavior is a Redland
 drop-in): 383 classified (238 verified, 96 not-applicable, 49 excluded); 0
 unreviewed. See [`docs/reports/0.6.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.6.md).
 
-## C ABI preview accounting (0.8)
+## C ABI accounting (0.8 preview → 0.9)
 
-Preview allowlist symbols are `c_state=verified` (45 of 383); remaining
-applicable symbols are `mapped` for 0.9 or retain `not-applicable` /
-`excluded`. Source-compat preview only—**not** ABI drop-in. See
+0.9 inventory closes C gaps: allowlist symbols are `c_state=verified`; remaining
+applicable symbols are justified `not-applicable` / `excluded` with notes.
+Source-compat plus measured Oxiland ABI—**not** Redland binary `.so` drop-in.
+See [`docs/reports/0.9.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.9.md) and
 [`docs/reports/0.8.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.8.md).
 
 ## Current evidence
 
-- Inventory: full 0.6 header-derived manifest + 0.8 C-field revision + curated
-  0.1–0.5 slices.
+- Inventory: full header-derived manifests through 0.9 C-field revision plus
+  curated earlier slices.
 - Integration tests + `tests/accounting.rs` + `oxiland-cli` tests +
   `tests/backend_conformance.rs`.
 - CLI smoke: `compatibility/harness/cli_smoke.py`.
@@ -93,11 +94,10 @@ applicable symbols are `mapped` for 0.9 or retain `not-applicable` /
   [`docs/reports/0.7.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.7.md).
 - C ABI: `crates/oxiland-capi` example, symbol allowlist, ASan CI; report
   [`docs/reports/0.8.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.8.md).
-- Public API snapshot + `cargo semver-checks` vs 0.7.0.
+- Public API snapshot + `cargo semver-checks` vs 0.8.0.
 - ADR-004–ADR-023 accepted as applicable.
 - Oxigraph 0.5.9 remains pinned with default features disabled.
 
 ## Next ledger upgrade
 
-Begin 0.9 C compatibility and optional storage-adapter accounting; keep Python
-and C preview evidence current on main.
+Begin 0.10 release-candidate freeze work; keep Python and C evidence current on main.

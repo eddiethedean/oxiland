@@ -354,6 +354,7 @@ fn update_insert_delete_data() {
 }
 
 #[test]
+#[cfg(feature = "storage-fjall")]
 fn fjall_update_persists() {
     let dir = tempfile::tempdir().unwrap();
     let model = Model::open(dir.path()).unwrap();

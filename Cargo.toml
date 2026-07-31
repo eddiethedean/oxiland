@@ -6,7 +6,7 @@ default-members = [".", "crates/oxiland-cli", "crates/oxiland-capi"]
 
 [package]
 name = "oxiland"
-version = "0.8.0"
+version = "0.9.0"
 edition = "2024"
 rust-version = "1.87"
 description = "Embedded RDF datasets, SPARQL, persistence, and streaming I/O for Rust"
@@ -21,16 +21,31 @@ categories = ["parsing", "data-structures", "encoding"]
 exclude = [".github/", "compatibility/harness/*-result.json"]
 
 [package.metadata.docs.rs]
-features = []
+features = ["storage-fjall"]
+
+# 0.9 intentionally expands StorageBackend and marks it #[non_exhaustive] so
+# optional adapters can grow without further exhaustive-match breaks (ADR-022).
+[package.metadata.cargo-semver-checks.lints]
+enum_marked_non_exhaustive = "allow"
+enum_variant_added = "allow"
 
 [features]
-default = []
+default = ["storage-fjall"]
 tracing = ["dep:tracing"]
+storage-fjall = ["dep:fjall"]
+storage-redb = ["dep:redb"]
+storage-rocksdb = ["dep:rocksdb"]
+storage-sqlite = ["dep:rusqlite"]
+storage-lmdb = ["dep:heed"]
 
 [dependencies]
 oxigraph = { version = "=0.5.9", default-features = false }
 spargebra = { version = "=0.4.6", default-features = false, features = ["sep-0002", "sep-0006"] }
-fjall = "2.11"
+fjall = { version = "2.11", optional = true }
+redb = { version = "2", optional = true }
+rocksdb = { version = "0.22", optional = true, default-features = true }
+rusqlite = { version = "0.32", optional = true, features = ["bundled"] }
+heed = { version = "0.21", optional = true }
 thiserror = "2"
 md-5 = "0.10"
 sha1 = "0.10"

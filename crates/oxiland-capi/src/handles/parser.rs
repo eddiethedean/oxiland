@@ -136,3 +136,55 @@ pub extern "C" fn librdf_parser_parse_string_into_model(
         }
     })
 }
+
+/// Parses a counted UTF-8 string into the model.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_parse_counted_string_into_model(
+    parser: *mut librdf_parser,
+    string: *const u8,
+    length: usize,
+    base_uri: *mut librdf_uri,
+    model: *mut librdf_model,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(parser) = (unsafe { borrow_handle(parser, TAG_PARSER) }) else {
+            return -1;
+        };
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        if string.is_null() {
+            set_last_error("string is null");
+            return -1;
+        }
+        let bytes = unsafe { std::slice::from_raw_parts(string, length) };
+        let text = match std::str::from_utf8(bytes) {
+            Ok(t) => t,
+            Err(_) => {
+                set_last_error("string is not valid UTF-8");
+                return -1;
+            }
+        };
+        let mut rdf_parser = Parser::for_syntax(parser.inner.syntax);
+        if !base_uri.is_null() {
+            let Some(base) = (unsafe { borrow_handle(base_uri, TAG_URI) }) else {
+                return -1;
+            };
+            rdf_parser = match rdf_parser.base_iri(base.inner.node.as_str()) {
+                Ok(p) => p,
+                Err(error) => {
+                    set_last_error(error.to_string());
+                    return -1;
+                }
+            };
+        }
+        match rdf_parser.load_into(&model.inner.model, Cursor::new(text.as_bytes())) {
+            Ok(_) => 0,
+            Err(error) => {
+                set_last_error(error.to_string());
+                -1
+            }
+        }
+    })
+}

@@ -27,7 +27,7 @@ struct Cli {
     #[arg(short = 'n', long)]
     new: bool,
 
-    /// Storage type: `memory` or `fjall` only.
+    /// Storage type: memory, fjall, or a compiled optional backend.
     #[arg(short = 's', long, default_value = "fjall")]
     storage: String,
 
@@ -39,7 +39,7 @@ struct Cli {
     #[arg(short = 'r', long, default_value = "xml")]
     results: String,
 
-    /// Store name: with `-s memory` use `memory`; with `-s fjall` use a path.
+    /// Store name: with `-s memory` use `memory`; durable backends use a path.
     store_name: String,
 
     #[command(subcommand)]
@@ -276,30 +276,27 @@ fn open_model(cli: &Cli) -> Result<Model, Box<dyn std::error::Error>> {
             return Err(format!("unsupported storage type: {err}").into());
         }
     };
-    match backend {
-        StorageBackend::Memory => {
-            if cli.store_name != "memory" && !cli.quiet {
-                eprintln!(
-                    "oxiland-cli: ignoring store-name '{}' for memory storage",
-                    cli.store_name
-                );
-            }
-            Ok(Model::open_with(OpenOptions::new(
-                StorageBackend::Memory,
-                "memory",
-            ))?)
+    if backend == StorageBackend::Memory {
+        if cli.store_name != "memory" && !cli.quiet {
+            eprintln!(
+                "oxiland-cli: ignoring store-name '{}' for memory storage",
+                cli.store_name
+            );
         }
-        StorageBackend::Fjall => {
-            if cli.store_name == "memory" {
-                return Err(
-                    "store-name 'memory' requires -s memory; use a filesystem path with -s fjall"
-                        .into(),
-                );
-            }
-            let opts = OpenOptions::new(StorageBackend::Fjall, &cli.store_name).create(cli.new);
-            Ok(Model::open_with(opts)?)
-        }
+        return Ok(Model::open_with(OpenOptions::new(
+            StorageBackend::Memory,
+            "memory",
+        ))?);
     }
+    if cli.store_name == "memory" {
+        return Err(format!(
+            "store-name 'memory' requires -s memory; use a filesystem path with -s {}",
+            backend.name()
+        )
+        .into());
+    }
+    let opts = OpenOptions::new(backend, &cli.store_name).create(cli.new);
+    Ok(Model::open_with(opts)?)
 }
 
 fn resolve_syntax(name: Option<&str>, path: &Path) -> Result<Syntax, Box<dyn std::error::Error>> {

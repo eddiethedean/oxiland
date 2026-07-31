@@ -1,13 +1,12 @@
-# C ABI preview
+# C ABI
 
-Oxiland 0.8 ships a **source-compat preview** C library (`oxiland-capi`) with a
-frozen Redland-shaped allowlist. Use this surface to try a world → storage →
-model → parse/serialize → ASK/SELECT workflow against Oxiland. It is **not** a
-binary drop-in for `librdf`.
+Oxiland 0.9 ships a **source-compatible Redland-shaped** C library
+(`oxiland-capi`) with an expanded allowlist. Use this surface to try a world →
+storage → model → parse/serialize → ASK/SELECT workflow against Oxiland. It is
+**not** a binary drop-in for `librdf`.
 
 !!! warning "Preview limitations"
-    Read [C ABI limitations](c-abi-limitations.md) before integrating. Full
-    symbol closure and ABI claims are planned for 0.9.
+    Read [C ABI limitations](c-abi-limitations.md) before integrating. Source and Oxiland ABI claims are measured in 0.9; Redland `.so` swap is not claimed.
 
 ## Prerequisites
 
@@ -23,6 +22,10 @@ From the repository root:
 ```console
 cargo build -p oxiland-capi --release
 ```
+
+The default build enables Fjall. To compile an optional durable backend into
+the C library, pass its matching feature, for example
+`--features storage-sqlite` or `--features storage-lmdb`.
 
 Artifacts (paths relative to the repo root):
 
@@ -83,22 +86,20 @@ pkg-config --cflags --libs oxiland
 
 The template ships `Name: oxiland` and links `-loxiland_capi`.
 
-## Preview allowlist
+## 0.9 allowlist
 
-Only these symbols are exported in the 0.8 preview. Unsupported Redland APIs
-are omitted from the preview header rather than stubbed.
+Only the symbols declared in the shipped header are exported. Unsupported
+Redland APIs are omitted rather than stubbed.
 
 | Area | Symbols |
 |---|---|
-| World | `librdf_new_world`, `librdf_free_world`, `librdf_world_open` |
-| Storage | `librdf_new_storage`, `librdf_free_storage`, `librdf_storage_open` |
-| Model | `librdf_new_model`, `librdf_free_model`, `librdf_model_add_statement`, `librdf_model_remove_statement`, `librdf_model_contains_statement`, `librdf_model_size`, `librdf_model_find_statements` |
-| Terms | `librdf_new_uri`, `librdf_free_uri`, `librdf_new_node_from_uri_string`, `librdf_new_node_from_literal`, `librdf_free_node`, `librdf_new_statement_from_nodes`, `librdf_free_statement` |
-| Stream | `librdf_stream_end`, `librdf_stream_next`, `librdf_stream_get_object`, `librdf_free_stream` |
-| Parser | `librdf_new_parser`, `librdf_free_parser`, `librdf_parser_check_name`, `librdf_parser_parse_string_into_model` |
-| Serializer | `librdf_new_serializer`, `librdf_free_serializer`, `librdf_serializer_check_name`, `librdf_serializer_serialize_model_to_string` |
-| Query | `librdf_new_query`, `librdf_free_query`, `librdf_model_query_execute`, `librdf_query_results_is_boolean`, `librdf_query_results_get_boolean`, `librdf_query_results_is_bindings`, `librdf_query_results_finished`, `librdf_query_results_next`, `librdf_query_results_get_binding_name`, `librdf_query_results_get_binding_value`, `librdf_query_results_get_bindings_count`, `librdf_free_query_results` |
-| Alloc | `librdf_free_memory` |
+| World | construction, logging, and logger callbacks |
+| Storage | construction, open, discovery, and sync |
+| Model | CRUD, streams, sync, string export, SPARQL Update, and queries |
+| Terms | URI, node, and statement construction, accessors, mutation, and string forms |
+| I/O | parser/serializer names plus string, counted-string, and file variants |
+| Query | ASK, SELECT, CONSTRUCT/DESCRIBE graph streams, and result iteration |
+| Utilities | MD5/SHA digests, UTF-8/Latin-1 conversion, basename, and allocator release |
 
 ## Handle ownership
 
@@ -113,13 +114,14 @@ containment):
 
 ## Storage names
 
-`librdf_new_storage` accepts `"memory"` and `"fjall"` (path in `name`). Known
-optional backends that are not compiled fail with an explicit unsupported
-message distinct from unknown names—the same registry as Rust
-`StorageBackend::from_name`.
+`librdf_new_storage` accepts `"memory"`, `"fjall"`, and any optional backend
+compiled into `oxiland-capi` (`"redb"`, `"rocksdb"`, `"sqlite"`, or `"lmdb"`;
+durable names use `name` as their path). Known optional backends that are not
+compiled fail with an explicit unsupported message distinct from unknown
+names—the same registry as Rust `StorageBackend::from_name`.
 
 ## Evidence
 
 Compatibility claims for this surface are scoped in the
-[0.8 report](../reports/0.8.md) and
+[0.9 report](../reports/0.9.md) and
 [parity ledger](https://github.com/eddiethedean/oxiland/blob/main/PARITY.md).

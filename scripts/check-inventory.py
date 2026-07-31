@@ -28,7 +28,17 @@ REQUIRED_FIELDS = {
     "tests",
     "state",
 }
-ALLOWED_MILESTONES = {"0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8"}
+ALLOWED_MILESTONES = {
+    "0.1",
+    "0.2",
+    "0.3",
+    "0.4",
+    "0.5",
+    "0.6",
+    "0.7",
+    "0.8",
+    "0.9",
+}
 C_ABI_REQUIRED_FROM = "0.8"
 
 

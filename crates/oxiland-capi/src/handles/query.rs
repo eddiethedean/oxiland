@@ -35,6 +35,9 @@ pub enum QueryResultsInner {
         /// Cached binding name C strings for the lifetime of results.
         name_cptrs: Vec<*mut std::os::raw::c_char>,
     },
+    Graph {
+        statements: Vec<crate::handles::statement::StatementInner>,
+    },
 }
 
 impl Drop for QueryResultsInner {
@@ -194,14 +197,63 @@ pub extern "C" fn librdf_model_query_execute(
                 materialize_current(&mut inner);
                 inner
             }
-            QueryResults::Graph(_) => {
-                set_last_error(
-                    "CONSTRUCT/DESCRIBE results are not exposed on the 0.8 preview query_results API",
-                );
-                return ptr::null_mut();
+            QueryResults::Graph(mut graph) => {
+                let mut statements = Vec::new();
+                for triple in graph.by_ref() {
+                    let triple = match triple {
+                        Ok(t) => t,
+                        Err(error) => {
+                            set_last_error(error.to_string());
+                            return ptr::null_mut();
+                        }
+                    };
+                    statements.push(crate::handles::statement::StatementInner::from_triple(
+                        triple,
+                    ));
+                }
+                QueryResultsInner::Graph { statements }
             }
         };
         box_handle(TAG_QUERY_RESULTS, inner)
+    })
+}
+
+/// Returns nonzero if results are a CONSTRUCT/DESCRIBE graph.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_is_graph(results: *mut librdf_query_results) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(results) = (unsafe { borrow_handle(results, TAG_QUERY_RESULTS) }) else {
+            return 0;
+        };
+        i32::from(matches!(results.inner, QueryResultsInner::Graph { .. }))
+    })
+}
+
+/// Returns a statement stream for graph results (caller frees the stream).
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_as_stream(
+    results: *mut librdf_query_results,
+) -> *mut crate::handles::stream::librdf_stream {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(results) = (unsafe { borrow_handle(results, TAG_QUERY_RESULTS) }) else {
+            return ptr::null_mut();
+        };
+        match &results.inner {
+            QueryResultsInner::Graph { statements } => box_handle(
+                crate::handles::TAG_STREAM,
+                crate::handles::stream::StreamInner {
+                    statements: statements.clone(),
+                    index: 0,
+                    current: None,
+                },
+            ),
+            _ => {
+                set_last_error("query results are not a graph");
+                ptr::null_mut()
+            }
+        }
     })
 }
 
@@ -229,7 +281,7 @@ pub extern "C" fn librdf_query_results_get_boolean(results: *mut librdf_query_re
         };
         match results.inner {
             QueryResultsInner::Boolean(v) => i32::from(v),
-            QueryResultsInner::Bindings { .. } => {
+            QueryResultsInner::Bindings { .. } | QueryResultsInner::Graph { .. } => {
                 set_last_error("query results are not boolean");
                 -1
             }
@@ -260,7 +312,7 @@ pub extern "C" fn librdf_query_results_finished(results: *mut librdf_query_resul
             return 1;
         };
         match &results.inner {
-            QueryResultsInner::Boolean(_) => 1,
+            QueryResultsInner::Boolean(_) | QueryResultsInner::Graph { .. } => 1,
             QueryResultsInner::Bindings { rows, index, .. } => i32::from(*index >= rows.len()),
         }
     })
@@ -276,7 +328,7 @@ pub extern "C" fn librdf_query_results_next(results: *mut librdf_query_results) 
             return -1;
         };
         match &mut results.inner {
-            QueryResultsInner::Boolean(_) => {
+            QueryResultsInner::Boolean(_) | QueryResultsInner::Graph { .. } => {
                 set_last_error("query results are not bindings");
                 -1
             }
@@ -312,7 +364,7 @@ pub extern "C" fn librdf_query_results_get_binding_name(
             QueryResultsInner::Bindings { name_cptrs, .. } => {
                 name_cptrs.get(offset).copied().unwrap_or(ptr::null_mut())
             }
-            QueryResultsInner::Boolean(_) => ptr::null(),
+            QueryResultsInner::Boolean(_) | QueryResultsInner::Graph { .. } => ptr::null(),
         }
     })
 }
@@ -348,7 +400,7 @@ pub extern "C" fn librdf_query_results_get_binding_value(
                     .flatten()
                     .unwrap_or(ptr::null_mut())
             }
-            QueryResultsInner::Boolean(_) => ptr::null_mut(),
+            QueryResultsInner::Boolean(_) | QueryResultsInner::Graph { .. } => ptr::null_mut(),
         }
     })
 }
@@ -368,7 +420,7 @@ pub extern "C" fn librdf_query_results_get_bindings_count(
             QueryResultsInner::Bindings { names, .. } => {
                 i32::try_from(names.len()).unwrap_or(i32::MAX)
             }
-            QueryResultsInner::Boolean(_) => 0,
+            QueryResultsInner::Boolean(_) | QueryResultsInner::Graph { .. } => 0,
         }
     })
 }

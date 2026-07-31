@@ -1,6 +1,6 @@
 //! FFI lifecycle tests calling the C API via the crate's `extern "C"` functions.
 
-use std::ffi::{CStr, CString};
+use std::ffi::{CStr, CString, c_void};
 use std::os::raw::c_char;
 use std::ptr;
 
@@ -187,5 +187,56 @@ fn double_free_is_defended() {
     assert!(!world.is_null());
     librdf_free_world(world);
     // Second free of the same address: registry rejects without double-drop.
+    librdf_free_world(world);
+}
+
+#[test]
+fn freed_and_wrongly_typed_handles_are_rejected_without_dereference() {
+    let world = librdf_new_world();
+    let node = librdf_new_node_from_uri_string(world, cstr("http://example.org/node").as_ptr());
+    assert_eq!(librdf_node_get_type(node), 1);
+
+    // A mismatched free must not unregister or destroy the live node.
+    librdf_free_uri(node.cast());
+    assert_eq!(librdf_node_get_type(node), 1);
+
+    librdf_free_node(node);
+    // A regular API call with the stale pointer is rejected by the registry.
+    assert_eq!(librdf_node_get_type(node), 0);
+    librdf_free_world(world);
+}
+
+#[test]
+fn invalid_language_tag_is_rejected_instead_of_changing_literal_kind() {
+    let world = librdf_new_world();
+    let node = librdf_new_node_from_literal(
+        world,
+        cstr("hello").as_ptr(),
+        cstr("not a language tag!").as_ptr(),
+        0,
+    );
+    assert!(node.is_null());
+    librdf_free_world(world);
+}
+
+unsafe extern "C" fn clear_logger_from_callback(
+    user_data: *mut c_void,
+    _code: i32,
+    _level: i32,
+    _facility: i32,
+    _message: *const c_char,
+    _locator: *const c_char,
+) -> i32 {
+    librdf_world_set_logger(user_data.cast(), ptr::null_mut(), None)
+}
+
+#[test]
+fn logger_callback_can_replace_itself_without_deadlock() {
+    let world = librdf_new_world();
+    assert_eq!(
+        librdf_world_set_logger(world, world.cast(), Some(clear_logger_from_callback),),
+        0
+    );
+    librdf_log_simple(world, 0, 1, 0, cstr("hello").as_ptr());
     librdf_free_world(world);
 }

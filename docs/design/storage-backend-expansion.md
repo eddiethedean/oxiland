@@ -147,7 +147,7 @@ The common `Model::transaction` contract cannot be weakened for one backend.
 | 0.9 | SB-05 established native alternatives | RocksDB, SQLite, and LMDB adapters pass their platform matrices |
 | 0.9 | SB-06 gated evaluations | sled, LevelDB, MDBX, and SurrealKV each receive a promote/defer/reject record with evidence |
 | 0.9 | SB-07 user surfaces and migration | Rust, CLI, Python, C capability discovery, docs, and cross-backend copy/export tests agree |
-| 0.10 | SB-08 stabilization | API/ABI snapshots, crash matrix, supported-layout reader policy, and dependency audit are release-gated |
+| 0.10 | SB-08 stabilization, Redland parity, and performance | API/ABI snapshots, crash matrix, supported-layout reader policy, dependency audit, and every in-scope baseline storage factory behavior pass the 100% Redland parity gate; required storage workloads also beat Redland under the frozen performance protocol; capability errors and migration-only paths do not count |
 
 ## Non-goals
 

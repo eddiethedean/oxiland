@@ -22,9 +22,10 @@ Compatibility has distinct claims:
 - **Behavioral compatibility:** equivalent calls produce equivalent observable
   results and failures.
 
-No document or release may use “100% parity” without naming which claim it
-means. The 1.0 aspiration is safe API accounting plus the published C
-source/ABI and behavioral compatibility surface.
+No document or release may use “100% parity” without naming its baseline,
+surface, platform/build profile, and evidence revision. For 0.10, “100%
+Redland parity” has the mandatory definition below and is a release gate rather
+than an aspiration.
 
 ## Claim levels
 
@@ -37,10 +38,42 @@ source/ABI and behavioral compatibility surface.
 | C source compatibility | clean builds against Oxiland headers | 0.8 |
 | C ABI compatibility | symbol, layout, calling, and lifecycle tests | 0.9 |
 | Downstream compatibility | selected real consumers pass unchanged | 0.9 |
+| Full Redland 1.0.17 parity | all in-scope safe mappings plus C source, ABI, and observable behavior verified | 0.10 |
 
 Claims are subsystem- and platform-scoped until 1.0. For example, “parser
 behavior verified on Linux” does not imply full storage ABI compatibility on
 Windows.
+
+## 0.10 full Redland parity gate
+
+Oxiland 0.10 may ship only when it has **100% parity with the pinned Redland
+`librdf` 1.0.17 baseline** (reference manual 1.0.18) on every target and build
+profile in the published support matrix. The denominator is every public
+`librdf` symbol plus every observable behavior exposed through those symbols,
+including Raptor and Rasqal behavior reached through `librdf` and the storage
+factory behavior present in the canonical baseline profiles. Independent
+Raptor/Rasqal APIs, third-party plug-ins absent from those profiles, and
+unpublished targets are outside the denominator.
+
+Passing requires all of the following:
+
+- every in-scope symbol is implemented in the promised C surface and has
+  source, ABI, ownership/lifecycle, and applicable behavioral evidence;
+- every safe Rust mapping is verified, except manual-memory mechanics that are
+  genuinely `not-applicable` in Rust; their observable effects and C forms
+  remain required;
+- every differential fixture passes under its declared normalization profile
+  on every supported target/profile;
+- the generated report records exactly 100% with numerator, denominator, skip
+  count, target/profile, oracle build, and evidence revision; and
+- there are no in-scope exclusions, accepted behavioral deviations,
+  quarantined compatibility tests, capability-error substitutes, or
+  migration-only workarounds.
+
+The parity denominator and supported target/profile matrix are frozen before
+0.10 qualification begins. Any failure above blocks 0.10; the remedy is to
+implement and verify parity. A failing row cannot be deleted from the
+denominator, scoped away, excepted, or waived to turn the report green.
 
 ## Canonical inputs
 
@@ -181,7 +214,8 @@ An accepted deviation records:
 - whether it blocks a named compatibility claim.
 
 Exclusions require review before each release candidate. Convenience is not a
-sufficient rationale for excluding a public Redland behavior.
+sufficient rationale for excluding a public Redland behavior, and an in-scope
+exclusion is always a blocker for the 0.10 full-parity gate.
 
 ## Change control
 

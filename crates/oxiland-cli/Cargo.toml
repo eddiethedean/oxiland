@@ -1,6 +1,6 @@
 [package]
 name = "oxiland-cli"
-version = "0.8.0"
+version = "0.9.0"
 edition = "2024"
 rust-version = "1.87"
 description = "Import, inspect, query, and export local RDF datasets"
@@ -18,8 +18,16 @@ publish = true
 name = "oxiland-cli"
 path = "src/main.rs"
 
+[features]
+default = ["storage-fjall"]
+storage-fjall = ["oxiland/storage-fjall"]
+storage-redb = ["oxiland/storage-redb"]
+storage-rocksdb = ["oxiland/storage-rocksdb"]
+storage-sqlite = ["oxiland/storage-sqlite"]
+storage-lmdb = ["oxiland/storage-lmdb"]
+
 [dependencies]
-oxiland = { path = "../..", version = "0.8.0" }
+oxiland = { path = "../..", version = "0.9.0", default-features = false }
 clap = { version = "4", features = ["derive"] }
 oxigraph = { version = "=0.5.9", default-features = false }
 

@@ -235,19 +235,30 @@ fn sparql_parse_errors_are_distinct_from_evaluation() {
 fn unsupported_storage_backend_is_explicit() {
     let error = Model::storage_backend_available("mysql").unwrap_err();
     assert!(matches!(error, Error::Unsupported(_)));
+    // Evaluation backends stay known-but-not-compiled in every build matrix.
     assert!(matches!(
-        Model::storage_backend_available("rocksdb"),
+        Model::storage_backend_available("sled"),
         Err(Error::Unsupported(_))
     ));
+    assert!(Model::storage_backend_available("memory").unwrap());
+    #[cfg(feature = "storage-fjall")]
+    assert!(Model::storage_backend_available("fjall").unwrap());
+    #[cfg(not(feature = "storage-fjall"))]
+    assert!(matches!(
+        Model::storage_backend_available("fjall"),
+        Err(Error::Unsupported(_))
+    ));
+    #[cfg(feature = "storage-redb")]
+    assert!(Model::storage_backend_available("redb").unwrap());
+    #[cfg(not(feature = "storage-redb"))]
     assert!(matches!(
         Model::storage_backend_available("redb"),
         Err(Error::Unsupported(_))
     ));
-    assert!(Model::storage_backend_available("memory").unwrap());
-    assert!(Model::storage_backend_available("fjall").unwrap());
 }
 
 #[test]
+#[cfg(feature = "storage-fjall")]
 fn fjall_model_round_trips_statements() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("store");

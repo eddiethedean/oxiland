@@ -406,6 +406,7 @@ fn prefix_rejected_for_ntriples() {
 }
 
 #[test]
+#[cfg(feature = "storage-fjall")]
 fn fjall_progressive_load_persists_partial_data() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("store");

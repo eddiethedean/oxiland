@@ -22,6 +22,7 @@ oxiland::Model::capabilities
 oxiland::Model::clear
 oxiland::Model::clear_graph
 oxiland::Model::contains
+oxiland::Model::copy_to
 oxiland::Model::contains_in_graph
 oxiland::Model::export_nquads_to_path
 oxiland::Model::find
@@ -54,6 +55,10 @@ oxiland::OpenOptions::backend
 oxiland::OpenOptions::can_create
 oxiland::OpenOptions::create
 oxiland::OpenOptions::fjall
+oxiland::OpenOptions::sqlite
+oxiland::OpenOptions::rocksdb
+oxiland::OpenOptions::redb
+oxiland::OpenOptions::lmdb
 oxiland::OpenOptions::is_read_only
 oxiland::OpenOptions::new
 oxiland::OpenOptions::path
@@ -88,6 +93,11 @@ oxiland::ResultsFormat::media_type
 oxiland::ResultsFormat::name
 oxiland::StorageBackend
 oxiland::StorageBackend::Fjall
+oxiland::StorageBackend::is_compiled
+oxiland::StorageBackend::Sqlite
+oxiland::StorageBackend::RocksDb
+oxiland::StorageBackend::Redb
+oxiland::StorageBackend::Lmdb
 oxiland::StorageBackend::Memory
 oxiland::StorageBackend::from_name
 oxiland::StorageBackend::name
@@ -97,6 +107,10 @@ oxiland::StorageCapabilities::bulk_load
 oxiland::StorageCapabilities::clear
 oxiland::StorageCapabilities::durable
 oxiland::StorageCapabilities::fjall
+oxiland::StorageCapabilities::sqlite
+oxiland::StorageCapabilities::rocksdb
+oxiland::StorageCapabilities::redb
+oxiland::StorageCapabilities::lmdb
 oxiland::StorageCapabilities::memory
 oxiland::StorageCapabilities::read_only
 oxiland::StorageCapabilities::sync

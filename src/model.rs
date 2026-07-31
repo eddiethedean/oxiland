@@ -232,10 +232,7 @@ impl Model {
             }
         }
 
-        let disk = match options.backend() {
-            StorageBackend::Memory => unreachable!("memory handled above"),
-            StorageBackend::Fjall => DurableStore::open_fjall(path, options.can_create())?,
-        };
+        let disk = DurableStore::open(options.backend(), path, options.can_create())?;
         let allow_init = !options.is_read_only() && options.can_create();
         disk.ensure_format_v1(path, allow_init)?;
         let store = Store::new().map_err(|error| Error::OpenStore {
@@ -253,11 +250,51 @@ impl Model {
         })
     }
 
+    /// Copies this model into a newly created destination store.
+    ///
+    /// The destination must not already look like an Oxiland store for the
+    /// requested backend. On failure the destination directory is left in a
+    /// state that is safe to delete; the source is never rewritten in place.
+    pub fn copy_to(&self, options: OpenOptions) -> Result<Self> {
+        if options.backend() == StorageBackend::Memory {
+            let dest = Self::new()?;
+            for quad in self.find(StatementPattern::default()) {
+                dest.insert_quad(quad?)?;
+            }
+            return Ok(dest);
+        }
+        if options.is_read_only() {
+            return Err(Error::Unsupported(
+                "Model::copy_to requires a writable destination".into(),
+            ));
+        }
+        if !options.can_create() {
+            return Err(Error::Unsupported(
+                "Model::copy_to requires OpenOptions::create(true)".into(),
+            ));
+        }
+        let path = options.path();
+        if DurableStore::looks_like_store(options.backend(), path) {
+            return Err(Error::OpenStore {
+                path: path.to_owned(),
+                message:
+                    "copy_to destination already looks like an Oxiland store; refuse to overwrite"
+                        .into(),
+            });
+        }
+        let dest = Self::open_with(options)?;
+        for quad in self.find(StatementPattern::default()) {
+            dest.insert_quad(quad?)?;
+        }
+        dest.sync()?;
+        Ok(dest)
+    }
+
     /// Migrates a pre-0.4 experimental Fjall directory to format v1, then opens it.
     pub fn migrate_legacy_store(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
         {
-            let disk = DurableStore::open_fjall(path, false)?;
+            let disk = DurableStore::open(StorageBackend::Fjall, path, false)?;
             disk.migrate_legacy_to_v1()?;
         }
         Self::open_with(OpenOptions::fjall(path))

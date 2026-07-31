@@ -203,7 +203,19 @@ Additional phase gates:
 | 0.7 | Python wheels, type checks, and pytest matrix |
 | 0.8 | exported symbols, C examples, and sanitizers |
 | 0.9 | selected downstream C consumers |
-| 0.10 | Rust API, Python package, and C ABI snapshots plus RC soak |
+| 0.10 | **100% Redland 1.0.17 parity and faster than Redland**, Rust/Python/C snapshots, and RC soak |
+
+The 0.10 parity row is a hard gate, not a documentation claim or a waivable
+target. The machine-generated report must show every in-scope public `librdf`
+symbol implemented and every applicable observable behavior verified on every
+supported target/build profile. It must report the numerator, denominator,
+skips, platform/profile, and evidence revision. Any in-scope unreviewed,
+mapped-only, implemented-but-unverified, or excluded row; differential
+mismatch; accepted behavioral deviation; quarantine; capability-error
+substitute; or migration-only workaround blocks 0.10. Safe-Rust-only ownership
+mechanics may be `not-applicable`, but their corresponding C lifecycle behavior
+must still pass. The normative definition is in
+[Compatibility](COMPATIBILITY.md#010-full-redland-parity-gate).
 
 Flaky tests are quarantined only with an owner, issue, expiry milestone, and a
 replacement signal. Quarantined compatibility tests do not count as passing.
@@ -220,9 +232,44 @@ compatible API unusable. Benchmarks track:
 - peak memory on large streams;
 - C-call and callback overhead.
 
-Budgets are established before 0.9 from representative workloads. Benchmark
-noise does not block a release unless it exceeds a documented threshold over
-repeated runs.
+Budgets and the required comparison suite are established from representative
+workloads before 0.10 qualification. Benchmark noise is controlled by the
+protocol below rather than waived.
+
+### 0.10 faster-than-Redland gate
+
+Oxiland 0.10 may ship only if Oxiland is faster than the pinned Redland 1.0.17
+oracle in **every required case** on every target/build profile in the frozen
+performance matrix. Throughput cases require an Oxiland/Redland median ratio of
+at least `1.05`; latency cases require an Oxiland/Redland median ratio of at
+most `0.95`. In both cases, the 95% bootstrap confidence interval must exclude
+parity (`1.0`) on the winning side. A tie, statistically inconclusive result,
+or loss blocks 0.10; a geometric mean or win elsewhere cannot hide it.
+
+The comparison protocol is part of the gate:
+
+- Oxiland's C compatibility surface and Redland's public C API run the same
+  completed, behaviorally equivalent workload with identical inputs and result
+  validation;
+- both use pinned release builds, equivalent compiler optimization, the same
+  machine, OS image, allocator policy, storage medium, cache state, and thread
+  limits;
+- cold and warm cases are separated, execution order alternates or is
+  randomized, warm-up is recorded, and enough repetitions are retained to
+  publish medians, dispersion, confidence intervals, and raw samples;
+- the frozen suite covers triple mutation and scans, parse/serialize, query and
+  streaming, persistent reopen and bulk load, and C-call/callback overhead at
+  small and representative large sizes; and
+- peak memory and disk amplification remain within their independently
+  published safety budgets, so speed cannot be bought by an unbounded resource
+  regression.
+
+The suite, datasets, queries, target/profile matrix, toolchain, Redland build,
+measurement method, and pass thresholds freeze before 0.10 qualification
+begins. Required cases cannot be deleted, renamed optional, or waived after a
+failure. CI runs the stable short matrix; release qualification runs the full
+matrix on controlled benchmark hosts and publishes signed machine-readable and
+human-readable results.
 
 ## Metrics
 
@@ -233,6 +280,8 @@ Track separately:
 - standard conformance pass rates;
 - known behavioral deviations;
 - downstream projects passing;
+- required performance cases beating Redland, with ratios and confidence
+  intervals;
 - parser and FFI fuzzing time without findings.
 
 A single percentage must not combine these categories. Doing so would obscure

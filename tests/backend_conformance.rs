@@ -1,7 +1,4 @@
-//! Shared backend conformance suite (ADR-022 / SB-03).
-//!
-//! Registers memory and Fjall through one harness so optional adapters can join
-//! the same cases in 0.9 without duplicating Model-level expectations.
+//! Shared backend conformance suite (ADR-022 / SB-03 / 0.9).
 
 use oxigraph::model::{GraphName, Quad};
 use oxiland::terms::{self, Literal, Triple};
@@ -16,28 +13,29 @@ fn statement(object: &str) -> Triple {
 }
 
 fn open_registered(backend: StorageBackend, path: &std::path::Path) -> Model {
-    match backend {
-        StorageBackend::Memory => Model::open_with(OpenOptions::new(backend, path)).unwrap(),
-        StorageBackend::Fjall => {
-            Model::open_with(OpenOptions::new(backend, path).create(true)).unwrap()
-        }
-    }
+    Model::open_with(OpenOptions::new(backend, path).create(true)).unwrap()
 }
 
 #[test]
-fn compiled_backends_are_memory_and_fjall() {
-    assert_eq!(
-        compiled_backends(),
-        &[StorageBackend::Memory, StorageBackend::Fjall]
-    );
+fn compiled_backends_include_memory_and_enabled_fjall() {
+    let backends = compiled_backends();
+    assert!(backends.contains(&StorageBackend::Memory));
+    #[cfg(feature = "storage-fjall")]
+    assert!(backends.contains(&StorageBackend::Fjall));
+    #[cfg(not(feature = "storage-fjall"))]
+    assert!(!backends.contains(&StorageBackend::Fjall));
 }
 
 #[test]
-fn registry_rejects_known_uncompiled_and_unknown() {
-    let err = StorageBackend::from_name("redb").unwrap_err();
-    assert!(matches!(err, Error::Unsupported(msg) if msg.contains("not compiled")));
+fn registry_rejects_unknown() {
     let err = StorageBackend::from_name("not-a-backend").unwrap_err();
     assert!(matches!(err, Error::Unsupported(msg) if msg.contains("not recognized")));
+}
+
+#[test]
+fn registry_rejects_evaluation_backends_as_uncompiled() {
+    let err = StorageBackend::from_name("sled").unwrap_err();
+    assert!(matches!(err, Error::Unsupported(msg) if msg.contains("not compiled")));
 }
 
 #[test]
@@ -92,26 +90,70 @@ fn harness_find_and_bulk_insert_for_each_compiled_backend() {
 }
 
 #[test]
-fn harness_fjall_sync_reopen_survives_restart() {
-    let dir = tempfile::tempdir().unwrap();
-    let path = dir.path().join("reopen");
+fn harness_durable_sync_reopen_survives_restart() {
+    for backend in compiled_backends()
+        .iter()
+        .copied()
+        .filter(|b| *b != StorageBackend::Memory)
     {
-        let model = open_registered(StorageBackend::Fjall, &path);
-        model.add(statement("persist")).unwrap();
-        model.sync().unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(format!("reopen-{}", backend.name()));
+        {
+            let model = open_registered(backend, &path);
+            model.add(statement("persist")).unwrap();
+            model.sync().unwrap();
+        }
+        let reopened = Model::open_with(OpenOptions::new(backend, &path).create(false)).unwrap();
+        assert!(reopened.contains(statement("persist").as_ref()).unwrap());
     }
-    let reopened = open_registered(StorageBackend::Fjall, &path);
-    assert!(reopened.contains(statement("persist").as_ref()).unwrap());
 }
 
 #[test]
-fn harness_wrong_backend_open_options_memory_ignores_path() {
+#[cfg(feature = "storage-fjall")]
+fn wrong_backend_open_fails_before_mutation() {
     let dir = tempfile::tempdir().unwrap();
-    let model = Model::open_with(OpenOptions::new(
-        StorageBackend::Memory,
-        dir.path().join("ignored"),
-    ))
-    .unwrap();
-    assert_eq!(model.backend(), StorageBackend::Memory);
-    assert!(!model.capabilities().durable);
+    let path = dir.path().join("owned");
+    {
+        let model = open_registered(StorageBackend::Fjall, &path);
+        model.add(statement("keep")).unwrap();
+        model.sync().unwrap();
+    }
+    // Opening the Fjall layout as another compiled backend must fail.
+    for backend in compiled_backends()
+        .iter()
+        .copied()
+        .filter(|b| !matches!(b, StorageBackend::Memory | StorageBackend::Fjall))
+    {
+        let err = match Model::open_with(OpenOptions::new(backend, &path).create(true)) {
+            Ok(_) => panic!("expected wrong-backend open to fail for {:?}", backend),
+            Err(err) => err,
+        };
+        assert!(
+            matches!(err, Error::OpenStore { .. }),
+            "expected OpenStore for {:?}, got {err:?}",
+            backend
+        );
+    }
+    let still =
+        Model::open_with(OpenOptions::new(StorageBackend::Fjall, &path).create(false)).unwrap();
+    assert!(still.contains(statement("keep").as_ref()).unwrap());
+}
+
+#[test]
+#[cfg(feature = "storage-fjall")]
+fn copy_to_memory_and_durable() {
+    let src = Model::new().unwrap();
+    src.add(statement("copy-me")).unwrap();
+    let mem = src
+        .copy_to(OpenOptions::new(StorageBackend::Memory, "/tmp/unused"))
+        .unwrap();
+    assert!(mem.contains(statement("copy-me").as_ref()).unwrap());
+
+    let dir = tempfile::tempdir().unwrap();
+    let dest_path = dir.path().join("dest-fjall");
+    let dest = src
+        .copy_to(OpenOptions::fjall(&dest_path).create(true))
+        .unwrap();
+    assert_eq!(dest.backend(), StorageBackend::Fjall);
+    assert!(dest.contains(statement("copy-me").as_ref()).unwrap());
 }

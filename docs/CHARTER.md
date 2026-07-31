@@ -145,6 +145,7 @@ Progress is reported as separate measures, never a blended score:
 | Portability | supported target matrix | all published targets green |
 | Downstream proof | selected unchanged consumers | published matrix passes |
 | Operability | install, migrate, back up, recover | documented and tested |
+| Performance | frozen apples-to-apples matrix against Redland 1.0.17 | Oxiland wins every required case by the published statistical threshold |
 
 Every percentage includes a numerator, denominator, skipped count, and suite or
 inventory revision.
@@ -154,17 +155,22 @@ inventory revision.
 Version 1.0 means:
 
 - the safe Rust surface promised by the project is reviewed and documented;
-- every public Redland item is mapped, intentionally replaced, or explicitly
-  excluded with impact and workaround;
+- the 0.10 100% Redland parity gate has passed: every public item and applicable
+  observable behavior in the pinned baseline is verified, with no in-scope
+  exclusion or deviation;
+- the 0.10 faster-than-Redland gate has passed on every required benchmark and
+  supported performance profile, with no tie, loss, or inconclusive result;
 - the published behavioral, source, and ABI matrices meet their stated gates;
 - API, ABI, persistence, MSRV, support, and deprecation policies are published;
 - clean installation and selected downstream workflows work from release
   artifacts;
 - no open risk contradicts the release claims.
 
-It does not necessarily mean every historical Redland storage plug-in or every
-platform is supported. The supported boundary must be explicit enough that a
-user can decide whether migration is safe before adopting Oxiland.
+Independent APIs, third-party plug-ins, and platforms outside the pinned
+baseline and published support matrix are not included. The supported boundary
+and parity denominator must be explicit enough that a user can decide whether
+migration is safe before adopting Oxiland; everything inside that denominator
+is mandatory.
 
 ## Change control
 

@@ -52,8 +52,8 @@ pub extern "C" fn librdf_new_storage(
             Ok(None) => None,
             Err(()) => return ptr::null_mut(),
         };
-        if backend == StorageBackend::Fjall && path.is_none() {
-            set_last_error("fjall storage requires a path name");
+        if backend != StorageBackend::Memory && path.is_none() {
+            set_last_error(format!("{} storage requires a path name", backend.name()));
             return ptr::null_mut();
         }
         box_handle(
@@ -90,6 +90,54 @@ pub extern "C" fn librdf_storage_open(
             return -1;
         };
         handle.inner.opened = true;
+        0
+    })
+}
+
+/// Enumerates compiled storage backends. Returns nonzero when `counter` is valid.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_storage_enumerate(
+    _world: *mut librdf_world,
+    counter: u32,
+    name: *mut *const std::os::raw::c_char,
+    label: *mut *const std::os::raw::c_char,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let backends = oxiland::compiled_backends();
+        let Ok(index) = usize::try_from(counter) else {
+            return 0;
+        };
+        let Some(backend) = backends.get(index) else {
+            return 0;
+        };
+        let cname: &'static std::ffi::CStr = match backend.name() {
+            "memory" => c"memory",
+            "fjall" => c"fjall",
+            "redb" => c"redb",
+            "rocksdb" => c"rocksdb",
+            "sqlite" => c"sqlite",
+            "lmdb" => c"lmdb",
+            _ => c"unknown",
+        };
+        if !name.is_null() {
+            unsafe { *name = cname.as_ptr() };
+        }
+        if !label.is_null() {
+            unsafe { *label = cname.as_ptr() };
+        }
+        1
+    })
+}
+
+/// Storage sync is a no-op at the storage handle layer (use model sync).
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_storage_sync(storage: *mut librdf_storage) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        if unsafe { borrow_handle(storage, TAG_STORAGE) }.is_none() {
+            return -1;
+        }
         0
     })
 }

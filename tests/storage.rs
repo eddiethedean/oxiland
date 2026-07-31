@@ -1,3 +1,5 @@
+#![cfg(feature = "storage-fjall")]
+
 use std::fs;
 
 use oxiland::io::{Parser, Syntax};
@@ -135,7 +137,12 @@ fn read_only_rejects_writes() {
 
 #[test]
 fn legacy_backends_are_unsupported() {
-    for name in ["mysql", "sqlite", "virtuoso", "hashes", "rocksdb"] {
+    for name in ["mysql", "virtuoso", "hashes", "file", "postgresql"] {
+        let err = Model::storage_backend_available(name).unwrap_err();
+        assert!(matches!(err, Error::Unsupported(_)), "{name}");
+    }
+    // Evaluation backends remain known-but-not-compiled.
+    for name in ["sled", "leveldb", "mdbx", "surrealkv"] {
         let err = Model::storage_backend_available(name).unwrap_err();
         assert!(matches!(err, Error::Unsupported(_)), "{name}");
     }

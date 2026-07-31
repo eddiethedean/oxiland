@@ -131,3 +131,67 @@ pub extern "C" fn librdf_serializer_serialize_model_to_string(
         }
     })
 }
+
+/// Serializes the model and returns length via `length_p` when non-null.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_serializer_serialize_model_to_counted_string(
+    serializer: *mut librdf_serializer,
+    base_uri: *mut librdf_uri,
+    model: *mut librdf_model,
+    length_p: *mut usize,
+) -> *mut u8 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let ptr = librdf_serializer_serialize_model_to_string(serializer, base_uri, model);
+        if ptr.is_null() {
+            return ptr::null_mut();
+        }
+        if !length_p.is_null() {
+            let cstr = unsafe { std::ffi::CStr::from_ptr(ptr) };
+            unsafe { *length_p = cstr.to_bytes().len() };
+        }
+        ptr.cast()
+    })
+}
+
+/// Serializes the model to a filesystem path.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_serializer_serialize_model_to_file(
+    serializer: *mut librdf_serializer,
+    name: *const std::os::raw::c_char,
+    base_uri: *mut librdf_uri,
+    model: *mut librdf_model,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(serializer) = (unsafe { borrow_handle(serializer, TAG_SERIALIZER) }) else {
+            return -1;
+        };
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        let Some(name) = (unsafe { cstr_required(name, "name") }) else {
+            return -1;
+        };
+        let mut ser = Serializer::for_syntax(serializer.inner.syntax);
+        if !base_uri.is_null() {
+            let Some(base) = (unsafe { borrow_handle(base_uri, TAG_URI) }) else {
+                return -1;
+            };
+            ser = match ser.base_iri(base.inner.node.as_str()) {
+                Ok(s) => s,
+                Err(error) => {
+                    set_last_error(error.to_string());
+                    return -1;
+                }
+            };
+        }
+        match ser.serialize_model_to_path(&model.inner.model, name) {
+            Ok(()) => 0,
+            Err(error) => {
+                set_last_error(error.to_string());
+                -1
+            }
+        }
+    })
+}

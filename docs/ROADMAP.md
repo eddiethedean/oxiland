@@ -24,8 +24,8 @@ only when its evidence gates are satisfied.
 | 0.6 | Accounted safe Rust parity | 0.5 | `complete` |
 | 0.7 | Pythonic package on PyPI | 0.4 (sequenced after 0.6) | `complete` |
 | 0.8 | Auditable C ABI preview | 0.6 | `complete` |
-| 0.9 | Downstream C compatibility | 0.8 | `planned` |
-| 0.10 | 1.0 release candidate | 0.9 | `planned` |
+| 0.9 | Downstream C compatibility | 0.8 | `complete` |
+| 0.10 | 100% Redland parity and faster-than-Redland release candidate | 0.9 | `planned` |
 
 States are `planned`, `in progress`, `blocked`, or `complete`. A state changes
 only after the evidence links are added to the root
@@ -357,6 +357,8 @@ Depends on: 0.6 safe API accounting and stable ownership semantics.
 
 Outcome: prove broad source and behavioral compatibility using real consumers.
 
+State: complete
+
 Deliverables:
 
 - Complete applicable C symbol implementations.
@@ -392,7 +394,9 @@ Depends on: a sanitizer-clean 0.8 ABI preview.
 
 ## 0.10 — Release candidate
 
-Outcome: freeze and validate the design intended for 1.0.
+Outcome: reach 100% parity with the pinned Redland baseline, beat Redland on
+the frozen performance matrix, then freeze and validate the design intended
+for 1.0.
 
 Deliverables:
 
@@ -404,17 +408,36 @@ Deliverables:
 - Cross-platform packaging and installation documentation.
 - Upgrade guide for Redland users.
 - Security, fuzzing, interoperability, and performance hardening.
+- A reproducible, apples-to-apples Oxiland-versus-Redland benchmark suite for
+  every supported target/build profile.
 - Support, deprecation, MSRV, and vulnerability-response policies.
 - Reproducible source archives and checksummed release artifacts.
 
 Evidence gates:
 
+- **Hard release gate:** the 0.10 release does not ship until the project meets
+  the [100% Redland parity definition](COMPATIBILITY.md#010-full-redland-parity-gate)
+  for Redland `librdf` 1.0.17 (manual 1.0.18) on every supported target and
+  build profile.
+- The generated parity report is exactly 100%: every in-scope public symbol is
+  implemented and every applicable observable behavior is `verified`, with
+  the numerator, denominator, skips, platform/profile, and evidence revision
+  published. Mechanical ownership operations may be `not-applicable` only for
+  the safe Rust mapping; their C ABI and observable lifecycle semantics must
+  still be verified.
+- There are zero in-scope `unreviewed`, `mapped`, `implemented`, or `excluded`
+  inventory rows, zero unexplained differential mismatches, and zero accepted
+  behavioral deviations. A waiver, quarantine, migration workaround, or
+  capability error does not satisfy this gate.
+- **Hard performance gate:** Oxiland must pass the
+  [0.10 faster-than-Redland gate](VERIFICATION.md#010-faster-than-redland-gate)
+  on every required benchmark and supported performance profile. No required
+  case may tie or lose, and wins in other cases may not average away a loss.
 - Rust public-API snapshots and C ABI snapshots are enforced in CI.
 - Python package versioning and wheel matrix are documented and green.
 - The full conformance and differential matrix is green.
 - Documentation includes complete examples for supported Redland workflows.
 - Release candidates receive real downstream testing.
-- Remaining deviations are enumerated and do not contradict the 1.0 claim.
 - No release-blocking item remains in the risk register.
 - A clean environment can install, link, execute, and uninstall every artifact.
 - At least one release-candidate soak period completes without an ABI reset.
@@ -423,12 +446,15 @@ Evidence gates:
 
 ## 1.0 readiness
 
-Version 1.0 is eligible only when both safe Rust accounting and the promised C
-compatibility surface meet their published definitions, and the Python package
-(if still in the 1.0 promise) meets its published PyPI contract. “Powered by
-Oxigraph” does not imply that every historical Redland storage plug-in can be
-reproduced; where exact implementation parity is impossible, 1.0 must provide
-compatible observable behavior or an explicit, narrowly justified exclusion.
+Version 1.0 is eligible only after 0.10 has passed both the 100% Redland parity
+gate and the faster-than-Redland performance gate. The safe Rust mappings and
+the promised C source, ABI, and behavioral surfaces must meet their published
+definitions with no in-scope exclusion or deviation.
+The Python package (if still in the 1.0 promise) must also meet its published
+PyPI contract. Independent Raptor/Rasqal APIs not exposed through `librdf`,
+third-party plug-ins outside the pinned baseline, and targets outside the
+published support matrix are not part of the denominator; anything inside that
+denominator is mandatory.
 
 The release decision consumes the evidence defined above; elapsed time,
 inventory percentages alone, or a green unit-test suite are insufficient.

@@ -89,4 +89,4 @@ if [[ "$missing" -ne 0 || "$extra" -ne 0 ]]; then
 fi
 
 count="$(wc -l <"$EXPECTED_FILE" | tr -d ' ')"
-echo "oxiland-capi exports match preview allowlist ($count symbols)"
+echo "oxiland-capi exports match allowlist ($count symbols)"

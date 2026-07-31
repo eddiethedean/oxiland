@@ -1,11 +1,13 @@
 //! Opaque tagged handles and live-pointer registry.
 
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::os::raw::c_char;
 use std::sync::{LazyLock, Mutex};
 
 use crate::error::set_last_error;
 
+pub mod digest;
+pub mod helpers;
 pub mod model;
 pub mod node;
 pub mod parser;
@@ -28,9 +30,10 @@ pub const TAG_PARSER: u32 = 0x4F58_5708;
 pub const TAG_SERIALIZER: u32 = 0x4F58_5709;
 pub const TAG_QUERY: u32 = 0x4F58_570A;
 pub const TAG_QUERY_RESULTS: u32 = 0x4F58_570B;
+pub const TAG_DIGEST: u32 = 0x4F58_570C;
 pub const TAG_FREED: u32 = 0xDEAD_F00D;
 
-static LIVE: LazyLock<Mutex<HashSet<usize>>> = LazyLock::new(|| Mutex::new(HashSet::new()));
+static LIVE: LazyLock<Mutex<HashMap<usize, u32>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
 /// Heap object shared by every opaque C handle.
 #[repr(C)]
@@ -39,23 +42,60 @@ pub struct TypedHandle<T> {
     pub inner: T,
 }
 
-fn register(ptr: usize) {
+fn register(ptr: usize, tag: u32) {
     LIVE.lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .insert(ptr);
+        .insert(ptr, tag);
 }
 
-fn unregister(ptr: usize) -> bool {
-    LIVE.lock()
+fn validate_live(ptr: usize, expected_tag: u32) -> bool {
+    match LIVE
+        .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .remove(&ptr)
+        .get(&ptr)
+        .copied()
+    {
+        Some(tag) if tag == expected_tag => true,
+        Some(tag) => {
+            set_last_error(format!(
+                "handle type tag mismatch (got {tag:#x}, expected {expected_tag:#x})"
+            ));
+            false
+        }
+        None => {
+            set_last_error("freed or invalid handle");
+            false
+        }
+    }
+}
+
+fn unregister(ptr: usize, expected_tag: u32) -> bool {
+    let mut live = LIVE
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    match live.get(&ptr).copied() {
+        Some(tag) if tag == expected_tag => {
+            live.remove(&ptr);
+            true
+        }
+        Some(tag) => {
+            set_last_error(format!(
+                "handle type tag mismatch on free (got {tag:#x}, expected {expected_tag:#x})"
+            ));
+            false
+        }
+        None => {
+            set_last_error("double free or invalid handle");
+            false
+        }
+    }
 }
 
 /// Boxes `inner` and returns a raw handle pointer registered as live.
 pub fn box_handle<T>(tag: u32, inner: T) -> *mut TypedHandle<T> {
     let handle = Box::new(TypedHandle { tag, inner });
     let ptr = Box::into_raw(handle);
-    register(ptr as usize);
+    register(ptr as usize, tag);
     ptr
 }
 
@@ -70,6 +110,9 @@ pub unsafe fn borrow_handle<'a, T>(
 ) -> Option<&'a mut TypedHandle<T>> {
     if ptr.is_null() {
         set_last_error("null handle");
+        return None;
+    }
+    if !validate_live(ptr as usize, expected_tag) {
         return None;
     }
     // SAFETY: caller guarantees `ptr` is a live TypedHandle<T> from this crate.
@@ -94,8 +137,7 @@ pub unsafe fn free_handle<T>(ptr: *mut TypedHandle<T>, expected_tag: u32) {
         return;
     }
     let addr = ptr as usize;
-    if !unregister(addr) {
-        set_last_error("double free or invalid handle");
+    if !unregister(addr, expected_tag) {
         return;
     }
     // SAFETY: address was live in the registry; exclusive ownership restored.

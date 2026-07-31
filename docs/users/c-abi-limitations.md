@@ -1,26 +1,27 @@
 # C ABI preview limitations
 
-Oxiland 0.8 `oxiland-capi` is an **auditable source-compat preview**. Treat
+Oxiland 0.9 `oxiland-capi` is an **auditable Redland-shaped C surface**. Treat
 these limits as product contract, not temporary footnotes.
 
 ## Not a Redland drop-in
 
 - **Not ABI-compatible** with existing Redland (`librdf`) shared libraries.
   Recompile against Oxiland headers; do not expect binary interchange.
-- **Not a complete `librdf` surface.** Only the frozen 0.8 allowlist is
-  declared and exported. Other Redland symbols are absent from the preview
-  header and deferred to 0.9.
+- **Not a complete historical `librdf` surface.** Symbols outside the 0.9
+  allowlist are omitted or excluded with inventory notes.
 - **Not a guarantee** that every Redland C program will compile unchanged.
   Programs that call symbols outside the allowlist will not link.
 
 ## Behavioral and API gaps
 
-- CONSTRUCT/DESCRIBE graph results are not exposed on the preview
-  `librdf_query_results_*` API (ASK and SELECT bindings are).
-- World log-handler / full Redland factory registration surfaces are out of
-  scope for the preview.
-- Optional durable backends (redb, RocksDB, SQLite, LMDB, …) are recognized as
-  known-but-not-compiled; only `memory` and `fjall` open successfully.
+- CONSTRUCT/DESCRIBE are available via `librdf_query_results_is_graph` /
+  `librdf_query_results_as_stream`.
+- `librdf_world_set_logger` receives only messages emitted through
+  `librdf_log_simple`; full Redland factory registration and logging surfaces
+  remain out of scope.
+- Optional durable backends open when compiled (`storage-redb`,
+  `storage-rocksdb`, `storage-sqlite`, `storage-lmdb`); otherwise they remain
+  known-but-not-compiled.
 - Double-free after the allocator reuses an address remains undefined; the
   preview may detect some invalid second frees but does not make misuse safe.
 
@@ -33,9 +34,9 @@ these limits as product contract, not temporary footnotes.
   [design/0.8-cabi.md](../design/0.8-cabi.md). Do not assume Redland's
   historical concurrency habits.
 
-## What 0.9 is for
+## 0.9 status
 
-Downstream consumer matrices, fuller symbol closure, packaging as an installed
-ABI artifact, and optional storage adapters are **0.9** work. Until then,
-integrate only against the documented allowlist and the
-[C ABI guide](c-abi.md).
+Downstream consumer matrices, expanded symbol surface, installed-artifact
+packaging smokes, and optional storage adapters shipped in 0.9. See
+the [downstream matrix](https://github.com/eddiethedean/oxiland/blob/main/compatibility/downstream/README.md)
+and the [C ABI guide](c-abi.md).

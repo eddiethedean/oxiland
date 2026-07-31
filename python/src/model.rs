@@ -61,10 +61,7 @@ impl PyModel {
 
     #[getter]
     fn backend(&self) -> &'static str {
-        match self.inner.backend() {
-            StorageBackend::Memory => "memory",
-            StorageBackend::Fjall => "fjall",
-        }
+        self.inner.backend().name()
     }
 
     #[pyo3(signature = (statement, graph=None))]
@@ -216,11 +213,7 @@ impl PyModel {
     }
 
     fn __repr__(&self) -> String {
-        let backend = match self.inner.backend() {
-            StorageBackend::Memory => "memory",
-            StorageBackend::Fjall => "fjall",
-        };
-        format!("Model(backend={backend:?})")
+        format!("Model(backend={:?})", self.inner.backend().name())
     }
 }
 
