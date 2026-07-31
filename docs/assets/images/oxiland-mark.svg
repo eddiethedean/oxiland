@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Oxiland</title>
+  <defs>
+    <linearGradient id="g" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#35D0BA"/>
+      <stop offset="1" stop-color="#6574FF"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#g)" d="M32 3 57 17v30L32 61 7 47V17L32 3Z"/>
+  <path fill="#071A1D" fill-rule="evenodd" d="M21.2 20.3a5.7 5.7 0 1 1 0 11.4 5.7 5.7 0 0 1 0-11.4Zm21.6 0a5.7 5.7 0 1 1 0 11.4 5.7 5.7 0 0 1 0-11.4ZM32 33.1a5.7 5.7 0 1 1 0 11.4 5.7 5.7 0 0 1 0-11.4ZM24.5 28l5.3 7.4 2.5-1.8-5.2-7.5L24.5 28Zm12.3-1.9-5.1 7.5 2.5 1.8 5.2-7.4-2.6-1.9Z"/>
+  <circle cx="21.2" cy="26" r="2.5" fill="#F6FFFC"/>
+  <circle cx="42.8" cy="26" r="2.5" fill="#F6FFFC"/>
+  <circle cx="32" cy="38.8" r="2.5" fill="#F6FFFC"/>
+</svg>

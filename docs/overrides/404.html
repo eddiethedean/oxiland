@@ -1,0 +1,14 @@
+{% extends "main.html" %}
+
+{% block content %}
+  <h1>That page has moved or does not exist.</h1>
+  <p>
+    Try the documentation search, return to the overview, or choose a language
+    guide below.
+  </p>
+  <p>
+    <a class="md-button md-button--primary" href="{{ config.site_url }}">Documentation home</a>
+    <a class="md-button" href="{{ config.site_url }}users/python/">Python guide</a>
+    <a class="md-button" href="{{ config.site_url }}users/rust/">Rust guide</a>
+  </p>
+{% endblock %}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks repository-local links in Markdown documentation."""
+"""Checks repository-local links in Markdown and embedded HTML."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parents[1]
 LINK = re.compile(r"!?\[[^\]]*]\(([^)]+)\)")
+HTML_LINK = re.compile(r'''\b(?:href|src)\s*=\s*["']([^"']+)["']''', re.I)
 EXCLUDED_DIRS = {".git", "target", "site", ".venv", ".pytest_cache", "node_modules"}
 
 
@@ -46,7 +47,25 @@ def local_destination(raw: str) -> str | None:
         or destination.startswith(("mailto:", "data:"))
     ):
         return None
-    return unquote(destination.split("#", 1)[0])
+    destination = destination.split("#", 1)[0].split("?", 1)[0]
+    return unquote(destination)
+
+
+def source_target(document: Path, destination: str) -> Path:
+    """Resolves both source-file links and MkDocs directory-style URLs."""
+    target = (document.parent / destination).resolve()
+    if target.exists():
+        return target
+
+    route = target if not destination.endswith("/") else target.parent / target.name
+    markdown_target = route.with_suffix(".md")
+    if markdown_target.exists():
+        return markdown_target
+
+    index_target = route / "index.md"
+    if index_target.exists():
+        return index_target
+    return target
 
 
 def main() -> int:
@@ -55,12 +74,16 @@ def main() -> int:
 
     for document in markdown_files():
         for line_number, line in prose_lines(document):
-            for match in LINK.finditer(line):
-                destination = local_destination(match.group(1))
+            raw_destinations = [match.group(1) for match in LINK.finditer(line)]
+            raw_destinations.extend(
+                match.group(1) for match in HTML_LINK.finditer(line)
+            )
+            for raw_destination in raw_destinations:
+                destination = local_destination(raw_destination)
                 if destination is None:
                     continue
                 checked += 1
-                target = (document.parent / destination).resolve()
+                target = source_target(document, destination)
                 if ROOT != target and ROOT not in target.parents:
                     failures.append(
                         f"{document.relative_to(ROOT)}:{line_number}: "

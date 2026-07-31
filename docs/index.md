@@ -1,95 +1,155 @@
-# Oxiland documentation
+---
+hide:
+  - navigation
+  - toc
+title: Oxiland — embedded RDF for Rust and Python
+description: Build typed, local RDF applications with SPARQL, persistent datasets, and streaming I/O in Rust or Python.
+---
 
-Production-oriented Python and Rust APIs for RDF models, named graphs, SPARQL,
-persistence, and streaming RDF I/O.
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero__copy">
+    <p class="hero__eyebrow">Embedded RDF for Rust and Python</p>
+    <h1 id="hero-title">Make linked data feel native.</h1>
+    <p class="hero__lead">
+      Build typed RDF applications with SPARQL 1.1, named graphs, persistent
+      datasets, transactions, and streaming I/O—without running a database
+      server.
+    </p>
+    <div class="hero__actions">
+      <a class="md-button md-button--primary" href="users/python/">Start with Python</a>
+      <a class="md-button" href="users/rust/">Start with Rust</a>
+    </div>
+    <div class="hero__meta" aria-label="Project highlights">
+      <span>Apache-2.0 OR MIT</span>
+      <span>Rust 1.87+</span>
+      <span>Python 3.10–3.14</span>
+    </div>
+  </div>
+  <div class="hero__terminal" aria-label="Python quick start example">
+    <div class="hero__terminal-bar" aria-hidden="true">
+      <span></span><span></span><span></span>
+      <strong>quick_start.py</strong>
+    </div>
 
-| Path | Time | Link |
-|---|---|---|
-| Python in five minutes | `pip install` + ASK | [Python](users/python.md) |
-| Deploy the Python package | Storage, backups, failures, upgrades | [Production operations](users/python-production.md) |
-| Python API | Typed public surface | [API reference](users/python-api.md) |
-| Rust in five minutes | Install + ASK | [Rust overview](users/rust.md) |
-| Deploy a Rust service | Storage, concurrency, backups, query budgets | [Production operations](users/rust-production.md) |
-| Command line | Imports, inspection, queries, scripting | [CLI guide](users/cli.md) |
-| Copy-paste examples | Rust + Python | [Examples](users/examples.md) |
-| Rust API | rustdoc | [docs.rs](https://docs.rs/oxiland) |
+    <pre><code class="language-python">from oxiland import Model, load, query
 
-Compatibility claims are evidence-scoped. See the [parity ledger](parity.md).
+graph = Model()
+load(
+    graph,
+    '&lt;alice&gt; &lt;name&gt; "Alice" .',
+    "turtle",
+    base_iri="https://example.com/",
+)
 
-## Python
+assert query(graph, "ASK { ?s ?p ?o }")</code></pre>
+  </div>
+</section>
 
-1. [Overview](users/python.md) — install, first model, and package capabilities
-2. [Installation and compatibility](users/python-installation.md) — wheels, reproducible deployment, and source builds
-3. [Models and RDF terms](users/python-models.md) — values, graphs, CRUD, matching, and transactions
-4. [RDF I/O and SPARQL](users/python-data.md) — syntax support, import modes, queries, and updates
-5. [Production operations](users/python-production.md) — lifecycle, durability, backups, upgrades, and security boundaries
-6. [API reference](users/python-api.md) — public classes, functions, signatures, and errors
+<div class="trust-strip" role="list" aria-label="Core capabilities">
+  <span role="listitem"><b aria-hidden="true">✓</b> Safe, typed APIs</span>
+  <span role="listitem"><b aria-hidden="true">✓</b> Local persistence</span>
+  <span role="listitem"><b aria-hidden="true">✓</b> SPARQL 1.1</span>
+  <span role="listitem"><b aria-hidden="true">✓</b> Streaming RDF I/O</span>
+</div>
 
-## Rust
+## Choose your path
 
-1. [Overview](users/rust.md) — public surface, models, storage, and errors
-2. [Getting started](users/getting-started.md) — project bootstrap and first workflows
-3. [RDF I/O](users/io.md) — syntaxes, graph targets, and import semantics
-4. [SPARQL](users/sparql.md) — queries, updates, datasets, and result formats
-5. [Persistence](users/persistence.md) — format v1, transactions, and archival export
-6. [Streams](users/streams.md) — fallible iterators, ownership, and early stop
-7. [Utilities and logging](users/utilities.md) — digests, IRIs, namespaces, and observability
-8. [Production operations](users/rust-production.md) — lifecycle, concurrency, capacity, backup, and upgrades
-9. [Rust API reference](https://docs.rs/oxiland)
+<div class="path-grid">
 
-## Command line
+<a class="path-card" href="users/python/">
+  <span class="path-card__badge" aria-hidden="true">Py</span>
+  <h3>Python</h3>
+  <p>Go from <code>pip install</code> to a queried dataset in five minutes.</p>
+  <span class="path-card__link">Open the Python guide →</span>
+</a>
 
-1. [CLI guide](users/cli.md) — install, store selection, commands, automation, and failure behavior
-2. [Examples](users/examples.md) — runnable Python and Rust programs
-3. [FAQ and troubleshooting](users/faq.md)
+<a class="path-card" href="users/rust/">
+  <span class="path-card__badge" aria-hidden="true">Rs</span>
+  <h3>Rust</h3>
+  <p>Use a compact, safe API for models, storage, queries, and RDF streams.</p>
+  <span class="path-card__link">Open the Rust guide →</span>
+</a>
 
-## Evaluators
+<a class="path-card" href="users/cli/">
+  <span class="path-card__badge" aria-hidden="true">$_</span>
+  <h3>Command line</h3>
+  <p>Import, inspect, query, and export local datasets from scripts or a shell.</p>
+  <span class="path-card__link">Open the CLI guide →</span>
+</a>
 
-1. [Positioning](evaluators/positioning.md) — vs Oxigraph, Sophia, and Redland
-2. [Migration from Redland](evaluators/migration-from-redland.md)
-3. [Redland symbol map](evaluators/redland-symbol-map.md)
-4. [Parity ledger](parity.md) — scoped verified claims
-5. [Current compatibility report (0.7)](reports/0.7.md)
-6. [Compatibility contract](COMPATIBILITY.md)
+</div>
 
-## Contributors
+## One toolkit, the complete local workflow
 
-1. [Contributing](contributing.md) — fast path and compatibility slices
-2. [Project charter](CHARTER.md)
-3. [Roadmap](ROADMAP.md) — next release is **0.8** (C ABI preview)
-4. [Execution plan](EXECUTION.md)
-5. [Architecture](ARCHITECTURE.md)
-6. [Verification](VERIFICATION.md)
-7. [Decisions](DECISIONS.md)
-8. [Risks](RISKS.md)
+<div class="feature-grid">
 
-### Document authority
+<div class="feature-card">
+  <h3>Model RDF precisely</h3>
+  <p>Validated IRIs, blank nodes, literals, triples, quads, default graphs, and named graphs give applications a clear data contract.</p>
+</div>
 
-| Question | Authority |
-|---|---|
-| Who is Oxiland for and what does 1.0 promise? | [Charter](CHARTER.md) |
-| What exists and is verified now? | [Parity ledger](parity.md) |
-| What release comes next? | [Roadmap](ROADMAP.md) (**0.8**) |
-| How is work sliced and completed? | [Execution](EXECUTION.md) |
-| Where does code belong? | [Architecture](ARCHITECTURE.md) |
-| What does compatibility mean? | [Compatibility](COMPATIBILITY.md) |
-| What evidence is sufficient? | [Verification](VERIFICATION.md) |
-| Why was a durable choice made? | [Decisions](DECISIONS.md) |
-| What could block the plan? | [Risks](RISKS.md) |
-| Support / deprecation for 0.x? | [Support](support.md) |
+<div class="feature-card">
+  <h3>Own the data lifecycle</h3>
+  <p>Choose an in-memory model or a durable local store with atomic transactions, explicit sync, read-only access, and portable N-Quads backups.</p>
+</div>
 
-## Project
+<div class="feature-card">
+  <h3>Query with SPARQL</h3>
+  <p>Run ASK, SELECT, CONSTRUCT, DESCRIBE, and Update. Consume large result sets as lazy iterators instead of materializing them all at once.</p>
+</div>
 
-- [Support](support.md)
-- [Security](security.md)
-- [Code of conduct](code-of-conduct.md)
+<div class="feature-card">
+  <h3>Stream standard formats</h3>
+  <p>Read and write Turtle, N-Triples, N-Quads, TriG, and RDF/XML with explicit syntax and import-failure semantics.</p>
+</div>
 
-Historical reports, release checklists, completed milestones, and design notes
-live under **Archive** in the site navigation.
+</div>
 
-## Maintenance rules
+## Ready for more than a demo
 
-- Plans use `planned`, `in progress`, `blocked`, and `complete`.
-- Only verified implementation is marked complete in the parity ledger.
-- User and evaluator guides must not describe planned work as available.
-- Historical reports are amended only to correct errors.
+Oxiland is an embedded library, not a hosted database. Your application owns
+the store path, permissions, process lifecycle, capacity, backups, and network
+boundary. The production guides turn those responsibilities into an operating
+model.
+
+<div class="next-grid">
+
+<div class="next-card">
+  <strong>Deploy safely</strong>
+  <p><a href="users/python-production/">Python operations</a> · <a href="users/rust-production/">Rust operations</a></p>
+</div>
+
+<div class="next-card">
+  <strong>Look up an API</strong>
+  <p><a href="users/python-api/">Python reference</a> · <a href="https://docs.rs/oxiland">Rust reference</a></p>
+</div>
+
+<div class="next-card">
+  <strong>Solve a problem</strong>
+  <p><a href="users/faq/">FAQ and troubleshooting</a> · <a href="support/">Support policy</a></p>
+</div>
+
+<div class="next-card">
+  <strong>Evaluate the fit</strong>
+  <p><a href="evaluators/positioning/">Positioning</a> · <a href="parity/">Compatibility evidence</a></p>
+</div>
+
+</div>
+
+!!! info "Compatibility claims are evidence-scoped"
+
+    Oxiland provides Redland-shaped workflows, but version 0.7.0 is not a C
+    source or ABI drop-in. Start with the [positioning guide](evaluators/positioning.md)
+    and verify each claim in the [parity ledger](parity.md).
+
+<div class="home-footer-cta" markdown>
+
+### Build your first dataset
+
+Choose the language you already use. Both tracks cover installation, models,
+RDF I/O, SPARQL, persistence, failure handling, and production operations.
+
+[Python quick start](users/python.md){ .md-button .md-button--primary }
+[Rust quick start](users/rust.md){ .md-button }
+
+</div>

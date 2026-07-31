@@ -1,40 +1,86 @@
 site_name: Oxiland
 site_description: Safe Rust and Python APIs for RDF models, SPARQL, and streaming RDF I/O on Oxigraph
+site_author: Oxiland contributors
 site_url: https://oxiland.readthedocs.io/
 repo_url: https://github.com/eddiethedean/oxiland
 repo_name: eddiethedean/oxiland
 edit_uri: edit/main/docs/
+copyright: Copyright &copy; Oxiland contributors · Apache-2.0 OR MIT
 docs_dir: docs
 site_dir: site
 
 theme:
   name: material
+  custom_dir: docs/overrides
+  language: en
+  logo: assets/images/oxiland-mark.svg
+  favicon: assets/images/favicon.svg
+  icon:
+    repo: fontawesome/brands/github
+  font: false
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
-        icon: material/brightness-7
+        icon: material/weather-night
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
-        icon: material/brightness-4
+        icon: material/weather-sunny
         name: Switch to light mode
   features:
+    - announce.dismiss
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.footer
     - navigation.top
     - search.suggest
+    - search.highlight
+    - search.share
     - content.code.copy
+    - content.code.select
+    - content.tabs.link
+    - content.tooltips
     - content.action.edit
+    - content.action.view
 
 plugins:
-  - search
+  - search:
+      lang: en
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+extra_javascript:
+  - assets/javascripts/site.js
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/eddiethedean/oxiland
+      name: Oxiland on GitHub
+    - icon: fontawesome/brands/rust
+      link: https://crates.io/crates/oxiland
+      name: Oxiland on crates.io
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/oxiland/
+      name: Oxiland on PyPI
+  generator: false
 
 markdown_extensions:
+  - abbr
   - admonition
   - attr_list
   - def_list
@@ -43,15 +89,34 @@ markdown_extensions:
   - tables
   - toc:
       permalink: true
+      permalink_title: Link to this section
   - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.smartsymbols
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
   - pymdownx.snippets:
       base_path:
         - .
         - ..
       check_paths: true
+
+validation:
+  omitted_files: warn
+  absolute_links: relative_to_docs
+  unrecognized_links: warn
+  anchors: warn
 
 nav:
   - Home: index.md
@@ -84,21 +149,23 @@ nav:
       - Compatibility contract: COMPATIBILITY.md
       - Parity ledger: parity.md
       - Current report (0.7): reports/0.7.md
-  - Contributors:
-      - Contributing: contributing.md
-      - Charter: CHARTER.md
-      - Roadmap: ROADMAP.md
-      - Storage backend plan: design/storage-backend-expansion.md
-      - Execution: EXECUTION.md
-      - Architecture: ARCHITECTURE.md
-      - Verification: VERIFICATION.md
-      - Compatibility contract: COMPATIBILITY.md
-      - Decisions: DECISIONS.md
-      - Risks: RISKS.md
   - Project:
-      - Support: support.md
-      - Security: security.md
-      - Code of conduct: code-of-conduct.md
+      - Community:
+          - Support: support.md
+          - Security: security.md
+          - Code of conduct: code-of-conduct.md
+          - Contributing: contributing.md
+      - Direction:
+          - Project charter: CHARTER.md
+          - Roadmap: ROADMAP.md
+          - Storage backend plan: design/storage-backend-expansion.md
+      - Engineering:
+          - Architecture: ARCHITECTURE.md
+          - Execution: EXECUTION.md
+          - Verification: VERIFICATION.md
+          - Compatibility contract: COMPATIBILITY.md
+          - Decisions: DECISIONS.md
+          - Risks: RISKS.md
   - Archive:
       - 0.7.0 release checklist: reports/0.7.0-release.md
       - 0.6 compatibility report: reports/0.6.md
