@@ -8,23 +8,23 @@
 [![License](https://img.shields.io/crates/l/oxiland)](LICENSE-APACHE)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/eddiethedean/oxiland)
 
-**Oxiland** is a safe Rust facade for Redland-shaped RDF workflows—models,
-contexts, statement matching, SPARQL query/update/results, and stream-oriented
-Turtle / N-Triples / N-Quads / TriG / RDF/XML I/O—backed by pinned
-[Oxigraph](https://oxigraph.org/) 0.5.9 with `#![forbid(unsafe_code)]`.
+**Oxiland** gives you safe Rust (and Python) APIs for RDF models, named graphs,
+SPARQL, and streaming Turtle / N-Triples / N-Quads / TriG / RDF/XML—on pinned
+[Oxigraph](https://oxigraph.org/) 0.5.9, with `#![forbid(unsafe_code)]`.
 
-Use it when you want Redland concepts and explicit unsupported/error behavior
-without C ownership; use Oxigraph directly when you only need the engine API.
-Version **0.7.0** covers trusted core model, Redland-shaped RDF I/O, SPARQL,
-durable Fjall storage (format v1), utilities, World logging, **header-derived
-safe-API accounting**, `oxiland-cli` rdfproc-shaped workflows, and a **Pythonic
-PyPI package**—with scoped evidence in the [parity ledger](PARITY.md)—not C
-ABI/source compatibility.
+Choose it when you want Redland-*shaped* workflows and explicit unsupported
+errors. Prefer Oxigraph alone for greenfield engine-only apps. Oxiland is **not**
+a C/ABI drop-in (planned for 0.8+).
+
+Version **0.7.0** includes in-memory and durable Fjall storage (format v1),
+`oxiland-cli` rdfproc-shaped workflows, utilities/logging, and
+`pip install oxiland`. Compatibility claims are evidence-scoped in the
+[parity ledger](PARITY.md)—not “100% Redland drop-in.”
 
 > [!IMPORTANT]
-> Compatibility claims are evidence-scoped. See the
-> [parity ledger](PARITY.md) and [0.7 report](docs/reports/0.7.md). Do not read
-> “Redland-shaped” as drop-in C or ABI compatibility.
+> “Redland-shaped” means familiar concepts and inventories, not C or ABI
+> compatibility. See the [parity ledger](PARITY.md) and
+> [0.7 report](docs/reports/0.7.md).
 
 ## When to use Oxiland
 
@@ -32,7 +32,7 @@ ABI/source compatibility.
 |---|---|
 | You want Redland-like models, contexts, and I/O facades | You only need Oxigraph’s store/SPARQL/I/O API |
 | You need explicit `Unsupported` / typed errors for missing features | You want every Oxigraph capability without a facade |
-| You are migrating Redland *concepts* into safe Rust | You are starting a greenfield Oxigraph app |
+| You are migrating Redland *concepts* into safe Rust or Python | You are starting a greenfield Oxigraph app |
 | You care about inventory-backed compatibility evidence | You do not need Redland workflow mapping |
 
 A longer comparison (including Sophia and native Redland) is in
@@ -50,13 +50,13 @@ A longer comparison (including Sophia and native Redland) is in
 | SPARQL ASK / SELECT / CONSTRUCT / DESCRIBE | Available; streaming `QueryResults` |
 | RDF parser and serializer facades | Available; Turtle, N-Triples, N-Quads, TriG, RDF/XML |
 | Syntax discovery by name, MIME type, and extension | Available via `Syntax` |
-| Persistent Fjall model | Available; format v1 via `Model::open` / `open_with` (ADR-006) |
+| Persistent Fjall model | Available; format v1 via `Model::open` / `open_with` |
 | Transactions / sync / clear | Available; `Model::transaction`, `sync`, `clear` |
 | SPARQL Update and results serialization | Available; XML/JSON/CSV/TSV + graph serialize helper |
 | Digests / URI / Unicode / vocab helpers | Available; `oxiland::utility` |
-| World logging | Available; handlers + optional `tracing` feature (ADR-014) |
-| Python package (Pythonic PyPI API) | Available; `pip install oxiland` (ADR-017) |
-| Full safe Rust Redland accounting | Available for 0.6 header-derived inventory |
+| World logging | Available; handlers + optional `tracing` feature |
+| Python package (Pythonic PyPI API) | Available; `pip install oxiland` |
+| Header-derived safe-API accounting | Available for the 0.6 `librdf` inventory (classification, not drop-in parity) |
 | C source and ABI compatibility | Planned for 0.8–0.9 |
 
 “Available” means the current public workflow is implemented and tested. It
@@ -78,10 +78,14 @@ dispositions: [`compatibility/baseline/format-matrix.json`](compatibility/baseli
 
 ## Requirements
 
-- Rust **1.87** or newer (edition 2024; matches the Oxigraph 0.5.9 pin used for
-  compatibility testing)
+| Component | Requirement |
+|---|---|
+| Rust (crate + CLI) | **1.87+** (edition 2024; Oxigraph 0.5.9 pin) |
+| Python (PyPI) | CPython **3.10–3.13**; published **wheels only** (no sdist) |
+| Optional Cargo feature | `tracing` — bridges World logging to the `tracing` crate |
+| CLI | separate crate: `cargo install oxiland-cli` |
 
-Install or update with [rustup](https://rustup.rs/):
+Install or update Rust with [rustup](https://rustup.rs/):
 
 ```console
 rustup update stable
@@ -90,12 +94,34 @@ rustc --version   # >= 1.87
 
 ## Installation
 
+**Rust**
+
 ```toml
 [dependencies]
 oxiland = "0.7.0"
+# optional:
+# oxiland = { version = "0.7.0", features = ["tracing"] }
 ```
 
-## Quick start
+**Python**
+
+```console
+pip install oxiland
+```
+
+**CLI**
+
+```console
+cargo install oxiland-cli
+```
+
+## Quick start (Rust)
+
+```console
+cargo new hello-oxiland && cd hello-oxiland
+```
+
+Add the dependency above, then:
 
 ```rust
 use oxiland::terms::{Literal, NamedNode, Triple};
@@ -120,11 +146,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 `Model::add` returns `true` when it inserts a new statement and `false` when the
 same statement already exists.
 
+From a checkout: `cargo run --example quick_start`.
+
+## Quick start (Python)
+
 ```console
-cargo run --example quick_start
+pip install oxiland
 ```
 
-More workflows: [Getting started](docs/users/getting-started.md).
+```python
+from oxiland import Literal, Model, NamedNode, Triple, query
+
+model = Model()
+model.add(
+    Triple(
+        NamedNode("https://example.com/alice"),
+        NamedNode("https://example.com/name"),
+        Literal("Alice"),
+    )
+)
+assert query(model, "ASK { ?s ?p ?o }") is True
+```
+
+More: [Getting started](docs/users/getting-started.md) ·
+[Python guide](docs/users/python.md) · [Examples index](docs/users/examples.md).
 
 ## Contexts and pattern matching
 
@@ -161,7 +206,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 `Model::find` returns a streaming `StatementMatches` iterator over a store
-snapshot (ADR-005). Run `cargo run --example contexts`.
+snapshot. Run `cargo run --example contexts`.
 
 ## Parsing and serialization
 
@@ -183,8 +228,8 @@ fn main() -> oxiland::Result<()> {
 ```
 
 `Parser::load_into` inserts progressively and may leave partial data on parse
-failure (ADR-007). Prefer `load_collecting` when you need parse-then-insert
-batching without transactions. See [I/O guide](docs/users/io.md) and
+failure. Prefer `load_collecting` when you need parse-then-insert batching
+without transactions. See [I/O guide](docs/users/io.md) and
 `cargo run --example progressive_load`.
 
 ## Persistent storage
@@ -202,15 +247,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-**Supported (format v1):** on-disk compatibility is promised for Oxiland **0.4.x**
-and **0.5.x** patch releases (ADR-006). Pre-0.4 experimental directories need
+**Supported (format v1):** on-disk compatibility is promised for Oxiland
+**0.4.x–0.7.x** patch releases. Pre-0.4 experimental directories need
 `Model::migrate_legacy_store`. Prefer N-Quads export for archival copies across
 majors. Details: [persistence guide](docs/users/persistence.md).
 
 ## Documentation
 
 Published guides: [oxiland.readthedocs.io](https://oxiland.readthedocs.io/).
-API reference: [docs.rs/oxiland](https://docs.rs/oxiland).
+API reference: [docs.rs/oxiland](https://docs.rs/oxiland) (Rust) ·
+[Python API landing](docs/users/python-api.md).
 
 | Audience | Start here |
 |---|---|
@@ -219,44 +265,20 @@ API reference: [docs.rs/oxiland](https://docs.rs/oxiland).
 | **Contributors** | [CONTRIBUTING.md](CONTRIBUTING.md) · [Planning docs](docs/index.md#contributors) |
 
 Also: [Changelog](CHANGELOG.md) · [FAQ](docs/users/faq.md) ·
-[Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
+[Support](SUPPORT.md) · [Security policy](SECURITY.md) ·
+[Code of conduct](CODE_OF_CONDUCT.md)
 
 ## Architecture (summary)
 
 ```text
-Rust application
+Rust / Python application
       │
       ▼
 Oxiland safe facade ──> Oxigraph RDF, storage, I/O, and SPARQL
-      ▲
-      │
-oxiland (PyPI, 0.7+) and future oxiland-capi (0.8+)
 ```
 
 Roadmap highlights: 0.8 C ABI preview, 0.9 downstream C validation. Full plan:
 [docs/ROADMAP.md](docs/ROADMAP.md).
-
-## Python
-
-```console
-pip install oxiland
-```
-
-```python
-from oxiland import Literal, Model, NamedNode, Triple, query
-
-model = Model()
-model.add(
-    Triple(
-        NamedNode("https://example.com/alice"),
-        NamedNode("https://example.com/name"),
-        Literal("Alice"),
-    )
-)
-assert query(model, "ASK { ?s ?p ?o }") is True
-```
-
-See [Python guide](docs/users/python.md).
 
 ## Development
 

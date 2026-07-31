@@ -56,7 +56,7 @@ oxiland/
 ├── python/              Pythonic PyPI package (`oxiland`, 0.7+)
 ├── crates/
 │   ├── oxiland-capi/    C ABI and opaque handle management (0.8+)
-│   └── oxiland-cli/     rdfproc-compatible workflows (0.6+)
+│   └── oxiland-cli/     rdfproc-shaped workflows (0.6+)
 ├── compatibility/
 │   ├── inventory/       Generated Redland API manifests
 │   ├── fixtures/        Shared behavioral fixtures

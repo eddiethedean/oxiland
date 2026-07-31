@@ -1,9 +1,12 @@
 # Migration from Redland
 
-This page helps maintainers map Redland `librdf` workflows to Oxiland 0.6.
-For **symbol-by-symbol** accounting see
-[redland-symbol-map.md](redland-symbol-map.md) and the header-derived inventory
-[`redland-1.0.17-oxiland-0.6.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.6.json).
+This page helps maintainers map Redland `librdf` workflows to **Oxiland 0.7**
+(safe Rust facade + `oxiland-cli` + PyPI package). For **symbol-by-symbol**
+accounting see [redland-symbol-map.md](redland-symbol-map.md) and the
+header-derived inventory
+[`redland-1.0.17-oxiland-0.6.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.6.json)
+(Python usability evidence is in the [0.7 report](../reports/0.7.md), not a
+second `librdf` inventory).
 
 Earlier curated slices remain available for historical milestone evidence:
 
@@ -87,6 +90,18 @@ Demo: `cargo run --example std_replacements`.
 | MySQL/Virtuoso/`hashes` plugins | Unsupported (explicit error) |
 
 See [cli.md](../users/cli.md) and [redland-symbol-map.md](redland-symbol-map.md).
+
+## Python (0.7)
+
+| Redland / Python concept | Oxiland |
+|---|---|
+| Native Redland Python bindings | **Not** a drop-in; use `pip install oxiland` |
+| Model CRUD / contexts | `Model`, `Triple`/`Quad`, `find` |
+| Parse / serialize | `load`, `serialize`, `parse` |
+| SPARQL | `query`, `update`, `serialize_results` |
+| rdflib interop | Deferred (ADR-017) |
+
+Guide: [python.md](../users/python.md).
 
 ## C source and ABI
 

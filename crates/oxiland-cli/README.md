@@ -1,6 +1,6 @@
 # oxiland-cli
 
-rdfproc-compatible command workflows over the [Oxiland](https://crates.io/crates/oxiland)
+rdfproc-shaped command workflows over the [Oxiland](https://crates.io/crates/oxiland)
 safe Rust facade (ADR-019). This is **not** a drop-in binary for native `rdfproc`.
 
 ```console

@@ -14,7 +14,7 @@ engine, not a C drop-in today, and not a kitchen-sink Rust RDF toolkit.
 | Compatibility evidence | Inventories, parity ledger, milestone reports | Upstream standards tests |
 | C ABI path | Planned separate crate (0.8+) | Not the product goal |
 | Python path | Pythonic PyPI package (`pip install oxiland`, 0.7+) | Native Python APIs vary |
-| When to pick | Migrating Redland *workflows* into Rust; want explicit unsupported errors | New apps that only need the engine |
+| When to pick | Migrating Redland *workflows* into Rust/Python; want explicit unsupported errors | New apps that only need the engine |
 
 Oxiland **depends on** Oxigraph. Choosing Oxiland always includes Oxigraph’s
 semantics for standards machinery.
@@ -28,25 +28,25 @@ inventory-backed claims matter.
 
 ## Compared to Redland (`librdf`)
 
-| | Oxiland 0.5 | Native Redland |
+| | Oxiland 0.7 | Native Redland |
 |---|---|---|
-| Language | Safe Rust | C (+ bindings) |
+| Language | Safe Rust + Python package | C (+ bindings) |
 | Memory | Rust ownership | Manual / library conventions |
 | I/O | Streaming facades for five syntaxes; transactional load | Raptor factories (broad) |
-| SPARQL | Query/Update builders, streaming results, ResultsFormat | Rasqal (broader) |
+| SPARQL | Query/Update, streaming results, ResultsFormat | Rasqal (broader) |
 | Storage | Supported Fjall format v1 + memory; transactions | Storage plugins |
+| CLI | `oxiland-cli` rdfproc-shaped (not binary drop-in) | `rdfproc` |
 | Utilities / logging | Digests, URI helpers, vocab, World log handlers | librdf digests/logs/hashes |
-| C consumers | Not yet | Yes |
+| Safe-API accounting | Header-derived inventory classified (0.6) | N/A |
+| C consumers | Not yet (0.8+) | Yes |
 | Drop-in ABI | No | N/A |
 
 Oxiland targets measurable migration over time. It does **not** claim to replace
-Redland in production C stacks in 0.5.
+Redland in production C stacks in 0.7.
 
 ## What Oxiland optimizes for
 
 1. Memory safety and data integrity
 2. Honest, scoped compatibility claims
 3. Standards-correct RDF/SPARQL via Oxigraph
-4. A coherent Rust API
-
-See the [charter](../CHARTER.md) for the full value order.
+4. A coherent Rust (and Pythonic) API

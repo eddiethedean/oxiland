@@ -1,16 +1,25 @@
 # Python package
 
-Oxiland’s PyPI package provides a **Pythonic** API over the safe Rust facade
-(ADR-017). It is not a 1:1 mirror of Rust builders, not a Redland Python
-drop-in, and does not integrate with rdflib in 0.7.
+Oxiland’s PyPI package provides a **Pythonic** API over the safe Rust facade.
+It is not a 1:1 mirror of Rust builders, not a Redland Python drop-in, and does
+not integrate with rdflib in 0.7.
 
-Install:
+## Install
 
 ```console
 pip install oxiland
 ```
 
-Requires CPython 3.10–3.13.
+| Requirement | Detail |
+|---|---|
+| CPython | **3.10–3.13** |
+| Platforms | Published **wheels** for Linux / macOS / Windows (CI matrix hosts) |
+| Source builds | **No sdist** on PyPI in 0.7.0 — install needs a matching wheel |
+
+If `pip` tries to build from source and fails, you are on an unsupported
+platform/Python combination for the published wheels. Use a supported CPython
+or build from a git checkout with [maturin](https://www.maturin.rs/) (see
+[Contributing](../contributing.md)).
 
 ## Quick start
 
@@ -26,6 +35,16 @@ model.add(
     )
 )
 assert query(model, "ASK { ?s ?p ?o }") is True
+```
+
+Runnable scripts (from a checkout):
+
+```console
+cd python
+python examples/quick_start.py
+python examples/select.py
+python examples/parse_serialize.py
+python examples/persistent.py
 ```
 
 ## Models and contexts
@@ -68,7 +87,9 @@ with model.transaction() as txn:
 model.sync()
 ```
 
-On exception, the context manager discards buffered operations (no commit).
+Transaction methods require an active `with` block. On exception, the context
+manager discards buffered operations (no commit). Format v1 reopen covers
+**0.4.x–0.7.x** patch lines ([persistence](persistence.md)).
 
 ## Parse and serialize
 
@@ -81,7 +102,7 @@ print(serialize(model, "ntriples"))
 ```
 
 `parse(data, syntax)` streams quads without requiring a model. Path helpers
-accept `pathlib.Path`.
+accept `pathlib.Path` and other `PathLike` objects.
 
 ## SPARQL
 
@@ -98,13 +119,14 @@ print(serialize_results(model, "ASK { ?s ?p ?o }", "json"))
 ```
 
 `SELECT` returns a `SolutionsIter`; `CONSTRUCT`/`DESCRIBE` return a
-`TriplesIter`. Both are lazy.
+`TriplesIter`. Both are lazy. Unbound variables are `None` (not `KeyError`).
 
 ## Errors
 
 Failures raise subclasses of `OxilandError` (`InvalidRdfError`, `ParseError`,
-`SparqlParseError`, `StorageError`, `UnsupportedError`, and others) aligned with
-the Rust `Error` categories.
+`SparqlParseError`, `StorageError`, `OpenStoreError`, `UnsupportedError`, and
+others) aligned with the Rust `Error` categories. `ParseError` exposes
+`.message` / `.location`; `OpenStoreError` exposes `.path` / `.message`.
 
 ## What is not mirrored
 
@@ -112,6 +134,10 @@ the Rust `Error` categories.
 - Query cancellation tokens
 - `Model.store` / advanced Oxigraph escapes
 - World logging handlers
-- rdflib conversion (deferred; ADR-017)
+- rdflib conversion (deferred)
 
-Design detail: [0.7-python-api.md](../design/0.7-python-api.md).
+## See also
+
+- [Python API landing](python-api.md)
+- [Examples index](examples.md)
+- Design: [0.7-python-api.md](../design/0.7-python-api.md)

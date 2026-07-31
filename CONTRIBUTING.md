@@ -1,18 +1,27 @@
 # Contributing to Oxiland
 
-Oxiland is early-stage and compatibility-driven. Contributions are welcome,
-especially when they turn one Redland workflow into a complete, tested,
-documented vertical slice.
+Oxiland is early-stage and compatibility-driven. Contributions are welcome.
 
-Start with the [project charter](docs/CHARTER.md), then use the
-[documentation index](docs/index.md#contributors) for the current milestone and
-applicable decisions. User-facing guides live under
-[`docs/users/`](docs/users/); do not treat planning ADRs as the product manual.
+Start with the [project charter](https://github.com/eddiethedean/oxiland/blob/main/docs/CHARTER.md),
+then use the [documentation index](https://oxiland.readthedocs.io/en/latest/)
+for roadmap and decisions. User-facing guides live under
+[`docs/users/`](https://github.com/eddiethedean/oxiland/tree/main/docs/users);
+do not treat planning ADRs as the product manual.
 
+## Fast path (docs, bugs, small fixes)
 
-## Before starting
+You do **not** need an inventory ID for:
 
-Choose work from the current milestone plan or identify:
+- documentation typo / clarity fixes under `docs/users/` or `README.md`;
+- bug fixes with a failing regression test;
+- CI or tooling fixes that do not change public API semantics.
+
+For those PRs: describe the user-visible problem, add or adjust a test when
+behavior changes, run the relevant local checks, and keep the diff focused.
+
+## Before starting (compatibility work)
+
+Choose work from the current roadmap milestone or identify:
 
 - the Redland inventory IDs affected, or the named release gate enabled;
 - the observable behavior and unsupported cases;
@@ -87,9 +96,9 @@ at runtime.
 
 Compatibility tests must state what they prove. Where output has irrelevant
 variation, use the normalization rules in
-[`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md). Do not weaken a fixture or
-replace a Redland result with a new golden output until the difference is
-classified.
+[`docs/COMPATIBILITY.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/COMPATIBILITY.md).
+Do not weaken a fixture or replace a Redland result with a new golden output
+until the difference is classified.
 
 Every new inventory entry needs:
 
@@ -105,7 +114,7 @@ Keep document roles separate:
 
 - `PARITY.md` says what is verified now;
 - `docs/ROADMAP.md` says what each release must achieve;
-- `docs/milestones/` says how the active release will be delivered;
+- `docs/milestones/` says how a release was or will be delivered;
 - `docs/EXECUTION.md` defines the operating model and current work order;
 - `docs/DECISIONS.md` records durable design choices;
 - `docs/RISKS.md` tracks uncertainty and release threats;
@@ -116,9 +125,9 @@ silently rewritten to describe later implementation.
 
 ## Pull request checklist
 
-- [ ] Scope is linked to inventory IDs or a release gate.
+- [ ] Scope is linked to inventory IDs, a release gate, or a docs/bug fast-path note.
 - [ ] Public behavior and non-goals are documented.
-- [ ] Positive, boundary, and failure tests are present.
+- [ ] Positive, boundary, and failure tests are present when behavior changes.
 - [ ] Relevant feature and platform configurations are tested.
 - [ ] API snapshot changes are intentional.
 - [ ] Compatibility differences are classified and recorded.

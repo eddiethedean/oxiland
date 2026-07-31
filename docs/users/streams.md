@@ -1,7 +1,7 @@
 # Streams and iterators
 
-Oxiland streams RDF and SPARQL results as standard Rust iterators (ADR-013).
-There is **no** unifying stream trait in 0.5—three shapes share one policy.
+Oxiland streams RDF and SPARQL results as standard Rust iterators.
+There is **no** unifying stream trait—three shapes share one policy.
 
 ## Shared policy
 
@@ -14,7 +14,7 @@ There is **no** unifying stream trait in 0.5—three shapes share one policy.
    callback API.
 
 Cancellation remains **SPARQL-scoped** via `CancellationToken` (ADR-012). Parse
-and bulk-load do not take a wall-clock timeout in 0.5.
+and bulk-load do not take a wall-clock timeout in the current API.
 
 ## Surfaces
 

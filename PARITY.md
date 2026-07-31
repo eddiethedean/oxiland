@@ -6,22 +6,30 @@ Ledger maturity: header-derived full public `librdf` 1.0.17 function inventory
 (0.6); Python package usability evidence (0.7); curated 0.1–0.5 slices retained
 for historical evidence
 
+> **Newcomer gloss:** This ledger classifies Redland `librdf_*` symbols and
+> records what Oxiland has implemented with tests for a **stated scope**.
+> **“100% safe-API accounting” means every inventoried symbol is classified**
+> (`verified`, `not-applicable`, or `excluded`)—**not** that Oxiland is a
+> drop-in Redland replacement or that every Redland behavior has a differential
+> test. Prefer Oxigraph directly if you do not need Redland-shaped APIs.
+
 Target: the documented Redland `librdf` 1.0.17 API (manual labeled 1.0.18).
 
 Planned sequencing and completion rules are documented in the
-[0.x roadmap](docs/ROADMAP.md) and
-[compatibility plan](docs/COMPATIBILITY.md).
+[0.x roadmap](https://github.com/eddiethedean/oxiland/blob/main/docs/ROADMAP.md) and
+[compatibility plan](https://github.com/eddiethedean/oxiland/blob/main/docs/COMPATIBILITY.md).
 
 Inventory revisions:
 
-- [`compatibility/inventory/redland-1.0.17-oxiland-0.1.json`](compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
-- [`compatibility/inventory/redland-1.0.17-oxiland-0.2.json`](compatibility/inventory/redland-1.0.17-oxiland-0.2.json)
-- [`compatibility/inventory/redland-1.0.17-oxiland-0.3.json`](compatibility/inventory/redland-1.0.17-oxiland-0.3.json)
-- [`compatibility/inventory/redland-1.0.17-oxiland-0.4.json`](compatibility/inventory/redland-1.0.17-oxiland-0.4.json)
-- [`compatibility/inventory/redland-1.0.17-oxiland-0.5.json`](compatibility/inventory/redland-1.0.17-oxiland-0.5.json)
-- [`compatibility/inventory/redland-1.0.17-oxiland-0.6.json`](compatibility/inventory/redland-1.0.17-oxiland-0.6.json)
+- [`redland-1.0.17-oxiland-0.1.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
+- [`redland-1.0.17-oxiland-0.2.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.2.json)
+- [`redland-1.0.17-oxiland-0.3.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.3.json)
+- [`redland-1.0.17-oxiland-0.4.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.4.json)
+- [`redland-1.0.17-oxiland-0.5.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.5.json)
+- [`redland-1.0.17-oxiland-0.6.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.6.json)
 
-0.6 compatibility report: [`docs/reports/0.6.md`](docs/reports/0.6.md)
+0.6 compatibility report: [`docs/reports/0.6.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.6.md)
+· 0.7 report: [`docs/reports/0.7.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.7.md)
 
 ## Status vocabulary
 
@@ -56,18 +64,22 @@ Inventory revisions:
 | Logging | Verified (0.6 accounting) | Unstarted | 0.5/0.8 | World handlers + optional `tracing` |
 | Storage plug-ins | Dispositioned | Unstarted | 0.4/0.9 | excluded / Unsupported |
 | `rdfproc` utility | Verified (0.6 CLI) | n/a | 0.6 | `oxiland-cli` workflows (ADR-019) |
+| Python / PyPI package | Verified (0.7 usability) | n/a | 0.7 | `pip install oxiland`; wheels + pytest + typing (ADR-017) |
 
 ## Safe-API accounting (0.6)
 
-**100% safe-API accounting** for header-derived public `librdf_*` functions:
-383 classified (238 verified, 96 not-applicable, 49 excluded); 0 unreviewed.
-See [`docs/reports/0.6.md`](docs/reports/0.6.md).
+**100% safe-API accounting** means every header-derived public `librdf_*`
+function in the 0.6 inventory is **classified** (not that behavior is a Redland
+drop-in): 383 classified (238 verified, 96 not-applicable, 49 excluded); 0
+unreviewed. See [`docs/reports/0.6.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.6.md).
 
 ## Current evidence
 
 - Inventory: full 0.6 header-derived manifest + curated 0.1–0.5 slices.
 - Integration tests + `tests/accounting.rs` + `oxiland-cli` tests.
 - CLI smoke: `compatibility/harness/cli_smoke.py`.
+- Python: `python/tests/`, pyright, wheel smoke in CI; report
+  [`docs/reports/0.7.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.7.md).
 - Public API snapshot + `cargo semver-checks` vs 0.6.0.
 - ADR-004–ADR-021 accepted as applicable.
 - Oxigraph 0.5.9 remains pinned with default features disabled.

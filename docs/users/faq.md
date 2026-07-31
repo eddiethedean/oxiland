@@ -5,6 +5,13 @@
 Oxiland’s MSRV is **1.87** (edition 2024) so CI and Oxigraph 0.5.9 stay aligned.
 Upgrade with `rustup update stable`.
 
+## Why does `pip install oxiland` try to build from source?
+
+0.7.0 publishes **wheels only** (no sdist). If pip cannot find a wheel for your
+platform/Python, it may attempt a source build and fail. Use CPython 3.10–3.13
+on a platform with published wheels, or build from a git checkout with maturin
+([Python guide](python.md)).
+
 ## Why not use Oxigraph directly?
 
 If you do not need Redland-shaped APIs, inventories, or migration mapping, use
@@ -14,9 +21,10 @@ and evidence process on top of the same engine. See
 
 ## Is Oxiland “Redland-compatible”?
 
-Only in evidence-scoped senses documented in the [parity ledger](../parity.md). It is
-**not** C source/ABI compatible in 0.5, and not a 100% `librdf` port. crates.io
-describes Redland-*shaped* workflows, not drop-in parity.
+Only in evidence-scoped senses documented in the [parity ledger](../parity.md).
+It is **not** C source/ABI compatible (planned 0.8+), and not a 100% `librdf`
+port. “Safe-API accounting” means inventoried symbols are **classified**, not
+that behavior is drop-in. crates.io describes Redland-*shaped* workflows.
 
 ## What does “Verified” mean in the parity ledger?
 
@@ -36,7 +44,7 @@ replace the store.
 
 ## `text/plain` / `.xml` / `guess` returns Unsupported
 
-Intentional (ADR-008). Pick an explicit `Syntax` or an unambiguous media type /
+Intentional. Pick an explicit `Syntax` or an unambiguous media type /
 extension (`.nt`, `.ttl`, `application/rdf+xml`, …).
 
 ## Named graphs vanished / parse error on N-Quads
@@ -44,20 +52,26 @@ extension (`.nt`, `.ttl`, `application/rdf+xml`, …).
 Default `GraphTarget::DefaultGraph` **rejects** named-graph input. Use
 `GraphTarget::Dataset` for TriG/N-Quads datasets.
 
-## Update / richer query workflows missing?
+## Fjall store uses a lot of RAM
 
-ASK, SELECT, CONSTRUCT, DESCRIBE, Update, dataset selection, limit/offset, and
-SPARQL Results serialization shipped in **0.3**. Durable on-disk contracts and
-storage transactions shipped in **0.4**. Utilities, digests, vocabulary helpers,
-and World logging shipped in **0.5**. A Pythonic PyPI package shipped in
-**0.7** (`pip install oxiland`; not a 1:1 Rust port — see
-[Python guide](python.md)). C ABI preview is planned for **0.8**. Track
-[milestones](../milestones/0.7.md) and the [roadmap](../ROADMAP.md).
+Fjall mode keeps a full Oxigraph **in-memory working set** for querying. Plan
+RAM for the dataset size; use streaming parse/serialize APIs for large files.
+
+## Transaction methods do nothing / buffer forever (Python)
+
+Call `add` / `remove` inside `with model.transaction() as txn:` — methods
+outside an entered context raise `UnsupportedError`.
+
+## Will my 0.7 store open in a later 0.7.x?
+
+Format v1 reopen is promised for patch releases in **0.4.x–0.7.x**. See
+[persistence](persistence.md).
 
 ## Where do I report bugs or security issues?
 
 - General bugs and questions: GitHub Issues
 - Security: [security policy](../security.md) (private email, not public issues)
+- Support expectations: [support](../support.md)
 - Conduct: [code of conduct](../code-of-conduct.md)
 
 ## Performance guidance?

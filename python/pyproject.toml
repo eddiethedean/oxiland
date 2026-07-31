@@ -5,7 +5,7 @@ build-backend = "maturin"
 [project]
 name = "oxiland"
 version = "0.7.0"
-description = "Pythonic RDF models, SPARQL, and I/O powered by Oxiland/Oxigraph"
+description = "Pythonic RDF models, SPARQL, and streaming I/O on Oxigraph"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0 OR MIT" }

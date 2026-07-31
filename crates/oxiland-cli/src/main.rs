@@ -16,7 +16,7 @@ use oxiland::{
 #[command(
     name = "oxiland-cli",
     version,
-    about = "rdfproc-compatible workflows over Oxiland (not a binary drop-in)"
+    about = "rdfproc-shaped workflows over Oxiland (not a binary drop-in)"
 )]
 struct Cli {
     /// Suppress informational messages.

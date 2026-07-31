@@ -1,8 +1,8 @@
 # CLI (`oxiland-cli`)
 
-Oxiland 0.6 ships [`oxiland-cli`](https://crates.io/crates/oxiland-cli), an
-rdfproc-shaped command-line tool over the safe Rust facade (ADR-019). It is
-**not** a drop-in binary for native Redland `rdfproc`.
+[`oxiland-cli`](https://crates.io/crates/oxiland-cli) is an rdfproc-**shaped**
+command-line tool over the safe Rust facade. It is **not** a drop-in binary for
+native Redland `rdfproc`.
 
 Each invocation opens the store, runs **one** command, and exits. There is no
 multi-command interactive session—chain commands against a Fjall path for
@@ -15,6 +15,40 @@ cargo install oxiland-cli
 # or from a workspace checkout:
 cargo run -p oxiland-cli -- --help
 ```
+
+Requires Rust **1.87+**.
+
+## Global options
+
+| Flag | Meaning |
+|---|---|
+| `-s, --storage` | `memory` or `fjall` (default `fjall`) |
+| `-n, --new` | Create the durable store directory if missing (required for new paths) |
+| `-q, --quiet` | Suppress informational messages |
+| `-o, --output` | Serialization syntax for print/serialize/find (default `nquads`) |
+| `-r, --results` | SPARQL results format (default `xml`) |
+| `-V, --version` | Print version |
+
+Usage shape: `oxiland-cli [OPTIONS] <STORE_NAME> <COMMAND>`.
+
+With `-s memory`, use store name `memory`. With `-s fjall`, use a filesystem
+path.
+
+## Commands
+
+| Command | Purpose |
+|---|---|
+| `parse` | Parse RDF into the store (collecting / all-or-nothing load) |
+| `parse-stream` | Progressive streaming load (may leave partial data on failure) |
+| `serialize` | Serialize the store |
+| `print` | Print the store as triples/quads |
+| `add` | Add a statement |
+| `remove` | Remove a statement |
+| `find` | Find matching statements (`-` wildcards) |
+| `query` | Run a SPARQL query |
+| `contexts` | List named graph contexts |
+
+Run `oxiland-cli help <command>` for per-command flags (syntax, base IRI, etc.).
 
 ## Quick examples
 
@@ -37,11 +71,12 @@ oxiland-cli -s memory memory parse ./data.ttl --syntax turtle
 
 | `-s` value | Behavior |
 |---|---|
-| `memory` | `Model::new` (store-name should be `memory`) |
+| `memory` | `Model::new` (store name should be `memory`) |
 | `fjall` | `Model::open` format v1 at the given path; use `-n` to create |
 | other | Error |
 
 ## See also
 
+- [Persistence](persistence.md)
+- [Migration from Redland](../evaluators/migration-from-redland.md)
 - Design: [0.6-cli-rdfproc.md](../design/0.6-cli-rdfproc.md)
-- Migration: [migration-from-redland.md](../evaluators/migration-from-redland.md)

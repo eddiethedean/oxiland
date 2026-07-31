@@ -6,8 +6,8 @@ durable store (Oxiland format v1, ADR-006) plus an Oxigraph working set.
 
 ## Stability (ADR-006)
 
-- Format v1 stores `__oxiland/meta` beside N-Quads keys. **0.4.x** and **0.5.x**
-  open format v1 without migration.
+- Format v1 stores `__oxiland/meta` beside N-Quads keys. Patch releases in
+  **0.4.x–0.7.x** open format v1 without migration.
 - Pre-0.4 experimental directories (no metadata) must call
   `Model::migrate_legacy_store` before `open`.
 - Prefer standards RDF for archival continuity across major upgrades.
@@ -18,7 +18,9 @@ durable store (Oxiland format v1, ADR-006) plus an Oxigraph working set.
 # use oxiland::terms::{self, Literal, Triple};
 # use oxiland::Model;
 # fn main() -> oxiland::Result<()> {
-let model = Model::new()?;
+# let path = std::env::temp_dir().join("oxiland-doc-txn");
+# let _ = std::fs::remove_dir_all(&path);
+let model = Model::open(&path)?;
 model.transaction(|tx| {
     tx.add(Triple::new(
         terms::named_node("https://example.com/alice")?,
@@ -27,6 +29,7 @@ model.transaction(|tx| {
     ))?;
     Ok(())
 })?;
+model.sync()?;
 # Ok(())
 # }
 ```

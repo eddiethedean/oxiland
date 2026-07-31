@@ -7,6 +7,32 @@ This log captures choices that constrain compatibility, public APIs, storage,
 or the future C ABI. Proposed decisions remain open until their evidence and
 tradeoffs are reviewed.
 
+## Index
+
+| ADR | Title |
+|---|---|
+| [ADR-001](#adr-001-oxigraph-is-the-rdf-engine) | Oxigraph is the RDF engine |
+| [ADR-002](#adr-002-safe-rust-and-c-abi-are-separate-crates) | Safe Rust and C ABI are separate crates |
+| [ADR-003](#adr-003-claims-use-independent-compatibility-levels) | Claims use independent compatibility levels |
+| [ADR-004](#adr-004-public-rdf-terms-re-export-oxigraph-types) | Public RDF terms re-export Oxigraph types |
+| [ADR-005](#adr-005-model-matching-uses-standard-fallible-iterators) | Model matching uses standard fallible iterators |
+| [ADR-006](#adr-006-persistent-storage-compatibility-boundary) | Persistent storage compatibility boundary |
+| [ADR-007](#adr-007-parser-output-and-model-load-failure-semantics) | Parser output and model-load failure semantics |
+| [ADR-008](#adr-008-built-in-rdf-format-identity-and-discovery) | Built-in RDF format identity and discovery |
+| [ADR-009](#adr-009-queryupdate-builders-dataset-unbound-limitoffset) | Query/Update builders, dataset, unbound, limit/offset |
+| [ADR-010](#adr-010-streaming-query-result-adapters) | Streaming query result adapters |
+| [ADR-011](#adr-011-sparql-results-serialization-formats) | SPARQL results serialization formats |
+| [ADR-012](#adr-012-query-cancellation-policy) | Query cancellation policy |
+| [ADR-013](#adr-013-shared-streaming-policy-without-a-unifying-trait) | Shared streaming policy without a unifying trait |
+| [ADR-014](#adr-014-world-logging-facade-and-optional-tracing) | World logging facade and optional tracing |
+| [ADR-015](#adr-015-closed-digest-algorithm-set) | Closed digest algorithm set |
+| [ADR-016](#adr-016-hashes-and-lists-map-to-standard-rust-collections) | Hashes and lists map to standard Rust collections |
+| [ADR-017](#adr-017-python-package-is-pythonic-not-a-thin-rust-mirror) | Python package is Pythonic, not a thin Rust mirror |
+| [ADR-018](#adr-018-factory-registration-disposition-for-safe-rust) | Factory registration disposition for safe Rust |
+| [ADR-019](#adr-019-oxiland-cli-rdfproc-workflow-surface) | `oxiland-cli` rdfproc workflow surface |
+| [ADR-020](#adr-020-10-naming-and-module-freeze-intent) | 1.0 naming and module freeze intent |
+| [ADR-021](#adr-021-header-derived-inventory-generation) | Header-derived inventory generation |
+
 ## Decision states
 
 - `proposed`: under review and not safe to build upon.
@@ -378,9 +404,9 @@ not silent forever-forward binary compatibility across Oxiland major versions.
 
 Format v1 stores an `__oxiland/meta` JSON document (`format_version: 1`) beside
 N-Quads quad keys in the Fjall `oxiland_quads` partition. Patch releases in the
-0.4.x and 0.5.x lines must open format v1 without migration. Pre-0.4 experimental stores
-(no metadata) are opened only via `Model::migrate_legacy_store`, which rewrites
-metadata after validating parseable quad keys; otherwise callers receive
+**0.4.x–0.7.x** lines must open format v1 without migration. Pre-0.4 experimental
+stores (no metadata) are opened only via `Model::migrate_legacy_store`, which
+rewrites metadata after validating parseable quad keys; otherwise callers receive
 `Unsupported` with N-Quads archival guidance.
 
 Archival continuity is standards RDF (N-Quads/TriG), not Fjall directories.
@@ -398,7 +424,7 @@ Consequences:
 
 - `Model::open` requires format v1 or initializes it for empty new stores.
 - User docs stop calling Fjall “experimental.”
-- R-016 mitigated for 0.4.x/0.5.x; major bumps may introduce format v2 with a
+- R-016 mitigated for 0.4.x–0.7.x; major bumps may introduce format v2 with a
   documented migrator.
 
 Evidence: `docs/design/0.4-storage-api.md`, `src/persist.rs`,

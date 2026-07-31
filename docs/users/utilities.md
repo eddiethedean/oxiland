@@ -1,8 +1,9 @@
 # Utilities and logging
 
-Oxiland 0.5 adds Redland-shaped helpers under [`oxiland::utility`](https://docs.rs/oxiland/latest/oxiland/utility/)
-and logging on [`World`](https://docs.rs/oxiland/latest/oxiland/struct.World.html)
-(ADR-014–ADR-016).
+Oxiland provides Redland-shaped helpers under
+[`oxiland::utility`](https://docs.rs/oxiland/latest/oxiland/utility/) plus
+logging on [`World`](https://docs.rs/oxiland/latest/oxiland/struct.World.html)
+(optional `tracing` feature).
 
 ## Digests
 

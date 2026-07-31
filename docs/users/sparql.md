@@ -1,8 +1,9 @@
 # SPARQL queries, updates, and results
 
-Oxiland 0.3 provides Redland-shaped [`Query`](https://docs.rs/oxiland/latest/oxiland/struct.Query.html)
-and [`Update`](https://docs.rs/oxiland/latest/oxiland/struct.Update.html)
-builders over Oxigraph 0.5.9 (ADR-009–ADR-012).
+Oxiland provides Redland-shaped
+[`Query`](https://docs.rs/oxiland/latest/oxiland/struct.Query.html) and
+[`Update`](https://docs.rs/oxiland/latest/oxiland/struct.Update.html) builders
+over Oxigraph SPARQL, plus streaming results and results serialization.
 
 ## ASK and SELECT
 
