@@ -19,6 +19,8 @@ pub use location::SourceLocation;
 pub use parser::{GraphTarget, Parser, QuadStream, SliceStream};
 pub use serializer::Serializer;
 
+pub(crate) use parser::map_rdf_parse_error;
+
 /// Direct Oxigraph I/O primitives.
 ///
 /// Prefer [`Parser`] and [`Serializer`] for Redland-oriented workflows.

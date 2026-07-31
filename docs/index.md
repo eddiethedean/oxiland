@@ -43,7 +43,7 @@ Process and planning (compatibility work is vertical-slice driven):
 7. [Verification](VERIFICATION.md)
 8. [Decisions](DECISIONS.md)
 9. [Risks](RISKS.md)
-10. [Reports and release checklists](reports/0.4.md) · [0.4.0 release](reports/0.4.0-release.md)
+10. [Reports and release checklists](reports/0.5.md) · [0.5.0 release](reports/0.5.0-release.md) · [0.4](reports/0.4.md)
 
 ### Document authority (contributors)
 
@@ -52,7 +52,7 @@ Process and planning (compatibility work is vertical-slice driven):
 | Who is Oxiland for and what does 1.0 promise? | [Charter](CHARTER.md) |
 | What exists and is verified now? | [Parity ledger](parity.md) |
 | What release comes next? | [Roadmap](ROADMAP.md) |
-| What must the active release deliver? | [milestones/0.4.md](milestones/0.4.md) (complete); next is 0.5 |
+| What must the active release deliver? | [milestones/0.5.md](milestones/0.5.md) (complete); next is 0.6 |
 | How is work sliced and completed? | [Execution](EXECUTION.md) |
 | Where does code belong? | [Architecture](ARCHITECTURE.md) |
 | What does compatibility mean? | [Compatibility](COMPATIBILITY.md) |

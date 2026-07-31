@@ -40,7 +40,10 @@
       "subsystem": "uri",
       "safe_rust": "utility::path_to_file_uri / file_uri_to_path",
       "implementation": "src/utility/uri.rs",
-      "tests": ["tests/utility.rs::file_uri_round_trip"],
+      "tests": [
+        "tests/utility.rs::file_uri_round_trip",
+        "tests/utility.rs::file_uri_strips_query_and_fragment"
+      ],
       "state": "verified"
     },
     {
@@ -73,9 +76,13 @@
       "kind": "function",
       "subsystem": "namespaces",
       "safe_rust": "utility::Namespace + utility::vocab",
-      "implementation": "src/utility/namespace.rs",
-      "tests": ["tests/utility.rs::namespace_expand_and_vocab_constants"],
-      "state": "verified"
+      "implementation": "src/utility/vocab/mod.rs",
+      "tests": [
+        "tests/utility.rs::namespace_expand_and_vocab_constants",
+        "tests/utility.rs::namespace_requires_delimiter_base"
+      ],
+      "state": "verified",
+      "notes": "Namespace helper in src/utility/namespace.rs; curated IRIs under src/utility/vocab/."
     },
     {
       "id": "librdf.world.log",
@@ -86,7 +93,8 @@
       "implementation": "src/world.rs",
       "tests": [
         "tests/utility.rs::logging_filters_and_preserves_order",
-        "tests/utility.rs::world_clones_share_log_handler"
+        "tests/utility.rs::world_clones_share_log_handler",
+        "tests/utility.rs::world_clones_share_log_level"
       ],
       "state": "verified"
     },

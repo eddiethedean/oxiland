@@ -6,8 +6,8 @@ durable store (Oxiland format v1, ADR-006) plus an Oxigraph working set.
 
 ## Stability (ADR-006)
 
-- Format v1 stores `__oxiland/meta` beside N-Quads keys. **0.4.x** opens format
-  v1 without migration.
+- Format v1 stores `__oxiland/meta` beside N-Quads keys. **0.4.x** and **0.5.x**
+  open format v1 without migration.
 - Pre-0.4 experimental directories (no metadata) must call
   `Model::migrate_legacy_store` before `open`.
 - Prefer standards RDF for archival continuity across major upgrades.
@@ -69,4 +69,4 @@ Use TriG via `Serializer` when you need a compact named-graph archive.
 - [FAQ](faq.md)
 - [Storage API design](../design/0.4-storage-api.md)
 - [Legacy backend disposition](../design/0.4-legacy-storage.md)
-- [Roadmap 0.4](../ROADMAP.md)
+- [Roadmap](../ROADMAP.md)

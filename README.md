@@ -53,7 +53,7 @@ A longer comparison (including Sophia and native Redland) is in
 | Persistent Fjall model | Available; format v1 via `Model::open` / `open_with` (ADR-006) |
 | Transactions / sync / clear | Available; `Model::transaction`, `sync`, `clear` |
 | SPARQL Update and results serialization | Available; XML/JSON/CSV/TSV + graph serialize helper |
-| Digests / URI / Unicode / vocab helpers | Available; `oxiland::utility` (ADR-015) |
+| Digests / URI / Unicode / vocab helpers | Available; `oxiland::utility` |
 | World logging | Available; handlers + optional `tracing` feature (ADR-014) |
 | Python package (Pythonic PyPI API) | Planned for 0.7 |
 | Full safe Rust Redland accounting | Planned for 0.6 |
@@ -203,7 +203,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 **Supported (format v1):** on-disk compatibility is promised for Oxiland **0.4.x**
-patch releases (ADR-006). Pre-0.4 experimental directories need
+and **0.5.x** patch releases (ADR-006). Pre-0.4 experimental directories need
 `Model::migrate_legacy_store`. Prefer N-Quads export for archival copies across
 majors. Details: [persistence guide](docs/users/persistence.md).
 

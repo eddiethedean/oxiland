@@ -73,5 +73,7 @@ From a checkout: `cargo run --example parse_serialize`.
 - Named graphs and matching: README “Contexts” or `cargo run --example contexts`
 - SPARQL Update / results: [sparql.md](sparql.md) (`construct`, `update` examples)
 - I/O details and progressive load: [io.md](io.md)
+- Streams and early stop: [streams.md](streams.md)
+- Utilities and logging: [utilities.md](utilities.md)
 - Persistence caveats: [persistence.md](persistence.md)
 - Common failures: [faq.md](faq.md)

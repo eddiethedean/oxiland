@@ -136,8 +136,9 @@ Consequences:
 Evidence: `src/model.rs`,
 `tests/model.rs::find_streams_without_full_materialization`.
 
-Revisit when: zero-copy lending access is required, or query streams in
-0.3–0.5 need a shared streaming trait.
+Revisit when: zero-copy lending access is required, or C ABI stream handles
+need a shared adapter (0.8). 0.5 documented a shared fallible-iterator policy
+without a unifying trait (ADR-013).
 
 ### ADR-007 — Parser output and model-load failure semantics
 
@@ -275,8 +276,8 @@ errors inside iterators map through `SparqlEvaluation` at the call site.
 
 Evidence: `tests/query.rs` early-stop cases; `docs/design/0.3-query-api.md`.
 
-Revisit when: a shared streaming trait across find/parse/query is required
-(0.5).
+Revisit when: lending iterators or C ABI stream handles require a shared trait
+beyond the 0.5 fallible-iterator policy (ADR-013).
 
 ### ADR-011 — SPARQL results serialization formats
 
@@ -314,7 +315,7 @@ Revisit when: a first-class timeout API is required for C consumers.
 
 ## Proposed decisions
 
-### ADR-013 — Python package is Pythonic, not a thin Rust mirror
+### ADR-017 — Python package is Pythonic, not a thin Rust mirror
 
 State: proposed  
 Decision deadline: before 0.7 public beta
@@ -345,7 +346,7 @@ not silent forever-forward binary compatibility across Oxiland major versions.
 
 Format v1 stores an `__oxiland/meta` JSON document (`format_version: 1`) beside
 N-Quads quad keys in the Fjall `oxiland_quads` partition. Patch releases in the
-0.4.x line must open format v1 without migration. Pre-0.4 experimental stores
+0.4.x and 0.5.x lines must open format v1 without migration. Pre-0.4 experimental stores
 (no metadata) are opened only via `Model::migrate_legacy_store`, which rewrites
 metadata after validating parseable quad keys; otherwise callers receive
 `Unsupported` with N-Quads archival guidance.
@@ -365,7 +366,7 @@ Consequences:
 
 - `Model::open` requires format v1 or initializes it for empty new stores.
 - User docs stop calling Fjall “experimental.”
-- R-016 mitigated for 0.4.x; major bumps may introduce format v2 with a
+- R-016 mitigated for 0.4.x/0.5.x; major bumps may introduce format v2 with a
   documented migrator.
 
 Evidence: `docs/design/0.4-storage-api.md`, `src/persist.rs`,
@@ -406,9 +407,10 @@ Context: Redland exposes log levels/facilities and callbacks. Oxiland needs a
 safe Rust equivalent without a global mutable logger.
 
 Decision: attach logging to `World` (`LogLevel`, `LogFacility`,
-`set_log_handler`, `log`). Clones share handler state. Optional Cargo feature
-`tracing` also emits `tracing` events. Callback ordering is synchronous and
-deterministic for a single composed handler.
+`set_log_handler`, `log`). Clones share the feature registry, minimum log
+level, and handler (`Arc`). Optional Cargo feature `tracing` also emits
+`tracing` events, gated by the same minimum level as the handler. Callback
+ordering is synchronous and deterministic for a single composed handler.
 
 Alternatives: `log` crate only; process-global logger; no callbacks.
 

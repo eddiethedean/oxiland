@@ -22,6 +22,11 @@ Supported names: `md5`, `sha1`, `sha256`. Others return `Error::Unsupported`.
 - `join_iri` / `relativize_iri` / `resolve_iri`
 - `path_to_file_uri` / `file_uri_to_path`
 
+`join_iri` is a path-append helper (not a full RFC 3986 resolver). Prefer
+[`Namespace`](https://docs.rs/oxiland/latest/oxiland/utility/struct.Namespace.html)
+for `#`-terminated vocabulary bases. Query and fragment on `file://` IRIs are
+stripped by `file_uri_to_path`.
+
 Malformed input returns `Error::InvalidRdf` or `Error::Unsupported`—utilities
 do not panic.
 
@@ -30,6 +35,9 @@ do not panic.
 `normalize_nfc` and `normalize_nfkc` wrap Unicode normalization forms.
 
 ## Namespaces and vocabulary
+
+Namespace bases must end with `/`, `#`, or `:` (for example
+`https://example.com/` or `http://example.org/ns#`).
 
 ```rust
 use oxiland::utility::vocab::rdf;
@@ -46,7 +54,8 @@ assert_eq!(
 # }
 ```
 
-Curated vocab modules: `rdf`, `rdfs`, `xsd`, `owl`, `dc`.
+Curated vocab modules: `rdf`, `rdfs`, `xsd`, `owl`, and `dc` (Dublin Core
+Terms `http://purl.org/dc/terms/`, not the older `elements/1.1/` namespace).
 
 ## Logging
 
@@ -60,7 +69,7 @@ world.log(LogLevel::Warn, LogFacility::Utility, "heads up");
 ```
 
 Enable the Cargo feature `tracing` to also emit `tracing` events. Cloned
-`World` values share the same handler.
+`World` values share the same handler and minimum log level.
 
 ## Hashes and lists
 

@@ -99,8 +99,11 @@ type LogHandler = Arc<dyn Fn(&LogRecord) + Send + Sync>;
 /// Redland requires explicit world initialization. Oxiland resources are RAII
 /// managed, so construction is sufficient and shutdown happens on drop.
 ///
-/// `World` is cheap to clone: clones share the same feature registry and log
-/// handler. It is `Send` and `Sync`.
+/// `World` is cheap to clone: clones share the same feature registry, minimum
+/// log level, and log handler. It is `Send` and `Sync`.
+///
+/// When the `tracing` Cargo feature is enabled, [`World::log`] also emits
+/// `tracing` events, gated by the same minimum log level as the handler.
 ///
 /// # Examples
 ///

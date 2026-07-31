@@ -24,6 +24,12 @@ impl Namespace {
             )));
         }
         let base = terms::named_node(base_iri.as_ref())?;
+        let base_str = base.as_str();
+        if !(base_str.ends_with('/') || base_str.ends_with('#') || base_str.ends_with(':')) {
+            return Err(crate::Error::InvalidRdf(format!(
+                "namespace base '{base_str}' must end with '/', '#', or ':' so local names do not concatenate ambiguously"
+            )));
+        }
         Ok(Self { prefix, base })
     }
 

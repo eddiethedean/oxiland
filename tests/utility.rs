@@ -54,13 +54,47 @@ fn uri_join_and_relativize() {
     assert_eq!(joined.as_str(), "https://example.com/base/dir/leaf");
     let abs = join_iri("https://example.com/base/", "https://other.example/x").unwrap();
     assert_eq!(abs.as_str(), "https://other.example/x");
+    let authority = join_iri("https://example.com", "leaf").unwrap();
+    assert_eq!(authority.as_str(), "https://example.com/leaf");
+    // Fragment bases are not preserved by the path-append helper.
+    let hash_base = join_iri("https://example.com/vocab#", "Term").unwrap();
+    assert_eq!(hash_base.as_str(), "https://example.com/Term");
     let rel = relativize_iri(
         "https://example.com/base/dir/",
         "https://example.com/base/dir/leaf",
     )
     .unwrap();
     assert_eq!(rel.as_deref(), Some("leaf"));
+    let rel_auth = relativize_iri("https://example.com", "https://example.com/leaf").unwrap();
+    assert_eq!(rel_auth.as_deref(), Some("leaf"));
     assert!(resolve_iri("not a uri").is_err());
+}
+
+#[test]
+fn file_uri_strips_query_and_fragment() {
+    let path = file_uri_to_path("file:///tmp/oxiland-x?y=1#frag").unwrap();
+    assert_eq!(path, PathBuf::from("/tmp/oxiland-x"));
+}
+
+#[test]
+fn namespace_requires_delimiter_base() {
+    let err = Namespace::new("ex", "https://example.com/vocab").unwrap_err();
+    assert!(matches!(err, Error::InvalidRdf(_)));
+    let ns = Namespace::new("ex", "https://example.com/vocab/").unwrap();
+    assert_eq!(
+        ns.expand("Term").unwrap().as_str(),
+        "https://example.com/vocab/Term"
+    );
+}
+
+#[test]
+fn world_clones_share_log_level() {
+    let world = World::new();
+    world.set_log_level(LogLevel::Error);
+    let clone = world.clone();
+    assert_eq!(clone.log_level(), LogLevel::Error);
+    clone.set_log_level(LogLevel::Debug);
+    assert_eq!(world.log_level(), LogLevel::Debug);
 }
 
 #[test]

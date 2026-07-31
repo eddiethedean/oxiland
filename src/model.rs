@@ -11,7 +11,7 @@ use oxigraph::model::{
 };
 use oxigraph::store::{QuadIter, Store, Transaction as OxigraphTransaction};
 
-use crate::io::BomStrippingReader;
+use crate::io::{BomStrippingReader, map_rdf_parse_error};
 use crate::persist::{self, DiskStore};
 use crate::storage::{OpenOptions, StorageBackend, StorageCapabilities};
 use crate::{Error, Result};
@@ -452,6 +452,9 @@ impl Model {
     }
 
     /// Inserts many quads inside a single transaction (then durable sync).
+    ///
+    /// Returns the number of quads in the input iterator (including duplicates
+    /// that were already present), not the count of newly inserted quads.
     pub fn bulk_insert_quads(&self, quads: impl IntoIterator<Item = Quad>) -> Result<usize> {
         let quads: Vec<_> = quads.into_iter().collect();
         let total = quads.len();
@@ -504,7 +507,7 @@ impl Model {
             .rename_blank_nodes()
             .for_reader(reader)
             .collect::<std::result::Result<Vec<_>, _>>()
-            .map_err(|error| Error::parse(error.to_string(), None))?;
+            .map_err(map_rdf_parse_error)?;
         let total = quads.len();
         self.bulk_insert_quads(quads)?;
         Ok(total)

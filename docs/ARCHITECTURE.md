@@ -90,7 +90,8 @@ sentinel pointers.
   its dataset.
 - Borrowed results may not outlive their model or query execution context.
 - Iterator APIs should stream. `Model::find` returns `StatementMatches`
-  (ADR-005). Parser and query streams follow in later milestones.
+  (ADR-005). Parser (0.2) and query (0.3) streams follow the same fallible
+  iterator policy documented in 0.5 (ADR-013).
 - Blank-node identity is scoped by the parser or dataset operation that creates
   it; adapters must not derive identity from labels alone.
 - User-provided callbacks are invoked outside internal locks whenever possible.
@@ -193,12 +194,11 @@ not reverse an accepted decision only through code changes.
 
 ## Open architecture questions
 
-- What stream/utility surface is required for 0.5 Redland workflow parity?
-  (Resolved in 0.5; see ADR-013–ADR-016 and `docs/design/0.5-streams-utilities.md`.)
-- Can query cancellation be implemented without modifying Oxigraph?
-  (Resolved in 0.3 via Oxigraph `CancellationToken`; see ADR-012.)
 - Which Redland factory registrations are safe and useful in Rust?
 - Which C handles need reference counting to reproduce observed aliasing?
+
+Resolved recently: 0.5 stream/utility surface (ADR-013–ADR-016);
+query cancellation via Oxigraph `CancellationToken` (ADR-012).
 
 Term re-exports are governed by ADR-004 and revisited only on its evidence
 trigger. The remaining questions are decision candidates, not implicit TODOs.

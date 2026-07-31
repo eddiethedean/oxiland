@@ -17,7 +17,7 @@ logging over Oxigraph 0.5.9.
 - Documented fallible-iterator stream policy (ADR-013); user guide
   `docs/users/streams.md`
 - `oxiland::utility`: URI join/file helpers, Unicode NFC/NFKC, digests
-  (MD5/SHA-1/SHA-256), `Namespace`, curated `vocab` constants (ADR-015)
+  (MD5/SHA-1/SHA-256, ADR-015), `Namespace`, curated `vocab` constants
 - `World` logging: `LogLevel`, `LogFacility`, handlers; optional `tracing`
   feature (ADR-014)
 - Hash/list → std migration example `std_replacements` (ADR-016)
@@ -28,6 +28,23 @@ logging over Oxigraph 0.5.9.
 
 - crates.io description covers utilities
 - Parity ledger marks digests/logging/heuristics/hashes for 0.5
+
+### Fixed
+
+- `join_iri` / `relativize_iri` no longer treat `://` as the path root
+  (authority-only bases such as `https://example.com` resolve correctly)
+- `file_uri_to_path` strips query/fragment before decoding; clearer UTF-8
+  path errors; Windows drive `:` and UNC round-trip
+- `Namespace::new` requires bases ending in `/`, `#`, or `:`
+- `World` clones share minimum log level; `tracing` emission uses the same gate
+- Docs/ADR numbering: Python ADR renumbered to ADR-017; ADR-005/010 revisit
+  notes align with ADR-013; format v1 promise covers 0.5.x
+- Vocab helpers live under `utility::vocab::{rdf,rdfs,xsd,owl,dc}` modules
+- BOM probe preserves partially read bytes across `Interrupted` / other I/O errors
+- `create(false)` / read-only open recognize only Fjall layout markers (no
+  pollution of unrelated nonempty directories)
+- Disk replace/insert/clear compensation propagates undo failures
+- `import_nquads_from_path` maps mid-stream I/O to `Error::Io` (not `Parse`)
 
 ## [0.4.0] - 2026-07-30
 

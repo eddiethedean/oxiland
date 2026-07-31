@@ -222,6 +222,19 @@ fn open_create_false_empty_dir_fails() {
 }
 
 #[test]
+fn open_create_false_unrelated_nonempty_dir_does_not_init_fjall() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("docs");
+    fs::create_dir_all(&path).unwrap();
+    fs::write(path.join("readme.txt"), "not a store").unwrap();
+    let err = Model::open_with(OpenOptions::fjall(&path).create(false));
+    assert!(matches!(err, Err(Error::OpenStore { .. })));
+    assert!(!path.join("partitions").exists());
+    assert!(!path.join("journals").exists());
+    assert!(!path.join("version").exists());
+}
+
+#[test]
 fn read_only_empty_dir_fails_without_init() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("ro-empty");

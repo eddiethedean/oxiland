@@ -200,8 +200,17 @@ impl DiskStore {
                 .map_err(|error| Error::Storage(error.to_string()))?;
         }
         if let Err(error) = self.keyspace.persist(PersistMode::SyncAll) {
+            let mut undo_failed = None;
             for key in &keys {
-                let _ = self.quads.insert(key.as_bytes(), []);
+                if let Err(undo_err) = self.quads.insert(key.as_bytes(), []) {
+                    undo_failed = Some(undo_err.to_string());
+                    break;
+                }
+            }
+            if let Some(undo_err) = undo_failed {
+                return Err(Error::Storage(format!(
+                    "durable clear sync failed ({error}); compensation undo also failed ({undo_err})"
+                )));
             }
             if let Err(compensate_err) = self.keyspace.persist(PersistMode::SyncAll) {
                 return Err(Error::Storage(format!(
@@ -223,7 +232,11 @@ impl DiskStore {
             .insert(key.as_bytes(), [])
             .map_err(|error| Error::Storage(error.to_string()))?;
         if let Err(error) = self.keyspace.persist(PersistMode::SyncAll) {
-            let _ = self.quads.remove(key.as_bytes());
+            if let Err(undo_err) = self.quads.remove(key.as_bytes()) {
+                return Err(Error::Storage(format!(
+                    "durable insert sync failed ({error}); compensation undo also failed ({undo_err})"
+                )));
+            }
             if let Err(compensate_err) = self.keyspace.persist(PersistMode::SyncAll) {
                 return Err(Error::Storage(format!(
                     "durable insert sync failed ({error}); compensation persist also failed ({compensate_err})"
@@ -259,8 +272,17 @@ impl DiskStore {
                 .map_err(|error| Error::Storage(error.to_string()))?;
         }
         if let Err(error) = self.keyspace.persist(PersistMode::SyncAll) {
+            let mut undo_failed = None;
             for key in &keys {
-                let _ = self.quads.insert(key.as_bytes(), []);
+                if let Err(undo_err) = self.quads.insert(key.as_bytes(), []) {
+                    undo_failed = Some(undo_err.to_string());
+                    break;
+                }
+            }
+            if let Some(undo_err) = undo_failed {
+                return Err(Error::Storage(format!(
+                    "durable remove sync failed ({error}); compensation undo also failed ({undo_err})"
+                )));
             }
             if let Err(compensate_err) = self.keyspace.persist(PersistMode::SyncAll) {
                 return Err(Error::Storage(format!(
@@ -303,8 +325,12 @@ impl DiskStore {
         let mut inserted = Vec::new();
         for key in &to_insert {
             if let Err(error) = self.quads.insert(key.as_bytes(), []) {
-                let _ = self.compensate_replace(&inserted, &[]);
-                return Err(Error::Storage(error.to_string()));
+                return Err(match self.compensate_replace(&inserted, &[]) {
+                    Ok(()) => Error::Storage(error.to_string()),
+                    Err(compensate_err) => Error::Storage(format!(
+                        "durable replace insert failed ({error}); compensation also failed ({compensate_err})"
+                    )),
+                });
             }
             inserted.push(key.clone());
         }
@@ -320,8 +346,12 @@ impl DiskStore {
         let mut deleted = Vec::new();
         for key in &to_delete {
             if let Err(error) = self.quads.remove(key.as_bytes()) {
-                let _ = self.compensate_replace(&inserted, &deleted);
-                return Err(Error::Storage(error.to_string()));
+                return Err(match self.compensate_replace(&inserted, &deleted) {
+                    Ok(()) => Error::Storage(error.to_string()),
+                    Err(compensate_err) => Error::Storage(format!(
+                        "durable replace remove failed ({error}); compensation also failed ({compensate_err})"
+                    )),
+                });
             }
             deleted.push(key.clone());
         }
@@ -363,33 +393,17 @@ impl DiskStore {
     }
 }
 
-/// Heuristic: directory already contains Fjall/LSM artifacts (not empty / unrelated).
+/// Heuristic: directory already contains Fjall/LSM artifacts.
+///
+/// Only recognized layout markers count. Unrelated nonempty directories (for
+/// example a lone `readme.txt`) must not be treated as stores—otherwise
+/// `create(false)` / read-only open would initialize Fjall beside user files.
 pub(crate) fn looks_like_fjall_store(path: &Path) -> bool {
     if !path.is_dir() {
         return false;
     }
-    const MARKERS: &[&str] = &["keyspace", "partitions", "journals", "blobs"];
-    for marker in MARKERS {
-        if path.join(marker).exists() {
-            return true;
-        }
-    }
-    // Fallback: any non-hidden entry suggests an existing keyspace layout.
-    std::fs::read_dir(path)
-        .ok()
-        .map(|mut entries| {
-            entries.any(|entry| {
-                entry
-                    .ok()
-                    .map(|e| {
-                        let name = e.file_name();
-                        let name = name.to_string_lossy();
-                        !name.starts_with('.')
-                    })
-                    .unwrap_or(false)
-            })
-        })
-        .unwrap_or(false)
+    const MARKERS: &[&str] = &["keyspace", "partitions", "journals", "blobs", "version"];
+    MARKERS.iter().any(|marker| path.join(marker).exists())
 }
 
 fn quad_key(quad: &Quad) -> String {

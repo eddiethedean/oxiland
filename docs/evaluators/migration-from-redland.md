@@ -1,13 +1,14 @@
 # Migration from Redland
 
-This page helps maintainers map Redland `librdf` workflows to Oxiland 0.4.
+This page helps maintainers map Redland `librdf` workflows to Oxiland 0.5.
 It is **not** a complete symbol-by-symbol porting guide (that is a 0.6
 accounting goal). Inventories remain authoritative for claimed rows:
 
 - [0.1 core inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
 - [0.2 I/O inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.2.json)
 - [0.3 query inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.3.json)
-- [0.5 storage/utilities inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.5.json)
+- [0.4 storage inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.4.json)
+- [0.5 streams/utilities inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.5.json)
 
 ## Mindset
 

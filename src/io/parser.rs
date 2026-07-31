@@ -325,10 +325,14 @@ fn enforce_graph_target(quad: Quad, target: &GraphTarget) -> Result<Quad> {
 }
 
 fn map_parse_result(result: std::result::Result<Quad, RdfParseError>) -> Result<Quad> {
-    result.map_err(|error| match error {
+    result.map_err(map_rdf_parse_error)
+}
+
+pub(crate) fn map_rdf_parse_error(error: RdfParseError) -> Error {
+    match error {
         RdfParseError::Io(error) => Error::Io(error),
         RdfParseError::Syntax(error) => map_syntax_error(error),
-    })
+    }
 }
 
 fn map_syntax_result(result: std::result::Result<Quad, RdfSyntaxError>) -> Result<Quad> {

@@ -463,7 +463,7 @@ impl ResultsFormat {
             "csv" => Ok(Self::Csv),
             "tsv" | "tab-separated-values" => Ok(Self::Tsv),
             other => Err(Error::Unsupported(format!(
-                "SPARQL results format '{other}' is not advertised in Oxiland 0.3"
+                "SPARQL results format '{other}' is not supported"
             ))),
         }
     }
@@ -482,7 +482,7 @@ impl ResultsFormat {
             "text/csv" => Ok(Self::Csv),
             "text/tab-separated-values" | "text/tsv" => Ok(Self::Tsv),
             other => Err(Error::Unsupported(format!(
-                "SPARQL results media type '{other}' is not advertised in Oxiland 0.3"
+                "SPARQL results media type '{other}' is not supported"
             ))),
         }
     }
