@@ -206,12 +206,17 @@ jobs:
       - name: Install cargo-audit
         run: cargo install cargo-audit --locked --version 0.22.2
 
-      # Same gate as release: no advisory ignores on tip.
+      # Tip and release share this gate via reusable CI. R-020: Oxigraph 0.5.9
+      # still pins vulnerable quick-xml 0.37; ignore only while the exception
+      # script confirms that exact dependency graph.
+      - name: Verify narrow upstream security exception
+        run: python3 scripts/check-security-exceptions.py
+
       - name: Audit Rust workspace
-        run: cargo audit --file Cargo.lock
+        run: cargo audit --file Cargo.lock --ignore RUSTSEC-2026-0194 --ignore RUSTSEC-2026-0195
 
       - name: Audit Python native extension
-        run: cargo audit --file python/Cargo.lock
+        run: cargo audit --file python/Cargo.lock --ignore RUSTSEC-2026-0194 --ignore RUSTSEC-2026-0195
 
   python:
     name: Python

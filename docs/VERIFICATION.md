@@ -118,14 +118,14 @@ attestations or GitHub release assets. The Rust workspace and independent
 Python extension each commit their `Cargo.lock`, making `--locked` builds and
 RustSec results reproducible on clean runners.
 
-Security advisories are blocking on tip CI, not release-only. Tip and release
-both run `cargo audit` on `Cargo.lock` and `python/Cargo.lock` with **no**
-advisory ignores. Tip also validates package-version alignment, `cargo publish
---dry-run` for the library crate, and the full 15-wheel release matrix after
-per-OS install smokes. As of the 0.7.0 preflight, PyO3 is at 0.29.0, but
-Oxigraph 0.5.9 still constrains `quick-xml` to 0.37 (RUSTSEC-2026-0194 /
-RUSTSEC-2026-0195), so tip CI stays red until that upstream line can accept
-`quick-xml >= 0.41`. See R-020 in the [risk register](RISKS.md).
+Security advisories are blocking on tip CI (the same reusable workflow release
+runs). Tip also validates package-version alignment, `cargo publish --dry-run`
+for the library crate, and the full 15-wheel release matrix after per-OS install
+smokes. As of the 0.7.0 preflight, PyO3 is at 0.29.0. Oxigraph 0.5.9 still
+constrains `quick-xml` to 0.37 (RUSTSEC-2026-0194 / RUSTSEC-2026-0195); tip CI
+allows **only** those two IDs, and `scripts/check-security-exceptions.py` fails
+as soon as the Oxigraph/`quick-xml` graph changes so the waiver must be
+re-reviewed or removed. See R-020 in the [risk register](RISKS.md).
 
 Nightly or scheduled coverage includes:
 
