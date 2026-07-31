@@ -2,8 +2,9 @@
 
 Status: active design baseline  
 Current implementation: Cargo workspace — library crate `oxiland` plus
-`crates/oxiland-cli` (0.6+). Oxigraph 0.5.9 remains the RDF engine.  
-Next review gate: before Python package public beta (0.7) and C ABI preview (0.8)
+`crates/oxiland-cli` (0.6+), and `python/` PyPI package (0.7+, not a workspace
+member). Oxigraph 0.5.9 remains the RDF engine.  
+Next review gate: before C ABI preview (0.8)
 
 This document specifies dependency direction and safety boundaries. It does not
 claim that planned crates or modules already exist.
@@ -63,7 +64,8 @@ oxiland/
 └── fuzz/                Parser, FFI, and lifecycle fuzz targets
 ```
 
-The additional crates and directories are planned, not present yet.
+The additional crates under `crates/` for C ABI and the `fuzz/` tree are
+planned, not present yet. The `python/` package is present as of 0.7.
 
 ## Component responsibilities
 

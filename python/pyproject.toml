@@ -1,0 +1,43 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "oxiland"
+version = "0.7.0"
+description = "Pythonic RDF models, SPARQL, and I/O powered by Oxiland/Oxigraph"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0 OR MIT" }
+authors = [{ name = "Odo Matthews", email = "odosmatthews@gmail.com" }]
+keywords = ["rdf", "sparql", "oxigraph", "redland", "semantic-web"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Rust",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pyright>=1.1"]
+
+[project.urls]
+Homepage = "https://github.com/eddiethedean/oxiland"
+Documentation = "https://oxiland.readthedocs.io/"
+Repository = "https://github.com/eddiethedean/oxiland"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+module-name = "oxiland"
+include = ["oxiland.pyi", "py.typed", "LICENSE-APACHE", "LICENSE-MIT"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

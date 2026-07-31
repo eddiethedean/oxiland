@@ -52,6 +52,17 @@ python3 scripts/check-docs.py
 scripts/generate-public-api.sh check
 ```
 
+For Python package changes (`python/`):
+
+```console
+cd python
+python3 -m venv .venv && source .venv/bin/activate
+pip install maturin pytest pyright
+maturin develop
+pytest
+pyright
+```
+
 Also run milestone-specific conformance, differential, storage, sanitizer, or
 packaging checks when your change affects them.
 

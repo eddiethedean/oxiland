@@ -1,7 +1,7 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 0.7 (0.6 complete)
+Current milestone: 0.8 (0.7 complete)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -113,10 +113,20 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Begin 0.7 Pythonic package design (ADR-017) against the frozen 0.6 facade.
-2. Expand SPARQL differential fixtures beyond the facade smoke harness.
-3. Keep format v1 / ADR-006 migration notes current as later milestones land.
-4. Do not start 0.8 C ABI until 0.6 accounting remains green on main.
+1. Begin 0.8 C ABI preview design against the frozen 0.6/0.7 facade.
+2. Keep Python wheels/pytest green on main as the 0.7 surface evolves in patches.
+3. Expand SPARQL differential fixtures beyond the facade smoke harness.
+4. Keep format v1 / ADR-006 migration notes current as later milestones land.
+
+## Completed 0.7 backlog
+
+| Priority | Deliverable | Notes |
+|---:|---|---|
+| P0 | ADR-017 | Pythonic package; rdflib deferred |
+| P0 | `python/` maturin + PyO3 | path-depends on safe crate |
+| P0 | Pytest + typing + wheels CI | CPython 3.10–3.13 |
+| P1 | User guide + examples | `docs/users/python.md` |
+| P1 | Compatibility report | `docs/reports/0.7.md` |
 
 ## Completed 0.5 backlog
 
@@ -137,10 +147,10 @@ The detailed acceptance criteria and dependency map live in the
 | P1 | Storage capability reporting | `StorageCapabilities` + legacy disposition |
 | P2 | Import/export for archival | N-Quads helpers + transactional load |
 
-## Current 0.7 backlog
+## Current 0.8 backlog
 
-See the [roadmap 0.7 section](ROADMAP.md). Work-package details expand as design
-spikes land (ADR-017).
+See the [roadmap 0.8 section](ROADMAP.md). Work-package details expand as design
+spikes land.
 
 ## Completed 0.6 backlog
 

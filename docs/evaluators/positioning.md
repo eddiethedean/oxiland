@@ -13,7 +13,7 @@ engine, not a C drop-in today, and not a kitchen-sink Rust RDF toolkit.
 | API style | Redland concepts (Model, contexts, Syntax facades) | Native store / SPARQL / I/O types |
 | Compatibility evidence | Inventories, parity ledger, milestone reports | Upstream standards tests |
 | C ABI path | Planned separate crate (0.8+) | Not the product goal |
-| Python path | Planned Pythonic PyPI package (0.7+) | Native Python APIs vary |
+| Python path | Pythonic PyPI package (`pip install oxiland`, 0.7+) | Native Python APIs vary |
 | When to pick | Migrating Redland *workflows* into Rust; want explicit unsupported errors | New apps that only need the engine |
 
 Oxiland **depends on** Oxigraph. Choosing Oxiland always includes Oxigraph’s

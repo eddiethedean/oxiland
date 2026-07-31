@@ -1,11 +1,12 @@
 [workspace]
 members = [".", "crates/oxiland-cli"]
+exclude = ["python"]
 resolver = "2"
 default-members = [".", "crates/oxiland-cli"]
 
 [package]
 name = "oxiland"
-version = "0.6.0"
+version = "0.7.0"
 edition = "2024"
 rust-version = "1.87"
 description = "Safe Redland-shaped RDF models, SPARQL, RDF I/O, durable Fjall storage, utilities, and rdfproc-compatible CLI on Oxigraph"

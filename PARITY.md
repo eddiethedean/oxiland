@@ -1,9 +1,10 @@
 # Redland parity ledger
 
-Last completed milestone: 0.6
-Current development milestone: 0.7 (`planned`)
+Last completed milestone: 0.7
+Current development milestone: 0.8 (`planned`)
 Ledger maturity: header-derived full public `librdf` 1.0.17 function inventory
-(0.6); curated 0.1–0.5 slices retained for historical evidence
+(0.6); Python package usability evidence (0.7); curated 0.1–0.5 slices retained
+for historical evidence
 
 Target: the documented Redland `librdf` 1.0.17 API (manual labeled 1.0.18).
 
@@ -73,4 +74,5 @@ See [`docs/reports/0.6.md`](docs/reports/0.6.md).
 
 ## Next ledger upgrade
 
-Begin 0.7 Python package evidence; keep C ABI accounting deferred to 0.8.
+Begin 0.8 C ABI preview accounting; keep Python package evidence current on
+main.

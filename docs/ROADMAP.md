@@ -21,7 +21,7 @@ only when its evidence gates are satisfied.
 | 0.4 | Durable storage and transactions | 0.3 | `complete` |
 | 0.5 | Streams, utilities, and observability | 0.4 | `complete` |
 | 0.6 | Accounted safe Rust parity | 0.5 | `complete` |
-| 0.7 | Pythonic package on PyPI | 0.4 (sequenced after 0.6) | `planned` |
+| 0.7 | Pythonic package on PyPI | 0.4 (sequenced after 0.6) | `complete` |
 | 0.8 | Auditable C ABI preview | 0.6 | `planned` |
 | 0.9 | Downstream C compatibility | 0.8 | `planned` |
 | 0.10 | 1.0 release candidate | 0.9 | `planned` |
@@ -253,9 +253,11 @@ Depends on: all high-level safe API milestones.
 Outcome: ship a maintained PyPI package with **Pythonic** interfaces over the
 safe Rust facade—not a mechanical 1:1 port of every Rust type and builder.
 
-State: planned  
-Depends on: 0.4 storage/query foundation; sequenced after 0.6 safe-API
-accounting
+State: complete  
+Evidence: [parity ledger](parity.md),
+[0.7 compatibility report](reports/0.7.md),
+[milestone plan](milestones/0.7.md),
+[design](design/0.7-python-api.md), ADR-017
 
 Deliverables:
 

@@ -49,9 +49,10 @@ Default `GraphTarget::DefaultGraph` **rejects** named-graph input. Use
 ASK, SELECT, CONSTRUCT, DESCRIBE, Update, dataset selection, limit/offset, and
 SPARQL Results serialization shipped in **0.3**. Durable on-disk contracts and
 storage transactions shipped in **0.4**. Utilities, digests, vocabulary helpers,
-and World logging shipped in **0.5**. A Pythonic PyPI package is planned for
-**0.7** (not a 1:1 Rust port). Track [milestones](../milestones/0.5.md) and the
-[roadmap](../ROADMAP.md).
+and World logging shipped in **0.5**. A Pythonic PyPI package shipped in
+**0.7** (`pip install oxiland`; not a 1:1 Rust port — see
+[Python guide](python.md)). C ABI preview is planned for **0.8**. Track
+[milestones](../milestones/0.7.md) and the [roadmap](../ROADMAP.md).
 
 ## Where do I report bugs or security issues?
 

@@ -93,6 +93,92 @@ jobs:
           cargo install cargo-semver-checks --locked
           cargo semver-checks check-release -p oxiland --baseline-version 0.5.0
 
+  python:
+    name: Python
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: python
+          workspaces: "python -> python/target"
+
+      - name: Install maturin and test tools
+        run: pip install maturin pytest pyright
+
+      - name: Develop install
+        working-directory: python
+        run: maturin develop
+
+      - name: Pytest
+        working-directory: python
+        run: pytest -q
+
+      - name: Type check
+        working-directory: python
+        run: pyright
+
+      - name: Examples
+        working-directory: python
+        run: |
+          python examples/quick_start.py
+          python examples/parse_serialize.py
+          python examples/select.py
+          python examples/persistent.py
+
+  python-wheels:
+    name: Python wheels
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: macos-latest
+          - os: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          working-directory: python
+          command: build
+          args: --release -i 3.10 3.11 3.12 3.13
+          manylinux: auto
+          sccache: "true"
+
+      - name: Smoke install wheel
+        shell: bash
+        run: |
+          pip install python/target/wheels/oxiland-*$(python -c 'import sys; print(f"cp3{sys.version_info.minor}")')*.whl || pip install python/target/wheels/oxiland-*.whl
+          python -c "import oxiland; assert oxiland.__version__ == '0.7.0'"
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: python/target/wheels/*.whl
+
   io-conformance:
     name: RDF I/O conformance
     runs-on: ubuntu-latest

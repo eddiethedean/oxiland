@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-31
+
+Pythonic PyPI package over the frozen safe Rust facade (ADR-017).
+
+### Added
+
+- `python/` maturin + PyO3 package published as `oxiland` on PyPI
+- Idiomatic Python APIs for terms, `Model`, parse/serialize, SPARQL
+  query/update, transactions, and curated digests/vocab helpers
+- Typed exception hierarchy aligned with Rust `Error` categories
+- PEP 561 stubs (`oxiland.pyi` / `py.typed`); pytest + pyright CI
+- Wheel builds on Linux/macOS/Windows for CPython 3.10–3.13
+- User guide `docs/users/python.md` and runnable `python/examples/`
+- ADR-017 accepted; milestone/design/report docs for 0.7
+
+### Changed
+
+- Crate version `0.7.0` (Rust + `oxiland-cli` + PyPI aligned)
+- Parity ledger / roadmap mark 0.7 complete; next focus 0.8 C ABI
+
 ## [0.6.0] - 2026-07-30
 
 Header-derived safe-API accounting, `oxiland-cli` rdfproc workflows, and 1.0

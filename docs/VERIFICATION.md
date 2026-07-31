@@ -20,7 +20,7 @@ A passing test in one layer does not substitute for the others.
 | Conformance | RDF and SPARQL standards | `compatibility/conformance/` |
 | Differential | Oxiland versus native Redland | `compatibility/fixtures/` |
 | C contract | headers, symbols, allocation, callbacks | `crates/oxiland-capi/tests/` |
-| Python package | wheels, typing, pytest | `python/` (planned) |
+| Python package | wheels, typing, pytest | `python/` |
 | Downstream | real language bindings and applications | CI-managed manifests |
 | Fuzz/property | malformed inputs and lifecycle sequences | `fuzz/` |
 

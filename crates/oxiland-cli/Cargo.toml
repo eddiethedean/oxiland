@@ -1,6 +1,6 @@
 [package]
 name = "oxiland-cli"
-version = "0.6.0"
+version = "0.7.0"
 edition = "2024"
 rust-version = "1.87"
 description = "rdfproc-compatible command workflows over the Oxiland safe Rust facade"
@@ -18,7 +18,7 @@ name = "oxiland-cli"
 path = "src/main.rs"
 
 [dependencies]
-oxiland = { path = "../..", version = "0.6.0" }
+oxiland = { path = "../..", version = "0.7.0" }
 clap = { version = "4", features = ["derive"] }
 oxigraph = { version = "=0.5.9", default-features = false }
 

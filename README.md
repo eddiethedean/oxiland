@@ -15,14 +15,15 @@ Turtle / N-Triples / N-Quads / TriG / RDF/XML I/O—backed by pinned
 
 Use it when you want Redland concepts and explicit unsupported/error behavior
 without C ownership; use Oxigraph directly when you only need the engine API.
-Version **0.6.0** covers trusted core model, Redland-shaped RDF I/O, SPARQL,
+Version **0.7.0** covers trusted core model, Redland-shaped RDF I/O, SPARQL,
 durable Fjall storage (format v1), utilities, World logging, **header-derived
-safe-API accounting**, and `oxiland-cli` rdfproc-shaped workflows—with scoped
-evidence in the [parity ledger](PARITY.md)—not C ABI/source compatibility.
+safe-API accounting**, `oxiland-cli` rdfproc-shaped workflows, and a **Pythonic
+PyPI package**—with scoped evidence in the [parity ledger](PARITY.md)—not C
+ABI/source compatibility.
 
 > [!IMPORTANT]
 > Compatibility claims are evidence-scoped. See the
-> [parity ledger](PARITY.md) and [0.6 report](docs/reports/0.6.md). Do not read
+> [parity ledger](PARITY.md) and [0.7 report](docs/reports/0.7.md). Do not read
 > “Redland-shaped” as drop-in C or ABI compatibility.
 
 ## When to use Oxiland
@@ -54,8 +55,8 @@ A longer comparison (including Sophia and native Redland) is in
 | SPARQL Update and results serialization | Available; XML/JSON/CSV/TSV + graph serialize helper |
 | Digests / URI / Unicode / vocab helpers | Available; `oxiland::utility` |
 | World logging | Available; handlers + optional `tracing` feature (ADR-014) |
-| Python package (Pythonic PyPI API) | Planned for 0.7 |
-| Full safe Rust Redland accounting | Planned for 0.6 |
+| Python package (Pythonic PyPI API) | Available; `pip install oxiland` (ADR-017) |
+| Full safe Rust Redland accounting | Available for 0.6 header-derived inventory |
 | C source and ABI compatibility | Planned for 0.8–0.9 |
 
 “Available” means the current public workflow is implemented and tested. It
@@ -91,7 +92,7 @@ rustc --version   # >= 1.87
 
 ```toml
 [dependencies]
-oxiland = "0.6.0"
+oxiland = "0.7.0"
 ```
 
 ## Quick start
@@ -229,11 +230,33 @@ Rust application
 Oxiland safe facade ──> Oxigraph RDF, storage, I/O, and SPARQL
       ▲
       │
-Future oxiland (PyPI, 0.7+) and oxiland-capi (0.8+)
+oxiland (PyPI, 0.7+) and future oxiland-capi (0.8+)
 ```
 
-Roadmap highlights: 0.6 safe-API parity, 0.7 Python package, 0.8 C ABI
-preview. Full plan: [docs/ROADMAP.md](docs/ROADMAP.md).
+Roadmap highlights: 0.8 C ABI preview, 0.9 downstream C validation. Full plan:
+[docs/ROADMAP.md](docs/ROADMAP.md).
+
+## Python
+
+```console
+pip install oxiland
+```
+
+```python
+from oxiland import Literal, Model, NamedNode, Triple, query
+
+model = Model()
+model.add(
+    Triple(
+        NamedNode("https://example.com/alice"),
+        NamedNode("https://example.com/name"),
+        Literal("Alice"),
+    )
+)
+assert query(model, "ASK { ?s ?p ?o }") is True
+```
+
+See [Python guide](docs/users/python.md).
 
 ## Development
 
@@ -245,6 +268,7 @@ cargo doc --no-deps
 python3 scripts/check-inventory.py
 python3 scripts/check-docs.py
 scripts/generate-public-api.sh check
+cd python && maturin develop && pytest && pyright
 ```
 
 ## License

@@ -1,0 +1,19 @@
+[package]
+name = "oxiland-py"
+version = "0.7.0"
+edition = "2024"
+rust-version = "1.87"
+description = "Pythonic Python bindings for Oxiland"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[workspace]
+
+[lib]
+name = "oxiland"
+crate-type = ["cdylib"]
+
+[dependencies]
+oxiland = { path = ".." }
+oxigraph = { version = "=0.5.9", default-features = false }
+pyo3 = { version = "0.25", features = ["extension-module"] }

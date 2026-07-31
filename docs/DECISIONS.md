@@ -315,24 +315,52 @@ Revisit when: a first-class timeout API is required for C consumers.
 
 ## Proposed decisions
 
-### ADR-017 — Python package is Pythonic, not a thin Rust mirror
-
-State: proposed  
-Decision deadline: before 0.7 public beta
-
-Question: how closely should the PyPI package mirror Rust builders versus
-idiomatic Python (kwargs, context managers, exception types, iterators)?
-
-Evaluation criteria:
-
-- ergonomics for Python RDF/SPARQL applications;
-- maintenance cost of dual surfaces;
-- typing and documentation quality;
-- whether rdflib or other ecosystem interop is in scope for 0.7;
-- clear non-goals (no C ABI layering; no claim of Redland Python binding
-  drop-in unless separately evidenced).
+_(none)_
 
 ## Accepted decisions (continued)
+
+### ADR-017 — Python package is Pythonic, not a thin Rust mirror
+
+State: accepted  
+Date: 2026-07-31  
+Milestone: 0.7
+
+Context: Roadmap 0.7 ships a PyPI package over the frozen 0.6 safe Rust
+facade. Callers need idiomatic Python, not a mechanical mirror of Rust builders
+or a Redland/`rdf` CPython binding clone.
+
+Decision:
+
+- Publish package name `oxiland` from monorepo `python/` via maturin + PyO3
+  `cdylib`, path-depending on the safe `oxiland` crate (not `oxiland-capi`).
+- The extension crate is **not** a Cargo workspace member of the root (root
+  keeps `#![forbid(unsafe_code)]`; all FFI `unsafe` stays in the PyO3 crate).
+- Prefer kwargs / module functions over fluent Rust builders; expose
+  `with model.transaction()` as a context manager; use the Python iterator
+  protocol for find, parse, SELECT, and CONSTRUCT streams without forced
+  materialization.
+- Map `Error` variants (`src/error.rs`) to a typed exception hierarchy under
+  `OxilandError` (not stringly-only failures).
+- Accept `pathlib.Path` / path-like and `str`/`bytes` for file and buffer I/O.
+- Support CPython **3.10–3.13**; wheel matrix via cibuildwheel (manylinux
+  x86_64/aarch64, macOS x86_64/aarch64, Windows x86_64).
+- **Defer rdflib interop** for 0.7 (no convert helpers, no store adapter, no
+  behavioral-identity claim). Revisit in a later ADR if needed.
+- Do **not** claim Redland Python binding drop-in compatibility or CPython ABI
+  stability tied to `oxiland-capi`.
+- Query cancellation tokens are omitted from the 0.7 Python surface (callers
+  may interrupt at process level); document as a non-mirror.
+
+Consequences:
+
+- Dual maintenance of Rust facade + Pythonic surface; design note
+  [`0.7-python-api.md`](design/0.7-python-api.md) lists intentional non-mirrors.
+- Python versioning tracks the 0.7.x train alongside the Rust crate where
+  practical.
+- Typing (`py.typed` / stubs) and pytest are release gates.
+
+Revisit when: adding rdflib interop, changing the supported CPython matrix, or
+layering Python on a future C ABI.
 
 ### ADR-006 — Persistent storage compatibility boundary
 
