@@ -171,8 +171,8 @@ oxiland-cli --results csv ./catalog query sparql - \
 ASK and SELECT use `--results` (`xml`, `json`, `csv`, or `tsv`). CONSTRUCT and
 DESCRIBE use the RDF `--output` syntax.
 
-RDQL and SPARQL Update are not CLI commands in 0.7.0. Use the Rust or Python API
-for updates.
+RDQL and SPARQL Update are not CLI commands. Use the Rust or Python API for
+updates.
 
 ## In-memory mode
 
@@ -203,9 +203,9 @@ oxiland-cli ./restore-check query sparql - 'ASK { ?s ?p ?o }'
 Import merges statements into the target dataset. Restore into a new store when
 replacement semantics are required.
 
-!!! warning "Named-graph restore in 0.7.0"
+!!! warning "Named-graph restore"
 
-    The CLI can export a complete named-graph dataset as N-Quads, but its 0.7.0
+    The CLI can export a complete named-graph dataset as N-Quads, but its
     parser does not expose the dataset graph target needed to import arbitrary
     named graphs from one N-Quads or TriG file. Restore those backups with Rust
     `Model::import_nquads_from_path` or Python `Model.import_nquads`. CLI restore

@@ -137,7 +137,7 @@ Before changing Oxiland versions in a persistent deployment:
 6. Run representative ASK/SELECT checks and compare expected statement counts.
 7. Upgrade production, keeping the portable backup until validation completes.
 
-Store format v1 is reopen-compatible across 0.4.x–0.7.x patch lines. Very old
+Store format v1 is reopen-compatible across 0.4.x–0.8.x patch lines. Very old
 experimental stores without format metadata require
 `Model.migrate_legacy_store(path)`. Migration and restore should be controlled
 maintenance operations, never request-path fallbacks.

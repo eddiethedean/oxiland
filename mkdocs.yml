@@ -141,10 +141,14 @@ nav:
       - API reference: https://docs.rs/oxiland
   - Command line:
       - CLI guide: users/cli.md
-      - FAQ: users/faq.md
   - C ABI:
       - Preview guide: users/c-abi.md
       - Limitations: users/c-abi-limitations.md
+  - Help:
+      - FAQ: users/faq.md
+      - Support: support.md
+      - Security: security.md
+      - Performance: users/performance.md
   - Evaluators:
       - Positioning: evaluators/positioning.md
       - Migration from Redland: evaluators/migration-from-redland.md
@@ -154,8 +158,6 @@ nav:
       - Current report (0.8): reports/0.8.md
   - Project:
       - Community:
-          - Support: support.md
-          - Security: security.md
           - Code of conduct: code-of-conduct.md
           - Contributing: contributing.md
       - Direction:
@@ -166,7 +168,6 @@ nav:
           - Architecture: ARCHITECTURE.md
           - Execution: EXECUTION.md
           - Verification: VERIFICATION.md
-          - Compatibility contract: COMPATIBILITY.md
           - Decisions: DECISIONS.md
           - Risks: RISKS.md
   - Archive:

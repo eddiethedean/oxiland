@@ -1,15 +1,21 @@
 # Python installation and compatibility
 
+!!! info "Release status"
+
+    PyPI currently publishes **0.7.0**. This tip is **0.8.0** (unreleased) until
+    the tag. Pin published wheels as shown below; build from a git checkout for
+    tip APIs.
+
 ## Supported runtime
 
-| Component | 0.7 support |
+| Component | Support |
 |---|---|
 | Interpreter | CPython 3.10, 3.11, 3.12, 3.13, and 3.14 |
 | Operating system | Linux, macOS, and Windows wheel targets built in CI |
 | Architecture | The architecture encoded by an available PyPI wheel |
 | Python dependencies | None required at runtime |
 | Static typing | Bundled `py.typed` marker and `.pyi` declarations |
-| Package format | Binary wheel only; no 0.7.0 source distribution |
+| Package format | Binary wheel only; no source distribution on PyPI |
 
 Each release wheel is installed and imported on its matching Python version in
 CI. Compatibility means a wheel exists for the exact Python, operating-system,
@@ -25,7 +31,7 @@ Create an isolated environment and upgrade `pip` before installing:
     python3 -m venv .venv
     source .venv/bin/activate
     python -m pip install --upgrade pip
-    python -m pip install oxiland
+    python -m pip install oxiland==0.7.0
     ```
 
 === "Windows PowerShell"
@@ -34,7 +40,7 @@ Create an isolated environment and upgrade `pip` before installing:
     py -m venv .venv
     .venv\Scripts\Activate.ps1
     python -m pip install --upgrade pip
-    python -m pip install oxiland
+    python -m pip install oxiland==0.7.0
     ```
 
 Confirm the installed runtime before deployment:
@@ -88,14 +94,15 @@ Common causes are:
 - using an old `pip` that does not recognize the wheel's platform tag;
 - forcing source-only installation with `--no-binary`.
 
-Because 0.7.0 has no source distribution, `pip` should not compile Oxiland as a
-fallback. On an unsupported target, choose a supported runtime or build from a
-repository checkout.
+Because published packages are **wheels only** (no source distribution), `pip`
+should not compile Oxiland as a fallback. On an unsupported target, choose a
+supported runtime or build from a repository checkout.
 
 ## Building from a checkout
 
-Source builds are a contributor and platform-porting workflow. They require a
-Rust toolchain, Maturin, and the repository source:
+Source builds are a contributor and platform-porting workflow—and the way to
+evaluate tip **0.8** before the PyPI tag. They require a Rust toolchain,
+Maturin, and the repository source:
 
 ```console
 git clone https://github.com/eddiethedean/oxiland.git

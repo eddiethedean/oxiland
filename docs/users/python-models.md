@@ -143,15 +143,20 @@ path = Path("var/data/knowledge-graph")
 model = Model.open(path)
 print(model.backend)  # "fjall"
 
+# Optional: select the storage backend (default is "fjall")
+# model = Model.open(path, backend="fjall")
+
 with model.transaction() as tx:
     tx.add(statement)
 
 model.sync()
 ```
 
-`Model.open(path, read_only=False, create=True)` controls whether writes are
-allowed and whether a missing store may be created. Use `create=False` in
-deployments that must fail instead of silently initializing an empty dataset.
+`Model.open(path, read_only=False, create=True, backend="fjall")` controls
+whether writes are allowed, whether a missing store may be created, and which
+compiled backend opens the path. The default `backend=` is `"fjall"`. Use
+`create=False` in deployments that must fail instead of silently initializing
+an empty dataset.
 
 See [Production operations](python-production.md) for ownership, backup,
 restore, and upgrade guidance.

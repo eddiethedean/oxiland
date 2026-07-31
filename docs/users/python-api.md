@@ -1,9 +1,10 @@
 # Python API reference
 
-This page is the compact reference for Oxiland 0.7.0. All public symbols are
-available from `oxiland` unless a vocabulary submodule is shown. The wheel
+This page is the compact reference for Oxiland tip **0.8.0**. All public symbols
+are available from `oxiland` unless a vocabulary submodule is shown. The wheel
 ships PEP 561 declarations, so the signatures below are also available through
-IDE completion and static type checkers.
+IDE completion and static type checkers. Published PyPI wheels remain **0.7.0**
+until the 0.8 tag; tip-only symbols below require a checkout build.
 
 ## Import and version
 
@@ -77,12 +78,32 @@ exposes `.graph`, returning a concrete `DefaultGraph`, `NamedNode`, or
 
 ```python
 Model()
-Model.open(path: PathArg, *, read_only: bool = False, create: bool = True) -> Model
+Model.open(
+    path: PathArg,
+    *,
+    read_only: bool = False,
+    create: bool = True,
+    backend: str = "fjall",
+) -> Model
 Model.migrate_legacy_store(path: PathArg) -> Model
 ```
 
 `Model()` creates an in-memory dataset. `Model.open()` opens a persistent local
-dataset. `.backend` is `"memory"` or `"fjall"`.
+dataset; `backend=` selects the sealed storage backend (default `"fjall"`).
+`.backend` reports `"memory"`, `"fjall"`, or another compiled backend name.
+
+### Storage helpers
+
+```python
+compiled_backends() -> list[str]
+storage_backend_available(name: str) -> bool
+```
+
+`compiled_backends()` lists backends linked into this build.
+`storage_backend_available(name)` returns `True` when that name is compiled.
+Unknown names and known-but-not-compiled optional names raise
+`UnsupportedError` with distinct messages (they do not open as a silent
+fallback).
 
 ### Dataset operations
 

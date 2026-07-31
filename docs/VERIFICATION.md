@@ -19,7 +19,7 @@ A passing test in one layer does not substitute for the others.
 | Rust integration | public workflows and feature combinations | `tests/` |
 | Conformance | RDF and SPARQL standards | `compatibility/conformance/` |
 | Differential | Oxiland versus native Redland | `compatibility/fixtures/` |
-| C contract *(planned 0.8+)* | headers, symbols, allocation, callbacks | `crates/oxiland-capi/tests/` |
+| C contract *(0.8 preview)* | headers, symbols, allocation, callbacks | `crates/oxiland-capi/tests/` |
 | Python package | wheels, typing, pytest | `python/` |
 | Downstream | real language bindings and applications | CI-managed manifests |
 | Fuzz/property *(planned expansion)* | malformed inputs and lifecycle sequences | `fuzz/` |

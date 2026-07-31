@@ -62,7 +62,7 @@ input, store, and serialization failures exit nonzero.
 - `parse` avoids partial data on RDF parse failure; `parse-stream` explicitly
   allows partial progress.
 - N-Quads is the recommended portable backup format for named graphs.
-- In 0.7.0 the CLI can export named-graph N-Quads but cannot import an arbitrary
+- The CLI can export named-graph N-Quads but cannot import an arbitrary
   multi-graph N-Quads/TriG dataset; restore that backup through the Rust or
   Python `Model.import_nquads` API.
 - The CLI is inspired by Redland `rdfproc` workflows but is not syntax- or

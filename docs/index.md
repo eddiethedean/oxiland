@@ -6,14 +6,19 @@ title: Oxiland — embedded RDF for Rust and Python
 description: Build typed, local RDF applications with SPARQL, persistent datasets, and streaming I/O in Rust or Python.
 ---
 
+!!! info "Release status"
+
+    This documentation tip describes **0.8.0** (unreleased). crates.io and PyPI
+    still publish **0.7.0** until the 0.8 tag. Use registry pins for published
+    installs, or a git/path checkout for tip APIs.
+
 <section class="hero" aria-labelledby="hero-title">
   <div class="hero__copy">
-    <p class="hero__eyebrow">Embedded RDF for Rust and Python</p>
-    <h1 id="hero-title">Make linked data feel native.</h1>
+    <p class="hero__eyebrow">Oxiland</p>
+    <h1 id="hero-title">Typed RDF, SPARQL, and local persistence—without a database server.</h1>
     <p class="hero__lead">
-      Build typed RDF applications with SPARQL 1.1, named graphs, persistent
-      datasets, transactions, and streaming I/O—without running a database
-      server.
+      Build linked-data applications with validated terms, named graphs, SPARQL
+      1.1, streaming I/O, and an embedded durable store inside your process.
     </p>
     <div class="hero__actions">
       <a class="md-button md-button--primary" href="users/python/">Start with Python</a>
@@ -77,6 +82,13 @@ assert query(graph, "ASK { ?s ?p ?o }")</code></pre>
   <span class="path-card__link">Open the CLI guide →</span>
 </a>
 
+<a class="path-card" href="users/c-abi/">
+  <span class="path-card__badge" aria-hidden="true">C</span>
+  <h3>C ABI preview</h3>
+  <p>Link a Redland-shaped source-compat preview against a frozen allowlist.</p>
+  <span class="path-card__link">Open the C ABI guide →</span>
+</a>
+
 </div>
 
 ## One toolkit, the complete local workflow
@@ -138,9 +150,11 @@ model.
 
 !!! info "Compatibility claims are evidence-scoped"
 
-    Oxiland provides Redland-shaped workflows, but version 0.7.0 is not a C
-    source or ABI drop-in. Start with the [positioning guide](evaluators/positioning.md)
-    and verify each claim in the [parity ledger](parity.md).
+    Oxiland provides Redland-shaped workflows. Tip **0.8** ships a C
+    **source-compat preview**—not an ABI drop-in for existing `librdf`
+    binaries, and not an rdflib adapter. Start with the
+    [positioning guide](evaluators/positioning.md) and verify each claim in the
+    [parity ledger](parity.md).
 
 <div class="home-footer-cta" markdown>
 

@@ -154,7 +154,7 @@ in an isolated path.
 6. Run representative ASK/SELECT checks and a backup/restore smoke test.
 7. Upgrade production and retain the portable backup until validation completes.
 
-Format v1 reopens across 0.4.x–0.7.x patch lines. Pre-0.4 experimental stores
+Format v1 reopens across 0.4.x–0.8.x patch lines. Pre-0.4 experimental stores
 without metadata require `Model::migrate_legacy_store`; run migration only as a
 controlled maintenance operation.
 

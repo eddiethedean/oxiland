@@ -7,10 +7,12 @@ Upgrade with `rustup update stable`.
 
 ## Why does `pip install oxiland` try to build from source?
 
-0.7.0 publishes **wheels only** (no sdist). If pip cannot find a wheel for your
-platform/Python, it may attempt a source build and fail. Use CPython 3.10–3.14
-on a platform with published wheels, or build from a git checkout with maturin
-([Python installation guide](python-installation.md)).
+Published packages are **wheels only** (no sdist). If pip cannot find a wheel
+for your platform/Python, it may attempt a source build and fail. Use CPython
+3.10–3.14 on a platform with published wheels, or build from a git checkout with
+maturin ([Python installation guide](python-installation.md)).
+
+PyPI currently publishes **0.7.0**; tip **0.8.0** is unreleased until tagged.
 
 ## Why not use Oxigraph directly?
 
@@ -29,9 +31,18 @@ replication, tenant isolation, or managed backups. See the
 ## Is Oxiland “Redland-compatible”?
 
 Only in evidence-scoped senses documented in the [parity ledger](../parity.md).
-It is **not** C source/ABI compatible (planned 0.8+), and not a 100% `librdf`
-port. “Safe-API accounting” means inventoried symbols are **classified**, not
-that behavior is drop-in. crates.io describes Redland-*shaped* workflows.
+Tip **0.8** ships a C **source-compat preview** (`oxiland-capi`) against a
+frozen allowlist—**not** ABI drop-in compatibility with existing `librdf`
+shared libraries. Full symbol closure and ABI claims are **0.9** work. Oxiland
+is not a 100% `librdf` port and not an rdflib adapter. “Safe-API accounting”
+means inventoried symbols are **classified**, not that behavior is drop-in.
+See the [C ABI guide](c-abi.md) and [limitations](c-abi-limitations.md).
+
+## Does Oxiland ship a C package on crates.io?
+
+No. `oxiland-capi` is `publish = false`. Build it from a repository checkout
+(`cargo build -p oxiland-capi`). Packaging as an installed ABI artifact is
+planned for later milestones. See [C ABI](c-abi.md).
 
 ## What does “Verified” mean in the parity ledger?
 
@@ -59,17 +70,35 @@ extension (`.nt`, `.ttl`, `application/rdf+xml`, …).
 ## Named graphs vanished / parse error on N-Quads
 
 The default graph target **rejects** named-graph input. Rust callers can use
-`GraphTarget::Dataset` for TriG/N-Quads datasets. The Python 0.7 API does not
+`GraphTarget::Dataset` for TriG/N-Quads datasets. The Python API does not
 expose that target; load one compatible graph with `graph=` or create named
 graphs programmatically. See [Python RDF I/O](python-data.md#stream-a-document).
 
-The 0.7 CLI has the same dataset-import limitation. Rust callers can use
+The CLI has the same dataset-import limitation. Restore multi-graph N-Quads
+backups with Rust `Model::import_nquads_from_path` or Python
+`Model.import_nquads`. Rust callers can also use
 `Parser::parse_path_with_extension` or configure `GraphTarget::Dataset`.
+
+## Wrong, unknown, or not-compiled storage backends
+
+Backend selection is explicit and fails closed:
+
+- **Unknown** names raise `Unsupported` / `UnsupportedError` (“not recognized”).
+- **Known but not compiled** optional names (for example future adapters such as
+  redb) raise a distinct “known but not compiled into this build” error—they
+  never fall back to Fjall or memory.
+- **Compiled** backends for the default build are `memory` and `fjall`.
+
+Use `compiled_backends()` (Rust and Python) to list what this build links.
+`storage_backend_available(name)` returns `True` only for compiled backends;
+other names error as above. CLI `--storage` and C `librdf_new_storage` follow
+the same registry.
 
 ## Fjall store uses a lot of RAM
 
 Fjall mode keeps a full Oxigraph **in-memory working set** for querying. Plan
 RAM for the dataset size; use streaming parse/serialize APIs for large files.
+See [Performance](performance.md).
 
 ## Transaction methods do nothing / buffer forever (Python)
 
@@ -97,6 +126,7 @@ guarantees.
 
 ## Performance guidance?
 
-Not published yet as a budgeted suite. Prefer streaming parse/serialize APIs for
+See [Performance](performance.md). Prefer streaming parse/serialize APIs for
 large data; avoid collecting full iterators. Fjall mode keeps a full in-memory
-working set—plan RAM accordingly.
+working set—plan RAM accordingly. Budgeted benchmark suites are not published
+yet.

@@ -1,6 +1,6 @@
 # Examples
 
-Runnable starting points for Python, Rust, and the command-line package. The
+Runnable starting points for Python, Rust, C, and the command-line package. The
 repository examples are executed in CI; production configuration and failure
 handling are intentionally expanded in the linked guides.
 
@@ -20,8 +20,15 @@ From a repository checkout, run the examples at the repository root:
 |---|---|---|
 | `quick_start.py` | Build a model and run ASK | `python python/examples/quick_start.py` |
 | `select.py` | Stream SELECT solution rows | `python python/examples/select.py` |
+| `construct.py` | CONSTRUCT into a graph iterator | `python python/examples/construct.py` |
+| `update.py` | SPARQL Update INSERT/DELETE | `python python/examples/update.py` |
 | `parse_serialize.py` | Load Turtle and serialize N-Triples | `python python/examples/parse_serialize.py` |
 | `persistent.py` | Open a durable model and commit a transaction | `python python/examples/persistent.py` |
+
+Named-graph workflows (programmatic CRUD, N-Quads/TriG, and the current dataset
+import limitation) are covered in [RDF I/O and SPARQL](python-data.md) and the
+[Python API reference](python-api.md); there is not yet a dedicated
+`python/examples/` script for named graphs.
 
 The same workflows are explained in [Models and RDF terms](python-models.md),
 [RDF I/O and SPARQL](python-data.md), and
@@ -41,6 +48,25 @@ The same workflows are explained in [Models and RDF terms](python-models.md),
 | `persistent_transaction.rs` | Persistent open + transaction | `cargo run --example persistent_transaction` |
 | `std_replacements.rs` | Hash/list replacement notes | `cargo run --example std_replacements` |
 
+## C (`crates/oxiland-capi/examples/`)
+
+| Example | What it demonstrates | Run |
+|---|---|---|
+| `preview_workflow.c` | World → storage → model → Turtle → ASK/SELECT | see below |
+
+From the repository root (after `cargo build -p oxiland-capi`):
+
+```console
+cc -I crates/oxiland-capi/include -L target/debug \
+  crates/oxiland-capi/examples/preview_workflow.c \
+  -loxiland_capi -Wl,-rpath,$PWD/target/debug \
+  -o preview_workflow
+./preview_workflow
+```
+
+Full install, pkg-config, and allowlist details:
+[C ABI preview](c-abi.md).
+
 ## Command line
 
 ```console
@@ -56,7 +82,7 @@ oxiland-cli --quiet --output nquads ./catalog serialize > catalog.nq
 ```
 
 See the [CLI guide](cli.md) for term arguments, stdout/stderr behavior, import
-failure semantics, and the 0.7 named-graph restore limitation.
+failure semantics, and the named-graph restore limitation.
 
 ## Next guides
 
@@ -66,3 +92,4 @@ failure semantics, and the 0.7 named-graph restore limitation.
 - [Rust SPARQL](sparql.md)
 - [Rust persistence](persistence.md)
 - [CLI](cli.md)
+- [C ABI preview](c-abi.md)

@@ -57,7 +57,7 @@ native engine and the complete Python API.
 | Python | CPython 3.10–3.14 |
 | Operating systems | Linux, macOS, and Windows wheels |
 | Typing | PEP 561 marker and bundled stubs |
-| Distribution | Binary wheels; no source distribution in 0.7.0 |
+| Distribution | Binary wheels; no source distribution on PyPI |
 
 Installation succeeds only when PyPI has a wheel matching the interpreter and
 platform. See the [installation guide](https://oxiland.readthedocs.io/en/latest/users/python-installation/)
@@ -105,9 +105,9 @@ print(f"loaded {loaded} statements")
 `parse()` and `parse_path()` return lazy quad iterators. `load()` and
 `load_path()` provide progressive, collecting, and transactional import modes
 so applications can choose memory usage and failure atomicity explicitly.
-In 0.7.0, an N-Quads or TriG file containing arbitrary named graphs cannot be
-imported as one dataset. Load one compatible graph at a time with `graph=`;
-dataset-target parsing is not yet exposed in Python.
+An N-Quads or TriG file containing arbitrary named graphs cannot be imported as
+one dataset. Load one compatible graph at a time with `graph=`; dataset-target
+parsing is not yet exposed in Python.
 
 ## SPARQL
 

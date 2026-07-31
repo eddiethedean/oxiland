@@ -271,6 +271,8 @@ jobs:
           python examples/parse_serialize.py
           python examples/select.py
           python examples/persistent.py
+          python examples/construct.py
+          python examples/update.py
 
   python-wheels:
     name: Python wheels (${{ matrix.os }})

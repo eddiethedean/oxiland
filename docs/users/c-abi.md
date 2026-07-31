@@ -9,6 +9,13 @@ binary drop-in for `librdf`.
     Read [C ABI limitations](c-abi-limitations.md) before integrating. Full
     symbol closure and ABI claims are planned for 0.9.
 
+## Prerequisites
+
+- Rust **1.87+** (edition and MSRV used by the workspace)
+- A C compiler (`cc` / Clang / GCC)
+- A clone of **this repository** — `oxiland-capi` has `publish = false` and is
+  **not** on crates.io
+
 ## Build the library
 
 From the repository root:
@@ -17,46 +24,81 @@ From the repository root:
 cargo build -p oxiland-capi --release
 ```
 
-Artifacts:
+Artifacts (paths relative to the repo root):
 
-- `target/release/liboxiland_capi.a` (static)
-- `target/release/liboxiland_capi.dylib` / `.so` (shared; platform-dependent)
-
-## Headers and pkg-config
-
-| Item | Path |
+| Artifact | Path |
 |---|---|
+| Static library | `target/release/liboxiland_capi.a` |
+| Shared library (macOS) | `target/release/liboxiland_capi.dylib` |
+| Shared library (ELF) | `target/release/liboxiland_capi.so` |
 | Header | `crates/oxiland-capi/include/librdf.h` |
 | pkg-config template | `crates/oxiland-capi/oxiland.pc.in` |
 | Symbol version script (ELF) | `crates/oxiland-capi/symbols.version` |
 
-Install the header where your toolchain expects it (or pass `-I`), and fill
-`@PREFIX@` in the `.pc.in` template for `pkg-config --cflags --libs oxiland`.
+Debug builds place the same libraries under `target/debug/`.
 
-Link with `-loxiland_capi`. On macOS you may need an rpath to the library
-directory.
+## Compile and link (repo root)
 
-## Quick example
-
-A representative workflow lives at
-`crates/oxiland-capi/examples/preview_workflow.c`:
+Canonical one-liner from the **repository root** (debug build + example):
 
 ```console
 cargo build -p oxiland-capi
 cc -I crates/oxiland-capi/include -L target/debug \
   crates/oxiland-capi/examples/preview_workflow.c \
-  -loxiland_capi -o preview_workflow
+  -loxiland_capi -Wl,-rpath,$PWD/target/debug \
+  -o preview_workflow
 ```
+
+Release variant:
+
+```console
+cargo build -p oxiland-capi --release
+cc -I crates/oxiland-capi/include -L target/release \
+  crates/oxiland-capi/examples/preview_workflow.c \
+  -loxiland_capi -Wl,-rpath,$PWD/target/release \
+  -o preview_workflow
+```
+
+`-Wl,-rpath,$PWD/target/debug` (or `.../release`) is the usual macOS pattern so
+the dynamic loader finds `liboxiland_capi.dylib` without installing it. On Linux
+you may use `-Wl,-rpath,$PWD/target/debug` the same way, or set
+`LD_LIBRARY_PATH`.
+
+Link with `-loxiland_capi` (the cdylib / staticlib name is `liboxiland_capi`).
+
+## pkg-config
+
+1. Copy `crates/oxiland-capi/oxiland.pc.in` to a writable location (for
+   example `./oxiland.pc`).
+2. Substitute `@PREFIX@` with the install prefix that contains `include/` and
+   `lib/` (or point `prefix` at a staging directory you layout yourself).
+3. Put that directory on `PKG_CONFIG_PATH` and query flags:
+
+```console
+cp crates/oxiland-capi/oxiland.pc.in ./oxiland.pc
+# edit ./oxiland.pc: replace @PREFIX@ with your prefix
+export PKG_CONFIG_PATH="$PWD:${PKG_CONFIG_PATH:-}"
+pkg-config --cflags --libs oxiland
+```
+
+The template ships `Name: oxiland` and links `-loxiland_capi`.
 
 ## Preview allowlist
 
-Only the symbols listed in the [0.8 milestone](../milestones/0.8.md) frozen
-allowlist are exported. Unsupported Redland APIs are omitted from the preview
-header rather than stubbed.
+Only these symbols are exported in the 0.8 preview. Unsupported Redland APIs
+are omitted from the preview header rather than stubbed.
 
-Covered areas: world, memory/fjall storage, model CRUD + find, URI/node/
-statement, streams, Turtle-oriented parse/serialize checks, SPARQL ASK/SELECT
-bindings, and `librdf_free_memory`.
+| Area | Symbols |
+|---|---|
+| World | `librdf_new_world`, `librdf_free_world`, `librdf_world_open` |
+| Storage | `librdf_new_storage`, `librdf_free_storage`, `librdf_storage_open` |
+| Model | `librdf_new_model`, `librdf_free_model`, `librdf_model_add_statement`, `librdf_model_remove_statement`, `librdf_model_contains_statement`, `librdf_model_size`, `librdf_model_find_statements` |
+| Terms | `librdf_new_uri`, `librdf_free_uri`, `librdf_new_node_from_uri_string`, `librdf_new_node_from_literal`, `librdf_free_node`, `librdf_new_statement_from_nodes`, `librdf_free_statement` |
+| Stream | `librdf_stream_end`, `librdf_stream_next`, `librdf_stream_get_object`, `librdf_free_stream` |
+| Parser | `librdf_new_parser`, `librdf_free_parser`, `librdf_parser_check_name`, `librdf_parser_parse_string_into_model` |
+| Serializer | `librdf_new_serializer`, `librdf_free_serializer`, `librdf_serializer_check_name`, `librdf_serializer_serialize_model_to_string` |
+| Query | `librdf_new_query`, `librdf_free_query`, `librdf_model_query_execute`, `librdf_query_results_is_boolean`, `librdf_query_results_get_boolean`, `librdf_query_results_is_bindings`, `librdf_query_results_finished`, `librdf_query_results_next`, `librdf_query_results_get_binding_name`, `librdf_query_results_get_binding_value`, `librdf_query_results_get_bindings_count`, `librdf_free_query_results` |
+| Alloc | `librdf_free_memory` |
 
 ## Handle ownership
 

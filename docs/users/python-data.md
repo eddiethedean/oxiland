@@ -18,7 +18,7 @@ Pass a name string or a `Syntax` constant. `Syntax.from_name()`,
 `Syntax.from_media_type()`, and `Syntax.from_extension()` validate external
 metadata without starting a parse.
 
-JSON-LD and N3 are not supported in 0.7.0. Unknown or ambiguous formats raise
+JSON-LD and N3 are not supported. Unknown or ambiguous formats raise
 `UnsupportedError`; Oxiland does not guess from document contents.
 
 ## Stream a document
@@ -43,7 +43,7 @@ when the iterator is constructed.
 Use `base_iri=` for relative IRIs. Use `graph=` to place graph-format input in
 a named graph.
 
-!!! note "Named-graph input in 0.7.0"
+!!! note "Named-graph input"
 
     N-Quads and TriG are supported formats, and serialization preserves named
     graphs. The Python parser does not yet expose the dataset graph target for
@@ -170,7 +170,7 @@ ASK and SELECT. Serialize CONSTRUCT and DESCRIBE graph results as RDF instead.
 ## Resource control
 
 Use query-level filters and `limit=` for caller-facing SELECT or graph queries,
-and consume lazy iterators incrementally. The 0.7.0 Python API does not expose a
+and consume lazy iterators incrementally. The Python API does not expose a
 query cancellation token or wall-clock timeout. Do not execute unrestricted
 SPARQL supplied by untrusted clients in a latency-sensitive worker; enforce
 limits and isolation at the application boundary.

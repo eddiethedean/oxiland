@@ -1,10 +1,12 @@
 # Migration from Redland
 
-This page helps maintainers map Redland `librdf` workflows to **Oxiland 0.7**
-(safe Rust facade + `oxiland-cli` + PyPI package). For **symbol-by-symbol**
-accounting see [redland-symbol-map.md](redland-symbol-map.md) and the
-header-derived inventory
-[`redland-1.0.17-oxiland-0.6.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.6.json)
+This page helps maintainers map Redland `librdf` workflows to **Oxiland tip
+0.8** (safe Rust facade + `oxiland-cli` + PyPI package + C source-compat
+preview). For **symbol-by-symbol** accounting see
+[redland-symbol-map.md](redland-symbol-map.md), the header-derived safe-API
+inventory
+[`redland-1.0.17-oxiland-0.6.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.6.json),
+and the [0.8 C preview inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.8.json)
 (Python usability evidence is in the [0.7 report](../reports/0.7.md), not a
 second `librdf` inventory).
 
@@ -30,7 +32,7 @@ Inventory the application rather than translating headers wholesale:
 | Question | Why it matters |
 |---|---|
 | Which parsers, query forms, storage backends, and feature URIs are used? | Determines verified mappings and explicit exclusions |
-| Does the application require C source or ABI compatibility? | Not available in 0.7; safe Rust/Python migration can proceed separately |
+| Does the application require C source or ABI compatibility? | Tip 0.8 offers a **source-compat preview** (not ABI drop-in); full ABI evidence is 0.9 |
 | Which data must survive an upgrade? | Requires N-Quads export, restore rehearsal, and format planning |
 | Are inputs or queries untrusted? | Requires application budgets and isolation beyond library semantics |
 | Which errors and callback orders affect control flow? | Must be covered by differential fixtures, not assumed from successful cases |
@@ -118,21 +120,31 @@ Guide: [python.md](../users/python.md).
 
 ## C source and ABI
 
-Not available. A separately audited `oxiland-capi` is planned no earlier than
-0.8 ([ADR-002](../DECISIONS.md)). A Pythonic PyPI package **ships in 0.7**
-(`pip install oxiland`) and binds the safe Rust facade directly—not a
-mechanical port of every Rust builder, and not layered on the C ABI. Do not
-schedule a binary drop-in C migration on 0.4 timelines for storage; keep C ABI
-on 0.8+.
+A separately audited `oxiland-capi` **source-compat preview** is available in
+tip **0.8** ([ADR-002](../DECISIONS.md), [ADR-022](../DECISIONS.md)). Build it
+from this repository—it is not published on crates.io. It is **not** a binary
+or ABI drop-in for existing Redland shared libraries; only the frozen allowlist
+is declared. See the [C ABI guide](../users/c-abi.md) and
+[limitations](../users/c-abi-limitations.md). Inventory rows for the preview
+live in the
+[0.8 inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.8.json)
+(`c_abi` / `c_state`).
+
+A Pythonic PyPI package ships independently (`pip install oxiland`) and binds
+the safe Rust facade directly—not a mechanical port of every Rust builder, and
+not layered on the C ABI. Prefer Rust/Python migration when ABI drop-in is not
+required; schedule binary ABI expectations on **0.9**.
 
 ## Suggested migration sequence
 
 1. Identify Redland workflows you actually call (parsers, model CRUD, SPARQL).
-2. Confirm each is `verified`, `not-applicable`, or `excluded` in the **0.6**
-   inventory (no unclassified symbols).
+2. Confirm each is `verified`, `not-applicable`, or `excluded` in the current
+   inventory (0.6 safe-API accounting; 0.8 adds `c_abi` / `c_state` for the
+   preview allowlist).
 3. Port tests to Oxiland public APIs with differential fixtures where needed.
 4. Keep native Redland as an oracle for contested behavior until fixtures pass.
-5. Prefer the 0.7 PyPI package for Python callers; keep C ABI work on 0.8+.
+5. Prefer the PyPI package for Python callers; evaluate the C preview against
+   the allowlist only, and keep ABI drop-in expectations on 0.9.
 
 ## Production cutover
 

@@ -116,7 +116,7 @@ regularly.
 ## Format compatibility
 
 Format v1 stores metadata beside durable N-Quads keys. Patch releases in
-**0.4.x–0.7.x** reopen format v1 without migration. Pre-0.4 experimental
+**0.4.x–0.8.x** reopen format v1 without migration. Pre-0.4 experimental
 directories without metadata require `Model::migrate_legacy_store(path)`.
 
 Standards RDF—not a copied Fjall directory—is the archival continuity contract

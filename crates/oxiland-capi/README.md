@@ -3,27 +3,44 @@
 C ABI preview for Oxiland (milestone 0.8). Redland-shaped headers and symbols
 for a frozen allowlist — full ABI compatibility remains 0.9.
 
-See `docs/design/0.8-cabi.md` and `docs/milestones/0.8.md`.
+**Canonical install and link guide:**
+[`docs/users/c-abi.md`](../../docs/users/c-abi.md).
 
-## Build
+Design and milestone notes: `docs/design/0.8-cabi.md`,
+`docs/milestones/0.8.md`.
+
+This crate has `publish = false` and is **not** on crates.io. Build from a
+clone of this repository.
+
+## Build (repository root)
 
 ```console
-cargo build -p oxiland-capi
+cargo build -p oxiland-capi --release
 ```
 
-Produces `liboxiland_capi.{a,so,dylib}` (crate-type `cdylib` + `staticlib`).
-Link with `-loxiland_capi` (the cdylib is `liboxiland_capi`).
+Produces `target/release/liboxiland_capi.{a,so,dylib}` (crate-type `cdylib` +
+`staticlib`). Link with `-loxiland_capi`.
 
 ## Headers and pkg-config
 
-- Header: `include/librdf.h`
-- Template: `oxiland.pc.in` (`Name: oxiland`)
+- Header: `crates/oxiland-capi/include/librdf.h`
+- Template: `crates/oxiland-capi/oxiland.pc.in` (`Name: oxiland`)
+
+Copy the `.pc.in` template, substitute `@PREFIX@`, and set `PKG_CONFIG_PATH`.
+See [`docs/users/c-abi.md`](../../docs/users/c-abi.md) for the full recipe.
+
+## Compile example (repository root)
 
 ```console
-cc -I include -L target/debug examples/preview_workflow.c -loxiland_capi -o preview_workflow
+cargo build -p oxiland-capi
+cc -I crates/oxiland-capi/include -L target/debug \
+  crates/oxiland-capi/examples/preview_workflow.c \
+  -loxiland_capi -Wl,-rpath,$PWD/target/debug \
+  -o preview_workflow
 ```
 
-On macOS you may also need `-Wl,-rpath,$(pwd)/target/debug`.
+Release variant uses `-L target/release` and
+`-Wl,-rpath,$PWD/target/release`.
 
 ## Ownership
 
@@ -35,4 +52,6 @@ On macOS you may also need `-Wl,-rpath,$(pwd)/target/debug`.
 
 ## Symbol allowlist
 
-Optional GNU ld version script: `symbols.version`.
+The frozen 0.8 table is embedded in
+[`docs/users/c-abi.md`](../../docs/users/c-abi.md). Optional GNU ld version
+script: `symbols.version`.

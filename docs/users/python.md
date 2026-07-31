@@ -129,5 +129,5 @@ Python callers do not need a Rust toolchain or knowledge of the Rust API.
 
 Oxiland is not an rdflib adapter or a drop-in for historical Redland Python
 bindings. Query cancellation tokens, custom storage engines, and rdflib object
-conversion are not exposed in 0.7.0. Unsupported operations fail explicitly
-instead of silently changing semantics.
+conversion are not exposed. Unsupported operations fail explicitly instead of
+silently changing semantics.

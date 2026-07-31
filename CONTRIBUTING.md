@@ -18,6 +18,7 @@ do not treat planning ADRs as the product manual.
 | `tests/`, `examples/` | Rust integration evidence and runnable workflows |
 | `python/` | Maturin/PyO3 Python package, stubs, tests, and examples |
 | `crates/oxiland-cli/` | Command-line package and workflow tests |
+| `crates/oxiland-capi/` | C ABI preview (`publish = false`; headers, examples, symbol checks) |
 | `docs/users/` | Task-oriented product documentation |
 | `docs/evaluators/` | Positioning and migration guidance |
 | `compatibility/` | Inventories, conformance fixtures, and oracle harnesses |
@@ -92,6 +93,8 @@ pytest -q
 pyright
 python examples/quick_start.py
 python examples/select.py
+python examples/construct.py
+python examples/update.py
 python examples/parse_serialize.py
 python examples/persistent.py
 maturin build --release --locked
@@ -102,6 +105,14 @@ For CLI changes:
 ```console
 cargo test -p oxiland-cli
 cargo run -p oxiland-cli -- --help
+```
+
+For C ABI (`crates/oxiland-capi/`) changes:
+
+```console
+cargo build -p oxiland-capi
+cargo test -p oxiland-capi
+scripts/check-capi-symbols.sh
 ```
 
 CI additionally exercises the Rust workspace on Linux, macOS, and Windows;
@@ -194,9 +205,9 @@ artifact and inspect its packaged metadata.
 
 ## Safety and data integrity
 
-The main crate has `#![forbid(unsafe_code)]`. Do not weaken it. Future C ABI
-work belongs in the separately audited crate described by the architecture
-plan.
+The main crate has `#![forbid(unsafe_code)]`. Do not weaken it. C ABI work
+belongs in `crates/oxiland-capi`, which may contain narrowly scoped `unsafe`
+under the architecture and design contracts.
 
 Storage changes need reopen and failure-path tests. Changes that could alter or
 lose persistent data require a migration/recovery story and a decision record

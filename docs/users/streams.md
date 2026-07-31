@@ -86,8 +86,8 @@ to the method signature. SPARQL result adapters remain tied to query/model state
 through their Rust lifetimes.
 
 SPARQL supports cooperative `CancellationToken` handling. Parse and bulk-load
-iterators do not expose wall-clock cancellation in 0.7.0; stop consuming them or
-apply process/thread isolation at the application boundary.
+iterators do not expose wall-clock cancellation; stop consuming them or apply
+process/thread isolation at the application boundary.
 
 ## Production practices
 

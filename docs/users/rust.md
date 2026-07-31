@@ -6,15 +6,26 @@ supported persistent-store contract behind one error model.
 
 ## Install
 
-Add Oxiland to a Rust 1.87+ project:
+Oxiland requires Rust 1.87+. crates.io currently publishes **0.7.0**; this tip
+is **0.8.0** (unreleased) until the tag.
+
+**Published release (crates.io):**
 
 ```toml
 [dependencies]
 oxiland = "0.7.0"
 ```
 
-The default feature set has no required native library dependency. The optional
-`tracing` feature forwards `World` log records to the `tracing` ecosystem.
+**This repository tip (0.8.0 APIs):**
+
+```toml
+[dependencies]
+oxiland = { git = "https://github.com/eddiethedean/oxiland" }
+```
+
+Or use a local path dependency against a checkout. The default feature set has
+no required native library dependency. The optional `tracing` feature forwards
+`World` log records to the `tracing` ecosystem.
 
 ## First dataset
 
