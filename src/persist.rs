@@ -74,19 +74,51 @@ impl DiskStore {
         self.quads
             .insert(key.as_bytes(), [])
             .map_err(|error| Error::Storage(error.to_string()))?;
-        self.keyspace
-            .persist(PersistMode::SyncAll)
-            .map_err(|error| Error::Storage(error.to_string()))
+        if let Err(error) = self.keyspace.persist(PersistMode::SyncAll) {
+            let _ = self.quads.remove(key.as_bytes());
+            if let Err(compensate_err) = self.keyspace.persist(PersistMode::SyncAll) {
+                return Err(Error::Storage(format!(
+                    "durable insert sync failed ({error}); compensation persist also failed ({compensate_err})"
+                )));
+            }
+            return Err(Error::Storage(error.to_string()));
+        }
+        Ok(())
     }
 
-    pub(crate) fn remove(&self, quad: &Quad) -> Result<()> {
-        let key = quad_key(quad);
-        self.quads
-            .remove(key.as_bytes())
-            .map_err(|error| Error::Storage(error.to_string()))?;
-        self.keyspace
-            .persist(PersistMode::SyncAll)
-            .map_err(|error| Error::Storage(error.to_string()))
+    /// Removes every durable key whose parsed quad is RDF-equal to `quad`.
+    ///
+    /// Scanning by RDF equality (not opaque key string) cleans alternate lexical
+    /// forms left by older builds and matches Oxigraph term equality.
+    pub(crate) fn remove_rdf_equal(&self, quad: &Quad) -> Result<()> {
+        let mut keys = Vec::new();
+        for entry in self.quads.iter() {
+            let (key, _) = entry.map_err(|error| Error::Storage(error.to_string()))?;
+            let key = std::str::from_utf8(&key).map_err(|error| {
+                Error::Storage(format!("persisted quad key was not UTF-8: {error}"))
+            })?;
+            let parsed = parse_quad(key)?;
+            if quads_rdf_equal(&parsed, quad)? {
+                keys.push(key.to_owned());
+            }
+        }
+        for key in &keys {
+            self.quads
+                .remove(key.as_bytes())
+                .map_err(|error| Error::Storage(error.to_string()))?;
+        }
+        if let Err(error) = self.keyspace.persist(PersistMode::SyncAll) {
+            for key in &keys {
+                let _ = self.quads.insert(key.as_bytes(), []);
+            }
+            if let Err(compensate_err) = self.keyspace.persist(PersistMode::SyncAll) {
+                return Err(Error::Storage(format!(
+                    "durable remove sync failed ({error}); compensation persist also failed ({compensate_err})"
+                )));
+            }
+            return Err(Error::Storage(error.to_string()));
+        }
+        Ok(())
     }
 
     /// Rewrites durable keys to match `store` after SPARQL Update (0.3).
@@ -117,7 +149,7 @@ impl DiskStore {
         let mut inserted = Vec::new();
         for key in &to_insert {
             if let Err(error) = self.quads.insert(key.as_bytes(), []) {
-                self.compensate_replace(&inserted, &[]);
+                let _ = self.compensate_replace(&inserted, &[]);
                 return Err(Error::Storage(error.to_string()));
             }
             inserted.push(key.clone());
@@ -125,7 +157,7 @@ impl DiskStore {
 
         #[cfg(test)]
         if DISK_REPLACE_FAULT.with(Cell::get) {
-            self.compensate_replace(&inserted, &[]);
+            self.compensate_replace(&inserted, &[])?;
             return Err(Error::Storage(
                 "injected disk replace fault after inserts".into(),
             ));
@@ -134,7 +166,7 @@ impl DiskStore {
         let mut deleted = Vec::new();
         for key in &to_delete {
             if let Err(error) = self.quads.remove(key.as_bytes()) {
-                self.compensate_replace(&inserted, &deleted);
+                let _ = self.compensate_replace(&inserted, &deleted);
                 return Err(Error::Storage(error.to_string()));
             }
             deleted.push(key.clone());
@@ -142,27 +174,38 @@ impl DiskStore {
 
         #[cfg(test)]
         if DISK_REPLACE_PERSIST_FAULT.with(Cell::get) {
-            self.compensate_replace(&inserted, &deleted);
+            self.compensate_replace(&inserted, &deleted)?;
             return Err(Error::Storage(
                 "injected disk replace fault before persist".into(),
             ));
         }
 
         if let Err(error) = self.keyspace.persist(PersistMode::SyncAll) {
-            self.compensate_replace(&inserted, &deleted);
-            let _ = self.keyspace.persist(PersistMode::SyncAll);
+            self.compensate_replace(&inserted, &deleted)?;
+            self.keyspace
+                .persist(PersistMode::SyncAll)
+                .map_err(|compensate_err| {
+                    Error::Storage(format!(
+                        "durable replace sync failed ({error}); compensation persist also failed ({compensate_err})"
+                    ))
+                })?;
             return Err(Error::Storage(error.to_string()));
         }
         Ok(())
     }
 
-    fn compensate_replace(&self, inserted: &[String], deleted: &[String]) {
+    fn compensate_replace(&self, inserted: &[String], deleted: &[String]) -> Result<()> {
         for key in deleted {
-            let _ = self.quads.insert(key.as_bytes(), []);
+            self.quads.insert(key.as_bytes(), []).map_err(|error| {
+                Error::Storage(format!("replace compensation insert failed: {error}"))
+            })?;
         }
         for key in inserted {
-            let _ = self.quads.remove(key.as_bytes());
+            self.quads.remove(key.as_bytes()).map_err(|error| {
+                Error::Storage(format!("replace compensation remove failed: {error}"))
+            })?;
         }
+        Ok(())
     }
 }
 
@@ -184,15 +227,42 @@ fn parse_quad(key: &str) -> Result<Quad> {
     Ok(quad)
 }
 
+/// RDF term equality as used by Oxigraph stores (value-equal typed literals).
+fn quads_rdf_equal(left: &Quad, right: &Quad) -> Result<bool> {
+    let probe = Store::new().map_err(|error| Error::Storage(error.to_string()))?;
+    probe
+        .insert(left)
+        .map_err(|error| Error::Storage(error.to_string()))?;
+    probe
+        .contains(right.as_ref())
+        .map_err(|error| Error::Storage(error.to_string()))
+}
+
+/// Returns the store's canonical quad matching `quad` under RDF equality.
+pub(crate) fn stored_matching_quad(store: &Store, quad: &Quad) -> Result<Quad> {
+    store
+        .quads_for_pattern(
+            Some(quad.subject.as_ref()),
+            Some(quad.predicate.as_ref()),
+            Some(quad.object.as_ref()),
+            Some(quad.graph_name.as_ref()),
+        )
+        .next()
+        .ok_or_else(|| {
+            Error::Storage("matching quad missing from store after contains check".into())
+        })?
+        .map_err(|error| Error::Storage(error.to_string()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::Model;
     use crate::terms::{self, Literal, Triple};
-    use oxigraph::model::Quad;
+    use oxigraph::model::{NamedNode, Quad};
 
     #[test]
-    fn duplicate_insert_disk_fault_preserves_existing_quad() {
+    fn duplicate_insert_skips_disk_and_preserves_existing_quad() {
         let dir = tempfile::tempdir().unwrap();
         let model = Model::open(dir.path()).unwrap();
         let statement = Triple::new(
@@ -209,12 +279,43 @@ mod tests {
         assert!(model.insert_quad(quad.clone()).unwrap());
         assert_eq!(model.len().unwrap(), 1);
 
+        // RDF-equal duplicates must not touch disk (fault would otherwise fire).
+        DISK_INSERT_FAULT.with(|flag| flag.set(true));
+        assert!(!model.insert_quad(quad).unwrap());
+        DISK_INSERT_FAULT.with(|flag| flag.set(false));
+        assert_eq!(model.len().unwrap(), 1);
+        assert!(model.contains(statement.as_ref()).unwrap());
+    }
+
+    #[test]
+    fn new_insert_disk_fault_rolls_back_to_disk_snapshot() {
+        let dir = tempfile::tempdir().unwrap();
+        let model = Model::open(dir.path()).unwrap();
+        let keep = Triple::new(
+            terms::named_node("https://example.com/s").unwrap(),
+            terms::named_node("https://example.com/p").unwrap(),
+            Literal::new_simple_literal("keep"),
+        );
+        assert!(model.add(keep.clone()).unwrap());
+
+        let fresh = Triple::new(
+            terms::named_node("https://example.com/s2").unwrap(),
+            terms::named_node("https://example.com/p").unwrap(),
+            Literal::new_simple_literal("new"),
+        );
+        let quad = Quad::new(
+            fresh.subject.clone(),
+            fresh.predicate.clone(),
+            fresh.object.clone(),
+            oxigraph::model::GraphName::DefaultGraph,
+        );
         DISK_INSERT_FAULT.with(|flag| flag.set(true));
         let err = model.insert_quad(quad).unwrap_err();
         DISK_INSERT_FAULT.with(|flag| flag.set(false));
         assert!(matches!(err, Error::Storage(_)));
         assert_eq!(model.len().unwrap(), 1);
-        assert!(model.contains(statement.as_ref()).unwrap());
+        assert!(model.contains(keep.as_ref()).unwrap());
+        assert!(!model.contains(fresh.as_ref()).unwrap());
     }
 
     #[test]
@@ -288,5 +389,68 @@ mod tests {
         let reopened = Model::open(dir.path()).unwrap();
         assert_eq!(reopened.len().unwrap(), 1);
         assert!(reopened.contains(keep.as_ref()).unwrap());
+    }
+
+    #[test]
+    fn typed_literal_canonical_remove_must_not_resurrect() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("store");
+        let integer = NamedNode::new_unchecked("http://www.w3.org/2001/XMLSchema#integer");
+        {
+            let model = Model::open(&path).unwrap();
+            let statement = Triple::new(
+                terms::named_node("https://example.com/s").unwrap(),
+                terms::named_node("https://example.com/p").unwrap(),
+                Literal::new_typed_literal("01", integer.clone()),
+            );
+            assert!(model.add(statement).unwrap());
+            let canonical = Triple::new(
+                terms::named_node("https://example.com/s").unwrap(),
+                terms::named_node("https://example.com/p").unwrap(),
+                Literal::new_typed_literal("1", integer),
+            );
+            assert!(model.remove(canonical).unwrap());
+            assert_eq!(model.len().unwrap(), 0);
+        }
+        let reopened = Model::open(&path).unwrap();
+        assert_eq!(reopened.len().unwrap(), 0);
+    }
+
+    #[test]
+    fn duplicate_lexical_forms_must_not_double_persist() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("store");
+        let integer = NamedNode::new_unchecked("http://www.w3.org/2001/XMLSchema#integer");
+        let model = Model::open(&path).unwrap();
+        let s = terms::named_node("https://example.com/s").unwrap();
+        let p = terms::named_node("https://example.com/p").unwrap();
+        assert!(
+            model
+                .add(Triple::new(
+                    s.clone(),
+                    p.clone(),
+                    Literal::new_typed_literal("01", integer.clone()),
+                ))
+                .unwrap()
+        );
+        assert!(
+            !model
+                .add(Triple::new(
+                    s.clone(),
+                    p.clone(),
+                    Literal::new_typed_literal("1", integer.clone()),
+                ))
+                .unwrap()
+        );
+        assert_eq!(model.len().unwrap(), 1);
+        assert!(
+            model
+                .remove(Triple::new(s, p, Literal::new_typed_literal("1", integer),))
+                .unwrap()
+        );
+        assert_eq!(model.len().unwrap(), 0);
+        drop(model);
+        let reopened = Model::open(&path).unwrap();
+        assert_eq!(reopened.len().unwrap(), 0);
     }
 }

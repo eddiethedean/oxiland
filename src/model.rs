@@ -6,7 +6,7 @@ use oxigraph::model::{
 };
 use oxigraph::store::{QuadIter, Store};
 
-use crate::persist::DiskStore;
+use crate::persist::{self, DiskStore};
 use crate::{Error, Result};
 
 /// A partial triple pattern, equivalent to Redland's statement matching API.
@@ -122,6 +122,12 @@ impl Model {
     }
 
     /// Returns the underlying Oxigraph store.
+    ///
+    /// This is an escape hatch for advanced Oxigraph use. Mutations through the
+    /// returned handle bypass Oxiland's write lock and Fjall durability sync.
+    /// On models opened with [`Model::open`], prefer [`Model::insert_quad`],
+    /// [`Model::remove_quad`], and [`crate::Update`] so memory and disk stay
+    /// aligned.
     #[must_use]
     pub fn store(&self) -> &Store {
         &self.store
@@ -168,6 +174,9 @@ impl Model {
     ///
     /// Returns `true` when the quad was newly inserted and `false` when it was
     /// already present. Used by progressive parser loads (ADR-007).
+    ///
+    /// Persistent models store Oxigraph's canonical quad form so typed-literal
+    /// lexical variants cannot create orphan durable keys.
     pub fn insert_quad(&self, quad: Quad) -> Result<bool> {
         let _guard = self
             .write_lock
@@ -177,20 +186,29 @@ impl Model {
             .store
             .contains(quad.as_ref())
             .map_err(|error| Error::Storage(error.to_string()))?;
+        if !inserted {
+            // Skip durable writes for RDF-equal duplicates so alternate lexical
+            // forms cannot add a second Fjall key for the same statement.
+            return Ok(false);
+        }
         self.store
             .insert(&quad)
             .map_err(|error| Error::Storage(error.to_string()))?;
         if let Some(disk) = &self.disk {
-            if let Err(error) = disk.insert(&quad) {
-                // Only roll back quads this call newly inserted. Removing when
-                // `inserted == false` would delete a pre-existing statement.
-                if inserted {
-                    let _ = self.store.remove(quad.as_ref());
+            let canonical = persist::stored_matching_quad(&self.store, &quad)?;
+            if let Err(error) = disk.insert(&canonical) {
+                // Reload from disk so memory matches whatever actually persisted
+                // (including SyncAll failure / compensation edge cases).
+                if let Err(reload_error) = self.reload_store_from_disk_unlocked(disk) {
+                    let _ = self.store.remove(canonical.as_ref());
+                    return Err(Error::Storage(format!(
+                        "durable insert failed ({error}); rollback from disk also failed ({reload_error})"
+                    )));
                 }
                 return Err(error);
             }
         }
-        Ok(inserted)
+        Ok(true)
     }
 
     /// Removes a fully formed quad from the model.
@@ -205,18 +223,25 @@ impl Model {
             .store
             .contains(quad.as_ref())
             .map_err(|error| Error::Storage(error.to_string()))?;
+        if !removed {
+            return Ok(false);
+        }
+        let canonical = persist::stored_matching_quad(&self.store, quad)?;
         self.store
             .remove(quad.as_ref())
             .map_err(|error| Error::Storage(error.to_string()))?;
-        if removed {
-            if let Some(disk) = &self.disk {
-                if let Err(error) = disk.remove(quad) {
-                    let _ = self.store.insert(quad);
-                    return Err(error);
+        if let Some(disk) = &self.disk {
+            if let Err(error) = disk.remove_rdf_equal(&canonical) {
+                if let Err(reload_error) = self.reload_store_from_disk_unlocked(disk) {
+                    let _ = self.store.insert(&canonical);
+                    return Err(Error::Storage(format!(
+                        "durable remove failed ({error}); rollback from disk also failed ({reload_error})"
+                    )));
                 }
+                return Err(error);
             }
         }
-        Ok(removed)
+        Ok(true)
     }
 
     /// Removes a statement from the default graph.
@@ -292,6 +317,10 @@ impl Model {
     /// Runs a store-mutating SPARQL Update under the write lock, then resyncs
     /// Fjall. If durable sync fails, the in-memory store is reloaded from disk
     /// so memory and durability stay aligned.
+    ///
+    /// Concurrent `find` / `Query::execute` readers are not blocked by this
+    /// lock. On persistent models, avoid overlapping Update with reads: a
+    /// failed sync temporarily clears and reloads the working set.
     pub(crate) fn run_sparql_update(
         &self,
         update: impl FnOnce(&Store) -> Result<()>,

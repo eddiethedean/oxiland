@@ -4,8 +4,9 @@
 
 | Version | Supported |
 |---|---|
-| 0.2.x | Yes |
-| 0.1.x | Security fixes only when practical; prefer upgrading to 0.2 |
+| 0.3.x | Yes |
+| 0.2.x | Security fixes only when practical; prefer upgrading to 0.3 |
+| 0.1.x | Security fixes only when practical; prefer upgrading to 0.3 |
 | < 0.1 | No |
 
 Oxiland is pre-1.0. Public APIs and on-disk formats may change; security fixes

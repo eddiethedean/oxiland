@@ -197,6 +197,9 @@ impl Query {
     }
 
     /// Restricts the query default graph to the given graph names.
+    ///
+    /// An empty list selects an empty default dataset (no triples match from
+    /// the default graph).
     #[must_use]
     pub fn default_graph(mut self, graphs: impl IntoIterator<Item = GraphName>) -> Self {
         self.dataset.default_graphs = Some(graphs.into_iter().collect());
@@ -541,7 +544,9 @@ pub fn serialize_query_results_to_string(
 /// Serializes CONSTRUCT/DESCRIBE [`QueryResults::Graph`] with an RDF
 /// [`Serializer`].
 ///
-/// Evaluation errors from the graph iterator map to [`Error::SparqlEvaluation`].
+/// Triples are written as they are produced; the helper does not buffer the
+/// full graph. Evaluation errors from the graph iterator map to
+/// [`Error::SparqlEvaluation`].
 pub fn serialize_graph_results_to_writer<W: Write>(
     results: QueryResults<'_>,
     serializer: &Serializer,
@@ -552,11 +557,10 @@ pub fn serialize_graph_results_to_writer<W: Write>(
             "serialize_graph_results_to_writer requires QueryResults::Graph".into(),
         ));
     };
-    let mut triples = Vec::new();
-    for triple in graph {
-        triples.push(triple.map_err(|error| Error::SparqlEvaluation(error.to_string()))?);
-    }
-    serializer.serialize_triples_to_writer(writer, triples)
+    serializer.serialize_triples_fallible_to_writer(
+        writer,
+        graph.map(|triple| triple.map_err(|error| Error::SparqlEvaluation(error.to_string()))),
+    )
 }
 
 fn looks_like_ask_query(text: &str) -> bool {
@@ -573,8 +577,9 @@ fn looks_like_ask_query(text: &str) -> bool {
     }
 }
 
-/// Skips leading comments and BASE/PREFIX declarations for early ASK checks.
+/// Skips leading BOM, comments, and BASE/PREFIX declarations for early ASK checks.
 fn strip_sparql_prologue(text: &str) -> &str {
+    let text = text.strip_prefix('\u{feff}').unwrap_or(text);
     let bytes = text.as_bytes();
     let mut i = 0;
     while i < bytes.len() {

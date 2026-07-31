@@ -1,4 +1,4 @@
-//! SELECT query example for Oxiland 0.2.
+//! SELECT query example for Oxiland 0.3.
 
 use oxiland::terms::{self, Literal, Triple};
 use oxiland::{Model, Query, QueryResults};

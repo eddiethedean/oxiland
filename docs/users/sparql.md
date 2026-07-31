@@ -78,7 +78,7 @@ Runnable: `cargo run --example update`.
 |---|---|
 | `base_iri` / `prefix` | Parsing defaults (`InvalidRdf` on bad IRIs) |
 | `limit` / `offset` | Algebra `Slice` for SELECT/CONSTRUCT/DESCRIBE (not ASK; replaces in-query limits) |
-| `default_graph` / `default_graph_as_union` | Dataset selection (Query and Update) |
+| `default_graph` / `default_graph_as_union` | Dataset selection (Query and Update). An empty `default_graph([])` list selects an empty default dataset. |
 | `available_named_graphs` | Query-only named-graph availability |
 | `cancellation_token` | Cooperative cancel (ADR-012); wall-clock timeout is caller-driven |
 

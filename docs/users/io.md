@@ -1,6 +1,6 @@
 # RDF input and output
 
-Oxiland 0.2 provides Redland-shaped [`Parser`](https://docs.rs/oxiland/latest/oxiland/io/struct.Parser.html)
+Oxiland provides Redland-shaped [`Parser`](https://docs.rs/oxiland/latest/oxiland/io/struct.Parser.html)
 and [`Serializer`](https://docs.rs/oxiland/latest/oxiland/io/struct.Serializer.html)
 facades over a closed [`Syntax`](https://docs.rs/oxiland/latest/oxiland/io/enum.Syntax.html)
 set (ADR-008).

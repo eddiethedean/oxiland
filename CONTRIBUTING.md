@@ -65,6 +65,8 @@ Oxiland is in 0.x, but public changes are still controlled:
 - return typed errors for unsupported capabilities;
 - include migration notes for breaking changes;
 - refresh `api/oxiland-public-api.txt` intentionally and review its diff;
+- note that the public-API check is a curated owned-symbol allowlist (not a
+  full rustdoc/`cargo public-api` rustdoc JSON diff);
 - add an ADR when the project charter's change-control rules require one.
 
 Do not add a public placeholder that accepts configuration and fails generically

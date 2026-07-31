@@ -2,7 +2,7 @@ use oxigraph::io::RdfFormat;
 
 use crate::{Error, Result};
 
-/// Closed set of RDF syntaxes advertised by Oxiland 0.2 (ADR-008).
+/// Closed set of RDF syntaxes advertised by Oxiland (ADR-008).
 ///
 /// Lookup is deterministic: unknown or unsupported aliases return
 /// [`Error::Unsupported`] rather than guessing.
@@ -101,11 +101,11 @@ impl Syntax {
             "trig" => Ok(Self::TriG),
             "rdfxml" | "rdf-xml" | "rdf/xml" | "xml" => Ok(Self::RdfXml),
             "n3" | "notation3" => Err(Error::Unsupported(
-                "syntax 'n3' is not advertised in Oxiland 0.2; use turtle where N3-compatible input applies"
+                "syntax 'n3' is not advertised by Oxiland; use turtle where N3-compatible input applies"
                     .into(),
             )),
             "jsonld" | "json-ld" | "ld+json" => Err(Error::Unsupported(
-                "syntax 'jsonld' is deferred; Oxiland 0.2 does not advertise JSON-LD".into(),
+                "syntax 'jsonld' is deferred; Oxiland does not advertise JSON-LD".into(),
             )),
             "guess" | "auto" => Err(Error::Unsupported(
                 "automatic syntax detection by content sniffing is unsupported; select an explicit Syntax"
@@ -148,11 +148,11 @@ impl Syntax {
                 "media type is ambiguous XML; use application/rdf+xml or an explicit Syntax".into(),
             )),
             "text/n3" | "text/rdf+n3" | "application/n3" => Err(Error::Unsupported(
-                "media type maps to N3, which is not advertised in Oxiland 0.2".into(),
+                "media type maps to N3, which is not advertised by Oxiland".into(),
             )),
             "application/ld+json" | "application/jsonld" | "application/json" => {
                 Err(Error::Unsupported(
-                    "media type maps to JSON-LD, which is not advertised in Oxiland 0.2".into(),
+                    "media type maps to JSON-LD, which is not advertised by Oxiland".into(),
                 ))
             }
             other => Err(Error::Unsupported(format!(
@@ -181,10 +181,10 @@ impl Syntax {
                 "extension '.xml' is ambiguous; use '.rdf' or an explicit Syntax".into(),
             )),
             "n3" => Err(Error::Unsupported(
-                "extension '.n3' maps to N3, which is not advertised in Oxiland 0.2".into(),
+                "extension '.n3' maps to N3, which is not advertised by Oxiland".into(),
             )),
             "jsonld" | "json" => Err(Error::Unsupported(
-                "extension maps to JSON-LD, which is not advertised in Oxiland 0.2".into(),
+                "extension maps to JSON-LD, which is not advertised by Oxiland".into(),
             )),
             other => Err(Error::Unsupported(format!(
                 "unknown RDF file extension '{other}'"

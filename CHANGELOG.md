@@ -7,11 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Roadmap adds **0.7 Pythonic Python package** (not a 1:1 Rust port); C ABI
-  preview moves to 0.8, downstream C to 0.9, RC to 0.10
-
 ## [0.3.0] - 2026-07-30
 
 Redland-shaped SPARQL query, update, and results over Oxigraph 0.5.9.
@@ -34,6 +29,8 @@ Redland-shaped SPARQL query, update, and results over Oxigraph 0.5.9.
 
 - crates.io description covers query/update/results
 - User SPARQL guide documents 0.3 configuration and serialization
+- Roadmap adds **0.7 Pythonic Python package** (not a 1:1 Rust port); C ABI
+  preview moves to 0.8, downstream C to 0.9, RC to 0.10
 
 ### Fixed
 
@@ -42,9 +39,22 @@ Redland-shaped SPARQL query, update, and results over Oxigraph 0.5.9.
 - Update dataset configuration returns `Unsupported` when USING datasets are
   unavailable (e.g. `INSERT DATA`)
 - API `limit`/`offset` replace in-query `Slice` layers instead of nesting
-- ASK rejects API `limit`/`offset` at builder time (including after PREFIX/BASE)
+- ASK rejects API `limit`/`offset` at builder time (including after PREFIX/BASE
+  and a leading UTF-8 BOM)
 - Invalid query/update base IRI and prefix map to `InvalidRdf` consistently
 - SPARQL smoke harness exercises `compatibility/fixtures/sparql/smoke.ttl`
+- Fjall durable keys use Oxigraph's canonical quad form and RDF-equal remove
+  scanning so typed-literal lexical variants cannot resurrect deleted triples
+- Duplicate RDF-equal inserts no longer write alternate lexical keys to disk
+- Durable insert/remove SyncAll failures compensate partition mutations; model
+  reloads from disk on persist errors instead of assuming the write never stuck
+- SPARQL Update replace compensation propagates failures instead of swallowing them
+- `serialize_model_to_path` flushes the `BufWriter` and surfaces flush errors
+- `serialize_graph_results_to_writer` streams triples without buffering the graph
+- `World` recovers from poisoned feature locks like `Model`
+- Progressive-load annotations cover all `Error` variants
+- Security support matrix, 0.3 evidence gates, and harness/inventory docs aligned
+  with the shipped 0.3 facade smoke (not native Rasqal differentials)
 
 ## [0.2.0] - 2026-07-30
 

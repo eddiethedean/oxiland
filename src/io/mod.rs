@@ -1,6 +1,6 @@
 //! Redland-shaped RDF parsing and serialization.
 //!
-//! Oxiland 0.2 provides safe [`Parser`] and [`Serializer`] facades with closed
+//! Oxiland provides safe [`Parser`] and [`Serializer`] facades with closed
 //! [`Syntax`] discovery (ADR-008). Streaming parse output and progressive
 //! model loading follow ADR-007.
 //!

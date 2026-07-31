@@ -6,7 +6,7 @@ Pinned compatibility inputs for the RDF I/O milestone.
 |---|---|---|
 | Redland `librdf` API | 1.0.17 | Manual labeled 1.0.18 |
 | Raptor | 2.0.16 (typical packaged) | Oracle via `rapper` CLI |
-| Rasqal | deferred for 0.2 I/O | Query/oracle work is 0.3+ |
+| Rasqal | deferred | 0.3 ships an Oxiland facade SPARQL smoke harness; native Rasqal differential oracles remain future work |
 | Oxigraph | 0.5.9 | Exact pin in `Cargo.toml` |
 | oxrdfio | 0.2.5 | Re-exported by Oxigraph |
 

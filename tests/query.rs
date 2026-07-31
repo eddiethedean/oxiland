@@ -166,6 +166,9 @@ fn limit_and_offset_slice_select() {
 
     let err = Query::new("PREFIX ex: <https://example.com/> ASK { ?s ?p ?o }").limit(1);
     assert!(matches!(err, Err(Error::Unsupported(_))));
+
+    let err = Query::new("\u{feff}ASK { ?s ?p ?o }").limit(1);
+    assert!(matches!(err, Err(Error::Unsupported(_))));
 }
 
 #[test]

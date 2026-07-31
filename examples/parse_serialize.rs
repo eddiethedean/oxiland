@@ -1,4 +1,4 @@
-//! Parse Turtle and serialize N-Triples with the Oxiland 0.2 I/O facade.
+//! Parse Turtle and serialize N-Triples with the Oxiland I/O facade.
 
 use oxiland::Model;
 use oxiland::io::{Parser, Serializer, Syntax};

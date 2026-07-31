@@ -48,7 +48,7 @@ impl World {
     pub fn set_feature(&self, iri: impl Into<String>, value: FeatureValue) {
         self.features
             .write()
-            .expect("world feature lock poisoned")
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
             .insert(iri.into(), value);
     }
 
@@ -57,7 +57,7 @@ impl World {
     pub fn feature(&self, iri: &str) -> Option<FeatureValue> {
         self.features
             .read()
-            .expect("world feature lock poisoned")
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
             .get(iri)
             .cloned()
     }

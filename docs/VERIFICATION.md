@@ -144,7 +144,7 @@ Additional phase gates:
 | Starting version | Added release blocker |
 |---|---|
 | 0.2 | applicable RDF syntax conformance |
-| 0.3 | SPARQL query/update conformance and differential fixtures |
+| 0.3 | SPARQL query/update facade conformance and smoke harness (Rasqal differential expands later) |
 | 0.4 | persistence, transaction, and reopen matrix |
 | 0.6 | complete safe-API inventory and public-API snapshot |
 | 0.7 | Python wheels, type checks, and pytest matrix |

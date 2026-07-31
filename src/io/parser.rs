@@ -346,7 +346,15 @@ fn annotate_partial_load(error: Error, newly_inserted: usize) -> Error {
             format!("{io_error}; {note}"),
         )),
         Error::Storage(message) => Error::Storage(format!("{message}; {note}")),
-        other => other,
+        Error::InvalidRdf(message) => Error::InvalidRdf(format!("{message}; {note}")),
+        Error::Serialize(message) => Error::Serialize(format!("{message}; {note}")),
+        Error::Unsupported(message) => Error::Unsupported(format!("{message}; {note}")),
+        Error::SparqlParse(message) => Error::SparqlParse(format!("{message}; {note}")),
+        Error::SparqlEvaluation(message) => Error::SparqlEvaluation(format!("{message}; {note}")),
+        Error::OpenStore { path, message } => Error::OpenStore {
+            path,
+            message: format!("{message}; {note}"),
+        },
     }
 }
 

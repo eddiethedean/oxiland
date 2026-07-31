@@ -7,6 +7,8 @@ Oxiland APIs.
   0.1 core-model slice.
 - [`redland-1.0.17-oxiland-0.2.json`](redland-1.0.17-oxiland-0.2.json) — curated
   0.2 RDF I/O slice.
+- [`redland-1.0.17-oxiland-0.3.json`](redland-1.0.17-oxiland-0.3.json) — curated
+  0.3 SPARQL query/update/results slice.
 
 Format name/MIME/extension dispositions:
 [`../baseline/format-matrix.json`](../baseline/format-matrix.json).

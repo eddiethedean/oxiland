@@ -138,10 +138,13 @@ Deliverables:
 Evidence gates:
 
 - Each query result kind has positive, empty, and failure-path tests.
-- Query and update behavior is compared with native Redland fixtures.
+- Query and update facade behavior is covered by inventory-linked tests and the
+  SPARQL smoke harness (`classification: oxiland-facade`). Native Rasqal
+  differential oracles remain deferred (see [0.3 report](reports/0.3.md)).
 - Iterator lifetimes do not require materializing full result sets.
 - Ordering is asserted only where SPARQL guarantees it.
-- Dataset/default-graph behavior has differential fixtures.
+- Dataset/default-graph behavior has facade tests; native differential fixtures
+  expand when Rasqal oracles land.
 - Query error categories preserve parse versus evaluation failures.
 
 Depends on: 0.2 dataset loading and result serialization.

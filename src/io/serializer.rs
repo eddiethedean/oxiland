@@ -95,8 +95,18 @@ impl Serializer {
         writer: W,
         triples: impl IntoIterator<Item = Triple>,
     ) -> Result<W> {
+        self.serialize_triples_fallible_to_writer(writer, triples.into_iter().map(Ok))
+    }
+
+    /// Serializes triples from a fallible iterator without buffering the full set.
+    pub(crate) fn serialize_triples_fallible_to_writer<W: Write>(
+        &self,
+        writer: W,
+        triples: impl IntoIterator<Item = Result<Triple>>,
+    ) -> Result<W> {
         let mut serializer = self.build()?.for_writer(writer);
         for triple in triples {
+            let triple = triple?;
             serializer
                 .serialize_triple(TripleRef::from(&triple))
                 .map_err(map_write_error)?;
@@ -144,7 +154,10 @@ impl Serializer {
                 format!("{}: {}", path.display(), error),
             ))
         })?;
-        self.serialize_model_to_writer(BufWriter::new(file), model)?;
+        let writer = self.serialize_model_to_writer(BufWriter::new(file), model)?;
+        writer
+            .into_inner()
+            .map_err(|error| map_write_error(error.into_error()))?;
         Ok(())
     }
 
