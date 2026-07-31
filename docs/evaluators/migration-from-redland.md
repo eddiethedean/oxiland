@@ -1,8 +1,11 @@
 # Migration from Redland
 
-This page helps maintainers map Redland `librdf` workflows to Oxiland 0.5.
-It is **not** a complete symbol-by-symbol porting guide (that is a 0.6
-accounting goal). Inventories remain authoritative for claimed rows:
+This page helps maintainers map Redland `librdf` workflows to Oxiland 0.6.
+For **symbol-by-symbol** accounting see
+[redland-symbol-map.md](redland-symbol-map.md) and the header-derived inventory
+[`redland-1.0.17-oxiland-0.6.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.6.json).
+
+Earlier curated slices remain available for historical milestone evidence:
 
 - [0.1 core inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
 - [0.2 I/O inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.2.json)
@@ -74,6 +77,17 @@ Design detail: [docs/design/0.3-query-api.md](../design/0.3-query-api.md).
 
 Demo: `cargo run --example std_replacements`.
 
+## CLI / rdfproc (0.6)
+
+| Redland concept | Oxiland |
+|---|---|
+| `rdfproc` parse / find / query / serialize | `oxiland-cli` (ADR-019) |
+| storage `memory` | `-s memory` |
+| storage file path | `-s fjall` path with `-n` to create (format v1) |
+| MySQL/Virtuoso/`hashes` plugins | Unsupported (explicit error) |
+
+See [cli.md](../users/cli.md) and [redland-symbol-map.md](redland-symbol-map.md).
+
 ## C source and ABI
 
 Not available. A separately audited `oxiland-capi` is planned no earlier than
@@ -85,8 +99,8 @@ migration on 0.4 timelines for storage; keep C ABI on 0.8+.
 ## Suggested migration sequence
 
 1. Identify Redland workflows you actually call (parsers, model CRUD, SPARQL).
-2. Confirm each is `verified` or `implemented` in the inventory for your
-   milestone.
+2. Confirm each is `verified`, `not-applicable`, or `excluded` in the **0.6**
+   inventory (no unclassified symbols).
 3. Port tests to Oxiland public APIs with differential fixtures where needed.
 4. Keep native Redland as an oracle for contested behavior until fixtures pass.
-5. Defer storage-plugin, Python package, and C ABI work until their milestones.
+5. Defer Python package and C ABI work until their milestones.

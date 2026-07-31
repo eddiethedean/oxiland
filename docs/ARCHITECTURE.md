@@ -1,8 +1,9 @@
 # Architecture plan
 
 Status: active design baseline  
-Current implementation: single `oxiland` crate on Oxigraph 0.5.9  
-Next review gate: before expanding safe-API accounting contracts in 0.6
+Current implementation: Cargo workspace — library crate `oxiland` plus
+`crates/oxiland-cli` (0.6+). Oxigraph 0.5.9 remains the RDF engine.  
+Next review gate: before Python package public beta (0.7) and C ABI preview (0.8)
 
 This document specifies dependency direction and safety boundaries. It does not
 claim that planned crates or modules already exist.
@@ -194,11 +195,13 @@ not reverse an accepted decision only through code changes.
 
 ## Open architecture questions
 
-- Which Redland factory registrations are safe and useful in Rust?
 - Which C handles need reference counting to reproduce observed aliasing?
 
-Resolved recently: 0.5 stream/utility surface (ADR-013–ADR-016);
-query cancellation via Oxigraph `CancellationToken` (ADR-012).
+Resolved recently: Redland factory registration disposition for safe Rust
+(ADR-018); `oxiland-cli` rdfproc workflows (ADR-019); naming freeze intent
+(ADR-020); header-derived inventory generation (ADR-021); 0.5 stream/utility
+surface (ADR-013–ADR-016); query cancellation via Oxigraph `CancellationToken`
+(ADR-012).
 
 Term re-exports are governed by ADR-004 and revisited only on its evidence
 trigger. The remaining questions are decision candidates, not implicit TODOs.

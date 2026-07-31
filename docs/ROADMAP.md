@@ -20,7 +20,7 @@ only when its evidence gates are satisfied.
 | 0.3 | Complete query/result workflows | 0.2 | `complete` |
 | 0.4 | Durable storage and transactions | 0.3 | `complete` |
 | 0.5 | Streams, utilities, and observability | 0.4 | `complete` |
-| 0.6 | Accounted safe Rust parity | 0.5 | `planned` |
+| 0.6 | Accounted safe Rust parity | 0.5 | `complete` |
 | 0.7 | Pythonic package on PyPI | 0.4 (sequenced after 0.6) | `planned` |
 | 0.8 | Auditable C ABI preview | 0.6 | `planned` |
 | 0.9 | Downstream C compatibility | 0.8 | `planned` |
@@ -221,9 +221,15 @@ Depends on: the stable error and lifetime models exercised by 0.1–0.4.
 Outcome: account for the full public Redland API in a reviewed safe Rust
 surface.
 
+State: complete  
+Evidence: [parity ledger](parity.md),
+[0.6 compatibility report](reports/0.6.md),
+[inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.6.json),
+[milestone plan](milestones/0.6.md)
+
 Deliverables:
 
-- Finish the generated Redland function/type/enum inventory.
+- Finish the generated Redland **function** inventory (header-derived).
 - Map every symbol to a Rust API, compatibility shim, or documented
   non-applicable ownership operation.
 - Add `rdfproc`-equivalent command workflows.

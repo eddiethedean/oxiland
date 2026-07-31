@@ -1,7 +1,7 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 0.6 (0.5 complete)
+Current milestone: 0.7 (0.6 complete)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -113,9 +113,10 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Begin 0.6 safe-API accounting inventory expansion.
+1. Begin 0.7 Pythonic package design (ADR-017) against the frozen 0.6 facade.
 2. Expand SPARQL differential fixtures beyond the facade smoke harness.
 3. Keep format v1 / ADR-006 migration notes current as later milestones land.
+4. Do not start 0.8 C ABI until 0.6 accounting remains green on main.
 
 ## Completed 0.5 backlog
 
@@ -136,10 +137,20 @@ The detailed acceptance criteria and dependency map live in the
 | P1 | Storage capability reporting | `StorageCapabilities` + legacy disposition |
 | P2 | Import/export for archival | N-Quads helpers + transactional load |
 
-## Current 0.6 backlog
+## Current 0.7 backlog
 
-See the [roadmap 0.6 section](ROADMAP.md). Work-package details expand as design
-spikes land.
+See the [roadmap 0.7 section](ROADMAP.md). Work-package details expand as design
+spikes land (ADR-017).
+
+## Completed 0.6 backlog
+
+| Priority | Deliverable | Notes |
+|---:|---|---|
+| P0 | Header-derived inventory | `redland-1.0.17-oxiland-0.6.json` |
+| P0 | Zero unclassified symbols | check-inventory 0.6 gate |
+| P0 | `oxiland-cli` workflows | ADR-019 |
+| P1 | Migration / symbol map | evaluator docs |
+| P1 | Semver + API review | vs 0.5.0; `docs/reports/0.6-api-review.md` |
 
 ## Completed 0.3 backlog
 

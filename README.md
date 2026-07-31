@@ -15,15 +15,14 @@ Turtle / N-Triples / N-Quads / TriG / RDF/XML I/O—backed by pinned
 
 Use it when you want Redland concepts and explicit unsupported/error behavior
 without C ownership; use Oxigraph directly when you only need the engine API.
-Version **0.5.0** covers the trusted core model, Redland-shaped RDF I/O,
-SPARQL query/update/results, durable Fjall storage (format v1), utilities
-(digests, URI/file/Unicode helpers, vocabulary), and World logging—with scoped
-evidence in the [parity ledger](PARITY.md)—not C ABI/source compatibility or
-full `librdf` accounting.
+Version **0.6.0** covers trusted core model, Redland-shaped RDF I/O, SPARQL,
+durable Fjall storage (format v1), utilities, World logging, **header-derived
+safe-API accounting**, and `oxiland-cli` rdfproc-shaped workflows—with scoped
+evidence in the [parity ledger](PARITY.md)—not C ABI/source compatibility.
 
 > [!IMPORTANT]
 > Compatibility claims are evidence-scoped. See the
-> [parity ledger](PARITY.md) and [0.5 report](docs/reports/0.5.md). Do not read
+> [parity ledger](PARITY.md) and [0.6 report](docs/reports/0.6.md). Do not read
 > “Redland-shaped” as drop-in C or ABI compatibility.
 
 ## When to use Oxiland
@@ -92,7 +91,7 @@ rustc --version   # >= 1.87
 
 ```toml
 [dependencies]
-oxiland = "0.5.0"
+oxiland = "0.6.0"
 ```
 
 ## Quick start

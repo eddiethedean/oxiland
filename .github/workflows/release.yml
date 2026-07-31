@@ -34,17 +34,28 @@ jobs:
       - name: Verify tag matches Cargo.toml
         run: |
           tag="${GITHUB_REF_NAME#v}"
-          version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)"
-          if [ "$tag" != "$version" ]; then
-            echo "Tag version '$tag' does not match Cargo.toml version '$version'"
+          lib_version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)"
+          cli_version="$(sed -n 's/^version = "\(.*\)"/\1/p' crates/oxiland-cli/Cargo.toml | head -n1)"
+          if [ "$tag" != "$lib_version" ] || [ "$tag" != "$cli_version" ]; then
+            echo "Tag '$tag' must match oxiland ($lib_version) and oxiland-cli ($cli_version)"
             exit 1
           fi
-          echo "Publishing oxiland $version"
+          echo "Publishing oxiland + oxiland-cli $tag"
 
       - name: Package dry run
-        run: cargo publish --dry-run
+        run: cargo publish -p oxiland --dry-run
 
       - name: Publish to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: cargo publish
+        run: |
+          cargo publish -p oxiland
+          # CLI depends on the just-published oxiland version on crates.io.
+          for i in 1 2 3 4 5 6 7 8; do
+            if cargo publish -p oxiland-cli; then
+              exit 0
+            fi
+            echo "oxiland-cli publish attempt $i failed; waiting for crates.io index…"
+            sleep 45
+          done
+          exit 1

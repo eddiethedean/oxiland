@@ -14,8 +14,15 @@ Pinned compatibility inputs for the RDF I/O milestone.
 
 Canonical upstream sources (record SHA-256 when vendoring tarballs):
 
-- Redland: `http://download.librdf.org/source/redland-1.0.17.tar.gz`
+- Redland: `https://download.librdf.org/source/redland-1.0.17.tar.gz`
+  (HTTP also works); SHA-256: [`redland-1.0.17.sha256`](redland-1.0.17.sha256)
 - Raptor2: `http://download.librdf.org/source/raptor2-2.0.16.tar.gz`
+
+Header-derived inventory generation:
+
+```console
+python3 scripts/generate-redland-inventory.py
+```
 
 This repository does not vendor the full native trees. CI and local oracle
 scripts prefer the system `rapper` binary from `raptor2-utils` / `libraptor2`

@@ -1,0 +1,28 @@
+[package]
+name = "oxiland-cli"
+version = "0.6.0"
+edition = "2024"
+rust-version = "1.87"
+description = "rdfproc-compatible command workflows over the Oxiland safe Rust facade"
+license = "Apache-2.0 OR MIT"
+readme = "README.md"
+repository = "https://github.com/eddiethedean/oxiland"
+homepage = "https://github.com/eddiethedean/oxiland"
+authors = ["Odo Matthews <odosmatthews@gmail.com>"]
+keywords = ["rdf", "sparql", "redland", "cli"]
+categories = ["command-line-utilities"]
+publish = true
+
+[[bin]]
+name = "oxiland-cli"
+path = "src/main.rs"
+
+[dependencies]
+oxiland = { path = "../..", version = "0.6.0" }
+clap = { version = "4", features = ["derive"] }
+oxigraph = { version = "=0.5.9", default-features = false }
+
+[dev-dependencies]
+tempfile = "3"
+assert_cmd = "2"
+predicates = "3"

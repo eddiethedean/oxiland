@@ -14,8 +14,9 @@ Product guides for writing applications against the published crate:
 3. [SPARQL](users/sparql.md) — Query, Update, and results
 4. [Streams](users/streams.md) — fallible iterators and early stop
 5. [Utilities and logging](users/utilities.md) — digests, URI helpers, World logs
-6. [Persistence](users/persistence.md) — Fjall format v1, transactions, archival export
-7. [FAQ and troubleshooting](users/faq.md)
+6. [CLI](users/cli.md) — `oxiland-cli` rdfproc-shaped workflows
+7. [Persistence](users/persistence.md) — Fjall format v1, transactions, archival export
+8. [FAQ and troubleshooting](users/faq.md)
 
 ## Evaluators
 
@@ -23,12 +24,14 @@ Adoption and compatibility decision material:
 
 1. [Positioning](evaluators/positioning.md) — vs Oxigraph, Sophia, and Redland
 2. [Migration from Redland](evaluators/migration-from-redland.md)
-3. [Parity ledger](parity.md) — scoped verified claims
-4. [0.5 compatibility report](reports/0.5.md)
-5. [0.4 compatibility report](reports/0.4.md)
-6. [0.3 compatibility report](reports/0.3.md)
-7. [0.2 compatibility report](reports/0.2.md)
-8. [Compatibility contract](COMPATIBILITY.md)
+3. [Redland symbol map](evaluators/redland-symbol-map.md) — 0.6 accounting
+4. [Parity ledger](parity.md) — scoped verified claims
+5. [0.6 compatibility report](reports/0.6.md)
+6. [0.5 compatibility report](reports/0.5.md)
+7. [0.4 compatibility report](reports/0.4.md)
+8. [0.3 compatibility report](reports/0.3.md)
+9. [0.2 compatibility report](reports/0.2.md)
+10. [Compatibility contract](COMPATIBILITY.md)
 
 ## Contributors
 
@@ -36,14 +39,14 @@ Process and planning (compatibility work is vertical-slice driven):
 
 1. [Contributing](contributing.md)
 2. [Project charter](CHARTER.md)
-3. [Roadmap](ROADMAP.md) — next release is **0.6**
-4. [Milestone 0.5](milestones/0.5.md) (complete) · [0.4](milestones/0.4.md) · [0.3](milestones/0.3.md)
+3. [Roadmap](ROADMAP.md) — next release is **0.7**
+4. [Milestone 0.6](milestones/0.6.md) (complete) · [0.5](milestones/0.5.md) · [0.4](milestones/0.4.md)
 5. [Execution plan](EXECUTION.md)
 6. [Architecture](ARCHITECTURE.md)
 7. [Verification](VERIFICATION.md)
 8. [Decisions](DECISIONS.md)
 9. [Risks](RISKS.md)
-10. [Reports and release checklists](reports/0.5.md) · [0.5.0 release](reports/0.5.0-release.md) · [0.4](reports/0.4.md)
+10. [Reports and release checklists](reports/0.6.md) · [0.6.0 release](reports/0.6.0-release.md) · [0.5](reports/0.5.md)
 
 ### Document authority (contributors)
 
@@ -52,7 +55,7 @@ Process and planning (compatibility work is vertical-slice driven):
 | Who is Oxiland for and what does 1.0 promise? | [Charter](CHARTER.md) |
 | What exists and is verified now? | [Parity ledger](parity.md) |
 | What release comes next? | [Roadmap](ROADMAP.md) |
-| What must the active release deliver? | [milestones/0.5.md](milestones/0.5.md) (complete); next is 0.6 |
+| What must the active release deliver? | [milestones/0.6.md](milestones/0.6.md) (complete); next is 0.7 |
 | How is work sliced and completed? | [Execution](EXECUTION.md) |
 | Where does code belong? | [Architecture](ARCHITECTURE.md) |
 | What does compatibility mean? | [Compatibility](COMPATIBILITY.md) |

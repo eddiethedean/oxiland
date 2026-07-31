@@ -58,7 +58,9 @@ jobs:
           cargo run --example std_replacements
 
       - name: Inventory
-        run: python3 scripts/check-inventory.py
+        run: |
+          python3 scripts/check-inventory.py
+          python3 scripts/generate-redland-inventory.py --check-only
 
       - name: Documentation links
         run: python3 scripts/check-docs.py
@@ -82,6 +84,14 @@ jobs:
 
       - name: Utility digest smoke
         run: python3 compatibility/harness/utility_digest_smoke.py
+
+      - name: CLI smoke
+        run: python3 compatibility/harness/cli_smoke.py
+
+      - name: Semver check vs 0.5.0
+        run: |
+          cargo install cargo-semver-checks --locked
+          cargo semver-checks check-release -p oxiland --baseline-version 0.5.0
 
   io-conformance:
     name: RDF I/O conformance

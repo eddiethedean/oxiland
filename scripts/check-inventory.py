@@ -28,7 +28,7 @@ REQUIRED_FIELDS = {
     "tests",
     "state",
 }
-ALLOWED_MILESTONES = {"0.1", "0.2", "0.3", "0.4", "0.5"}
+ALLOWED_MILESTONES = {"0.1", "0.2", "0.3", "0.4", "0.5", "0.6"}
 
 
 def fail(message: str) -> None:
@@ -94,6 +94,27 @@ def validate_inventory(path: Path) -> None:
                     )
         if "deviations" in entry and not isinstance(entry["deviations"], list):
             fail(f"{path.name}:{entry['id']}: deviations must be a list")
+        if entry["state"] == "excluded":
+            notes = entry.get("notes")
+            deviations = entry.get("deviations") or []
+            if not notes and not deviations:
+                fail(
+                    f"{path.name}:{entry['id']}: excluded entries require notes or deviations"
+                )
+
+    if milestone == "0.6":
+        unreviewed = [e["id"] for e in entries if e["state"] == "unreviewed"]
+        if unreviewed:
+            fail(
+                f"{path.name}: 0.6 forbids unreviewed entries "
+                f"({len(unreviewed)} remain), e.g. {unreviewed[:5]}"
+            )
+        mapped = [e["id"] for e in entries if e["state"] == "mapped"]
+        if mapped:
+            fail(
+                f"{path.name}: 0.6 exit forbids mapped (unimplemented) entries "
+                f"({len(mapped)} remain), e.g. {mapped[:5]}"
+            )
 
     counts = Counter(entry["state"] for entry in entries)
     print(f"inventory ok: {path.relative_to(ROOT)}")

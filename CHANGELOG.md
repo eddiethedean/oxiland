@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-30
+
+Header-derived safe-API accounting, `oxiland-cli` rdfproc workflows, and 1.0
+naming freeze intent over Oxigraph 0.5.9.
+
+### Added
+
+- Full public `librdf` 1.0.17 function inventory
+  (`redland-1.0.17-oxiland-0.6.json`) generated from pinned headers (ADR-021)
+- Workspace binary crate `oxiland-cli` for rdfproc-shaped parse/find/query/
+  serialize workflows (ADR-019)
+- Symbol map + expanded migration guide; CLI user docs
+- ADR-018–ADR-021 (factories, CLI, naming freeze, inventory generation)
+- `cargo semver-checks` CI gate against published 0.5.0
+- Compatibility report `docs/reports/0.6.md` and API review checklist
+
+### Changed
+
+- Crate version `0.6.0`; Cargo workspace layout (`oxiland` + `oxiland-cli`)
+- Parity ledger reports 100% **safe-API accounting** (not C ABI)
+- `Error` / module layout documented as frozen for 1.0 intent (ADR-020)
+
+### Fixed
+
+- CLI defaults to `nquads` so named-graph print/find/serialize succeed
+- CLI `-n` gates Fjall `create`; missing paths fail without it
+- CLI `-s` accepts only `memory` / `fjall` (no silent `hashes`/`file` aliases)
+- `parse-stream` uses progressive `load_path_into`; `parse` stays collecting
+- Query language must be `-`/`sparql`; typed/lang literal CLI args are rejected
+- Inventory no longer marks missing feature/storage APIs as `verified`
+- Generator `--check-only` diffs against checked-in 0.6 classifications
+
 ## [0.5.0] - 2026-07-30
 
 Streams policy documentation, utilities, digests, vocabulary helpers, and World

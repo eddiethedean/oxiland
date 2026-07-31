@@ -464,6 +464,99 @@ Evidence: `docs/evaluators/migration-from-redland.md`,
 
 Revisit when: C ABI needs explicit list/hash handles.
 
+### ADR-018 — Factory registration disposition for safe Rust
+
+State: accepted  
+Date: 2026-07-30  
+Milestone: 0.6
+
+Context: Redland exposes parser/serializer/storage/query factory registration
+APIs. Architecture asked which registrations are safe and useful in Rust.
+
+Decision: custom factory **registration** APIs (`librdf_*_register_*`,
+plugin modules, Raptor world wiring for embedding) are **excluded** from the
+safe facade. Callers use closed `Syntax`, `ResultsFormat`, and
+`StorageBackend` discovery. Unsupported names return `Error::Unsupported`.
+Built-in advertised formats remain first-class.
+
+Alternatives: dynamic plugin loading; thin registration callbacks.
+
+Consequences: simpler soundness story; inventory marks factory registration
+`excluded` with migration to closed enums.
+
+Evidence: `docs/design/0.6-safe-api-accounting.md`, `src/io/format.rs`,
+`src/storage.rs`.
+
+Revisit when: a supported extension mechanism is required for 1.0.
+
+### ADR-019 — `oxiland-cli` rdfproc workflow surface
+
+State: accepted  
+Date: 2026-07-30  
+Milestone: 0.6
+
+Context: ROADMAP requires rdfproc-equivalent command workflows.
+
+Decision: ship workspace binary `crates/oxiland-cli` with rdfproc-shaped
+commands (`parse`, `serialize`, `add`, `remove`, `find`, `query`, `contexts`,
+`print`). Storage types are `memory` and `fjall` only. Not a binary/ABI
+drop-in for native `rdfproc`.
+
+Alternatives: feature-gated bin in the library crate; docs-only recipes.
+
+Consequences: ARCHITECTURE workspace layout begins; CI runs CLI smoke.
+
+Evidence: `docs/design/0.6-cli-rdfproc.md`, `crates/oxiland-cli`.
+
+Revisit when: packaging a homebrew/apt `rdfproc` replacement name.
+
+### ADR-020 — 1.0 naming and module freeze intent
+
+State: accepted  
+Date: 2026-07-30  
+Milestone: 0.6
+
+Context: 0.6 freezes naming conventions intended for 1.0 before Python (0.7)
+and C ABI (0.8) bind the facade.
+
+Decision: public modules `terms`, `io`, `storage`, `utility` (incl. `vocab`),
+root re-exports (`Model`, `World`, `Query`, `Update`, `Error`, …), and the
+closed `Error` variant set are frozen for 1.0 intent. Breaks require ADR +
+CHANGELOG. Advanced Oxigraph escapes remain under `io::primitives` and
+`sparql` (re-exported primitives module).
+
+Alternatives: continue renaming freely until 0.10.
+
+Consequences: semver-checks against 0.5.0+ become meaningful.
+
+Evidence: `docs/design/0.6-safe-api-accounting.md`, `api/oxiland-public-api.txt`.
+
+Revisit when: 0.10 RC scope review.
+
+### ADR-021 — Header-derived inventory generation
+
+State: accepted  
+Date: 2026-07-30  
+Milestone: 0.6
+
+Context: Curated milestone slices cannot claim full safe-API accounting.
+
+Decision: generate public `librdf_*` function symbols from pinned Redland
+1.0.17 headers (`scripts/generate-redland-inventory.py`). Inputs are
+checksummed. Checked-in classifications are authoritative; regen merges by ID
+and must not wipe human classifications without review. Milestone 0.6 forbids
+`unreviewed` and residual `mapped` states at exit.
+
+Alternatives: continue curated slices only; vendor full Redland trees in-repo.
+
+Consequences: inventory size grows to hundreds of rows; shared accounting
+tests evidence N/A and excluded families.
+
+Evidence: `compatibility/baseline/redland-1.0.17.sha256`,
+`compatibility/inventory/redland-1.0.17-oxiland-0.6.json`.
+
+Revisit when: rebasing to a newer Redland reference API.
+
 ## ADR template
 
 ```markdown

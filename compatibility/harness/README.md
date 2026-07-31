@@ -8,6 +8,8 @@ evidence for Oxiland RDF I/O (0.2) and SPARQL (0.3).
 | `oracle_smoke.py` | Run `rapper` against the Turtle smoke fixture |
 | `differential_smoke.py` | Compare Oxiland and `rapper` statement counts |
 | `sparql_smoke.py` | Oxiland SPARQL facade smoke (`oxiland-facade` classification) |
+| `utility_digest_smoke.py` | Digest vectors vs hashlib |
+| `cli_smoke.py` | `oxiland-cli` parse + find smoke |
 
 Curated standards cases live under
 [`../conformance/`](../conformance/) and are executed by
@@ -17,6 +19,7 @@ Curated standards cases live under
 python3 compatibility/harness/oracle_smoke.py
 python3 compatibility/harness/differential_smoke.py
 python3 compatibility/harness/sparql_smoke.py
+python3 compatibility/harness/cli_smoke.py
 cargo test --test conformance
 ```
 

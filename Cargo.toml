@@ -1,9 +1,14 @@
+[workspace]
+members = [".", "crates/oxiland-cli"]
+resolver = "2"
+default-members = [".", "crates/oxiland-cli"]
+
 [package]
 name = "oxiland"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2024"
 rust-version = "1.87"
-description = "Safe Redland-shaped RDF models, SPARQL, RDF I/O, durable Fjall storage, and utilities on Oxigraph"
+description = "Safe Redland-shaped RDF models, SPARQL, RDF I/O, durable Fjall storage, utilities, and rdfproc-compatible CLI on Oxigraph"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
 repository = "https://github.com/eddiethedean/oxiland"

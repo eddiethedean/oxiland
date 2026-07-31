@@ -13,6 +13,8 @@ Oxiland APIs.
   0.4 storage/transactions slice.
 - [`redland-1.0.17-oxiland-0.5.json`](redland-1.0.17-oxiland-0.5.json) — curated
   0.5 streams/utilities/logging slice.
+- [`redland-1.0.17-oxiland-0.6.json`](redland-1.0.17-oxiland-0.6.json) —
+  **header-derived** full public function inventory (safe-API accounting).
 
 Format name/MIME/extension dispositions:
 [`../baseline/format-matrix.json`](../baseline/format-matrix.json).
@@ -23,6 +25,12 @@ Validate with:
 python3 scripts/check-inventory.py
 ```
 
-Full header-derived generation remains planned with the broader native Redland
-oracle harness. Until then, curated milestone slices are the source of truth
-for claimed inventory rows.
+Regenerate the 0.6 manifest (after reviewing classification diffs):
+
+```console
+python3 scripts/generate-redland-inventory.py
+```
+
+Inputs are pinned by
+[`../baseline/redland-1.0.17.sha256`](../baseline/redland-1.0.17.sha256)
+(ADR-021).

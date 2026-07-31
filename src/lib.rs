@@ -5,6 +5,12 @@
 //! callers can move data into and out of the underlying RDF ecosystem without
 //! adapters (see ADR-004).
 //!
+//! # Module layout (1.0 naming freeze intent — ADR-020)
+//!
+//! Stable public modules: [`terms`], [`io`], [`storage`], [`utility`], plus root
+//! re-exports such as [`Model`], [`World`], [`Query`], [`Update`], and [`Error`].
+//! Breaking renames after 0.6 require an ADR and CHANGELOG entry.
+//!
 //! # Quick start
 //!
 //! ```

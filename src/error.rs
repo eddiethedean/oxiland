@@ -5,6 +5,10 @@ use std::path::PathBuf;
 use crate::io::SourceLocation;
 
 /// Errors produced by Oxiland.
+///
+/// The variant set is closed for 1.0 intent (ADR-020). New categories require an
+/// ADR. Unsupported Redland factories and options surface as [`Error::Unsupported`]
+/// rather than silent success.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// An RDF term or IRI was invalid.
