@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/eddiethedean/oxiland/actions/workflows/ci.yml/badge.svg)](https://github.com/eddiethedean/oxiland/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/oxiland.svg)](https://crates.io/crates/oxiland)
-[![PyPI](https://img.shields.io/pypi/v/oxiland.svg)](https://pypi.org/project/oxiland/)
+[![PyPI](https://img.shields.io/pypi/v/oxiland?cacheSeconds=3600)](https://pypi.org/project/oxiland/)
 [![API docs](https://img.shields.io/docsrs/oxiland?label=Rust%20API)](https://docs.rs/oxiland)
 [![Guides](https://img.shields.io/readthedocs/oxiland?label=Guides)](https://oxiland.readthedocs.io/en/latest/)
 [![MSRV](https://img.shields.io/crates/msrv/oxiland)](https://crates.io/crates/oxiland)
@@ -13,13 +13,14 @@ Oxiland is an embedded RDF toolkit for Rust and Python. It provides validated
 RDF terms, in-memory and persistent datasets, named graphs, SPARQL 1.1, and
 streaming RDF input and output through a compact, typed API.
 
-Version **0.7.0** includes three independently installable surfaces:
+Version **0.8.0** includes four independently installable surfaces:
 
 | Surface | Install | Best for |
 |---|---|---|
-| Rust library | `oxiland = "0.7.0"` | Native applications and services |
+| Rust library | `oxiland = "0.8.0"` | Native applications and services |
 | Python package | `python -m pip install oxiland` | Python data pipelines and embedded RDF applications |
 | Command line | `cargo install oxiland-cli` | Store inspection, imports, exports, and scripted queries |
+| C ABI preview | build `oxiland-capi` (headers / pkg-config) | Redland-shaped C source-compat preview (not ABI drop-in) |
 
 Oxiland uses [Oxigraph](https://oxigraph.org/) 0.5.9 for standards-oriented RDF
 and SPARQL execution and Fjall for its supported durable store. The primary
@@ -46,7 +47,7 @@ Oxiland requires Rust **1.87 or newer**.
 
 ```toml
 [dependencies]
-oxiland = "0.7.0"
+oxiland = "0.8.0"
 ```
 
 Enable `tracing` only when `World` log records should also be emitted as
@@ -54,7 +55,7 @@ Enable `tracing` only when `World` log records should also be emitted as
 
 ```toml
 [dependencies]
-oxiland = { version = "0.7.0", features = ["tracing"] }
+oxiland = { version = "0.8.0", features = ["tracing"] }
 ```
 
 ### Python
@@ -166,6 +167,7 @@ does not silently guess syntax from document contents.
 | Python | [Overview](docs/users/python.md) · [API](docs/users/python-api.md) · [Production](docs/users/python-production.md) |
 | Rust | [Overview](docs/users/rust.md) · [API on docs.rs](https://docs.rs/oxiland) · [Production](docs/users/rust-production.md) |
 | Command line | [CLI guide](docs/users/cli.md) |
+| C ABI preview | [C guide](docs/users/c-abi.md) · [Limitations](docs/users/c-abi-limitations.md) |
 | Examples | [Runnable examples](docs/users/examples.md) |
 | Troubleshooting | [FAQ](docs/users/faq.md) |
 | Evaluation | [Positioning](docs/evaluators/positioning.md) · [Compatibility contract](docs/COMPATIBILITY.md) |
@@ -176,19 +178,21 @@ Published guides are available at
 
 ## Compatibility and scope
 
-Oxiland supports Redland-shaped concepts and migration workflows, but version
-0.7.0 is not a C source or ABI drop-in for `librdf`, and the Python package is
-not an rdflib adapter. Every compatibility statement is scoped by subsystem,
-platform, and evidence in the [parity ledger](PARITY.md).
+Oxiland supports Redland-shaped concepts and migration workflows. Version
+0.8.0 ships a **C source-compat preview** (`oxiland-capi`) for a frozen
+allowlist—it is **not** an ABI drop-in for existing Redland binaries. The
+Python package is not an rdflib adapter. Every compatibility statement is
+scoped by subsystem, platform, and evidence in the [parity ledger](PARITY.md).
 
 Choose Oxigraph directly when only its native engine API is required. Choose
 Oxiland when its stable facade, explicit unsupported errors, persistent-store
-contract, Python package, CLI, or Redland migration evidence adds value.
+contract, Python package, CLI, C preview, or Redland migration evidence adds
+value.
 
 ## Stability and support
 
 Oxiland is pre-1.0. Minor 0.x releases may contain documented public API
-changes. Persistent format v1 is reopen-compatible across 0.4.x–0.7.x patch
+changes. Persistent format v1 is reopen-compatible across 0.4.x–0.8.x patch
 lines; export standards RDF before major upgrades. See the
 [support policy](SUPPORT.md) and [changelog](CHANGELOG.md).
 

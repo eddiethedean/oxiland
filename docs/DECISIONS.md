@@ -33,6 +33,7 @@ tradeoffs are reviewed.
 | [ADR-020](#adr-020-10-naming-and-module-freeze-intent) | 1.0 naming and module freeze intent |
 | [ADR-021](#adr-021-header-derived-inventory-generation) | Header-derived inventory generation |
 | [ADR-022](#adr-022-sealed-durable-adapter-and-optional-backend-matrix) | Sealed durable adapter and optional backend matrix |
+| [ADR-023](#adr-023-c-abi-ownership-panic-and-allocator-contract) | C ABI ownership, panic, and allocator contract |
 
 ## Decision states
 
@@ -342,10 +343,15 @@ Revisit when: a first-class timeout API is required for C consumers.
 
 ## Proposed decisions
 
+*(none)*
+
+## Accepted decisions (continued)
+
 ### ADR-022 — Sealed durable adapter and optional backend matrix
 
-State: proposed
-Decision deadline: before the first 0.8 storage/C ABI implementation slice
+State: accepted  
+Date: 2026-07-31  
+Milestone: 0.8
 
 Context: ADR-006 made Fjall the only supported durable engine and explicitly
 set this revisit trigger. Applications may need a different embedded
@@ -354,7 +360,7 @@ operational tooling, file layout, or workload characteristics. Adding engine
 branches directly to `Model` would duplicate transaction/error behavior and
 freeze backend details into the future C ABI.
 
-Proposed decision:
+Decision:
 
 - Extract Fjall behind a private sealed durable-store adapter and make its
   existing format-v1 suite the initial conformance baseline.
@@ -374,7 +380,7 @@ Proposed decision:
   safe public user-supplied trait. Dynamic native plug-in loading remains out
   of scope.
 
-Alternatives:
+Alternatives considered:
 
 - Keep Fjall as the only durable engine.
 - Add one-off engine-specific `Model` implementations and constructors.
@@ -392,15 +398,45 @@ Consequences:
   common durability contract; canonical names never silently fall back.
 - Existing Fjall users keep their constructor and format-v1 reader.
 
-Planned evidence:
+Evidence:
 [storage backend expansion plan](design/storage-backend-expansion.md), sealed
-adapter prototype, shared backend conformance tests, dependency/platform
-reviews, and per-evaluation promotion records.
+adapter in `src/storage/`, shared backend conformance tests, and per-evaluation
+promotion records.
 
-Revisit when: the 0.8 adapter and conformance harness are complete, before each
-0.9 adapter promotion, and at the 0.10 public-trait/API freeze decision.
+Revisit when: before each 0.9 adapter promotion, and at the 0.10
+public-trait/API freeze decision.
 
-## Accepted decisions (continued)
+### ADR-023 — C ABI ownership, panic, and allocator contract
+
+State: accepted  
+Date: 2026-07-31  
+Milestone: 0.8
+
+Context: Redland C programs rely on opaque handles, paired alloc/free, and
+non-unwinding FFI. The safe `oxiland` crate forbids `unsafe` (ADR-002). The
+0.8 preview must be auditable without claiming full ABI drop-in (0.9).
+
+Decision:
+
+- Implement all C exports in `crates/oxiland-capi` with opaque tagged handles.
+- Every `extern "C"` entry contains panics via `catch_unwind` and never
+  unwinds into C.
+- Returned C strings/buffers use one documented allocator and are freed only
+  with `librdf_free_memory`; handles use typed `librdf_free_*`.
+- Null checks, type tags, invalid UTF-8 rejection, and double-free defenses are
+  required for every exported pointer type.
+- Publish a per-handle thread-safety matrix ([0.8-cabi.md](design/0.8-cabi.md)).
+- Freeze a preview symbol allowlist in the milestone plan; unsupported Redland
+  APIs are omitted from headers rather than stubbed as silent no-ops.
+
+Consequences:
+
+- Sanitizer and export-allowlist CI are 0.8 release gates.
+- Full symbol inventory closure and binary ABI claims remain 0.9.
+- Python continues to bind the safe crate, not `oxiland-capi` (ADR-017).
+
+Revisit when: expanding the allowlist in 0.9, or if a platform requires a
+narrowly scoped exception to ADR-002.
 
 ### ADR-017 — Python package is Pythonic, not a thin Rust mirror
 
@@ -467,7 +503,7 @@ not silent forever-forward binary compatibility across Oxiland major versions.
 
 Format v1 stores an `__oxiland/meta` JSON document (`format_version: 1`) beside
 N-Quads quad keys in the Fjall `oxiland_quads` partition. Patch releases in the
-**0.4.x–0.7.x** lines must open format v1 without migration. Pre-0.4 experimental
+**0.4.x–0.8.x** lines must open format v1 without migration. Pre-0.4 experimental
 stores (no metadata) are opened only via `Model::migrate_legacy_store`, which
 rewrites metadata after validating parseable quad keys; otherwise callers receive
 `Unsupported` with N-Quads archival guidance.
@@ -487,10 +523,10 @@ Consequences:
 
 - `Model::open` requires format v1 or initializes it for empty new stores.
 - User docs stop calling Fjall “experimental.”
-- R-016 mitigated for 0.4.x–0.7.x; major bumps may introduce format v2 with a
+- R-016 mitigated for 0.4.x–0.8.x; major bumps may introduce format v2 with a
   documented migrator.
 
-Evidence: `docs/design/0.4-storage-api.md`, `src/persist.rs`,
+Evidence: `docs/design/0.4-storage-api.md`, `src/storage/fjall.rs`,
 `tests/storage.rs`.
 
 Revisit when: introducing format v2 or a second durable backend.
@@ -606,7 +642,7 @@ Consequences: simpler soundness story; inventory marks factory registration
 `excluded` with migration to closed enums.
 
 Evidence: `docs/design/0.6-safe-api-accounting.md`, `src/io/format.rs`,
-`src/storage.rs`.
+`src/storage/mod.rs`.
 
 Revisit when: a supported extension mechanism is required for 1.0.
 

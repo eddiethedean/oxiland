@@ -8,7 +8,8 @@ users can rely on, and how to request help effectively.
 
 | Release line | Status | Expected maintenance |
 |---|---|---|
-| **0.7.x** | Current | Bug and security fixes as practical |
+| **0.8.x** | Current | Bug and security fixes as practical |
+| **0.7.x** | Maintenance | Security fixes; critical bugs as practical |
 | **0.6.x** | Maintenance | Security fixes when practical; upgrade recommended |
 | **0.4.x–0.5.x** | Legacy | Security fixes only when practical; upgrade strongly recommended |
 | **0.1.x–0.3.x** | Legacy | Security or critical fixes only when practical; no routine maintenance |
@@ -36,7 +37,7 @@ for other platforms, but it is not a release commitment.
 - Breaking changes should appear in `CHANGELOG.md` with a migration note.
 - Patch releases should remain API-compatible within their minor line unless a
   security or data-integrity issue requires otherwise.
-- Format v1 stores reopen across **0.4.x–0.7.x patch lines**. A future format-v2
+- Format v1 stores reopen across **0.4.x–0.8.x patch lines**. A future format-v2
   change requires an explicit migration or export path.
 - N-Quads is the portable backup and major-upgrade continuity format.
 - Formal long-term deprecation windows and MSRV guarantees are 1.0 goals, not

@@ -142,13 +142,16 @@ nav:
   - Command line:
       - CLI guide: users/cli.md
       - FAQ: users/faq.md
+  - C ABI:
+      - Preview guide: users/c-abi.md
+      - Limitations: users/c-abi-limitations.md
   - Evaluators:
       - Positioning: evaluators/positioning.md
       - Migration from Redland: evaluators/migration-from-redland.md
       - Redland symbol map: evaluators/redland-symbol-map.md
       - Compatibility contract: COMPATIBILITY.md
       - Parity ledger: parity.md
-      - Current report (0.7): reports/0.7.md
+      - Current report (0.8): reports/0.8.md
   - Project:
       - Community:
           - Support: support.md
@@ -167,10 +170,12 @@ nav:
           - Decisions: DECISIONS.md
           - Risks: RISKS.md
   - Archive:
+      - 0.7 compatibility report: reports/0.7.md
       - 0.7.0 release checklist: reports/0.7.0-release.md
       - 0.6 compatibility report: reports/0.6.md
       - 0.6.0 release checklist: reports/0.6.0-release.md
       - 0.6 API review: reports/0.6-api-review.md
+      - Milestone 0.8: milestones/0.8.md
       - Milestone 0.7: milestones/0.7.md
       - Milestone 0.6: milestones/0.6.md
       - Milestone 0.5: milestones/0.5.md
@@ -187,6 +192,8 @@ nav:
       - 0.2.0 release checklist: reports/0.2.0-release.md
       - 0.1 compatibility report: reports/0.1.md
       - 0.1.0 release checklist: reports/0.1.0-release.md
+      - Design 0.8 C ABI: design/0.8-cabi.md
+      - Design 0.8 redb spike: design/0.8-redb-spike.md
       - Design 0.7 Python API: design/0.7-python-api.md
       - Design 0.6 safe-API accounting: design/0.6-safe-api-accounting.md
       - Design 0.6 CLI: design/0.6-cli-rdfproc.md

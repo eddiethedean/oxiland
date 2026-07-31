@@ -39,7 +39,7 @@
       "subsystem": "storage",
       "safe_rust": "Model::migrate_legacy_store",
       "implementation": "src/model.rs",
-      "tests": ["src/persist.rs::legacy_store_without_meta_requires_migrate"],
+      "tests": ["src/storage/fjall.rs::legacy_store_without_meta_requires_migrate"],
       "state": "verified"
     },
     {
@@ -82,7 +82,7 @@
       "kind": "function",
       "subsystem": "storage",
       "safe_rust": "StorageCapabilities / Model::capabilities / storage_backend_available",
-      "implementation": "src/storage.rs",
+      "implementation": "src/storage/mod.rs",
       "tests": [
         "tests/storage.rs::capabilities_memory_vs_fjall",
         "tests/storage.rs::legacy_backends_are_unsupported",
@@ -119,7 +119,7 @@
       "kind": "function",
       "subsystem": "storage",
       "safe_rust": "StorageBackend::from_name → Unsupported",
-      "implementation": "src/storage.rs",
+      "implementation": "src/storage/mod.rs",
       "tests": ["tests/storage.rs::legacy_backends_are_unsupported"],
       "state": "verified",
       "notes": "Disposition recorded in docs/design/0.4-legacy-storage.md."

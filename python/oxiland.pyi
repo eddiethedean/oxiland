@@ -112,6 +112,7 @@ class Model:
         *,
         read_only: bool = False,
         create: bool = True,
+        backend: str = "fjall",
     ) -> Model: ...
     @classmethod
     def migrate_legacy_store(cls, path: PathArg) -> Model: ...
@@ -313,5 +314,8 @@ class _Vocab:
     xsd: _XsdVocab
     owl: _OwlVocab
     dc: _DcVocab
+
+def compiled_backends() -> list[str]: ...
+def storage_backend_available(name: str) -> bool: ...
 
 vocab: _Vocab

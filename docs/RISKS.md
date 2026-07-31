@@ -65,18 +65,20 @@ Closing a risk requires evidence that the exposure is gone. Renaming it as a
 known limitation is not closure. A regression may move a mitigated or closed
 risk back to active.
 
-## Current 0.8 focus
+## Current 0.9 focus
 
-C ABI preview (`oxiland-capi`) design against the frozen safe facade. Python
-package (0.7) remains a monitoring item for wheel/pytest regressions. Safe-API
-accounting from 0.6 remains a monitoring item. Stream, utility, and logging
-risks for the curated 0.5 slice were addressed under ADR-013–ADR-016 and remain
-monitoring items. Storage/transaction risks under ADR-006 were addressed in 0.4
-(format v1 + migrate); proposed ADR-022 reopens storage architecture work, so
-R-021 is active before any additional backend is promoted. Query/result risks
-R-001, R-006, R-007, R-008, R-010, and
-R-012 were addressed for the 0.3 facade slice and remain monitoring items.
-R-017 and R-018 remain monitoring items under ADR-007 and ADR-008. R-003 remains
-monitored under ADR-004. R-020 remains active for 0.7.0: PyO3 was upgraded to 0.29.0, but the remaining
-`quick-xml` advisories are tip-gated with a narrow ignore until a released
-Oxigraph line accepts `quick-xml` 0.41 or later (oxigraph `main` already does).
+C ABI expansion and optional storage adapters after the 0.8 source-compat
+preview. `oxiland-capi` preview risks (R-004, R-009, R-013) remain monitoring
+items under ADR-023. Python package (0.7+) remains a monitoring item for
+wheel/pytest regressions. Safe-API accounting from 0.6 remains a monitoring
+item. Stream, utility, and logging risks for the curated 0.5 slice were
+addressed under ADR-013–ADR-016 and remain monitoring items.
+Storage/transaction risks under ADR-006 were addressed in 0.4 (format v1 +
+migrate); ADR-022 accepted the sealed adapter in 0.8, so R-021 stays active
+until each optional backend is promoted with conformance evidence. Query/result
+risks R-001, R-006, R-007, R-008, R-010, and R-012 were addressed for the 0.3
+facade slice and remain monitoring items. R-017 and R-018 remain monitoring
+items under ADR-007 and ADR-008. R-003 remains monitored under ADR-004. R-020
+remains active: PyO3 was upgraded to 0.29.0, but the remaining `quick-xml`
+advisories are tip-gated with a narrow ignore until a released Oxigraph line
+accepts `quick-xml` 0.41 or later (oxigraph `main` already does).

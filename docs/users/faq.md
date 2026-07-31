@@ -76,9 +76,9 @@ RAM for the dataset size; use streaming parse/serialize APIs for large files.
 Call `add` / `remove` inside `with model.transaction() as txn:` — methods
 outside an entered context raise `UnsupportedError`.
 
-## Will my 0.7 store open in a later 0.7.x?
+## Will my 0.8 store open in a later 0.8.x?
 
-Format v1 reopen is promised for patch releases in **0.4.x–0.7.x**. See
+Format v1 reopen is promised for patch releases in **0.4.x–0.8.x**. See
 [persistence](persistence.md).
 
 ## Can multiple processes write the same store path?

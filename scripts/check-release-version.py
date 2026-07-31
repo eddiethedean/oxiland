@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFESTS = {
     "oxiland": ROOT / "Cargo.toml",
     "oxiland-cli": ROOT / "crates/oxiland-cli/Cargo.toml",
+    "oxiland-capi": ROOT / "crates/oxiland-capi/Cargo.toml",
     "oxiland-py crate": ROOT / "python/Cargo.toml",
     "PyPI oxiland": ROOT / "python/pyproject.toml",
 }

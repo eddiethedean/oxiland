@@ -12,8 +12,9 @@ use oxigraph::model::{
 use oxigraph::store::{QuadIter, Store, Transaction as OxigraphTransaction};
 
 use crate::io::{BomStrippingReader, map_rdf_parse_error};
-use crate::persist::{self, DiskStore};
-use crate::storage::{OpenOptions, StorageBackend, StorageCapabilities};
+use crate::storage::{
+    self, DurableStore, DurableStoreOps, OpenOptions, StorageBackend, StorageCapabilities,
+};
 use crate::{Error, Result};
 
 /// A partial triple pattern, equivalent to Redland's statement matching API.
@@ -167,7 +168,7 @@ impl ModelTransaction<'_> {
 #[derive(Clone)]
 pub struct Model {
     store: Store,
-    disk: Option<DiskStore>,
+    disk: Option<DurableStore>,
     lock: Arc<RwLock<()>>,
     read_only: bool,
     in_transaction: Arc<AtomicBool>,
@@ -209,8 +210,12 @@ impl Model {
         Self::open_with(OpenOptions::fjall(path))
     }
 
-    /// Opens a persistent model with typed options (ADR-006).
+    /// Opens a persistent model with typed options (ADR-006 / ADR-022).
     pub fn open_with(options: OpenOptions) -> Result<Self> {
+        if options.backend() == StorageBackend::Memory {
+            return Self::new();
+        }
+
         let path = options.path();
         if options.is_read_only() {
             if !path.exists() {
@@ -219,14 +224,18 @@ impl Model {
                     message: "read-only open requires an existing store path".into(),
                 });
             }
-            if !persist::looks_like_fjall_store(path) {
+            if !DurableStore::looks_like_store(options.backend(), path) {
                 return Err(Error::OpenStore {
                     path: path.to_owned(),
                     message: "read-only open cannot initialize a new Oxiland store".into(),
                 });
             }
         }
-        let disk = DiskStore::open_with_create(path, options.can_create())?;
+
+        let disk = match options.backend() {
+            StorageBackend::Memory => unreachable!("memory handled above"),
+            StorageBackend::Fjall => DurableStore::open_fjall(path, options.can_create())?,
+        };
         let allow_init = !options.is_read_only() && options.can_create();
         disk.ensure_format_v1(path, allow_init)?;
         let store = Store::new().map_err(|error| Error::OpenStore {
@@ -248,7 +257,7 @@ impl Model {
     pub fn migrate_legacy_store(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
         {
-            let disk = DiskStore::open_with_create(path, false)?;
+            let disk = DurableStore::open_fjall(path, false)?;
             disk.migrate_legacy_to_v1()?;
         }
         Self::open_with(OpenOptions::fjall(path))
@@ -259,14 +268,17 @@ impl Model {
     pub fn capabilities(&self) -> StorageCapabilities {
         match &self.disk {
             None => StorageCapabilities::memory(),
-            Some(_) => StorageCapabilities::fjall(self.read_only),
+            Some(disk) => disk.capabilities(self.read_only),
         }
     }
 
     /// Returns the storage backend for this model.
     #[must_use]
     pub fn backend(&self) -> StorageBackend {
-        self.capabilities().backend
+        match &self.disk {
+            None => StorageBackend::Memory,
+            Some(disk) => disk.backend_id(),
+        }
     }
 
     /// Returns the underlying Oxigraph store.
@@ -295,7 +307,8 @@ impl Model {
 
     /// Reports whether a named storage backend is available in this build.
     pub fn storage_backend_available(name: &str) -> Result<bool> {
-        StorageBackend::from_name(name).map(|_| true)
+        let backend = StorageBackend::from_name(name)?;
+        Ok(storage::compiled_backends().contains(&backend))
     }
 
     fn same_thread_in_transaction(&self) -> bool {
@@ -547,8 +560,8 @@ impl Model {
             .insert(&quad)
             .map_err(|error| Error::Storage(error.to_string()))?;
         if let Some(disk) = &self.disk {
-            let canonical = persist::stored_matching_quad(&self.store, &quad)?;
-            if let Err(error) = disk.insert(&canonical) {
+            let canonical = storage::stored_matching_quad(&self.store, &quad)?;
+            if let Err(error) = disk.insert_quad(&canonical) {
                 if let Err(reload_error) = self.reload_store_from_disk_unlocked(disk) {
                     let _ = self.store.remove(canonical.as_ref());
                     return Err(Error::Storage(format!(
@@ -575,7 +588,7 @@ impl Model {
         if !removed {
             return Ok(false);
         }
-        let canonical = persist::stored_matching_quad(&self.store, quad)?;
+        let canonical = storage::stored_matching_quad(&self.store, quad)?;
         self.store
             .remove(quad.as_ref())
             .map_err(|error| Error::Storage(error.to_string()))?;
@@ -690,7 +703,7 @@ impl Model {
         Ok(())
     }
 
-    fn reload_store_from_disk_unlocked(&self, disk: &DiskStore) -> Result<()> {
+    fn reload_store_from_disk_unlocked(&self, disk: &DurableStore) -> Result<()> {
         self.store
             .clear()
             .map_err(|error| Error::Storage(error.to_string()))?;

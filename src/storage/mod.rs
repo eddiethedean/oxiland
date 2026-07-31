@@ -1,4 +1,11 @@
-//! Storage backends, open options, and capability reporting (0.4).
+//! Storage backends, open options, and capability reporting (0.4 / ADR-022).
+
+mod durable;
+mod fjall;
+mod format_v1;
+
+pub(crate) use durable::{DurableStore, DurableStoreOps};
+pub(crate) use format_v1::stored_matching_quad;
 
 use std::path::{Path, PathBuf};
 
@@ -13,6 +20,28 @@ pub enum StorageBackend {
     Fjall,
 }
 
+const KNOWN_OPTIONAL_BACKENDS: &[&str] = &[
+    "redb",
+    "rocksdb",
+    "sqlite",
+    "lmdb",
+    "sled",
+    "leveldb",
+    "mdbx",
+    "surrealkv",
+];
+
+const LEGACY_REDLAND_BACKENDS: &[&str] = &[
+    "hashes",
+    "file",
+    "mysql",
+    "postgresql",
+    "postgres",
+    "tstore",
+    "uri",
+    "virtuoso",
+];
+
 impl StorageBackend {
     /// Canonical short name.
     #[must_use]
@@ -25,15 +54,14 @@ impl StorageBackend {
 
     /// Resolves a backend name.
     pub fn from_name(name: &str) -> Result<Self> {
-        match name.trim().to_ascii_lowercase().as_str() {
+        let normalized = name.trim().to_ascii_lowercase();
+        match normalized.as_str() {
             "memory" | "mem" => Ok(Self::Memory),
             "fjall" => Ok(Self::Fjall),
-            "rocksdb" | "redb" => Err(Error::Unsupported(
-                "storage backend was replaced by fjall; use Model::open / OpenOptions::fjall"
-                    .into(),
-            )),
-            "hashes" | "file" | "mysql" | "postgresql" | "postgres" | "sqlite" | "tstore"
-            | "uri" | "virtuoso" => Err(Error::Unsupported(format!(
+            other if KNOWN_OPTIONAL_BACKENDS.contains(&other) => Err(Error::Unsupported(format!(
+                "storage backend '{other}' is known but not compiled into this build"
+            ))),
+            other if LEGACY_REDLAND_BACKENDS.contains(&other) => Err(Error::Unsupported(format!(
                 "legacy Redland storage backend '{name}' is unsupported; export to N-Quads and use memory or fjall (see docs/design/0.4-legacy-storage.md)"
             ))),
             other => Err(Error::Unsupported(format!(
@@ -43,23 +71,52 @@ impl StorageBackend {
     }
 }
 
-/// Options for opening a durable Fjall-backed model (ADR-006).
+/// Backends compiled into this build.
+#[must_use]
+pub fn compiled_backends() -> &'static [StorageBackend] {
+    &[StorageBackend::Memory, StorageBackend::Fjall]
+}
+
+/// Returns whether `name` is a recognized backend identity (compiled or not).
+#[must_use]
+pub fn is_known_backend_name(name: &str) -> bool {
+    let normalized = name.trim().to_ascii_lowercase();
+    matches!(normalized.as_str(), "memory" | "mem" | "fjall")
+        || KNOWN_OPTIONAL_BACKENDS.contains(&normalized.as_str())
+        || LEGACY_REDLAND_BACKENDS.contains(&normalized.as_str())
+}
+
+/// Options for opening a model with a selected storage backend (ADR-006 / ADR-022).
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct OpenOptions {
+    backend: StorageBackend,
     path: PathBuf,
     read_only: bool,
     create: bool,
 }
 
 impl OpenOptions {
-    /// Opens or creates a Fjall store at `path` (read-write, create allowed).
+    /// Opens a store for `backend` at `path` (read-write, create allowed).
     #[must_use]
-    pub fn fjall(path: impl AsRef<Path>) -> Self {
+    pub fn new(backend: StorageBackend, path: impl AsRef<Path>) -> Self {
         Self {
+            backend,
             path: path.as_ref().to_owned(),
             read_only: false,
             create: true,
         }
+    }
+
+    /// Opens or creates a Fjall store at `path` (read-write, create allowed).
+    #[must_use]
+    pub fn fjall(path: impl AsRef<Path>) -> Self {
+        Self::new(StorageBackend::Fjall, path)
+    }
+
+    /// Returns the configured backend.
+    #[must_use]
+    pub fn backend(&self) -> StorageBackend {
+        self.backend
     }
 
     /// Returns the configured path.

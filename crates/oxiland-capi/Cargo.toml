@@ -1,0 +1,27 @@
+[package]
+name = "oxiland-capi"
+version = "0.8.0"
+edition = "2024"
+rust-version = "1.87"
+description = "C ABI preview for Oxiland (Redland-shaped source-compat)"
+license = "Apache-2.0 OR MIT"
+readme = "README.md"
+repository = "https://github.com/eddiethedean/oxiland"
+homepage = "https://oxiland.readthedocs.io/"
+documentation = "https://oxiland.readthedocs.io/"
+authors = ["Odo Matthews <odosmatthews@gmail.com>"]
+keywords = ["rdf", "sparql", "redland", "ffi", "c-abi"]
+categories = ["api-bindings", "parsing"]
+publish = false
+
+[lib]
+name = "oxiland_capi"
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+oxiland = { path = "../..", version = "0.8.0" }
+oxigraph = { version = "=0.5.9", default-features = false }
+libc = "0.2"
+
+[dev-dependencies]
+tempfile = "3"

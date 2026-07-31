@@ -3,16 +3,18 @@ use std::cell::Cell;
 use std::path::Path;
 
 use fjall::{Config, Keyspace, Partition, PartitionCreateOptions, PersistMode};
-use oxigraph::io::{RdfFormat, RdfParser};
 use oxigraph::model::Quad;
 use oxigraph::store::Store;
 
 use crate::{Error, Result};
 
+use super::format_v1::{
+    FORMAT_OXILAND, FORMAT_VERSION, META_KEY, parse_format_version, parse_quad, quad_key,
+    quads_rdf_equal,
+};
+use super::{StorageBackend, StorageCapabilities};
+
 const QUADS_PARTITION: &str = "oxiland_quads";
-pub(crate) const META_KEY: &str = "__oxiland/meta";
-pub(crate) const FORMAT_VERSION: u32 = 1;
-pub(crate) const FORMAT_OXILAND: &str = "0.4.0";
 
 #[cfg(test)]
 thread_local! {
@@ -28,12 +30,20 @@ thread_local! {
 /// Oxigraph still provides the in-memory query engine; Fjall holds the durable
 /// copy of every quad under Oxiland format v1 (ADR-006).
 #[derive(Clone)]
-pub(crate) struct DiskStore {
+pub(crate) struct FjallStore {
     keyspace: Keyspace,
     quads: Partition,
 }
 
-impl DiskStore {
+impl FjallStore {
+    pub(crate) fn backend_id(&self) -> StorageBackend {
+        StorageBackend::Fjall
+    }
+
+    pub(crate) fn capabilities(&self, read_only: bool) -> StorageCapabilities {
+        StorageCapabilities::fjall(read_only)
+    }
+
     #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) fn open(path: &Path) -> Result<Self> {
         Self::open_with_create(path, true)
@@ -406,67 +416,6 @@ pub(crate) fn looks_like_fjall_store(path: &Path) -> bool {
     MARKERS.iter().any(|marker| path.join(marker).exists())
 }
 
-fn quad_key(quad: &Quad) -> String {
-    format!("{quad} .")
-}
-
-fn parse_format_version(meta: &str) -> Result<u32> {
-    // Minimal JSON parse: look for "format_version": <int>
-    let key = "\"format_version\"";
-    let Some(pos) = meta.find(key) else {
-        return Err(Error::Storage(
-            "format metadata missing format_version".into(),
-        ));
-    };
-    let rest = &meta[pos + key.len()..];
-    let rest = rest.trim_start().trim_start_matches(':').trim_start();
-    let digits: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
-    digits
-        .parse::<u32>()
-        .map_err(|_| Error::Storage("format metadata has invalid format_version".into()))
-}
-
-fn parse_quad(key: &str) -> Result<Quad> {
-    let mut parsed = RdfParser::from_format(RdfFormat::NQuads).for_reader(key.as_bytes());
-    let quad = parsed
-        .next()
-        .ok_or_else(|| Error::Storage("persisted quad key was empty".into()))?
-        .map_err(|error| Error::Storage(error.to_string()))?;
-    if parsed.next().is_some() {
-        return Err(Error::Storage(
-            "persisted quad key contained multiple quads".into(),
-        ));
-    }
-    Ok(quad)
-}
-
-/// RDF term equality as used by Oxigraph stores (value-equal typed literals).
-fn quads_rdf_equal(left: &Quad, right: &Quad) -> Result<bool> {
-    let probe = Store::new().map_err(|error| Error::Storage(error.to_string()))?;
-    probe
-        .insert(left)
-        .map_err(|error| Error::Storage(error.to_string()))?;
-    probe
-        .contains(right.as_ref())
-        .map_err(|error| Error::Storage(error.to_string()))
-}
-
-/// Returns the store's canonical quad matching `quad` under RDF equality.
-pub(crate) fn stored_matching_quad(store: &Store, quad: &Quad) -> Result<Quad> {
-    store
-        .quads_for_pattern(
-            Some(quad.subject.as_ref()),
-            Some(quad.predicate.as_ref()),
-            Some(quad.object.as_ref()),
-            Some(quad.graph_name.as_ref()),
-        )
-        .next()
-        .ok_or_else(|| {
-            Error::Storage("matching quad missing from store after contains check".into())
-        })?
-        .map_err(|error| Error::Storage(error.to_string()))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -681,14 +630,14 @@ mod tests {
                 ))
                 .unwrap();
         }
-        let disk = DiskStore::open(&path).unwrap();
+        let disk = FjallStore::open(&path).unwrap();
         disk.quads.remove(META_KEY.as_bytes()).unwrap();
         disk.sync().unwrap();
         let err = Model::open(&path);
         assert!(matches!(err, Err(Error::Unsupported(_))));
         let migrated = Model::migrate_legacy_store(&path).unwrap();
         assert_eq!(migrated.len().unwrap(), 1);
-        let disk = DiskStore::open(&path).unwrap();
+        let disk = FjallStore::open(&path).unwrap();
         assert_eq!(disk.read_format_version().unwrap(), Some(FORMAT_VERSION));
     }
 }

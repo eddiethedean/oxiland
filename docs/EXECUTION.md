@@ -1,7 +1,7 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 0.8 (0.7 complete)
+Current milestone: 0.9 (0.8 complete)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -113,14 +113,26 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Begin 0.8 C ABI preview design against the frozen 0.6/0.7 facade.
-2. Resolve proposed ADR-022 and extract Fjall behind the sealed durable-store
-   adapter before the C ABI freezes storage selection.
-3. Build the reusable backend conformance harness from the existing Fjall
-   reopen, transaction, failure, and concurrency tests.
-4. Keep Python wheels/pytest green on main as the 0.7 surface evolves in patches.
+1. Begin 0.9 C compatibility: expand beyond the 0.8 preview allowlist toward
+   applicable symbol closure and downstream consumer evidence.
+2. Implement first-party optional storage adapters (redb first; then RocksDB,
+   SQLite, LMDB) behind Cargo features, using the sealed DurableStore contract.
+3. Promote or defer evaluation backends only with shared conformance evidence.
+4. Keep Python wheels/pytest and the C ABI preview green on main.
 5. Expand SPARQL differential fixtures beyond the facade smoke harness.
 6. Keep format v1 / ADR-006 migration notes current as later milestones land.
+
+## Completed 0.8 backlog
+
+| Priority | Deliverable | Notes |
+|---:|---|---|
+| P0 | ADR-022 / ADR-023 | Sealed adapter; C ownership/panic/allocator |
+| P0 | Sealed `DurableStore` + Fjall extraction | `src/storage/{durable,fjall,format_v1}.rs` |
+| P0 | Backend conformance harness | `tests/backend_conformance.rs` |
+| P0 | Backend registry Rust/CLI/Python/C | known-uncompiled vs unknown |
+| P0 | `oxiland-capi` preview allowlist | headers, pkg-config, example, ASan/symbol CI |
+| P1 | Inventory 0.8 + redb spike | `redland-1.0.17-oxiland-0.8.json`, `docs/design/0.8-redb-spike.md` |
+| P1 | Compatibility report + user C docs | `docs/reports/0.8.md`, `docs/users/c-abi*.md` |
 
 ## Completed 0.7 backlog
 
@@ -151,19 +163,19 @@ The detailed acceptance criteria and dependency map live in the
 | P1 | Storage capability reporting | `StorageCapabilities` + legacy disposition |
 | P2 | Import/export for archival | N-Quads helpers + transactional load |
 
-## Current 0.8 backlog
+## Current 0.9 backlog
 
-See the [roadmap 0.8 section](ROADMAP.md) and the
+See the [roadmap 0.9 section](ROADMAP.md) and the
 [storage backend expansion plan](design/storage-backend-expansion.md).
 
 | Priority | Deliverable | Exit evidence |
 |---:|---|---|
-| P0 | C ABI handle and ownership design | C handle matrix and panic/allocator contract reviewed |
-| P0 | SB-01 backend contract / ADR-022 | Adapter invariants, selection API, capability semantics, and format policy accepted |
-| P0 | SB-02 Fjall adapter extraction | Unchanged format-v1 reopen/migration tests pass through the adapter |
-| P0 | SB-03 backend conformance harness | Memory and Fjall run through a reusable registered-backend suite |
-| P1 | Backend identity across Rust/C/Python/CLI | Known-disabled, unknown, wrong-layout, and capability cases have one canonical registry |
-| P1 | redb integration spike | MSRV, locking, read-only, batch atomicity, crash, and packaging findings recorded for 0.9 |
+| P0 | Expand C symbol surface beyond 0.8 allowlist | Inventory `c_state` gaps closed or justified |
+| P0 | Downstream C consumer / binding matrix | Selected apps/bindings pass unchanged or documented deviations |
+| P0 | Optional adapters: redb, RocksDB, SQLite, LMDB | Feature-gated; shared conformance harness green |
+| P1 | Evaluation packages (sled, LevelDB, MDBX, SurrealKV) | promote/defer/reject with crash/reopen evidence |
+| P1 | Cross-surface backend identity | Rust/CLI/Python/C capability and wrong-layout cases |
+| P2 | Performance / memory baselines for C paths | Published budgets with decisions for overruns |
 
 The 0.9 storage queue is redb, RocksDB, SQLite, and LMDB as first-party
 optional adapters. sled, LevelDB, MDBX, and SurrealKV receive bounded

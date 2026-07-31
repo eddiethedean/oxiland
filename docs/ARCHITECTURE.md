@@ -1,10 +1,11 @@
 # Architecture
 
 Status: active design baseline  
-Current implementation: Cargo workspace — library crate `oxiland` plus
-`crates/oxiland-cli` (0.6+), and `python/` PyPI package (0.7+, not a workspace
-member). Oxigraph 0.5.9 remains the RDF engine.  
-Next review gate: before C ABI preview (0.8)
+Current implementation: Cargo workspace — library crate `oxiland`,
+`crates/oxiland-cli` (0.6+), `crates/oxiland-capi` (0.8+ C ABI preview), and
+`python/` PyPI package (0.7+, not a workspace member). Oxigraph 0.5.9 remains
+the RDF engine.  
+Next review gate: before C compatibility / optional adapters (0.9)
 
 This document specifies the implemented dependency direction, ownership model,
 and safety boundaries, then labels future C ABI components explicitly. It is a
@@ -65,10 +66,12 @@ oxiland/
 └── fuzz/                Parser, FFI, and lifecycle fuzz targets
 ```
 
-Implemented in 0.7: the root Rust library, `crates/oxiland-cli`, `python/`,
-tests, documentation, compatibility inventory/fixtures/harness, and release
-automation. Planned for later milestones: `crates/oxiland-capi` and a dedicated
-`fuzz/` tree. Planned paths must not be cited as current user capabilities.
+Implemented in 0.8: the root Rust library, `crates/oxiland-cli`,
+`crates/oxiland-capi` (preview allowlist), `python/`, tests, documentation,
+compatibility inventory/fixtures/harness, sealed durable storage adapters, and
+release automation. Planned for later milestones: a dedicated `fuzz/` tree and
+expanded C symbol / downstream matrices (0.9). Planned paths must not be cited
+as current user capabilities beyond their documented preview scope.
 
 ## Component responsibilities
 
@@ -127,9 +130,9 @@ interruption where none exists.
 
 ## C ABI boundary
 
-The future C layer is a separate crate allowed to contain narrowly reviewed
-`unsafe` code. Its handles own or reference safe Oxiland objects. Each handle
-type must define:
+The C layer is a separate crate (`oxiland-capi`) allowed to contain narrowly
+reviewed `unsafe` code. Its handles own or reference safe Oxiland objects. Each
+handle type must define:
 
 - allocation and destruction functions;
 - null handling;
@@ -215,9 +218,10 @@ not reverse an accepted decision only through code changes.
 
 Resolved recently: Redland factory registration disposition for safe Rust
 (ADR-018); `oxiland-cli` rdfproc workflows (ADR-019); naming freeze intent
-(ADR-020); header-derived inventory generation (ADR-021); 0.5 stream/utility
-surface (ADR-013–ADR-016); query cancellation via Oxigraph `CancellationToken`
-(ADR-012).
+(ADR-020); header-derived inventory generation (ADR-021); sealed durable
+adapter and backend matrix (ADR-022); C ABI ownership/panic/allocator
+(ADR-023); 0.5 stream/utility surface (ADR-013–ADR-016); query cancellation
+via Oxigraph `CancellationToken` (ADR-012).
 
 Term re-exports are governed by ADR-004 and revisited only on its evidence
 trigger. The remaining questions are decision candidates, not implicit TODOs.

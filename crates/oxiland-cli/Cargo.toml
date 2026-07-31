@@ -1,6 +1,6 @@
 [package]
 name = "oxiland-cli"
-version = "0.7.0"
+version = "0.8.0"
 edition = "2024"
 rust-version = "1.87"
 description = "Import, inspect, query, and export local RDF datasets"
@@ -19,7 +19,7 @@ name = "oxiland-cli"
 path = "src/main.rs"
 
 [dependencies]
-oxiland = { path = "../..", version = "0.7.0" }
+oxiland = { path = "../..", version = "0.8.0" }
 clap = { version = "4", features = ["derive"] }
 oxigraph = { version = "=0.5.9", default-features = false }
 

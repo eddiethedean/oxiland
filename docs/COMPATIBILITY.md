@@ -62,11 +62,23 @@ headers and enriched with documentation metadata. Each entry records:
 
 - stable ID, symbol, kind, header, and normalized C signature;
 - subsystem and lifecycle/ownership rules;
-- safe Rust mapping;
-- C ABI implementation symbol;
+- safe Rust mapping (`safe_rust`);
+- C ABI fields (required from milestone **0.8** onward):
+  - `c_abi` — Oxiland C export name when implemented, or `null` when not
+    exported in this milestone;
+  - `c_state` — C claim state using the same allowed states as `state`, scoped
+    to source-compat / ABI work (`unreviewed` until a C disposition exists);
+  - `c_tests` — optional list of CAPI or sanitizer test references when
+    `c_state` is `implemented` or `verified`;
 - support status, platform, and feature gate;
 - behavioral test identifiers;
 - deviations, rationale, and evidence links.
+
+For milestones before 0.8, `c_abi` / `c_state` may be omitted (safe-API
+accounting only). The 0.8 inventory must populate them for every entry: preview
+allowlist symbols reach `verified` or `implemented` with `c_tests`; remaining
+symbols are `mapped` (deferred to 0.9), `not-applicable`, or `excluded` with
+notes.
 
 Allowed states are `unreviewed`, `mapped`, `implemented`, `verified`,
 `not-applicable`, and `excluded`. `not-applicable` is reserved for mechanics

@@ -172,8 +172,8 @@ jobs:
       - name: Install cargo-semver-checks
         run: cargo install cargo-semver-checks --locked --version 0.49.0
 
-      - name: Check semver against 0.6.0
-        run: cargo semver-checks check-release -p oxiland --baseline-version 0.6.0 --release-type minor
+      - name: Check semver against 0.7.0
+        run: cargo semver-checks check-release -p oxiland --baseline-version 0.7.0 --release-type minor
 
       - name: Verify package versions are aligned
         run: |
@@ -449,7 +449,59 @@ jobs:
         run: cargo test --locked fjall
 
       - name: Storage matrix
-        run: cargo test --locked --test storage
+        run: |
+          cargo test --locked --test storage
+          cargo test --locked --test backend_conformance
+
+  capi:
+    name: C ABI preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4
+        with:
+          toolchain: stable
+
+      - name: Install nightly (sanitizers)
+        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4
+        with:
+          toolchain: nightly
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          shared-key: capi
+
+      - name: Build oxiland-capi
+        run: cargo build -p oxiland-capi --locked
+
+      - name: CAPI unit/FFI tests
+        run: cargo test -p oxiland-capi --locked
+
+      - name: Exported symbol allowlist
+        run: scripts/check-capi-symbols.sh debug
+
+      - name: Compile and run representative C example
+        run: |
+          cc -I crates/oxiland-capi/include -L target/debug \
+            crates/oxiland-capi/examples/preview_workflow.c \
+            -loxiland_capi -Wl,-rpath,"$PWD/target/debug" \
+            -o target/debug/preview_workflow
+          ./target/debug/preview_workflow
+
+      - name: ASan CAPI tests (nightly)
+        run: |
+          RUSTFLAGS="-Zsanitizer=address" \
+            cargo +nightly test -p oxiland-capi --locked \
+            --target x86_64-unknown-linux-gnu
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
 
   msrv:
     name: MSRV (1.87)

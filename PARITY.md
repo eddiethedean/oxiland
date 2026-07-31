@@ -1,10 +1,10 @@
 # Redland parity ledger
 
-Last completed milestone: 0.7
-Current development milestone: 0.8 (`planned`)
+Last completed milestone: 0.8
+Current development milestone: 0.9 (`planned`)
 Ledger maturity: header-derived full public `librdf` 1.0.17 function inventory
-(0.6); Python package usability evidence (0.7); curated 0.1–0.5 slices retained
-for historical evidence
+(0.6); Python package usability evidence (0.7); C ABI source-compat preview
+accounting (0.8); curated 0.1–0.5 slices retained for historical evidence
 
 > **Newcomer gloss:** This ledger classifies Redland `librdf_*` symbols and
 > records what Oxiland has implemented with tests for a **stated scope**.
@@ -27,9 +27,11 @@ Inventory revisions:
 - [`redland-1.0.17-oxiland-0.4.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.4.json)
 - [`redland-1.0.17-oxiland-0.5.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.5.json)
 - [`redland-1.0.17-oxiland-0.6.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.6.json)
+- [`redland-1.0.17-oxiland-0.8.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.8.json)
 
 0.6 compatibility report: [`docs/reports/0.6.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.6.md)
 · 0.7 report: [`docs/reports/0.7.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.7.md)
+· 0.8 report: [`docs/reports/0.8.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.8.md)
 
 ## Status vocabulary
 
@@ -47,21 +49,21 @@ Inventory revisions:
 
 | Redland subsystem | Safe Rust | C ABI | Target | Current evidence / gap |
 |---|---|---|---:|---|
-| World / lifecycle | Verified (0.6 accounting) | Unstarted | 0.1/0.8 | RAII world, features, log handlers (ADR-014) |
-| URI | Verified (0.6 accounting) | Unstarted | 0.5/0.8 | join/relativize/file-URI helpers |
-| Nodes | Verified (0.6 accounting) | Unstarted | 0.1/0.8 | Oxigraph term re-exports plus InvalidRdf helpers (ADR-004) |
-| Statements | Verified (0.6 accounting) | Unstarted | 0.1/0.8 | triples and `StatementPattern` matching |
-| Model | Verified (0.6 accounting) | Unstarted | 0.1/0.8 | default and named-graph CRUD, size, streaming find |
-| Storage | Verified (0.6 accounting) | Unstarted | 0.4/0.9 | format v1 Fjall; plugins excluded (ADR-018) |
-| Streams / iterators | Verified (0.6 accounting) | Unstarted | 0.5/0.8 | find/parse/query streams; ADR-013 policy |
-| Parser | Verified (0.6 accounting) | Unstarted | 0.2/0.8 | `Parser` facade, Syntax discovery |
-| Serializer | Verified (0.6 accounting) | Unstarted | 0.2/0.8 | `Serializer` facade |
-| SPARQL query/results | Verified (0.6 accounting) | Unstarted | 0.3/0.8 | Query / results / ResultsFormat |
-| Query update | Verified (0.6 accounting) | Unstarted | 0.3/0.8 | `Update` facade |
-| Digests | Verified (0.6 accounting) | Unstarted | 0.5/0.8 | MD5/SHA-1/SHA-256 (ADR-015) |
+| World / lifecycle | Verified (0.6 accounting) | Verified (preview) | 0.1/0.8 | RAII world; C allowlist world_open (ADR-014/023) |
+| URI | Verified (0.6 accounting) | Verified (preview) | 0.5/0.8 | join/relativize/file-URI helpers; C URI create/free |
+| Nodes | Verified (0.6 accounting) | Verified (preview) | 0.1/0.8 | Oxigraph term re-exports; C URI/literal nodes |
+| Statements | Verified (0.6 accounting) | Verified (preview) | 0.1/0.8 | triples and `StatementPattern`; C statement handles |
+| Model | Verified (0.6 accounting) | Verified (preview) | 0.1/0.8 | CRUD + find; C model allowlist |
+| Storage | Verified (0.6 accounting) | Verified (preview) | 0.4/0.9 | sealed DurableStore; C memory/fjall; optional backends 0.9 |
+| Streams / iterators | Verified (0.6 accounting) | Verified (preview) | 0.5/0.8 | find/parse/query streams; C stream allowlist |
+| Parser | Verified (0.6 accounting) | Verified (preview) | 0.2/0.8 | `Parser` facade; C parse-string allowlist |
+| Serializer | Verified (0.6 accounting) | Verified (preview) | 0.2/0.8 | `Serializer` facade; C serialize-to-string allowlist |
+| SPARQL query/results | Verified (0.6 accounting) | Verified (preview) | 0.3/0.8 | ASK/SELECT on C; CONSTRUCT/DESCRIBE C deferred |
+| Query update | Verified (0.6 accounting) | Unstarted | 0.3/0.9 | `Update` facade; C update not in 0.8 allowlist |
+| Digests | Verified (0.6 accounting) | Unstarted | 0.5/0.9 | MD5/SHA-1/SHA-256 (ADR-015); C deferred |
 | Hashes / lists | Dispositioned | Unstarted | 0.5/0.8 | `not-applicable` → `HashMap`/`Vec` (ADR-016) |
-| Heuristics / files / Unicode | Verified (0.6 accounting) | Unstarted | 0.5/0.8 | file URI + NFC/NFKC helpers |
-| Logging | Verified (0.6 accounting) | Unstarted | 0.5/0.8 | World handlers + optional `tracing` |
+| Heuristics / files / Unicode | Verified (0.6 accounting) | Unstarted | 0.5/0.9 | file URI + NFC/NFKC helpers; C deferred |
+| Logging | Verified (0.6 accounting) | Unstarted | 0.5/0.9 | World handlers + optional `tracing`; C log handlers deferred |
 | Storage plug-ins | Dispositioned | Unstarted | 0.4/0.9 | excluded / Unsupported |
 | `rdfproc` utility | Verified (0.6 CLI) | n/a | 0.6 | `oxiland-cli` workflows (ADR-019) |
 | Python / PyPI package | Verified (0.7 usability) | n/a | 0.7 | `pip install oxiland`; wheels + pytest + typing (ADR-017) |
@@ -73,18 +75,29 @@ function in the 0.6 inventory is **classified** (not that behavior is a Redland
 drop-in): 383 classified (238 verified, 96 not-applicable, 49 excluded); 0
 unreviewed. See [`docs/reports/0.6.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.6.md).
 
+## C ABI preview accounting (0.8)
+
+Preview allowlist symbols are `c_state=verified` (45 of 383); remaining
+applicable symbols are `mapped` for 0.9 or retain `not-applicable` /
+`excluded`. Source-compat preview only—**not** ABI drop-in. See
+[`docs/reports/0.8.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.8.md).
+
 ## Current evidence
 
-- Inventory: full 0.6 header-derived manifest + curated 0.1–0.5 slices.
-- Integration tests + `tests/accounting.rs` + `oxiland-cli` tests.
+- Inventory: full 0.6 header-derived manifest + 0.8 C-field revision + curated
+  0.1–0.5 slices.
+- Integration tests + `tests/accounting.rs` + `oxiland-cli` tests +
+  `tests/backend_conformance.rs`.
 - CLI smoke: `compatibility/harness/cli_smoke.py`.
 - Python: `python/tests/`, pyright, wheel smoke in CI; report
   [`docs/reports/0.7.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.7.md).
-- Public API snapshot + `cargo semver-checks` vs 0.6.0.
-- ADR-004–ADR-021 accepted as applicable.
+- C ABI: `crates/oxiland-capi` example, symbol allowlist, ASan CI; report
+  [`docs/reports/0.8.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.8.md).
+- Public API snapshot + `cargo semver-checks` vs 0.7.0.
+- ADR-004–ADR-023 accepted as applicable.
 - Oxigraph 0.5.9 remains pinned with default features disabled.
 
 ## Next ledger upgrade
 
-Begin 0.8 C ABI preview accounting; keep Python package evidence current on
-main.
+Begin 0.9 C compatibility and optional storage-adapter accounting; keep Python
+and C preview evidence current on main.

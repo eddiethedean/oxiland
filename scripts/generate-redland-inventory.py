@@ -349,7 +349,7 @@ def classify(name: str, header: str) -> dict:
         }:
             return verified(
                 "Model::new / Model::open / OpenOptions / StorageCapabilities",
-                "src/storage.rs",
+                "src/storage/mod.rs",
                 ["tests/storage.rs::capabilities_memory_vs_fjall"],
             )
         return excluded(

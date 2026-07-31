@@ -1,0 +1,151 @@
+//! Opaque tagged handles and live-pointer registry.
+
+use std::collections::HashSet;
+use std::os::raw::c_char;
+use std::sync::{LazyLock, Mutex};
+
+use crate::error::set_last_error;
+
+pub mod model;
+pub mod node;
+pub mod parser;
+pub mod query;
+pub mod serializer;
+pub mod statement;
+pub mod storage;
+pub mod stream;
+pub mod uri;
+pub mod world;
+
+pub const TAG_WORLD: u32 = 0x4F58_5701;
+pub const TAG_STORAGE: u32 = 0x4F58_5702;
+pub const TAG_MODEL: u32 = 0x4F58_5703;
+pub const TAG_URI: u32 = 0x4F58_5704;
+pub const TAG_NODE: u32 = 0x4F58_5705;
+pub const TAG_STATEMENT: u32 = 0x4F58_5706;
+pub const TAG_STREAM: u32 = 0x4F58_5707;
+pub const TAG_PARSER: u32 = 0x4F58_5708;
+pub const TAG_SERIALIZER: u32 = 0x4F58_5709;
+pub const TAG_QUERY: u32 = 0x4F58_570A;
+pub const TAG_QUERY_RESULTS: u32 = 0x4F58_570B;
+pub const TAG_FREED: u32 = 0xDEAD_F00D;
+
+static LIVE: LazyLock<Mutex<HashSet<usize>>> = LazyLock::new(|| Mutex::new(HashSet::new()));
+
+/// Heap object shared by every opaque C handle.
+#[repr(C)]
+pub struct TypedHandle<T> {
+    pub tag: u32,
+    pub inner: T,
+}
+
+fn register(ptr: usize) {
+    LIVE.lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .insert(ptr);
+}
+
+fn unregister(ptr: usize) -> bool {
+    LIVE.lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .remove(&ptr)
+}
+
+/// Boxes `inner` and returns a raw handle pointer registered as live.
+pub fn box_handle<T>(tag: u32, inner: T) -> *mut TypedHandle<T> {
+    let handle = Box::new(TypedHandle { tag, inner });
+    let ptr = Box::into_raw(handle);
+    register(ptr as usize);
+    ptr
+}
+
+/// Null-safe typed borrow. Sets last-error on failure.
+///
+/// # Safety
+/// `ptr` must be null or a live handle previously returned by [`box_handle`]
+/// for the same `T` and `expected_tag`.
+pub unsafe fn borrow_handle<'a, T>(
+    ptr: *mut TypedHandle<T>,
+    expected_tag: u32,
+) -> Option<&'a mut TypedHandle<T>> {
+    if ptr.is_null() {
+        set_last_error("null handle");
+        return None;
+    }
+    // SAFETY: caller guarantees `ptr` is a live TypedHandle<T> from this crate.
+    let handle = unsafe { &mut *ptr };
+    if handle.tag != expected_tag {
+        set_last_error(format!(
+            "handle type tag mismatch (got {:#x}, expected {:#x})",
+            handle.tag, expected_tag
+        ));
+        return None;
+    }
+    Some(handle)
+}
+
+/// Frees a handle. Null is a no-op. Double-free of an unregistered pointer
+/// records an error and returns without dropping again.
+///
+/// # Safety
+/// `ptr` must be null or a pointer from [`box_handle`] for this `T`.
+pub unsafe fn free_handle<T>(ptr: *mut TypedHandle<T>, expected_tag: u32) {
+    if ptr.is_null() {
+        return;
+    }
+    let addr = ptr as usize;
+    if !unregister(addr) {
+        set_last_error("double free or invalid handle");
+        return;
+    }
+    // SAFETY: address was live in the registry; exclusive ownership restored.
+    let handle = unsafe { &mut *ptr };
+    if handle.tag != expected_tag {
+        set_last_error(format!(
+            "handle type tag mismatch on free (got {:#x}, expected {:#x})",
+            handle.tag, expected_tag
+        ));
+    }
+    handle.tag = TAG_FREED;
+    // SAFETY: unique ownership; memory came from Box::into_raw.
+    drop(unsafe { Box::from_raw(ptr) });
+}
+
+/// Reads a required NUL-terminated UTF-8 C string.
+///
+/// # Safety
+/// `ptr` must be null or a valid NUL-terminated C string for the duration.
+pub unsafe fn cstr_required<'a>(ptr: *const c_char, field: &str) -> Option<&'a str> {
+    if ptr.is_null() {
+        set_last_error(format!("{field} is null"));
+        return None;
+    }
+    // SAFETY: caller provides a valid C string pointer.
+    let cstr = unsafe { std::ffi::CStr::from_ptr(ptr) };
+    match cstr.to_str() {
+        Ok(s) => Some(s),
+        Err(_) => {
+            set_last_error(format!("{field} is not valid UTF-8"));
+            None
+        }
+    }
+}
+
+/// Reads an optional NUL-terminated UTF-8 C string (`NULL` → `None`).
+///
+/// # Safety
+/// Same as [`cstr_required`] when non-null.
+pub unsafe fn cstr_optional<'a>(ptr: *const c_char, field: &str) -> Result<Option<&'a str>, ()> {
+    if ptr.is_null() {
+        return Ok(None);
+    }
+    // SAFETY: caller provides a valid C string pointer.
+    let cstr = unsafe { std::ffi::CStr::from_ptr(ptr) };
+    match cstr.to_str() {
+        Ok(s) => Ok(Some(s)),
+        Err(_) => {
+            set_last_error(format!("{field} is not valid UTF-8"));
+            Err(())
+        }
+    }
+}

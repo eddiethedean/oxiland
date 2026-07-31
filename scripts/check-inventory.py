@@ -28,7 +28,8 @@ REQUIRED_FIELDS = {
     "tests",
     "state",
 }
-ALLOWED_MILESTONES = {"0.1", "0.2", "0.3", "0.4", "0.5", "0.6"}
+ALLOWED_MILESTONES = {"0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8"}
+C_ABI_REQUIRED_FROM = "0.8"
 
 
 def fail(message: str) -> None:
@@ -102,6 +103,26 @@ def validate_inventory(path: Path) -> None:
                     f"{path.name}:{entry['id']}: excluded entries require notes or deviations"
                 )
 
+        if milestone >= C_ABI_REQUIRED_FROM:
+            if "c_abi" not in entry:
+                fail(f"{path.name}:{entry['id']}: missing c_abi (required from 0.8)")
+            if "c_state" not in entry:
+                fail(f"{path.name}:{entry['id']}: missing c_state (required from 0.8)")
+            if entry["c_state"] not in ALLOWED_STATES:
+                fail(f"{path.name}:{entry['id']}: invalid c_state {entry['c_state']}")
+            if entry["c_state"] in {"implemented", "verified"}:
+                if not entry.get("c_abi"):
+                    fail(
+                        f"{path.name}:{entry['id']}: c_abi required when c_state is "
+                        f"{entry['c_state']}"
+                    )
+                c_tests = entry.get("c_tests")
+                if not isinstance(c_tests, list) or not c_tests:
+                    fail(
+                        f"{path.name}:{entry['id']}: c_tests required when c_state is "
+                        f"{entry['c_state']}"
+                    )
+
     if milestone == "0.6":
         unreviewed = [e["id"] for e in entries if e["state"] == "unreviewed"]
         if unreviewed:
@@ -112,7 +133,7 @@ def validate_inventory(path: Path) -> None:
         mapped = [e["id"] for e in entries if e["state"] == "mapped"]
         if mapped:
             fail(
-                f"{path.name}: 0.6 exit forbids mapped (unimplemented) entries "
+                f"{path.name}: 0.6 forbids mapped (unimplemented) entries "
                 f"({len(mapped)} remain), e.g. {mapped[:5]}"
             )
 
@@ -121,6 +142,11 @@ def validate_inventory(path: Path) -> None:
     print(f"entries: {len(entries)}")
     for state in sorted(counts):
         print(f"  {state}: {counts[state]}")
+    if milestone >= C_ABI_REQUIRED_FROM:
+        c_counts = Counter(entry.get("c_state", "missing") for entry in entries)
+        print("c_state:")
+        for state in sorted(c_counts):
+            print(f"  {state}: {c_counts[state]}")
 
 
 def main() -> None:

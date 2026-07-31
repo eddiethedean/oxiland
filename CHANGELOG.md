@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-07-31
+
+Auditable C ABI source-compat preview and sealed durable-store adapter (ADR-022/023).
+
+### Added
+
+- crates/oxiland-capi with preview librdf_* allowlist, headers, pkg-config, representative C example
+- Sealed DurableStore adapter; format_v1 helpers; backend conformance harness
+- OpenOptions::new(StorageBackend, path); compiled_backends(); known-but-not-compiled backend errors
+- CI: C ABI job (example, symbol allowlist, ASan)
+- Inventory redland-1.0.17-oxiland-0.8.json with c_abi/c_state fields
+- docs: milestones/0.8.md, design/0.8-cabi.md, design/0.8-redb-spike.md, reports/0.8.md, users C guide
+
+### Changed
+
+- Fjall persistence moved behind src/storage/{fjall,durable,format_v1}.rs
+- StorageBackend::from_name distinguishes known-uncompiled vs unknown vs legacy
+- Crate versions 0.8.0 (Rust, CLI, CAPI, PyPI aligned)
+
 ## [0.7.0] - 2026-07-31
 
 First-class typed Python package for embedded RDF models, persistence, SPARQL,

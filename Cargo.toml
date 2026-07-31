@@ -1,12 +1,12 @@
 [workspace]
-members = [".", "crates/oxiland-cli"]
+members = [".", "crates/oxiland-cli", "crates/oxiland-capi"]
 exclude = ["python"]
 resolver = "2"
-default-members = [".", "crates/oxiland-cli"]
+default-members = [".", "crates/oxiland-cli", "crates/oxiland-capi"]
 
 [package]
 name = "oxiland"
-version = "0.7.0"
+version = "0.8.0"
 edition = "2024"
 rust-version = "1.87"
 description = "Embedded RDF datasets, SPARQL, persistence, and streaming I/O for Rust"

@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 
 use oxigraph::model::{GraphName as OxGraphName, NamedNodeRef, NamedOrBlankNodeRef, Quad, TermRef};
-use oxiland::storage::OpenOptions;
+use oxiland::storage::{compiled_backends, OpenOptions};
 use oxiland::{Model, StatementMatches, StatementPattern, StorageBackend};
 use pyo3::prelude::*;
 
@@ -29,15 +29,19 @@ impl PyModel {
     }
 
     #[classmethod]
-    #[pyo3(signature = (path, *, read_only=false, create=true))]
+    #[pyo3(signature = (path, *, read_only=false, create=true, backend="fjall"))]
     fn open(
         _cls: &Bound<'_, pyo3::types::PyType>,
         path: &Bound<'_, PyAny>,
         read_only: bool,
         create: bool,
+        backend: &str,
     ) -> PyResult<Self> {
         let path = path_buf(path)?;
-        let options = OpenOptions::fjall(path).read_only(read_only).create(create);
+        let backend = StorageBackend::from_name(backend).map_err(map_error)?;
+        let options = OpenOptions::new(backend, path)
+            .read_only(read_only)
+            .create(create);
         Ok(Self {
             inner: Model::open_with(options).map_err(map_error)?,
             transaction_active: Arc::new(AtomicBool::new(false)),
@@ -415,5 +419,17 @@ pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyModel>()?;
     m.add_class::<PyFindIter>()?;
     m.add_class::<PyTransaction>()?;
+    m.add_function(wrap_pyfunction!(py_compiled_backends, m)?)?;
+    m.add_function(wrap_pyfunction!(py_storage_backend_available, m)?)?;
     Ok(())
+}
+
+#[pyfunction(name = "compiled_backends")]
+fn py_compiled_backends() -> Vec<&'static str> {
+    compiled_backends().iter().map(|b| b.name()).collect()
+}
+
+#[pyfunction(name = "storage_backend_available")]
+fn py_storage_backend_available(name: &str) -> PyResult<bool> {
+    Model::storage_backend_available(name).map_err(map_error)
 }

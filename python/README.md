@@ -1,10 +1,10 @@
 # Oxiland for Python
 
 [![CI](https://github.com/eddiethedean/oxiland/actions/workflows/ci.yml/badge.svg)](https://github.com/eddiethedean/oxiland/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/oxiland.svg)](https://pypi.org/project/oxiland/)
-[![Python versions](https://img.shields.io/pypi/pyversions/oxiland.svg)](https://pypi.org/project/oxiland/)
+[![PyPI](https://img.shields.io/pypi/v/oxiland?cacheSeconds=3600)](https://pypi.org/project/oxiland/)
+[![Python versions](https://img.shields.io/pypi/pyversions/oxiland?cacheSeconds=3600)](https://pypi.org/project/oxiland/)
 [![Guides](https://img.shields.io/readthedocs/oxiland?label=Guides)](https://oxiland.readthedocs.io/en/latest/users/python/)
-[![License](https://img.shields.io/pypi/l/oxiland.svg)](https://github.com/eddiethedean/oxiland/blob/main/LICENSE-APACHE)
+[![License](https://img.shields.io/pypi/l/oxiland?cacheSeconds=3600)](https://github.com/eddiethedean/oxiland/blob/main/LICENSE-APACHE)
 
 Oxiland is a typed Python library for working with RDF datasets. It combines
 an in-memory or persistent model, named graphs, SPARQL 1.1 queries and updates,

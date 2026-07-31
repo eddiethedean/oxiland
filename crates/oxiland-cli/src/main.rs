@@ -8,7 +8,7 @@ use oxigraph::model::{GraphName, NamedOrBlankNode, Quad, Term, Triple};
 use oxiland::io::{Parser as RdfParser, Serializer, Syntax};
 use oxiland::terms::{self, Literal};
 use oxiland::{
-    Model, OpenOptions, Query, QueryResults, ResultsFormat, StatementPattern,
+    Model, OpenOptions, Query, QueryResults, ResultsFormat, StatementPattern, StorageBackend,
     serialize_query_results_to_string,
 };
 
@@ -270,28 +270,35 @@ fn load_path(
 }
 
 fn open_model(cli: &Cli) -> Result<Model, Box<dyn std::error::Error>> {
-    let storage = cli.storage.to_ascii_lowercase();
-    match storage.as_str() {
-        "memory" | "mem" => {
+    let backend = match StorageBackend::from_name(&cli.storage) {
+        Ok(backend) => backend,
+        Err(err) => {
+            return Err(format!("unsupported storage type: {err}").into());
+        }
+    };
+    match backend {
+        StorageBackend::Memory => {
             if cli.store_name != "memory" && !cli.quiet {
                 eprintln!(
                     "oxiland-cli: ignoring store-name '{}' for memory storage",
                     cli.store_name
                 );
             }
-            Ok(Model::new()?)
+            Ok(Model::open_with(OpenOptions::new(
+                StorageBackend::Memory,
+                "memory",
+            ))?)
         }
-        "fjall" => {
+        StorageBackend::Fjall => {
             if cli.store_name == "memory" {
                 return Err(
                     "store-name 'memory' requires -s memory; use a filesystem path with -s fjall"
                         .into(),
                 );
             }
-            let opts = OpenOptions::fjall(&cli.store_name).create(cli.new);
+            let opts = OpenOptions::new(StorageBackend::Fjall, &cli.store_name).create(cli.new);
             Ok(Model::open_with(opts)?)
         }
-        other => Err(format!("unsupported storage type '{other}' (use memory or fjall)").into()),
     }
 }
 

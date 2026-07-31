@@ -23,7 +23,7 @@ only when its evidence gates are satisfied.
 | 0.5 | Streams, utilities, and observability | 0.4 | `complete` |
 | 0.6 | Accounted safe Rust parity | 0.5 | `complete` |
 | 0.7 | Pythonic package on PyPI | 0.4 (sequenced after 0.6) | `complete` |
-| 0.8 | Auditable C ABI preview | 0.6 | `planned` |
+| 0.8 | Auditable C ABI preview | 0.6 | `complete` |
 | 0.9 | Downstream C compatibility | 0.8 | `planned` |
 | 0.10 | 1.0 release candidate | 0.9 | `planned` |
 
@@ -316,6 +316,13 @@ Rust mappings from 0.6 before a non-experimental PyPI release.
 
 Outcome: run representative existing C consumers against an auditable Oxiland
 compatibility library.
+
+State: complete  
+Evidence: [parity ledger](parity.md),
+[0.8 compatibility report](reports/0.8.md),
+[inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.8.json),
+[milestone plan](milestones/0.8.md),
+[design](design/0.8-cabi.md), ADR-022, ADR-023
 
 Deliverables:
 

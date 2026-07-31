@@ -1,0 +1,10 @@
+prefix=@PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: oxiland
+Description: Oxiland C ABI preview (Redland-shaped source-compat)
+Version: 0.8.0
+Libs: -L${libdir} -loxiland_capi
+Cflags: -I${includedir}

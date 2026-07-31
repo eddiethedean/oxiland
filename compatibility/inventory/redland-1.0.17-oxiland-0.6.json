@@ -4411,7 +4411,7 @@
       "subsystem": "storage",
       "header": "rdf_storage.h",
       "safe_rust": "Model::new / Model::open / OpenOptions / StorageCapabilities",
-      "implementation": "src/storage.rs",
+      "implementation": "src/storage/mod.rs",
       "tests": [
         "tests/storage.rs::capabilities_memory_vs_fjall"
       ],
@@ -4732,7 +4732,7 @@
       "subsystem": "storage",
       "header": "rdf_storage.h",
       "safe_rust": "Model::new / Model::open / OpenOptions / StorageCapabilities",
-      "implementation": "src/storage.rs",
+      "implementation": "src/storage/mod.rs",
       "tests": [
         "tests/storage.rs::capabilities_memory_vs_fjall"
       ],
@@ -4899,7 +4899,7 @@
       "subsystem": "storage",
       "header": "rdf_storage.h",
       "safe_rust": "Model::new / Model::open / OpenOptions / StorageCapabilities",
-      "implementation": "src/storage.rs",
+      "implementation": "src/storage/mod.rs",
       "tests": [
         "tests/storage.rs::capabilities_memory_vs_fjall"
       ],
@@ -4912,7 +4912,7 @@
       "subsystem": "storage",
       "header": "rdf_storage.h",
       "safe_rust": "Model::new / Model::open / OpenOptions / StorageCapabilities",
-      "implementation": "src/storage.rs",
+      "implementation": "src/storage/mod.rs",
       "tests": [
         "tests/storage.rs::capabilities_memory_vs_fjall"
       ],
@@ -4925,7 +4925,7 @@
       "subsystem": "storage",
       "header": "rdf_storage.h",
       "safe_rust": "Model::new / Model::open / OpenOptions / StorageCapabilities",
-      "implementation": "src/storage.rs",
+      "implementation": "src/storage/mod.rs",
       "tests": [
         "tests/storage.rs::capabilities_memory_vs_fjall"
       ],
