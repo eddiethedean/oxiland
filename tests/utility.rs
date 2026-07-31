@@ -111,10 +111,7 @@ fn file_uri_round_trip() {
     #[cfg(windows)]
     {
         let unc = file_uri_to_path("file://remote.host/tmp/x").unwrap();
-        assert_eq!(
-            unc,
-            std::path::PathBuf::from(r"\\remote.host\tmp\x")
-        );
+        assert_eq!(unc, std::path::PathBuf::from(r"\\remote.host\tmp\x"));
     }
     #[cfg(not(windows))]
     {
