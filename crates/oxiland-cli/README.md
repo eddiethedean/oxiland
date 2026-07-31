@@ -4,9 +4,11 @@ rdfproc-compatible command workflows over the [Oxiland](https://crates.io/crates
 safe Rust facade (ADR-019). This is **not** a drop-in binary for native `rdfproc`.
 
 ```console
+cargo install oxiland-cli
 cargo run -p oxiland-cli -- --help
-oxiland-cli memory parse ./data.ttl turtle
-oxiland-cli ./store.db find - - - 
+oxiland-cli -s memory memory parse ./data.ttl --syntax turtle
+oxiland-cli -n -s fjall ./store.db find - - -
 ```
 
-See `docs/users/cli.md` and `docs/design/0.6-cli-rdfproc.md`.
+See [`docs/users/cli.md`](../../docs/users/cli.md) and
+[`docs/design/0.6-cli-rdfproc.md`](../../docs/design/0.6-cli-rdfproc.md).
