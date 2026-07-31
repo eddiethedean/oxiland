@@ -93,18 +93,38 @@ Required on every PR and on `main`/release:
 
 - stable Rust checks (fmt, Clippy, tests, docs, examples, inventory,
   documentation links, public-API snapshot);
+- safe Rust workspace tests on Linux, macOS, and Windows;
 - dedicated Fjall persistence tests;
 - Rust 1.87 MSRV Clippy and tests;
+- RustSec audits for the workspace and Python extension lockfiles;
+- non-breaking semver compatibility against 0.6.0 (forced to minor-release
+  policy for the pre-1.0 API) and packaged-crate verification;
 - Python pytest, Pyright, and runnable examples;
 - Linux, macOS, and Windows wheel builds for CPython 3.10–3.14;
-- install/import smoke tests for every produced wheel;
+- metadata, license, typing, native-extension, and CycloneDX SBOM validation
+  for every wheel;
+- clean install/import smoke tests for every produced wheel;
 - RDF I/O conformance and compatibility harness smokes.
 
 Planned broader coverage includes:
 
-- Linux, macOS, and Windows for the safe API;
 - sanitizer-enabled Linux/macOS C ABI tests;
-- documentation, formatting, Clippy, dependency policy, and public-API checks.
+- expanded license policy and generated dependency inventory checks.
+
+Workflow permissions default to read-only, third-party Actions use immutable
+full commit SHAs, and dependency updates arrive as grouped Dependabot pull
+requests. Release jobs elevate only the individual permissions needed for OIDC
+attestations or GitHub release assets. The Rust workspace and independent
+Python extension each commit their `Cargo.lock`, making `--locked` builds and
+RustSec results reproducible on clean runners.
+
+Security advisories are blocking, not warning-only. As of the 0.7.0 preflight,
+PyO3 has been upgraded to 0.29.0. Pull-request CI carries a narrow, executable
+exception for RUSTSEC-2026-0194 and RUSTSEC-2026-0195 while Oxigraph 0.5.9
+constrains `quick-xml` to 0.37; the exception check fails as soon as that exact
+graph changes so it must be reviewed and removed. The release workflow audits
+without exceptions and therefore cannot publish while either advisory remains.
+See R-020 in the [risk register](RISKS.md).
 
 Nightly or scheduled coverage includes:
 
@@ -122,10 +142,10 @@ rollback, interrupted writes, and concurrent access behavior.
 Before review:
 
 ```text
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
-cargo test
-cargo doc --no-deps
+cargo fmt --all --check
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --workspace --all-features --locked
+cargo doc --workspace --all-features --no-deps --locked
 python3 scripts/check-inventory.py
 python3 scripts/check-docs.py
 scripts/generate-public-api.sh check
@@ -135,26 +155,31 @@ For Python changes:
 
 ```text
 cd python
-maturin develop
+python -m pip install --requirement requirements-ci.txt
+maturin develop --locked
 pytest -q
 pyright
 python examples/quick_start.py
 python examples/select.py
 python examples/parse_serialize.py
 python examples/persistent.py
-maturin build --release
+maturin build --release --locked
 ```
 
 For documentation changes:
 
 ```text
 python3 scripts/check-docs.py
-mkdocs build --strict
+python3 -m pip install --requirement docs/requirements.txt
+python3 -m mkdocs build --strict
 ```
 
 Milestones may add native or long-running commands to this baseline. Release
 artifact checks must operate on the built crate, CLI, or wheel rather than only
-the workspace source tree.
+the workspace source tree. Python release artifacts are the exact CI-built and
+install-smoked wheels; release jobs do not rebuild them. Their metadata,
+bundled licenses, PEP 561 files, native extension, and CycloneDX SBOM are
+checked before provenance attestation and publication.
 
 ## Release gates by phase
 

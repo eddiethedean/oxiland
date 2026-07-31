@@ -70,14 +70,15 @@ they enable. Code without the required evidence is `implemented`, not
 Run:
 
 ```console
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
-cargo test
-cargo doc --no-deps
+cargo fmt --all --check
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --workspace --all-features --locked
+cargo doc --workspace --all-features --no-deps --locked
 python3 scripts/check-inventory.py
 python3 scripts/check-docs.py
 scripts/generate-public-api.sh check
-mkdocs build --strict
+python3 -m pip install --requirement docs/requirements.txt
+python3 -m mkdocs build --strict
 ```
 
 For Python package changes (`python/`):
@@ -85,15 +86,15 @@ For Python package changes (`python/`):
 ```console
 cd python
 python3 -m venv .venv && source .venv/bin/activate
-pip install maturin pytest pyright
-maturin develop
+python -m pip install --requirement requirements-ci.txt
+maturin develop --locked
 pytest -q
 pyright
 python examples/quick_start.py
 python examples/select.py
 python examples/parse_serialize.py
 python examples/persistent.py
-maturin build --release
+maturin build --release --locked
 ```
 
 For CLI changes:
@@ -102,6 +103,16 @@ For CLI changes:
 cargo test -p oxiland-cli
 cargo run -p oxiland-cli -- --help
 ```
+
+CI additionally exercises the Rust workspace on Linux, macOS, and Windows;
+Rust 1.87; both Rust lockfiles with `cargo audit`; crate packaging and semver;
+and all 15 supported Python wheel/runtime combinations. External GitHub
+Actions are pinned to full commit SHAs. Dependabot proposes reviewed updates
+for Actions, Cargo, Python tooling, and documentation dependencies.
+
+`Cargo.lock` and `python/Cargo.lock` are committed release inputs. Dependency
+changes must update the appropriate lockfile and pass its security audit; do
+not delete a lockfile to force CI to resolve an unreviewed graph.
 
 Also run milestone-specific conformance, differential, storage, sanitizer, or
 packaging checks when your change affects them.

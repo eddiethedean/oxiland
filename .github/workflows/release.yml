@@ -9,16 +9,20 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 env:
   CARGO_TERM_COLOR: always
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
 
 jobs:
   ci:
     name: CI
     uses: ./.github/workflows/ci.yml
 
-  publish:
-    name: Publish crates
+  security:
+    name: Release dependency audit
     needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -26,27 +30,54 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4
+        with:
+          toolchain: stable
+
+      - name: Cache cargo tools
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          shared-key: security
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked --version 0.22.2
+
+      - name: Audit Rust workspace without exceptions
+        run: cargo audit --file Cargo.lock
+
+      - name: Audit Python native extension without exceptions
+        run: cargo audit --file python/Cargo.lock
+
+  publish:
+    name: Publish crates
+    needs: [ci, security]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4
+        with:
+          toolchain: stable
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.14"
 
       - name: Verify tag matches package versions
-        run: |
-          tag="${GITHUB_REF_NAME#v}"
-          lib_version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)"
-          cli_version="$(sed -n 's/^version = "\(.*\)"/\1/p' crates/oxiland-cli/Cargo.toml | head -n1)"
-          py_version="$(sed -n 's/^version = "\(.*\)"/\1/p' python/pyproject.toml | head -n1)"
-          py_crate_version="$(sed -n 's/^version = "\(.*\)"/\1/p' python/Cargo.toml | head -n1)"
-          if [ "$tag" != "$lib_version" ] || [ "$tag" != "$cli_version" ]; then
-            echo "Tag '$tag' must match oxiland ($lib_version) and oxiland-cli ($cli_version)"
-            exit 1
-          fi
-          if [ "$tag" != "$py_version" ] || [ "$tag" != "$py_crate_version" ]; then
-            echo "Tag '$tag' must match python/pyproject.toml ($py_version) and python/Cargo.toml ($py_crate_version)"
-            exit 1
-          fi
-          echo "Publishing oxiland + oxiland-cli + PyPI oxiland $tag"
+        run: python scripts/check-release-version.py "$GITHUB_REF_NAME"
 
       - name: Publish to crates.io
         env:
@@ -62,8 +93,8 @@ jobs:
           if version_exists oxiland; then
             echo "oxiland $tag is already on crates.io; skipping"
           else
-            cargo publish -p oxiland --dry-run
-            cargo publish -p oxiland
+            cargo publish -p oxiland --locked --dry-run
+            cargo publish -p oxiland --locked
           fi
 
           if version_exists oxiland-cli; then
@@ -73,7 +104,7 @@ jobs:
 
           # CLI depends on the just-published oxiland version on crates.io.
           for i in 1 2 3 4 5 6 7 8; do
-            if cargo publish -p oxiland-cli; then
+            if cargo publish -p oxiland-cli --locked; then
               exit 0
             fi
             if version_exists oxiland-cli; then
@@ -94,59 +125,74 @@ jobs:
       name: pypi
       url: https://pypi.org/project/oxiland/
     permissions:
+      attestations: write
       contents: read
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
-      - name: Verify tag matches Python package version
-        shell: bash
-        run: |
-          tag="${GITHUB_REF_NAME#v}"
-          py_version="$(sed -n 's/^version = "\(.*\)"/\1/p' python/pyproject.toml | head -n1)"
-          py_crate_version="$(sed -n 's/^version = "\(.*\)"/\1/p' python/Cargo.toml | head -n1)"
-          if [ "$tag" != "$py_version" ] || [ "$tag" != "$py_crate_version" ]; then
-            echo "Tag '$tag' must match python/pyproject.toml ($py_version) and python/Cargo.toml ($py_crate_version)"
-            exit 1
-          fi
-          echo "Publishing PyPI oxiland $tag with Trusted Publishing"
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.14"
+
+      - name: Verify tag matches package versions
+        run: python scripts/check-release-version.py "$GITHUB_REF_NAME"
 
       - name: Download release wheels
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: wheels-*
           path: dist
           merge-multiple: true
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
-
       - name: Validate release wheel set
-        env:
-          RELEASE_VERSION: ${{ github.ref_name }}
-        run: |
-          python - <<'PY'
-          import os
-          from pathlib import Path
-          import zipfile
+        shell: bash
+        run: python scripts/check-python-wheels.py dist --version "${GITHUB_REF_NAME#v}" --copies-per-abi 3
 
-          version = os.environ["RELEASE_VERSION"].removeprefix("v")
-          wheels = sorted(Path("dist").glob(f"oxiland-{version}-*.whl"))
-          assert len(wheels) == 15, wheels
-          expected_abis = {"cp310", "cp311", "cp312", "cp313", "cp314"}
-          for abi in expected_abis:
-              matches = [wheel for wheel in wheels if f"-{abi}-" in wheel.name]
-              assert len(matches) == 3, (abi, matches)
-          for wheel in wheels:
-              names = zipfile.ZipFile(wheel).namelist()
-              assert any(name.endswith("/py.typed") for name in names), wheel
-          PY
+      - name: Attest release wheels
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        with:
+          subject-path: dist/*.whl
 
       - name: Publish wheels to PyPI
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
         with:
           packages-dir: dist
           skip-existing: true
+
+  github-release:
+    name: GitHub release
+    needs: [publish, publish-pypi]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Download release wheels
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - name: Generate SHA-256 manifest
+        working-directory: dist
+        run: sha256sum *.whl > SHA256SUMS
+
+      - name: Create or update GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/*.whl dist/SHA256SUMS --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/*.whl dist/SHA256SUMS \
+              --generate-notes \
+              --title "Oxiland ${GITHUB_REF_NAME#v}" \
+              --verify-tag
+          fi

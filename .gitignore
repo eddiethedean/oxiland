@@ -4,10 +4,7 @@
 /target
 /python/target
 /python/.venv
-Cargo.lock
-/python/Cargo.lock
 __pycache__/
 .ontocode/
 compatibility/harness/*-result.json
 .pytest_cache/
-

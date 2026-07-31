@@ -28,7 +28,7 @@ pub struct PySolution {
 
 #[pymethods]
 impl PySolution {
-    fn __getitem__(&self, py: Python<'_>, key: &Bound<'_, PyAny>) -> PyResult<PyObject> {
+    fn __getitem__(&self, py: Python<'_>, key: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         if let Ok(index) = key.extract::<usize>() {
             return match self.ordered.get(index) {
                 None => Err(pyo3::exceptions::PyKeyError::new_err(index)),
@@ -48,7 +48,7 @@ impl PySolution {
         ))
     }
 
-    fn get(&self, py: Python<'_>, name: &str) -> PyResult<Option<PyObject>> {
+    fn get(&self, py: Python<'_>, name: &str) -> PyResult<Option<Py<PyAny>>> {
         match self.ordered.iter().find(|(n, _)| n == name) {
             None => Ok(None),
             Some((_, None)) => Ok(None),
@@ -160,7 +160,7 @@ fn extract_graphs(graphs: &Bound<'_, PyAny>) -> PyResult<Vec<OxGraphName>> {
     if let Ok(graph) = extract_graph_name(graphs) {
         return Ok(vec![graph]);
     }
-    if let Ok(seq) = graphs.downcast::<PySequence>() {
+    if let Ok(seq) = graphs.cast::<PySequence>() {
         let mut out = Vec::with_capacity(seq.len()?);
         for i in 0..seq.len()? {
             out.push(extract_graph_name(&seq.get_item(i)?)?);
@@ -184,7 +184,7 @@ fn query(
     offset: Option<usize>,
     default_graph: Option<&Bound<'_, PyAny>>,
     default_graph_as_union: bool,
-) -> PyResult<PyObject> {
+) -> PyResult<Py<PyAny>> {
     let mut q = Query::new(sparql);
     if let Some(base) = base_iri {
         q = q.base_iri(base).map_err(map_error)?;

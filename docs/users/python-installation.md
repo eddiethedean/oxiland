@@ -60,11 +60,12 @@ application:
 oxiland==0.7.0
 ```
 
-For environments that require artifact integrity, generate and review hashes
-for the target platform with your normal dependency-locking tool, then install
-with hash checking enabled. Do not copy a wheel between platforms based only on
-the version number; wheel tags include the CPython ABI, operating system, and
-architecture.
+For environments that require artifact integrity, download the wheel and
+`SHA256SUMS` from the matching GitHub release, verify the checksum, and retain
+the GitHub build-provenance attestation with deployment evidence. You can also
+generate hashes with your dependency-locking tool and install with pip hash
+checking. Do not copy a wheel between platforms based only on the version
+number; wheel tags include the CPython ABI, operating system, and architecture.
 
 When building containers, resolve dependencies for the image's actual platform
 and libc environment. A wheel downloaded for macOS, Windows, or a different

@@ -8,7 +8,7 @@ use pyo3::prelude::*;
 
 use crate::error::map_error;
 
-#[pyclass(name = "NamedNode", module = "oxiland", frozen)]
+#[pyclass(name = "NamedNode", module = "oxiland", frozen, skip_from_py_object)]
 #[derive(Clone, Debug)]
 pub struct PyNamedNode {
     pub(crate) inner: OxNamed,
@@ -55,7 +55,7 @@ impl PyNamedNode {
     }
 }
 
-#[pyclass(name = "BlankNode", module = "oxiland", frozen)]
+#[pyclass(name = "BlankNode", module = "oxiland", frozen, skip_from_py_object)]
 #[derive(Clone, Debug)]
 pub struct PyBlankNode {
     pub(crate) inner: OxBlank,
@@ -103,7 +103,7 @@ impl PyBlankNode {
     }
 }
 
-#[pyclass(name = "Literal", module = "oxiland", frozen)]
+#[pyclass(name = "Literal", module = "oxiland", frozen, skip_from_py_object)]
 #[derive(Clone, Debug)]
 pub struct PyLiteral {
     pub(crate) inner: OxLiteral,
@@ -172,7 +172,7 @@ impl PyLiteral {
     }
 }
 
-#[pyclass(name = "Triple", module = "oxiland", frozen)]
+#[pyclass(name = "Triple", module = "oxiland", frozen, skip_from_py_object)]
 #[derive(Clone, Debug)]
 pub struct PyTriple {
     pub(crate) inner: OxTriple,
@@ -196,7 +196,7 @@ impl PyTriple {
     }
 
     #[getter]
-    fn subject(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn subject(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         named_or_blank_to_py(py, &self.inner.subject)
     }
 
@@ -208,7 +208,7 @@ impl PyTriple {
     }
 
     #[getter]
-    fn object(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn object(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         term_to_py(py, &self.inner.object)
     }
 
@@ -235,7 +235,7 @@ impl PyTriple {
     }
 }
 
-#[pyclass(name = "Quad", module = "oxiland", frozen)]
+#[pyclass(name = "Quad", module = "oxiland", frozen, skip_from_py_object)]
 #[derive(Clone, Debug)]
 pub struct PyQuad {
     pub(crate) inner: OxQuad,
@@ -266,7 +266,7 @@ impl PyQuad {
     }
 
     #[getter]
-    fn subject(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn subject(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         named_or_blank_to_py(py, &self.inner.subject)
     }
 
@@ -278,12 +278,12 @@ impl PyQuad {
     }
 
     #[getter]
-    fn object(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn object(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         term_to_py(py, &self.inner.object)
     }
 
     #[getter]
-    fn graph(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn graph(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         graph_name_to_py(py, &self.inner.graph_name)
     }
 
@@ -310,7 +310,7 @@ impl PyQuad {
     }
 }
 
-#[pyclass(name = "DefaultGraph", module = "oxiland", frozen)]
+#[pyclass(name = "DefaultGraph", module = "oxiland", frozen, skip_from_py_object)]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct PyDefaultGraph;
 
@@ -399,7 +399,7 @@ pub fn extract_triple(obj: &Bound<'_, PyAny>) -> PyResult<OxTriple> {
     Err(pyo3::exceptions::PyTypeError::new_err("expected Triple"))
 }
 
-pub fn term_to_py(py: Python<'_>, term: &OxTerm) -> PyResult<PyObject> {
+pub fn term_to_py(py: Python<'_>, term: &OxTerm) -> PyResult<Py<PyAny>> {
     match term {
         OxTerm::NamedNode(n) => Ok(PyNamedNode { inner: n.clone() }
             .into_pyobject(py)?
@@ -416,7 +416,7 @@ pub fn term_to_py(py: Python<'_>, term: &OxTerm) -> PyResult<PyObject> {
     }
 }
 
-pub fn named_or_blank_to_py(py: Python<'_>, node: &NamedOrBlankNode) -> PyResult<PyObject> {
+pub fn named_or_blank_to_py(py: Python<'_>, node: &NamedOrBlankNode) -> PyResult<Py<PyAny>> {
     match node {
         NamedOrBlankNode::NamedNode(n) => Ok(PyNamedNode { inner: n.clone() }
             .into_pyobject(py)?
@@ -429,7 +429,7 @@ pub fn named_or_blank_to_py(py: Python<'_>, node: &NamedOrBlankNode) -> PyResult
     }
 }
 
-pub fn graph_name_to_py(py: Python<'_>, graph: &OxGraphName) -> PyResult<PyObject> {
+pub fn graph_name_to_py(py: Python<'_>, graph: &OxGraphName) -> PyResult<Py<PyAny>> {
     match graph {
         OxGraphName::DefaultGraph => Ok(PyDefaultGraph.into_pyobject(py)?.into_any().unbind()),
         OxGraphName::NamedNode(n) => Ok(PyNamedNode { inner: n.clone() }

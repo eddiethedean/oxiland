@@ -18,7 +18,7 @@ create_exception!(oxiland, IoError, OxilandError);
 create_exception!(oxiland, OpenStoreError, OxilandError);
 
 pub fn map_error(error: Error) -> PyErr {
-    Python::with_gil(|py| map_error_py(py, error))
+    Python::attach(|py| map_error_py(py, error))
 }
 
 fn map_error_py(py: Python<'_>, error: Error) -> PyErr {
@@ -80,7 +80,7 @@ pub fn path_buf(path: &Bound<'_, PyAny>) -> PyResult<PathBuf> {
     if let Ok(s) = path.extract::<String>() {
         return Ok(PathBuf::from(s));
     }
-    if let Ok(s) = path.downcast::<PyString>() {
+    if let Ok(s) = path.cast::<PyString>() {
         return Ok(PathBuf::from(s.to_string_lossy().as_ref()));
     }
     Err(pyo3::exceptions::PyTypeError::new_err(

@@ -8,7 +8,12 @@ use pyo3::types::{PyBytes, PyModule};
 use crate::error::map_error;
 use crate::terms::PyNamedNode;
 
-#[pyclass(name = "DigestAlgorithm", module = "oxiland", frozen)]
+#[pyclass(
+    name = "DigestAlgorithm",
+    module = "oxiland",
+    frozen,
+    skip_from_py_object
+)]
 #[derive(Clone, Copy, Debug)]
 pub struct PyDigestAlgorithm {
     inner: DigestAlgorithm,
@@ -70,7 +75,7 @@ fn digest_bytes(
     py: Python<'_>,
     algorithm: &Bound<'_, PyAny>,
     data: &Bound<'_, PyAny>,
-) -> PyResult<PyObject> {
+) -> PyResult<Py<PyAny>> {
     let algo = resolve_algo(algorithm)?;
     let bytes = extract_data(data)?;
     Ok(PyBytes::new(py, &rust_digest_bytes(algo, &bytes))
@@ -82,7 +87,7 @@ fn extract_data(data: &Bound<'_, PyAny>) -> PyResult<Vec<u8>> {
     if let Ok(s) = data.extract::<String>() {
         return Ok(s.into_bytes());
     }
-    if let Ok(b) = data.downcast::<PyBytes>() {
+    if let Ok(b) = data.cast::<PyBytes>() {
         return Ok(b.as_bytes().to_vec());
     }
     if let Ok(b) = data.extract::<Vec<u8>>() {

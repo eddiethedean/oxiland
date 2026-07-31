@@ -374,6 +374,11 @@ Decision:
   0.7.0 publishes the CI-verified wheels through PyPI Trusted Publishing and
   does not publish an sdist because the path dependency on the Rust crate
   cannot ship a usable source archive from `python/` alone.
+- Treat wheels as first-class release artifacts: validate their Python
+  metadata, license files, native ABI tags, PEP 561 surface, and embedded
+  CycloneDX SBOM; install-smoke every platform/interpreter pair; attest the
+  exact tested files; and publish them with a SHA-256 manifest on the GitHub
+  release. The release workflow never rebuilds wheels after CI.
 - **Defer rdflib interop** for 0.7 (no convert helpers, no store adapter, no
   behavioral-identity claim). Revisit in a later ADR if needed.
 - Do **not** claim Redland Python binding drop-in compatibility or CPython ABI
@@ -387,7 +392,8 @@ Consequences:
   [`0.7-python-api.md`](design/0.7-python-api.md) lists intentional non-mirrors.
 - Python versioning tracks the 0.7.x train alongside the Rust crate where
   practical.
-- Typing (`py.typed` / stubs) and pytest are release gates.
+- Typing (`py.typed` / stubs), pytest, artifact integrity, and wheel provenance
+  are release gates.
 
 Revisit when: adding rdflib interop, changing the supported CPython matrix, or
 layering Python on a future C ABI.

@@ -10,7 +10,7 @@ use crate::error::{map_error, path_buf};
 use crate::model::PyModel;
 use crate::terms::{PyQuad, extract_graph_name, quad_to_py};
 
-#[pyclass(name = "Syntax", module = "oxiland", frozen)]
+#[pyclass(name = "Syntax", module = "oxiland", frozen, skip_from_py_object)]
 #[derive(Clone, Copy, Debug)]
 pub struct PySyntax {
     pub(crate) inner: Syntax,
@@ -310,7 +310,7 @@ fn extract_bytes(data: &Bound<'_, PyAny>) -> PyResult<Vec<u8>> {
     if let Ok(s) = data.extract::<String>() {
         return Ok(s.into_bytes());
     }
-    if let Ok(b) = data.downcast::<PyBytes>() {
+    if let Ok(b) = data.cast::<PyBytes>() {
         return Ok(b.as_bytes().to_vec());
     }
     if let Ok(b) = data.extract::<Vec<u8>>() {

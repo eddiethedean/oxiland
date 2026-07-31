@@ -39,6 +39,8 @@ and streaming I/O (ADR-017).
   context cannot commit through an outer rollback
 - Wheel CI installs every advertised OS/interpreter artifact; PyPI publication
   reuses those verified wheels through Trusted Publishing after crates.io
+- Python extension upgraded to PyO3 0.29.0 to remove the 0.25 iterator and
+  closure soundness advisories
 
 ## [0.6.0] - 2026-07-30
 
