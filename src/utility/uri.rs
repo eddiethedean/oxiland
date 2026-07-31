@@ -71,7 +71,8 @@ pub fn path_to_file_uri(path: impl AsRef<Path>) -> Result<NamedNode> {
 /// Converts a `file://` IRI to a filesystem path.
 ///
 /// Query and fragment components are stripped before decoding. Non-local hosts
-/// other than `localhost` return [`Error::Unsupported`].
+/// other than `localhost` return [`Error::Unsupported`] on non-Windows targets;
+/// on Windows they map to UNC paths (`\\host\share\…`).
 pub fn file_uri_to_path(iri: impl AsRef<str>) -> Result<PathBuf> {
     let iri = iri.as_ref().trim();
     let rest = iri

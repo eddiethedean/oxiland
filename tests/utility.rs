@@ -108,8 +108,19 @@ fn file_uri_round_trip() {
     assert_eq!(back.canonicalize().unwrap(), path.canonicalize().unwrap());
     let err = file_uri_to_path("https://example.com/x").unwrap_err();
     assert!(matches!(err, Error::InvalidRdf(_)));
-    let bad = file_uri_to_path("file://remote.host/tmp/x").unwrap_err();
-    assert!(matches!(bad, Error::Unsupported(_)));
+    #[cfg(windows)]
+    {
+        let unc = file_uri_to_path("file://remote.host/tmp/x").unwrap();
+        assert_eq!(
+            unc,
+            std::path::PathBuf::from(r"\\remote.host\tmp\x")
+        );
+    }
+    #[cfg(not(windows))]
+    {
+        let bad = file_uri_to_path("file://remote.host/tmp/x").unwrap_err();
+        assert!(matches!(bad, Error::Unsupported(_)));
+    }
 }
 
 #[test]
