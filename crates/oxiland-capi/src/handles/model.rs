@@ -1,11 +1,13 @@
 //! `librdf_model` handle.
 
+use std::os::raw::c_char;
 use std::ptr;
 
-use oxigraph::model::{NamedNodeRef, NamedOrBlankNodeRef, TermRef, TripleRef};
+use oxigraph::model::{GraphName, NamedNodeRef, NamedOrBlankNodeRef, TermRef, TripleRef};
 use oxiland::{Model, OpenOptions, StatementPattern, StorageBackend};
 
 use crate::error::{abort_on_panic, clear_last_error, set_last_error};
+use crate::handles::node::librdf_node;
 use crate::handles::statement::{StatementInner, librdf_statement};
 use crate::handles::storage::librdf_storage;
 use crate::handles::stream::{StreamInner, librdf_stream};
@@ -92,6 +94,49 @@ fn statement_as_triple(stmt: &StatementInner) -> Result<oxigraph::model::Triple,
         .term
         .clone();
     Ok(oxigraph::model::Triple::new(subject, predicate, object))
+}
+
+fn context_graph(context: &crate::handles::node::NodeInner) -> Result<GraphName, String> {
+    context
+        .as_named()
+        .map(GraphName::NamedNode)
+        .ok_or_else(|| "context must be an IRI".to_string())
+}
+
+fn stream_for_pattern(
+    model: &Model,
+    statement: &StatementInner,
+    graph_name: Option<GraphName>,
+) -> Result<*mut librdf_stream, String> {
+    let subject_owned = statement
+        .subject
+        .as_ref()
+        .and_then(|node| node.as_named_or_blank());
+    let predicate_owned = statement
+        .predicate
+        .as_ref()
+        .and_then(|node| node.as_named());
+    let object_owned = statement.object.as_ref().map(|node| node.term.clone());
+    let pattern = StatementPattern {
+        subject: subject_owned.as_ref().map(NamedOrBlankNodeRef::from),
+        predicate: predicate_owned.as_ref().map(NamedNodeRef::from),
+        object: object_owned.as_ref().map(TermRef::from),
+        graph_name: graph_name.as_ref().map(|name| name.as_ref()),
+    };
+    let mut statements = Vec::new();
+    for item in model.find(pattern) {
+        let quad = item.map_err(|error| error.to_string())?;
+        let triple = oxigraph::model::Triple::new(quad.subject, quad.predicate, quad.object);
+        statements.push(StatementInner::from_triple(triple));
+    }
+    Ok(box_handle(
+        TAG_STREAM,
+        StreamInner {
+            statements,
+            index: 0,
+            current: None,
+        },
+    ))
 }
 
 /// Adds a statement. Returns nonzero on error.
@@ -361,6 +406,333 @@ pub extern "C" fn librdf_model_add(
                 -1
             }
         }
+    })
+}
+
+/// Adds a plain or language-tagged literal statement.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_add_string_literal_statement(
+    model: *mut librdf_model,
+    subject: *mut librdf_node,
+    predicate: *mut librdf_node,
+    literal: *const u8,
+    xml_language: *const c_char,
+    _is_wf_xml: i32,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(literal) = (unsafe { crate::handles::cstr_required(literal.cast(), "literal") })
+        else {
+            return -1;
+        };
+        let language = match unsafe { crate::handles::cstr_optional(xml_language, "xml_language") }
+        {
+            Ok(language) => language,
+            Err(()) => return -1,
+        };
+        let object = match language.filter(|language| !language.is_empty()) {
+            Some(language) => {
+                match oxigraph::model::Literal::new_language_tagged_literal(literal, language) {
+                    Ok(value) => value,
+                    Err(error) => {
+                        set_last_error(error.to_string());
+                        return -1;
+                    }
+                }
+            }
+            None => oxigraph::model::Literal::new_simple_literal(literal),
+        };
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        let Some(subject) = (unsafe { borrow_handle(subject, crate::handles::TAG_NODE) }) else {
+            return -1;
+        };
+        let Some(predicate) = (unsafe { borrow_handle(predicate, crate::handles::TAG_NODE) })
+        else {
+            return -1;
+        };
+        let Some(subject) = subject.inner.as_named_or_blank() else {
+            set_last_error("subject must be IRI or blank");
+            return -1;
+        };
+        let Some(predicate) = predicate.inner.as_named() else {
+            set_last_error("predicate must be IRI");
+            return -1;
+        };
+        match model
+            .inner
+            .model
+            .add(oxigraph::model::Triple::new(subject, predicate, object))
+        {
+            Ok(_) => 0,
+            Err(error) => {
+                set_last_error(error.to_string());
+                -1
+            }
+        }
+    })
+}
+
+/// Adds a typed literal statement. Language-tagged typed literals are rejected by RDF 1.1.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_add_typed_literal_statement(
+    model: *mut librdf_model,
+    subject: *mut librdf_node,
+    predicate: *mut librdf_node,
+    literal: *const u8,
+    xml_language: *const c_char,
+    datatype_uri: *mut crate::handles::uri::librdf_uri,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(literal) = (unsafe { crate::handles::cstr_required(literal.cast(), "literal") })
+        else {
+            return -1;
+        };
+        let language = match unsafe { crate::handles::cstr_optional(xml_language, "xml_language") }
+        {
+            Ok(language) => language,
+            Err(()) => return -1,
+        };
+        if language.is_some_and(|language| !language.is_empty()) {
+            set_last_error("a typed literal cannot have a language tag");
+            return -1;
+        }
+        let Some(datatype) = (unsafe { borrow_handle(datatype_uri, crate::handles::TAG_URI) })
+        else {
+            return -1;
+        };
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        let Some(subject) = (unsafe { borrow_handle(subject, crate::handles::TAG_NODE) }) else {
+            return -1;
+        };
+        let Some(predicate) = (unsafe { borrow_handle(predicate, crate::handles::TAG_NODE) })
+        else {
+            return -1;
+        };
+        let Some(subject) = subject.inner.as_named_or_blank() else {
+            set_last_error("subject must be IRI or blank");
+            return -1;
+        };
+        let Some(predicate) = predicate.inner.as_named() else {
+            set_last_error("predicate must be IRI");
+            return -1;
+        };
+        let object =
+            oxigraph::model::Literal::new_typed_literal(literal, datatype.inner.node.clone());
+        match model
+            .inner
+            .model
+            .add(oxigraph::model::Triple::new(subject, predicate, object))
+        {
+            Ok(_) => 0,
+            Err(error) => {
+                set_last_error(error.to_string());
+                -1
+            }
+        }
+    })
+}
+
+/// Adds a statement to a named graph/context.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_context_add_statement(
+    model: *mut librdf_model,
+    context: *mut librdf_node,
+    statement: *mut librdf_statement,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        let Some(context) = (unsafe { borrow_handle(context, crate::handles::TAG_NODE) }) else {
+            return -1;
+        };
+        let Some(statement) = (unsafe { borrow_handle(statement, TAG_STATEMENT) }) else {
+            return -1;
+        };
+        let graph = match context_graph(&context.inner) {
+            Ok(graph) => graph,
+            Err(error) => {
+                set_last_error(error);
+                return -1;
+            }
+        };
+        let triple = match statement_as_triple(&statement.inner) {
+            Ok(triple) => triple,
+            Err(error) => {
+                set_last_error(error);
+                return -1;
+            }
+        };
+        match model.inner.model.add_to_graph(triple, graph) {
+            Ok(_) => 0,
+            Err(error) => {
+                set_last_error(error.to_string());
+                -1
+            }
+        }
+    })
+}
+
+/// Removes a statement from a named graph/context.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_context_remove_statement(
+    model: *mut librdf_model,
+    context: *mut librdf_node,
+    statement: *mut librdf_statement,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        let Some(context) = (unsafe { borrow_handle(context, crate::handles::TAG_NODE) }) else {
+            return -1;
+        };
+        let Some(statement) = (unsafe { borrow_handle(statement, TAG_STATEMENT) }) else {
+            return -1;
+        };
+        let graph = match context_graph(&context.inner) {
+            Ok(graph) => graph,
+            Err(error) => {
+                set_last_error(error);
+                return -1;
+            }
+        };
+        let triple = match statement_as_triple(&statement.inner) {
+            Ok(triple) => triple,
+            Err(error) => {
+                set_last_error(error);
+                return -1;
+            }
+        };
+        match model.inner.model.remove_from_graph(triple, graph) {
+            Ok(_) => 0,
+            Err(error) => {
+                set_last_error(error.to_string());
+                -1
+            }
+        }
+    })
+}
+
+/// Returns statements from a named graph/context.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_context_as_stream(
+    model: *mut librdf_model,
+    context: *mut librdf_node,
+) -> *mut librdf_stream {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return ptr::null_mut();
+        };
+        let Some(context) = (unsafe { borrow_handle(context, crate::handles::TAG_NODE) }) else {
+            return ptr::null_mut();
+        };
+        let graph = match context_graph(&context.inner) {
+            Ok(graph) => graph,
+            Err(error) => {
+                set_last_error(error);
+                return ptr::null_mut();
+            }
+        };
+        match stream_for_pattern(&model.inner.model, &StatementInner::default(), Some(graph)) {
+            Ok(stream) => stream,
+            Err(error) => {
+                set_last_error(error);
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+/// Finds statements matching a pattern in a named graph/context.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_find_statements_in_context(
+    model: *mut librdf_model,
+    statement: *mut librdf_statement,
+    context: *mut librdf_node,
+) -> *mut librdf_stream {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return ptr::null_mut();
+        };
+        let Some(statement) = (unsafe { borrow_handle(statement, TAG_STATEMENT) }) else {
+            return ptr::null_mut();
+        };
+        let Some(context) = (unsafe { borrow_handle(context, crate::handles::TAG_NODE) }) else {
+            return ptr::null_mut();
+        };
+        let graph = match context_graph(&context.inner) {
+            Ok(graph) => graph,
+            Err(error) => {
+                set_last_error(error);
+                return ptr::null_mut();
+            }
+        };
+        match stream_for_pattern(&model.inner.model, &statement.inner, Some(graph)) {
+            Ok(stream) => stream,
+            Err(error) => {
+                set_last_error(error);
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+/// Returns nonzero when the named graph/context has at least one statement.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_contains_context(
+    model: *mut librdf_model,
+    context: *mut librdf_node,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return 0;
+        };
+        let Some(context) = (unsafe { borrow_handle(context, crate::handles::TAG_NODE) }) else {
+            return 0;
+        };
+        let graph = match context_graph(&context.inner) {
+            Ok(graph) => graph,
+            Err(error) => {
+                set_last_error(error);
+                return 0;
+            }
+        };
+        match model
+            .inner
+            .model
+            .find(StatementPattern {
+                graph_name: Some(graph.as_ref()),
+                ..StatementPattern::default()
+            })
+            .next()
+        {
+            Some(Ok(_)) => 1,
+            Some(Err(error)) => {
+                set_last_error(error.to_string());
+                0
+            }
+            None => 0,
+        }
+    })
+}
+
+/// Oxiland models support RDF named-graph contexts.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_supports_contexts(model: *mut librdf_model) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        i32::from(unsafe { borrow_handle(model, TAG_MODEL) }.is_some())
     })
 }
 

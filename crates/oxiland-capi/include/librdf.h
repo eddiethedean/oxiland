@@ -2,8 +2,8 @@
 #define OXILAND_LIBRDF_H
 
 /**
- * Oxiland 0.9 C ABI — Redland-shaped surface beyond the 0.8 preview.
- * See docs/design/0.9-cabi.md. Source-compat + Oxiland ABI; not Redland .so swap.
+ * Oxiland 0.10 development C ABI — frozen Redland-shaped snapshot.
+ * Full Redland parity remains blocked until the 0.10 qualification gate passes.
  */
 
 #ifdef __cplusplus
@@ -65,6 +65,21 @@ int librdf_model_sync(librdf_model *model);
 librdf_stream *librdf_model_as_stream(librdf_model *model);
 int librdf_model_add(librdf_model *model, librdf_node *subject, librdf_node *predicate,
                      librdf_node *object);
+int librdf_model_add_string_literal_statement(librdf_model *model, librdf_node *subject,
+    librdf_node *predicate, const unsigned char *literal, const char *xml_language,
+    int is_wf_xml);
+int librdf_model_add_typed_literal_statement(librdf_model *model, librdf_node *subject,
+    librdf_node *predicate, const unsigned char *literal, const char *xml_language,
+    librdf_uri *datatype_uri);
+int librdf_model_context_add_statement(librdf_model *model, librdf_node *context,
+                                       librdf_statement *statement);
+int librdf_model_context_remove_statement(librdf_model *model, librdf_node *context,
+                                          librdf_statement *statement);
+librdf_stream *librdf_model_context_as_stream(librdf_model *model, librdf_node *context);
+int librdf_model_contains_context(librdf_model *model, librdf_node *context);
+int librdf_model_supports_contexts(librdf_model *model);
+librdf_stream *librdf_model_find_statements_in_context(librdf_model *model,
+    librdf_statement *statement, librdf_node *context);
 unsigned char *librdf_model_to_string(librdf_model *model, librdf_uri *base_uri);
 int librdf_model_update(librdf_model *model, const unsigned char *update_string);
 librdf_query_results *librdf_model_query_execute(librdf_model *model, librdf_query *query);
@@ -104,6 +119,7 @@ librdf_statement *librdf_new_statement_from_nodes(librdf_world *world,
                                                   librdf_node *predicate,
                                                   librdf_node *object);
 void librdf_free_statement(librdf_statement *statement);
+void librdf_statement_clear(librdf_statement *statement);
 librdf_node *librdf_statement_get_subject(librdf_statement *statement);
 librdf_node *librdf_statement_get_predicate(librdf_statement *statement);
 librdf_node *librdf_statement_get_object(librdf_statement *statement);
@@ -111,6 +127,7 @@ void librdf_statement_set_subject(librdf_statement *statement, librdf_node *node
 void librdf_statement_set_predicate(librdf_statement *statement, librdf_node *node);
 void librdf_statement_set_object(librdf_statement *statement, librdf_node *node);
 int librdf_statement_equals(librdf_statement *first, librdf_statement *second);
+int librdf_statement_match(librdf_statement *statement, librdf_statement *partial_statement);
 int librdf_statement_is_complete(librdf_statement *statement);
 unsigned char *librdf_statement_to_string(librdf_statement *statement);
 

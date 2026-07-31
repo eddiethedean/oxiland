@@ -120,6 +120,21 @@ pub extern "C" fn librdf_free_statement(statement: *mut librdf_statement) {
     });
 }
 
+/// Clears all nodes from a statement, releasing any statement-owned cached nodes.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_statement_clear(statement: *mut librdf_statement) {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(statement) = (unsafe { borrow_handle(statement, TAG_STATEMENT) }) else {
+            return;
+        };
+        statement.inner.clear_cached();
+        statement.inner.subject = None;
+        statement.inner.predicate = None;
+        statement.inner.object = None;
+    });
+}
+
 fn cached_node(
     cache: &mut Option<*mut librdf_node>,
     value: &Option<NodeInner>,
@@ -239,6 +254,40 @@ pub extern "C" fn librdf_statement_equals(
             first.inner.subject == second.inner.subject
                 && first.inner.predicate == second.inner.predicate
                 && first.inner.object == second.inner.object,
+        )
+    })
+}
+
+/// Matches a complete statement against a partial statement whose null fields are wildcards.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_statement_match(
+    statement: *mut librdf_statement,
+    partial_statement: *mut librdf_statement,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(statement) = (unsafe { borrow_handle(statement, TAG_STATEMENT) }) else {
+            return 0;
+        };
+        let Some(partial) = (unsafe { borrow_handle(partial_statement, TAG_STATEMENT) }) else {
+            return 0;
+        };
+        i32::from(
+            partial
+                .inner
+                .subject
+                .as_ref()
+                .is_none_or(|node| statement.inner.subject.as_ref() == Some(node))
+                && partial
+                    .inner
+                    .predicate
+                    .as_ref()
+                    .is_none_or(|node| statement.inner.predicate.as_ref() == Some(node))
+                && partial
+                    .inner
+                    .object
+                    .as_ref()
+                    .is_none_or(|node| statement.inner.object.as_ref() == Some(node)),
         )
     })
 }

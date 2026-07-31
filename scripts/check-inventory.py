@@ -38,8 +38,18 @@ ALLOWED_MILESTONES = {
     "0.7",
     "0.8",
     "0.9",
+    "0.10",
 }
 C_ABI_REQUIRED_FROM = "0.8"
+
+
+def milestone_key(value: str) -> tuple[int, ...]:
+    """Returns a numeric milestone key (``0.10`` must sort after ``0.9``)."""
+
+    try:
+        return tuple(int(part) for part in value.split("."))
+    except ValueError:
+        fail(f"invalid numeric milestone {value!r}")
 
 
 def fail(message: str) -> None:
@@ -113,7 +123,7 @@ def validate_inventory(path: Path) -> None:
                     f"{path.name}:{entry['id']}: excluded entries require notes or deviations"
                 )
 
-        if milestone >= C_ABI_REQUIRED_FROM:
+        if milestone_key(milestone) >= milestone_key(C_ABI_REQUIRED_FROM):
             if "c_abi" not in entry:
                 fail(f"{path.name}:{entry['id']}: missing c_abi (required from 0.8)")
             if "c_state" not in entry:
@@ -152,7 +162,7 @@ def validate_inventory(path: Path) -> None:
     print(f"entries: {len(entries)}")
     for state in sorted(counts):
         print(f"  {state}: {counts[state]}")
-    if milestone >= C_ABI_REQUIRED_FROM:
+    if milestone_key(milestone) >= milestone_key(C_ABI_REQUIRED_FROM):
         c_counts = Counter(entry.get("c_state", "missing") for entry in entries)
         print("c_state:")
         for state in sorted(c_counts):

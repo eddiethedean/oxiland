@@ -1,7 +1,7 @@
 # Redland parity ledger
 
 Last completed milestone: 0.9
-Current development milestone: 0.10 (`planned`)
+Current development milestone: 0.10 (`in progress`)
 Ledger maturity: header-derived full public `librdf` 1.0.17 function inventory
 (0.6); Python package usability evidence (0.7); C ABI source-compat preview
 accounting (0.8); curated 0.1–0.5 slices retained for historical evidence
@@ -94,10 +94,13 @@ See [`docs/reports/0.9.md`](https://github.com/eddiethedean/oxiland/blob/main/do
   [`docs/reports/0.7.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.7.md).
 - C ABI: `crates/oxiland-capi` example, symbol allowlist, ASan CI; report
   [`docs/reports/0.8.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.8.md).
-- Public API snapshot + `cargo semver-checks` vs 0.8.0.
+- Public API snapshot + `cargo semver-checks` vs 0.9.0.
 - ADR-004–ADR-023 accepted as applicable.
 - Oxigraph 0.5.9 remains pinned with default features disabled.
 
-## Next ledger upgrade
+## Current 0.10 qualification
 
-Begin 0.10 release-candidate freeze work; keep Python and C evidence current on main.
+The target/profile and performance matrices are frozen and strict report
+validators are implemented. The hard gate is not yet satisfied: the 0.9
+inventory still contains safe and C exclusions that 0.10 forbids. See the
+[`0.10 qualification report`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.10.md).

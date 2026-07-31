@@ -8,9 +8,9 @@ description: Build typed, local RDF applications with SPARQL, persistent dataset
 
 !!! info "Release status"
 
-    This documentation tip describes **0.9.0** (unreleased). crates.io and PyPI
-    still publish **0.8.0** until the 0.9 tag. Use registry pins for published
-    installs, or a git/path checkout for tip APIs.
+    This documentation tip describes **0.10.0** (unreleased). The latest
+    project release tag is **0.9.0**. Use registry pins for published installs,
+    or a git/path checkout for tip APIs.
 
 <section class="hero" aria-labelledby="hero-title">
   <div class="hero__copy">

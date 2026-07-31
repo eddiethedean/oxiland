@@ -97,7 +97,7 @@ Required on every PR and on `main`/release:
 - dedicated Fjall persistence tests;
 - Rust 1.87 MSRV Clippy and tests;
 - RustSec audits for the workspace and Python extension lockfiles;
-- non-breaking semver compatibility against 0.8.0 (forced to minor-release
+- non-breaking semver compatibility against 0.9.0 (forced to minor-release
   policy for the pre-1.0 API) and packaged-crate verification;
 - Python pytest, Pyright, and runnable examples;
 - Linux, macOS, and Windows wheel builds for CPython 3.10–3.14;
@@ -114,9 +114,9 @@ Planned broader coverage includes:
 Workflow permissions default to read-only, third-party Actions use immutable
 full commit SHAs, and dependency updates arrive as grouped Dependabot pull
 requests. Release jobs elevate only the individual permissions needed for OIDC
-attestations or GitHub release assets. The Rust workspace and independent
-Python extension each commit their `Cargo.lock`, making `--locked` builds and
-RustSec results reproducible on clean runners.
+attestations or GitHub release assets. The Rust workspace, independent Python
+extension, and fuzz workspace each commit their `Cargo.lock`, making `--locked`
+builds and RustSec results reproducible on clean runners.
 
 Security advisories are blocking on tip CI (the same reusable workflow release
 runs). Tip also validates package-version alignment, `cargo publish --dry-run`

@@ -1,0 +1,29 @@
+[package]
+name = "oxiland-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+oxiland = { path = "..", default-features = false }
+oxiland-capi = { path = "../crates/oxiland-capi", default-features = false }
+
+[[bin]]
+name = "rdf_parser"
+path = "fuzz_targets/rdf_parser.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "c_lifecycle"
+path = "fuzz_targets/c_lifecycle.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]

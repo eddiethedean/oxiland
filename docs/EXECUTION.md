@@ -9,7 +9,7 @@ true compatibility surface.
 
 The [project charter](CHARTER.md) constrains scope, the
 [roadmap](ROADMAP.md) defines release outcomes, and
-[milestone plans](milestones/0.3.md) define executable work packages. This document
+[milestone plans](milestones/0.10.md) define executable work packages. This document
 owns the operating model and current work order.
 
 ## Workstreams
@@ -113,13 +113,16 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Begin 0.10 release-candidate freeze: API/ABI snapshots, soak, and supported
-   backend matrix stabilization.
-2. Keep Python wheels and C ABI evidence green on tip.
-3. Review 1.0 scope after the 0.9 close.
-4. Keep Python wheels/pytest and the C ABI preview green on main.
-5. Expand SPARQL differential fixtures beyond the facade smoke harness.
-6. Keep format v1 / ADR-006 migration notes current as later milestones land.
+1. Replace every 0.9 C exclusion / C `not-applicable` row with a verified C
+   implementation and lifecycle/behavior evidence.
+2. Close safe-Rust in-scope exclusions and run the complete differential matrix
+   on all six frozen target/build profiles.
+3. Run the frozen faster-than-Redland suite on its three controlled performance
+   profiles; repair every tie, inconclusive interval, or loss.
+4. Complete packaged-layout readers, crash/failure injection, fuzz/sanitizer,
+   W3C, downstream, wheel, clean-install, and uninstall qualification.
+5. Start the RC soak only after API/ABI snapshots and every preceding hard gate
+   are green; any ABI reset restarts the soak.
 
 ## Completed 0.8 backlog
 

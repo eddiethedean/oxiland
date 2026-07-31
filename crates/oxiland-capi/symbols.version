@@ -20,6 +20,14 @@ OXILAND_0.9 {
     librdf_model_sync;
     librdf_model_as_stream;
     librdf_model_add;
+    librdf_model_add_string_literal_statement;
+    librdf_model_add_typed_literal_statement;
+    librdf_model_context_add_statement;
+    librdf_model_context_remove_statement;
+    librdf_model_context_as_stream;
+    librdf_model_contains_context;
+    librdf_model_supports_contexts;
+    librdf_model_find_statements_in_context;
     librdf_model_to_string;
     librdf_model_update;
     librdf_model_query_execute;
@@ -48,6 +56,7 @@ OXILAND_0.9 {
     librdf_new_statement;
     librdf_new_statement_from_nodes;
     librdf_free_statement;
+    librdf_statement_clear;
     librdf_statement_get_subject;
     librdf_statement_get_predicate;
     librdf_statement_get_object;
@@ -55,6 +64,7 @@ OXILAND_0.9 {
     librdf_statement_set_predicate;
     librdf_statement_set_object;
     librdf_statement_equals;
+    librdf_statement_match;
     librdf_statement_is_complete;
     librdf_statement_to_string;
     librdf_stream_end;

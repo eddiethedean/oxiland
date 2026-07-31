@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Verify oxiland-capi exports exactly the 0.8 preview allowlist.
+# Verify the library exports and public header match the frozen symbol snapshot.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ALLOWLIST="$ROOT/crates/oxiland-capi/symbols.version"
+HEADER="$ROOT/crates/oxiland-capi/include/librdf.h"
 PROFILE="${1:-debug}"
 LIBDIR="$ROOT/target/$PROFILE"
 
@@ -23,6 +24,23 @@ if [[ ! -s "$EXPECTED_FILE" ]]; then
   echo "error: allowlist is empty" >&2
   exit 1
 fi
+
+python3 - "$HEADER" "$EXPECTED_FILE" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+header = Path(sys.argv[1])
+expected = set(Path(sys.argv[2]).read_text(encoding="utf-8").splitlines())
+declared = set(re.findall(r"\b(librdf_[A-Za-z0-9_]+)\s*\(", header.read_text(encoding="utf-8")))
+if declared != expected:
+    for symbol in sorted(expected - declared):
+        print(f"missing header declaration: {symbol}", file=sys.stderr)
+    for symbol in sorted(declared - expected):
+        print(f"header declaration absent from snapshot: {symbol}", file=sys.stderr)
+    raise SystemExit(1)
+print(f"C header matches snapshot ({len(declared)} symbols)")
+PY
 
 LIB=""
 for candidate in \

@@ -20,6 +20,7 @@ MANIFESTS = {
 LOCK_PACKAGES = {
     ROOT / "Cargo.lock": ("oxiland", "oxiland-cli", "oxiland-capi"),
     ROOT / "python/Cargo.lock": ("oxiland", "oxiland-py"),
+    ROOT / "fuzz/Cargo.lock": ("oxiland", "oxiland-capi"),
 }
 
 

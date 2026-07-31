@@ -34,6 +34,7 @@ tradeoffs are reviewed.
 | [ADR-021](#adr-021-header-derived-inventory-generation) | Header-derived inventory generation |
 | [ADR-022](#adr-022-sealed-durable-adapter-and-optional-backend-matrix) | Sealed durable adapter and optional backend matrix |
 | [ADR-023](#adr-023-c-abi-ownership-panic-and-allocator-contract) | C ABI ownership, panic, and allocator contract |
+| [ADR-024](#adr-024-freeze-first-party-storage-and-keep-the-adapter-sealed) | Freeze first-party storage and keep the adapter sealed |
 
 ## Decision states
 
@@ -349,8 +350,10 @@ Revisit when: a first-class timeout API is required for C consumers.
 
 ### ADR-022 — Sealed durable adapter and optional backend matrix
 
-State: accepted  
-Date: 2026-07-31  
+State: accepted
+
+Date: 2026-07-31
+
 Milestone: 0.8
 
 Context: ADR-006 made Fjall the only supported durable engine and explicitly
@@ -403,8 +406,8 @@ Evidence:
 adapter in `src/storage/`, shared backend conformance tests, and per-evaluation
 promotion records.
 
-Revisit when: before each 0.9 adapter promotion, and at the 0.10
-public-trait/API freeze decision.
+Revisit outcome: ADR-024 freezes the first-party matrix and keeps the adapter
+sealed for 1.0.
 
 ### ADR-023 — C ABI ownership, panic, and allocator contract
 
@@ -437,6 +440,55 @@ Consequences:
 
 Revisit when: expanding the allowlist in 0.9, or if a platform requires a
 narrowly scoped exception to ADR-002.
+
+### ADR-024 — Freeze first-party storage and keep the adapter sealed
+
+State: accepted
+
+Date: 2026-07-31
+
+Milestone: 0.10
+
+Context: the 0.10 storage gate must freeze backend identities, feature names,
+capabilities, and layout-reader commitments. ADR-022 also required an explicit
+decision on a public user-supplied `DurableBackend` trait after the first-party
+adapters exercised the sealed boundary.
+
+Decision:
+
+- Freeze `memory`, `fjall`, `redb`, `rocksdb`, `sqlite`, and `lmdb` as the 1.0
+  supported identities. Their Cargo features remain `storage-{name}` (with
+  `storage-rocksdb` for `rocksdb`); Fjall remains the default durable backend.
+- Expose feature-independent descriptors through `supported_backends()` and
+  keep `compiled_backends()` for the adapters present in one build.
+- Freeze `StorageCapabilities` and publish `LayoutReaderPolicy`: memory has no
+  physical layout, while every durable adapter owns a format-v1 reader and
+  standards-RDF export path.
+- Reject a public custom-backend trait for 1.0. Keep `DurableStoreOps` sealed.
+  The current boundary exposes engine initialization, layout mutation, and
+  recovery operations whose panic, re-entry, crash-atomicity, and compensation
+  invariants cannot be enforced by Rust's type system. Publishing it would
+  also force `OpenOptions` to accept an open-ended identity while the C and
+  Python registries promise a closed, auditable matrix.
+- A future custom-backend API requires a separate provider object that owns its
+  identity and layout version, a conformance kit with failure injection, and a
+  SemVer boundary that does not expose first-party implementation hooks.
+
+Alternatives considered: expose `DurableStoreOps` directly; expose an `unsafe`
+trait; accept callbacks only in Rust while hiding them from C/Python; remove
+all optional adapters and retain Fjall alone.
+
+Consequences: applications choose among a stable first-party matrix or migrate
+through N-Quads/TriG. A disabled first-party identity remains discoverable and
+returns a specific unsupported error. Removing an adapter requires an export
+window; it cannot strand the only readable copy of a supported layout.
+
+Evidence: `src/storage/mod.rs`, `src/storage/durable.rs`,
+`tests/backend_conformance.rs`, and
+`docs/design/storage-backend-expansion.md` (SB-08).
+
+Revisit when: after 1.0, only with a provider design and third-party prototype
+that pass the full storage conformance/failure-injection suite.
 
 ### ADR-017 — Python package is Pythonic, not a thin Rust mirror
 

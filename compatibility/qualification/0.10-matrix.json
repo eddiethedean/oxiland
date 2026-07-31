@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "frozen_at_milestone": "0.10",
+  "redland": {
+    "version": "1.0.17",
+    "manual": "1.0.18",
+    "source_sha256": "de1847f7b59021c16bdc72abb4d8e2d9187cd6124d69156f3326dd34ee043681"
+  },
+  "targets": [
+    "x86_64-unknown-linux-gnu",
+    "aarch64-apple-darwin",
+    "x86_64-pc-windows-msvc"
+  ],
+  "build_profiles": [
+    {
+      "id": "release-default",
+      "cargo": "--release --locked",
+      "features": ["storage-fjall"]
+    },
+    {
+      "id": "release-all-storage",
+      "cargo": "--release --locked --all-features",
+      "features": [
+        "storage-fjall",
+        "storage-redb",
+        "storage-rocksdb",
+        "storage-sqlite",
+        "storage-lmdb",
+        "tracing"
+      ]
+    }
+  ],
+  "required_profile_ids": [
+    "x86_64-unknown-linux-gnu/release-default",
+    "x86_64-unknown-linux-gnu/release-all-storage",
+    "aarch64-apple-darwin/release-default",
+    "aarch64-apple-darwin/release-all-storage",
+    "x86_64-pc-windows-msvc/release-default",
+    "x86_64-pc-windows-msvc/release-all-storage"
+  ],
+  "python": {
+    "implementations": ["CPython 3.10", "CPython 3.11", "CPython 3.12", "CPython 3.13", "CPython 3.14"],
+    "wheel_targets": ["manylinux", "macos", "windows"]
+  },
+  "performance": {
+    "suite": "compatibility/performance/0.10-suite.json",
+    "profiles": [
+      "x86_64-unknown-linux-gnu/release-default",
+      "aarch64-apple-darwin/release-default",
+      "x86_64-pc-windows-msvc/release-default"
+    ]
+  }
+}

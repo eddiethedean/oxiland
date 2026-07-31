@@ -6,7 +6,7 @@ default-members = [".", "crates/oxiland-cli", "crates/oxiland-capi"]
 
 [package]
 name = "oxiland"
-version = "0.9.0"
+version = "0.10.0"
 edition = "2024"
 rust-version = "1.87"
 description = "Embedded RDF datasets, SPARQL, persistence, and streaming I/O for Rust"
@@ -22,12 +22,6 @@ exclude = [".github/", "compatibility/harness/*-result.json"]
 
 [package.metadata.docs.rs]
 features = ["storage-fjall"]
-
-# 0.9 intentionally expands StorageBackend and marks it #[non_exhaustive] so
-# optional adapters can grow without further exhaustive-match breaks (ADR-022).
-[package.metadata.cargo-semver-checks.lints]
-enum_marked_non_exhaustive = "allow"
-enum_variant_added = "allow"
 
 [features]
 default = ["storage-fjall"]

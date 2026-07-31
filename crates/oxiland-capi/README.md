@@ -1,13 +1,14 @@
 # oxiland-capi
 
-C ABI preview for Oxiland (milestone 0.8). Redland-shaped headers and symbols
-for a frozen allowlist — full ABI compatibility remains 0.9.
+C ABI preview for Oxiland. Redland-shaped headers and symbols are enforced
+against a frozen snapshot. Full Redland ABI/behavioral parity remains a hard,
+currently unmet 0.10 release gate.
 
 **Canonical install and link guide:**
 [`docs/users/c-abi.md`](../../docs/users/c-abi.md).
 
 Design and milestone notes: `docs/design/0.8-cabi.md`,
-`docs/milestones/0.8.md`.
+`docs/design/0.9-cabi.md`, and `docs/milestones/0.10.md`.
 
 This crate has `publish = false` and is **not** on crates.io. Build from a
 clone of this repository.
@@ -52,6 +53,6 @@ Release variant uses `-L target/release` and
 
 ## Symbol allowlist
 
-The frozen 0.8 table is embedded in
+The frozen symbol table is embedded in
 [`docs/users/c-abi.md`](../../docs/users/c-abi.md). Optional GNU ld version
 script: `symbols.version`.

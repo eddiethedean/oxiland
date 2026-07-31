@@ -1,6 +1,6 @@
 # C ABI
 
-Oxiland 0.9 ships a **source-compatible Redland-shaped** C library
+Oxiland 0.10 development ships a **source-compatible Redland-shaped** C library
 (`oxiland-capi`) with an expanded allowlist. Use this surface to try a world →
 storage → model → parse/serialize → ASK/SELECT workflow against Oxiland. It is
 **not** a binary drop-in for `librdf`.
@@ -86,7 +86,7 @@ pkg-config --cflags --libs oxiland
 
 The template ships `Name: oxiland` and links `-loxiland_capi`.
 
-## 0.9 allowlist
+## Frozen development snapshot
 
 Only the symbols declared in the shipped header are exported. Unsupported
 Redland APIs are omitted rather than stubbed.
@@ -123,5 +123,6 @@ names—the same registry as Rust `StorageBackend::from_name`.
 ## Evidence
 
 Compatibility claims for this surface are scoped in the
-[0.9 report](../reports/0.9.md) and
+[0.9 report](../reports/0.9.md), the
+[0.10 qualification report](../reports/0.10.md), and the
 [parity ledger](https://github.com/eddiethedean/oxiland/blob/main/PARITY.md).

@@ -25,7 +25,7 @@ only when its evidence gates are satisfied.
 | 0.7 | Pythonic package on PyPI | 0.4 (sequenced after 0.6) | `complete` |
 | 0.8 | Auditable C ABI preview | 0.6 | `complete` |
 | 0.9 | Downstream C compatibility | 0.8 | `complete` |
-| 0.10 | 100% Redland parity and faster-than-Redland release candidate | 0.9 | `planned` |
+| 0.10 | 100% Redland parity and faster-than-Redland release candidate | 0.9 | `in progress` |
 
 States are `planned`, `in progress`, `blocked`, or `complete`. A state changes
 only after the evidence links are added to the root
@@ -397,6 +397,12 @@ Depends on: a sanitizer-clean 0.8 ABI preview.
 Outcome: reach 100% parity with the pinned Redland baseline, beat Redland on
 the frozen performance matrix, then freeze and validate the design intended
 for 1.0.
+
+State: in progress
+
+Execution specification: [milestone 0.10](milestones/0.10.md)
+
+Qualification report: [0.10 report](reports/0.10.md)
 
 Deliverables:
 

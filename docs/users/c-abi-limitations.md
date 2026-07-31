@@ -1,6 +1,6 @@
 # C ABI preview limitations
 
-Oxiland 0.9 `oxiland-capi` is an **auditable Redland-shaped C surface**. Treat
+Oxiland 0.10 development `oxiland-capi` is an **auditable Redland-shaped C surface**. Treat
 these limits as product contract, not temporary footnotes.
 
 ## Not a Redland drop-in
@@ -34,9 +34,13 @@ these limits as product contract, not temporary footnotes.
   [design/0.8-cabi.md](../design/0.8-cabi.md). Do not assume Redland's
   historical concurrency habits.
 
-## 0.9 status
+## 0.10 status
 
 Downstream consumer matrices, expanded symbol surface, installed-artifact
 packaging smokes, and optional storage adapters shipped in 0.9. See
 the [downstream matrix](https://github.com/eddiethedean/oxiland/blob/main/compatibility/downstream/README.md)
 and the [C ABI guide](c-abi.md).
+
+The 0.10 release remains blocked because the complete Redland symbol and
+behavior denominator is not verified. The shipped header is a snapshot, not a
+claim that omitted 0.9 inventory rows are compatible.

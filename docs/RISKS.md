@@ -37,6 +37,7 @@ can never recur. `closed` requires the underlying exposure to be removed.
 | R-020 | Oxigraph 0.5.9 pins vulnerable `quick-xml` 0.37 in RDF/XML and SPARQL XML paths | M | H | `active` | Safe API | Tip/release CI share a narrow, self-expiring ignore for RUSTSEC-2026-0194/0195 verified by `scripts/check-security-exceptions.py` | Oxigraph releases a line that accepts `quick-xml` 0.41+ (main already uses 0.41) | upgrade Oxigraph under the full compatibility suite; remove the tip ignores |
 | R-021 | Optional storage engines weaken durability or strand backend-specific data | M | H | `active` | Storage | ADR-022, sealed adapter, shared conformance/crash matrix, versioned layout markers, RDF export path | first non-Fjall adapter, dependency removal, wrong-backend open, or divergent transaction result | do not promote/freeze the adapter; preserve its reader/export feature and migrate through standards RDF |
 | R-022 | “Faster than Redland” is produced by noise, cherry-picked workloads, or unequal builds | H | H | `active` | Performance | freeze representative workloads and matched-build protocol; publish raw samples, ratios, and confidence intervals | any tie/loss, unstable result, deleted case, or environment mismatch | repair performance or measurement validity and rerun the full matrix; hold 0.10 |
+| R-023 | Optional LMDB dependency `heed` retains unmaintained `bincode` 1.3.3 | M | M | `active` | Storage | RustSec audit on all lockfiles; track `heed` dependency updates; keep LMDB optional | a vulnerability, format defect, or unsupported-toolchain issue lands in the inherited crate | update `heed` under the storage conformance suite or preserve the LMDB reader/export window while replacing the adapter dependency |
 
 ## Release-blocking rule
 
@@ -66,20 +67,18 @@ Closing a risk requires evidence that the exposure is gone. Renaming it as a
 known limitation is not closure. A regression may move a mitigated or closed
 risk back to active.
 
-## Current 0.9 focus
+## Current 0.10 focus
 
-C ABI expansion and optional storage adapters after the 0.8 source-compat
-preview. `oxiland-capi` preview risks (R-004, R-009, R-013) remain monitoring
-items under ADR-023. Python package (0.7+) remains a monitoring item for
-wheel/pytest regressions. Safe-API accounting from 0.6 remains a monitoring
-item. Stream, utility, and logging risks for the curated 0.5 slice were
-addressed under ADR-013–ADR-016 and remain monitoring items.
-Storage/transaction risks under ADR-006 were addressed in 0.4 (format v1 +
-migrate); ADR-022 accepted the sealed adapter in 0.8, so R-021 stays active
-until each optional backend is promoted with conformance evidence. Query/result
-risks R-001, R-006, R-007, R-008, R-010, and R-012 were addressed for the 0.3
-facade slice and remain monitoring items. R-017 and R-018 remain monitoring
-items under ADR-007 and ADR-008. R-003 remains monitored under ADR-004. R-020
-remains active: PyO3 was upgraded to 0.29.0, but the remaining `quick-xml`
-advisories are tip-gated with a narrow ignore until a released Oxigraph line
-accepts `quick-xml` 0.41 or later (oxigraph `main` already does).
+The hard parity and performance gates make R-001, R-002, R-005, R-006,
+R-012, R-015, R-019, and R-022 release-blocking until complete evidence is
+checked in. `oxiland-capi` risks R-004, R-009, and R-013 remain active while
+the 0.9 exclusions are replaced by verified implementations. ADR-024 freezes
+the first-party backend registry and reader/export policy, but R-021 remains
+active until the full cross-platform crash and packaged-reader matrix passes.
+Python wheel and public-surface snapshots remain qualification inputs.
+
+R-020 remains active: PyO3 is 0.29.0, but Oxigraph 0.5.9 still constrains
+`quick-xml` 0.37. The narrow CI exception remains self-expiring and blocks any
+unreviewed dependency-graph change. R-023 records cargo-audit's maintenance
+warning for `bincode` through the optional LMDB adapter. No active high-impact
+risk is considered waived merely because its preventive validator exists.

@@ -16,7 +16,7 @@ contract, CLI, and evidence-backed Redland migration path.
 | A trait-oriented modular Rust RDF ecosystem | Sophia |
 | Existing `librdf` C ABI and storage plug-ins | Native Redland |
 | Measured migration from Redland workflows | Oxiland migration and parity documentation |
-| C source-compat preview against a frozen allowlist | Oxiland `oxiland-capi` (tip 0.8; build from source) |
+| C source-compat preview against a frozen allowlist | Oxiland `oxiland-capi` (build from source) |
 
 This is a boundary guide, not a universal benchmark. Validate syntax support,
 store lifecycle, query behavior, target artifacts, and operational limits
@@ -29,7 +29,7 @@ against the application's own requirements.
 | Role | Application-focused Rust/Python packages and CLI | RDF/SPARQL engine |
 | API style | Redland concepts (Model, contexts, Syntax facades) | Native store / SPARQL / I/O types |
 | Compatibility evidence | Inventories, parity ledger, milestone reports | Upstream standards tests |
-| C path | Source-compat preview crate in 0.8; ABI drop-in deferred to 0.9 | Not the product goal |
+| C path | Source-compat preview; full ABI/parity blocked on 0.10 qualification | Not the product goal |
 | Python path | Typed PyPI package with its own API and production guide | Use the upstream Python surface when direct engine access is preferred |
 | When to pick | The documented Oxiland facade, storage contract, CLI, or migration evidence adds value | Only the native engine API is required |
 
@@ -45,21 +45,21 @@ inventory-backed claims matter.
 
 ## Compared to Redland (`librdf`)
 
-| | Oxiland 0.9 | Native Redland |
+| | Oxiland 0.10 development | Native Redland |
 |---|---|---|
 | Language | Safe Rust + Python package + C preview | C (+ bindings) |
 | Memory | Rust ownership; opaque C handles in the preview | Manual / library conventions |
 | I/O | Streaming facades for five syntaxes; transactional load | Raptor factories (broad) |
 | SPARQL | Query/Update, streaming results, ResultsFormat | Rasqal (broader) |
-| Storage | Supported Fjall format v1 + memory; transactions | Storage plugins |
+| Storage | Memory/Fjall plus optional redb, RocksDB, SQLite, and LMDB; transactions | Storage plugins |
 | CLI | `oxiland-cli` rdfproc-shaped (not binary drop-in) | `rdfproc` |
 | Utilities / logging | Digests, URI helpers, vocab, World log handlers | librdf digests/logs/hashes |
 | Safe-API accounting | Header-derived inventory classified (0.6+) | N/A |
 | C consumers | Expanded source-compat preview (0.9 allowlist); not ABI drop-in | Yes |
 | Drop-in ABI | No | N/A |
 
-Oxiland targets measurable migration over time. Tip **0.9** offers an auditable
-expanded C source-compat preview; it does **not** claim to replace
+Oxiland targets measurable migration over time. Tip **0.10** offers an auditable
+expanded C source-compat preview; it does **not yet** claim to replace
 Redland in production C stacks as an ABI drop-in.
 
 ## What Oxiland optimizes for

@@ -1,8 +1,8 @@
 # Storage backend expansion plan
 
-Status: planned cross-cutting work
+Status: stabilization in progress
 Targets: 0.8 design, 0.9 adapters, 0.10 stabilization
-Decision: proposed ADR-022
+Decisions: ADR-022 and ADR-024
 Existing contract: ADR-006 / Fjall format v1
 
 ## Outcome
@@ -79,11 +79,11 @@ The adapter owns physical database calls; `Model` owns RDF equality, locking,
 the Oxigraph working set, transaction behavior, and error translation. No
 engine type appears in the default public facade.
 
-The initial boundary is sealed so its invariants can change during the backend
-matrix work. Before 0.10, an ADR must decide whether to expose a safe
-user-supplied `DurableBackend` trait. That decision requires an object-safety,
-thread-safety, panic, re-entry, and SemVer review; it is not the same as loading
-arbitrary native plug-ins.
+The boundary remains sealed for 1.0. ADR-024 rejected exposing a
+user-supplied `DurableBackend` trait after reviewing object safety, thread
+safety, panic containment, re-entry, crash atomicity, registry consistency,
+and SemVer. A future provider API needs an external conformance/failure-
+injection boundary rather than exposing the first-party physical adapter.
 
 ## Public selection surface
 
@@ -147,7 +147,7 @@ The common `Model::transaction` contract cannot be weakened for one backend.
 | 0.9 | SB-05 established native alternatives | RocksDB, SQLite, and LMDB adapters pass their platform matrices |
 | 0.9 | SB-06 gated evaluations | sled, LevelDB, MDBX, and SurrealKV each receive a promote/defer/reject record with evidence |
 | 0.9 | SB-07 user surfaces and migration | Rust, CLI, Python, C capability discovery, docs, and cross-backend copy/export tests agree |
-| 0.10 | SB-08 stabilization, Redland parity, and performance | API/ABI snapshots, crash matrix, supported-layout reader policy, dependency audit, and every in-scope baseline storage factory behavior pass the 100% Redland parity gate; required storage workloads also beat Redland under the frozen performance protocol; capability errors and migration-only paths do not count |
+| 0.10 | SB-08 stabilization, Redland parity, and performance | ADR-024 freezes six identities/features and the format-v1 reader/export policy; API/ABI snapshots, crash matrix, dependency audit, full baseline storage-factory behavior, and required benchmark wins remain release-qualification gates; capability errors and migration-only paths do not count |
 
 ## Non-goals
 

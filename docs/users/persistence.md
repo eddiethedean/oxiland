@@ -32,6 +32,21 @@ instead of creating an empty dataset.
 `capabilities()` reports the backend, persistence, transaction, sync, and
 read-only properties. Mutating a read-only model returns `Error::Unsupported`.
 
+## Frozen backend discovery
+
+`supported_backends()` returns descriptors for the 1.0-intent matrix even when
+an optional adapter is disabled in the current build. Each descriptor includes
+the canonical name, Cargo feature, compiled state, durability, and
+`LayoutReaderPolicy`. `compiled_backends()` returns only adapters usable by the
+current binary. This distinction lets configuration validators recognize
+`rocksdb`, for example, while still returning an explicit error when
+`storage-rocksdb` was not compiled.
+
+The supported identities are `memory`, `fjall`, `redb`, `rocksdb`, `sqlite`,
+and `lmdb`. All durable adapters retain a format-v1 reader/export path;
+standards RDF is the portable cross-backend format. The physical custom-backend
+adapter remains sealed for 1.0 (ADR-024).
+
 ## Transaction contract
 
 ```rust,no_run
@@ -116,7 +131,7 @@ regularly.
 ## Format compatibility
 
 Format v1 stores metadata beside durable N-Quads keys. Patch releases in
-**0.4.x–0.8.x** reopen format v1 without migration. Pre-0.4 experimental
+**0.4.x–0.10.x** reopen format v1 without migration. Pre-0.4 experimental
 directories without metadata require `Model::migrate_legacy_store(path)`.
 
 Standards RDF—not a copied Fjall directory—is the archival continuity contract

@@ -52,7 +52,8 @@ pub use query::{
     serialize_query_results_to_string, serialize_query_results_to_writer,
 };
 pub use storage::{
-    OpenOptions, StorageBackend, StorageCapabilities, compiled_backends, is_known_backend_name,
+    LayoutReaderPolicy, OpenOptions, StorageBackend, StorageBackendDescriptor, StorageCapabilities,
+    compiled_backends, is_known_backend_name, supported_backends,
 };
 pub use world::{FeatureValue, LogFacility, LogLevel, LogRecord, World};
 

@@ -1,4 +1,9 @@
-//! Storage backends, open options, and capability reporting (0.4 / ADR-022 / 0.9).
+//! Storage backends, open options, and capability reporting.
+//!
+//! The backend identities, Cargo feature names, capability shape, and layout
+//! reader policy in this module are the matrix frozen for Oxiland 1.0 by
+//! ADR-024. The physical database directories are not interchangeable; use
+//! standards RDF or [`crate::Model::copy_to`] to migrate between engines.
 
 #[cfg_attr(
     not(any(
@@ -59,6 +64,46 @@ pub enum StorageBackend {
     Lmdb,
 }
 
+/// Reader commitment for a backend's physical layout.
+///
+/// This is deliberately small and closed for the 1.0 storage contract. A
+/// durable backend uses an engine-specific Oxiland format-v1 layout and keeps
+/// a reader/export path available for every layout it has advertised. Memory
+/// has no persistent layout to read.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum LayoutReaderPolicy {
+    /// The backend has no persistent files.
+    None,
+    /// The first-party adapter reads and exports its Oxiland format-v1 layout.
+    FormatV1,
+}
+
+/// Frozen metadata for one supported storage backend.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct StorageBackendDescriptor {
+    /// Typed backend identity.
+    pub backend: StorageBackend,
+    /// Canonical name accepted by [`StorageBackend::from_name`].
+    pub name: &'static str,
+    /// Cargo feature required for this backend, or `None` for memory.
+    pub cargo_feature: Option<&'static str>,
+    /// Whether the adapter is present in this build.
+    pub compiled: bool,
+    /// Whether data survives process restart.
+    pub durable: bool,
+    /// Physical-layout reader/export commitment.
+    pub layout_reader: LayoutReaderPolicy,
+}
+
+const SUPPORTED_BACKENDS: [StorageBackend; 6] = [
+    StorageBackend::Memory,
+    StorageBackend::Fjall,
+    StorageBackend::Redb,
+    StorageBackend::RocksDb,
+    StorageBackend::Sqlite,
+    StorageBackend::Lmdb,
+];
+
 const KNOWN_OPTIONAL_BACKENDS: &[&str] = &[
     "redb",
     "rocksdb",
@@ -108,6 +153,30 @@ impl StorageBackend {
         }
     }
 
+    /// Returns the frozen 1.0 descriptor for this backend.
+    #[must_use]
+    pub const fn descriptor(self) -> StorageBackendDescriptor {
+        StorageBackendDescriptor {
+            backend: self,
+            name: self.name(),
+            cargo_feature: match self {
+                Self::Memory => None,
+                Self::Fjall => Some("storage-fjall"),
+                Self::Redb => Some("storage-redb"),
+                Self::RocksDb => Some("storage-rocksdb"),
+                Self::Sqlite => Some("storage-sqlite"),
+                Self::Lmdb => Some("storage-lmdb"),
+            },
+            compiled: self.is_compiled(),
+            durable: !matches!(self, Self::Memory),
+            layout_reader: if matches!(self, Self::Memory) {
+                LayoutReaderPolicy::None
+            } else {
+                LayoutReaderPolicy::FormatV1
+            },
+        }
+    }
+
     /// Resolves a backend name.
     pub fn from_name(name: &str) -> Result<Self> {
         let normalized = name.trim().to_ascii_lowercase();
@@ -142,6 +211,19 @@ impl StorageBackend {
         }
         Ok(backend)
     }
+}
+
+/// All backend identities supported by the frozen 1.0 matrix.
+///
+/// Unlike [`compiled_backends`], this list is feature-independent. Use each
+/// descriptor's [`StorageBackendDescriptor::compiled`] field for discovery
+/// without losing the identity of an adapter disabled in the current build.
+#[must_use]
+pub fn supported_backends() -> impl ExactSizeIterator<Item = StorageBackendDescriptor> {
+    SUPPORTED_BACKENDS
+        .iter()
+        .copied()
+        .map(StorageBackend::descriptor)
 }
 
 /// Backends compiled into this build.
@@ -291,6 +373,19 @@ pub struct StorageCapabilities {
 }
 
 impl StorageCapabilities {
+    /// Capabilities for `backend` in the requested access mode.
+    #[must_use]
+    pub const fn for_backend(backend: StorageBackend, read_only: bool) -> Self {
+        match backend {
+            StorageBackend::Memory => Self::memory(),
+            StorageBackend::Fjall => Self::fjall(read_only),
+            StorageBackend::Redb => Self::redb(read_only),
+            StorageBackend::RocksDb => Self::rocksdb(read_only),
+            StorageBackend::Sqlite => Self::sqlite(read_only),
+            StorageBackend::Lmdb => Self::lmdb(read_only),
+        }
+    }
+
     /// Capabilities for an in-memory model.
     #[must_use]
     pub const fn memory() -> Self {

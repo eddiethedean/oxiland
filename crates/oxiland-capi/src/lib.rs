@@ -22,9 +22,13 @@ pub use handles::digest::{
 };
 pub use handles::helpers::{librdf_basename, librdf_latin1_to_utf8, librdf_utf8_to_latin1};
 pub use handles::model::{
-    librdf_free_model, librdf_model_add, librdf_model_add_statement, librdf_model_as_stream,
-    librdf_model_contains_statement, librdf_model_find_statements, librdf_model_remove_statement,
-    librdf_model_size, librdf_model_sync, librdf_model_to_string, librdf_model_update,
+    librdf_free_model, librdf_model_add, librdf_model_add_statement,
+    librdf_model_add_string_literal_statement, librdf_model_add_typed_literal_statement,
+    librdf_model_as_stream, librdf_model_contains_context, librdf_model_contains_statement,
+    librdf_model_context_add_statement, librdf_model_context_as_stream,
+    librdf_model_context_remove_statement, librdf_model_find_statements,
+    librdf_model_find_statements_in_context, librdf_model_remove_statement, librdf_model_size,
+    librdf_model_supports_contexts, librdf_model_sync, librdf_model_to_string, librdf_model_update,
     librdf_new_model,
 };
 pub use handles::node::{
@@ -53,9 +57,10 @@ pub use handles::serializer::{
 };
 pub use handles::statement::{
     librdf_free_statement, librdf_new_statement, librdf_new_statement_from_nodes,
-    librdf_statement_equals, librdf_statement_get_object, librdf_statement_get_predicate,
-    librdf_statement_get_subject, librdf_statement_is_complete, librdf_statement_set_object,
-    librdf_statement_set_predicate, librdf_statement_set_subject, librdf_statement_to_string,
+    librdf_statement_clear, librdf_statement_equals, librdf_statement_get_object,
+    librdf_statement_get_predicate, librdf_statement_get_subject, librdf_statement_is_complete,
+    librdf_statement_match, librdf_statement_set_object, librdf_statement_set_predicate,
+    librdf_statement_set_subject, librdf_statement_to_string,
 };
 pub use handles::storage::{
     librdf_free_storage, librdf_new_storage, librdf_storage_enumerate, librdf_storage_open,

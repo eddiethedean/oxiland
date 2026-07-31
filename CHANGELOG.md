@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Frozen, feature-independent storage descriptors and explicit format-v1
+  layout-reader commitments for the intended 1.0 backend matrix
+- Strict machine-readable 0.10 parity and faster-than-Redland qualification
+  validators, a frozen target/profile matrix, and regression tests for the
+  no-waiver/no-averaging release rules
+- ADR-024 decision to keep the physical durable adapter sealed for 1.0
+
+### Changed
+
+- Workspace, CLI, C, and Python package versions are aligned at `0.10.0`
+- The 0.10 roadmap state is in progress; reports explicitly retain hard-gate
+  blockers instead of treating 0.9 exclusions as full parity
+- Storage capability construction is available uniformly through
+  `StorageCapabilities::for_backend`
+
+### Fixed
+
+- Inventory validation compares numeric milestone components, so `0.10`
+  correctly sorts after `0.9` and receives C ABI schema validation
+
 ## [0.9.0] - 2026-07-31
 
 Expanded C source-compatibility, optional durable-store adapters, and

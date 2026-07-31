@@ -5,6 +5,6 @@ includedir=${prefix}/include
 
 Name: oxiland
 Description: Oxiland C ABI (Redland-shaped source-compat)
-Version: 0.9.0
+Version: 0.10.0
 Libs: -L${libdir} -loxiland_capi
 Cflags: -I${includedir}

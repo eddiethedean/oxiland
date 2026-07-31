@@ -45,6 +45,117 @@ fn model_add_contains_size() {
 }
 
 #[test]
+fn model_context_operations_are_isolated_from_default_graph() {
+    let world = librdf_new_world();
+    let storage = librdf_new_storage(world, cstr("memory").as_ptr(), ptr::null(), ptr::null());
+    let model = librdf_new_model(world, storage, ptr::null());
+    let context = librdf_new_node_from_uri_string(world, cstr("http://example.org/graph").as_ptr());
+    let subject = librdf_new_node_from_uri_string(world, cstr("http://example.org/s").as_ptr());
+    let predicate = librdf_new_node_from_uri_string(world, cstr("http://example.org/p").as_ptr());
+    let object = librdf_new_node_from_literal(world, cstr("value").as_ptr(), ptr::null(), 0);
+    let statement = librdf_new_statement_from_nodes(world, subject, predicate, object);
+
+    assert_eq!(librdf_model_supports_contexts(model), 1);
+    assert_eq!(
+        librdf_model_context_add_statement(model, context, statement),
+        0
+    );
+    assert_eq!(librdf_model_size(model), 1);
+    assert_eq!(librdf_model_contains_context(model, context), 1);
+    assert_eq!(librdf_model_contains_statement(model, statement), 0);
+
+    let stream = librdf_model_context_as_stream(model, context);
+    assert!(!stream.is_null());
+    assert_eq!(librdf_stream_end(stream), 0);
+    assert!(!librdf_stream_get_object(stream).is_null());
+    librdf_free_stream(stream);
+
+    let pattern = librdf_new_statement(world);
+    let matches = librdf_model_find_statements_in_context(model, pattern, context);
+    assert!(!matches.is_null());
+    assert_eq!(librdf_stream_end(matches), 0);
+    librdf_free_stream(matches);
+    librdf_free_statement(pattern);
+
+    assert_eq!(
+        librdf_model_context_remove_statement(model, context, statement),
+        0
+    );
+    assert_eq!(librdf_model_contains_context(model, context), 0);
+    librdf_free_statement(statement);
+    librdf_free_node(context);
+    librdf_free_model(model);
+    librdf_free_storage(storage);
+    librdf_free_world(world);
+}
+
+#[test]
+fn model_literal_convenience_operations() {
+    let world = librdf_new_world();
+    let storage = librdf_new_storage(world, cstr("memory").as_ptr(), ptr::null(), ptr::null());
+    let model = librdf_new_model(world, storage, ptr::null());
+    let subject = librdf_new_node_from_uri_string(world, cstr("http://example.org/s").as_ptr());
+    let predicate = librdf_new_node_from_uri_string(world, cstr("http://example.org/p").as_ptr());
+    assert_eq!(
+        librdf_model_add_string_literal_statement(
+            model,
+            subject,
+            predicate,
+            cstr("bonjour").as_ptr().cast(),
+            cstr("fr").as_ptr(),
+            0,
+        ),
+        0
+    );
+    let datatype = librdf_new_uri(
+        world,
+        cstr("http://www.w3.org/2001/XMLSchema#integer").as_ptr(),
+    );
+    assert_eq!(
+        librdf_model_add_typed_literal_statement(
+            model,
+            subject,
+            predicate,
+            cstr("42").as_ptr().cast(),
+            ptr::null(),
+            datatype,
+        ),
+        0
+    );
+    assert_eq!(librdf_model_size(model), 2);
+    librdf_free_uri(datatype);
+    librdf_free_node(subject);
+    librdf_free_node(predicate);
+    librdf_free_model(model);
+    librdf_free_storage(storage);
+    librdf_free_world(world);
+}
+
+#[test]
+fn statement_clear_and_partial_match_follow_redland_semantics() {
+    let world = librdf_new_world();
+    let statement = librdf_new_statement_from_nodes(
+        world,
+        librdf_new_node_from_uri_string(world, cstr("http://example.org/s").as_ptr()),
+        librdf_new_node_from_uri_string(world, cstr("http://example.org/p").as_ptr()),
+        librdf_new_node_from_literal(world, cstr("o").as_ptr(), ptr::null(), 0),
+    );
+    let partial = librdf_new_statement_from_nodes(
+        world,
+        librdf_new_node_from_uri_string(world, cstr("http://example.org/s").as_ptr()),
+        ptr::null_mut(),
+        ptr::null_mut(),
+    );
+    assert_eq!(librdf_statement_match(statement, partial), 1);
+    librdf_statement_clear(partial);
+    assert_eq!(librdf_statement_is_complete(partial), 0);
+    assert_eq!(librdf_statement_match(statement, partial), 1);
+    librdf_free_statement(partial);
+    librdf_free_statement(statement);
+    librdf_free_world(world);
+}
+
+#[test]
 fn invalid_utf8_rejected() {
     let world = librdf_new_world();
     let bad: [u8; 3] = [0xff, 0xfe, 0x00];

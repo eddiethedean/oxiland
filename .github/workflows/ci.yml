@@ -102,6 +102,9 @@ jobs:
           python scripts/check-inventory.py
           python scripts/generate-redland-inventory.py --check-only
 
+      - name: Qualification tooling
+        run: python -m unittest discover -s scripts/tests -v
+
       - name: Documentation links
         run: python scripts/check-docs.py
 
@@ -175,8 +178,8 @@ jobs:
       - name: Install cargo-semver-checks
         run: cargo install cargo-semver-checks --locked --version 0.49.0
 
-      - name: Check semver against 0.8.0
-        run: cargo semver-checks check-release -p oxiland --baseline-version 0.8.0 --release-type minor
+      - name: Check semver against 0.9.0
+        run: cargo semver-checks check-release -p oxiland --baseline-version 0.9.0 --release-type minor
 
       - name: Verify package versions are aligned
         run: |
@@ -185,6 +188,12 @@ jobs:
 
       - name: Verify publishable library crate
         run: cargo publish -p oxiland --locked --dry-run
+
+      - name: Verify CLI install, execute, and uninstall
+        run: |
+          cargo install --path crates/oxiland-cli --locked --root "$RUNNER_TEMP/oxiland-cli-install"
+          "$RUNNER_TEMP/oxiland-cli-install/bin/oxiland-cli" --version
+          cargo uninstall oxiland-cli --root "$RUNNER_TEMP/oxiland-cli-install"
 
   security:
     name: Dependency audit
@@ -220,6 +229,9 @@ jobs:
 
       - name: Audit Python native extension
         run: cargo audit --file python/Cargo.lock --ignore RUSTSEC-2026-0194 --ignore RUSTSEC-2026-0195
+
+      - name: Audit fuzz workspace
+        run: cargo audit --file fuzz/Cargo.lock --ignore RUSTSEC-2026-0194 --ignore RUSTSEC-2026-0195
 
   python:
     name: Python

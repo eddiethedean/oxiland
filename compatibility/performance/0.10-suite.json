@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "oxiland-redland-0.10-v1",
+  "status": "frozen",
+  "baseline": "Redland librdf 1.0.17",
+  "surface": "public C API",
+  "thresholds": {
+    "throughput_oxiland_over_redland_min": 1.05,
+    "latency_oxiland_over_redland_max": 0.95,
+    "confidence": 0.95,
+    "bootstrap_rounds": 10000,
+    "minimum_samples": 30
+  },
+  "protocol": {
+    "optimization": "release, equivalent native compiler optimization",
+    "order": "alternating AB/BA after recorded warm-up",
+    "cache_modes": ["warm", "cold where named by case"],
+    "validation": "every iteration validates the completed RDF result",
+    "isolation": "same host, storage medium, allocator policy, thread limit, and input bytes"
+  },
+  "cases": [
+    {"id": "P-MUT-1K", "operation": "insert 1000 triples", "kind": "throughput", "size": "small", "required": true},
+    {"id": "P-MUT-100K", "operation": "insert then remove 100000 triples", "kind": "throughput", "size": "large", "required": true},
+    {"id": "P-SCAN-100K", "operation": "predicate pattern scan over 100000 triples", "kind": "throughput", "size": "large", "required": true},
+    {"id": "P-PARSE-TTL-1K", "operation": "parse Turtle with 1000 triples", "kind": "throughput", "size": "small", "required": true},
+    {"id": "P-PARSE-NQ-100K", "operation": "parse N-Quads with 100000 quads", "kind": "throughput", "size": "large", "required": true},
+    {"id": "P-SER-NQ-100K", "operation": "serialize 100000 quads as N-Quads", "kind": "throughput", "size": "large", "required": true},
+    {"id": "P-ASK-100K", "operation": "ASK over 100000 triples", "kind": "latency", "size": "large", "required": true},
+    {"id": "P-SELECT-100K", "operation": "SELECT and consume 100000 bindings", "kind": "throughput", "size": "large", "required": true},
+    {"id": "P-GRAPH-100K", "operation": "CONSTRUCT and consume 100000 triples", "kind": "throughput", "size": "large", "required": true},
+    {"id": "P-REOPEN-COLD-100K", "operation": "cold reopen persistent 100000-quad store", "kind": "latency", "size": "large", "required": true},
+    {"id": "P-BULK-100K", "operation": "persistent bulk load and sync 100000 quads", "kind": "throughput", "size": "large", "required": true},
+    {"id": "P-CALL-1M", "operation": "one million C size calls", "kind": "throughput", "size": "overhead", "required": true},
+    {"id": "P-CALLBACK-100K", "operation": "100000 C log callback deliveries", "kind": "throughput", "size": "overhead", "required": true}
+  ],
+  "resource_budgets": [
+    {"id": "R-RSS-PARSE", "metric": "peak RSS ratio Oxiland/Redland", "maximum": 1.25},
+    {"id": "R-RSS-QUERY", "metric": "peak RSS ratio Oxiland/Redland", "maximum": 1.25},
+    {"id": "R-DISK-BULK", "metric": "disk bytes ratio Oxiland/Redland", "maximum": 1.50}
+  ]
+}

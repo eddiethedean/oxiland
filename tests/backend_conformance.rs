@@ -2,7 +2,10 @@
 
 use oxigraph::model::{GraphName, Quad};
 use oxiland::terms::{self, Literal, Triple};
-use oxiland::{Error, Model, OpenOptions, StatementPattern, StorageBackend, compiled_backends};
+use oxiland::{
+    Error, LayoutReaderPolicy, Model, OpenOptions, StatementPattern, StorageBackend,
+    StorageCapabilities, compiled_backends, supported_backends,
+};
 
 fn statement(object: &str) -> Triple {
     Triple::new(
@@ -24,6 +27,54 @@ fn compiled_backends_include_memory_and_enabled_fjall() {
     assert!(backends.contains(&StorageBackend::Fjall));
     #[cfg(not(feature = "storage-fjall"))]
     assert!(!backends.contains(&StorageBackend::Fjall));
+}
+
+#[test]
+fn frozen_backend_registry_is_feature_independent_and_complete() {
+    let descriptors: Vec<_> = supported_backends().collect();
+    assert_eq!(descriptors.len(), 6);
+    assert_eq!(
+        descriptors.iter().map(|item| item.name).collect::<Vec<_>>(),
+        ["memory", "fjall", "redb", "rocksdb", "sqlite", "lmdb"]
+    );
+
+    for descriptor in descriptors {
+        assert_eq!(descriptor.backend.name(), descriptor.name);
+        assert_eq!(descriptor.backend.is_compiled(), descriptor.compiled);
+        assert_eq!(
+            descriptor.durable,
+            descriptor.backend != StorageBackend::Memory
+        );
+        assert_eq!(
+            descriptor.layout_reader,
+            if descriptor.durable {
+                LayoutReaderPolicy::FormatV1
+            } else {
+                LayoutReaderPolicy::None
+            }
+        );
+        assert_eq!(
+            StorageCapabilities::for_backend(descriptor.backend, false).backend,
+            descriptor.backend
+        );
+    }
+}
+
+#[test]
+fn read_only_capabilities_are_frozen_consistently() {
+    for descriptor in supported_backends() {
+        let capabilities = StorageCapabilities::for_backend(descriptor.backend, true);
+        if descriptor.backend == StorageBackend::Memory {
+            assert!(!capabilities.read_only);
+            assert!(!capabilities.durable);
+        } else {
+            assert!(capabilities.read_only);
+            assert!(capabilities.durable);
+            assert!(!capabilities.transactions);
+            assert!(!capabilities.clear);
+            assert!(!capabilities.bulk_load);
+        }
+    }
 }
 
 #[test]
@@ -105,6 +156,32 @@ fn harness_durable_sync_reopen_survives_restart() {
         }
         let reopened = Model::open_with(OpenOptions::new(backend, &path).create(false)).unwrap();
         assert!(reopened.contains(statement("persist").as_ref()).unwrap());
+    }
+}
+
+#[test]
+fn every_compiled_layout_has_a_reader_and_standards_export_path() {
+    for backend in compiled_backends().iter().copied() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(format!("reader-{}", backend.name()));
+        let export = dir.path().join(format!("{}.nq", backend.name()));
+        {
+            let model = open_registered(backend, &path);
+            model.add(statement("portable")).unwrap();
+            model.sync().unwrap();
+            model.export_nquads_to_path(&export).unwrap();
+        }
+
+        let reopened = if backend == StorageBackend::Memory {
+            // Memory intentionally has no physical reader; prove the standards
+            // export is sufficient to recover into a new supported model.
+            let model = Model::new().unwrap();
+            model.import_nquads_from_path(&export).unwrap();
+            model
+        } else {
+            Model::open_with(OpenOptions::new(backend, &path).create(false)).unwrap()
+        };
+        assert!(reopened.contains(statement("portable").as_ref()).unwrap());
     }
 }
 

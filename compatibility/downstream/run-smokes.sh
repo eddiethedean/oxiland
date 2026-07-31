@@ -28,7 +28,7 @@ if [[ -z "$LIB" ]]; then
 fi
 cp "$LIB" "$STAGE/lib/"
 PREFIX="$STAGE"
-sed "s|@PREFIX@|$PREFIX|g; s|@VERSION@|0.9.0|g" crates/oxiland-capi/oxiland.pc.in \
+sed "s|@PREFIX@|$PREFIX|g; s|@VERSION@|0.10.0|g" crates/oxiland-capi/oxiland.pc.in \
   > "$STAGE/lib/pkgconfig/oxiland.pc"
 
 cat > "$STAGE/smoke.c" <<'EOF'

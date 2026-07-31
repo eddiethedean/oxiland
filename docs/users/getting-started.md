@@ -25,14 +25,14 @@ cargo new hello-oxiland
 cd hello-oxiland
 ```
 
-crates.io currently publishes **0.8.0**; this tip is **0.9.0** (unreleased)
-until the tag.
+The latest project release tag is **0.9.0**; this tip is **0.10.0**
+(unreleased) until its release-candidate gates pass.
 
 **Published release:**
 
 ```toml
 [dependencies]
-oxiland = "0.8.0"
+oxiland = "0.9.0"
 ```
 
 **Tip (git or path):**
@@ -44,7 +44,7 @@ oxiland = { git = "https://github.com/eddiethedean/oxiland" }
 
 Optional: enable `features = ["tracing"]` to bridge World logging to the
 `tracing` crate. Install the CLI separately with `cargo install oxiland-cli`
-(published CLI is **0.8.0** until the 0.9 tag; see the [CLI guide](cli.md)).
+(see the [CLI guide](cli.md)).
 
 ## Workflow 1 — Build a model and ASK
 
@@ -157,7 +157,7 @@ source .venv/bin/activate   # Windows: .venv\Scripts\Activate.ps1
 python -m pip install oxiland
 ```
 
-Published wheels are **0.8.0** until the 0.9 tag. Start with the
+Published wheels track the latest release. Start with the
 [Python overview](python.md), then use the dedicated guides for
 [installation](python-installation.md), [models](python-models.md),
 [RDF I/O and SPARQL](python-data.md), and

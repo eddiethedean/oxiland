@@ -27,7 +27,7 @@ def dependency_version(manifest: Path, name: str) -> str:
 
 def main() -> int:
     manifests = (ROOT / "Cargo.toml", ROOT / "python/Cargo.toml")
-    lockfiles = (ROOT / "Cargo.lock", ROOT / "python/Cargo.lock")
+    lockfiles = (ROOT / "Cargo.lock", ROOT / "python/Cargo.lock", ROOT / "fuzz/Cargo.lock")
 
     for manifest in manifests:
         actual = dependency_version(manifest, "oxigraph")
