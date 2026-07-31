@@ -1,12 +1,17 @@
+use std::fs::File;
+use std::io::{BufReader, BufWriter};
 use std::path::Path;
-use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, RwLock};
 
+use oxigraph::io::{RdfFormat, RdfParser, RdfSerializer};
 use oxigraph::model::{
-    GraphName, GraphNameRef, NamedOrBlankNodeRef, Quad, TermRef, Triple, TripleRef,
+    GraphName, GraphNameRef, NamedOrBlankNodeRef, Quad, QuadRef, TermRef, Triple, TripleRef,
 };
-use oxigraph::store::{QuadIter, Store};
+use oxigraph::store::{QuadIter, Store, Transaction as OxigraphTransaction};
 
 use crate::persist::{self, DiskStore};
+use crate::storage::{OpenOptions, StorageBackend, StorageCapabilities};
 use crate::{Error, Result};
 
 /// A partial triple pattern, equivalent to Redland's statement matching API.
@@ -42,18 +47,93 @@ impl Iterator for StatementMatches {
     }
 }
 
+/// Mutator available inside [`Model::transaction`].
+pub struct ModelTransaction<'a> {
+    inner: OxigraphTransaction<'a>,
+}
+
+impl ModelTransaction<'_> {
+    /// Adds a statement to the default graph within the transaction.
+    pub fn add(&mut self, statement: impl Into<Triple>) -> Result<bool> {
+        self.add_to_graph(statement, GraphName::DefaultGraph)
+    }
+
+    /// Adds a statement to a named graph within the transaction.
+    pub fn add_to_graph(
+        &mut self,
+        statement: impl Into<Triple>,
+        graph_name: impl Into<GraphName>,
+    ) -> Result<bool> {
+        let triple = statement.into();
+        let quad = Quad::new(triple.subject, triple.predicate, triple.object, graph_name);
+        self.insert_quad(quad)
+    }
+
+    /// Inserts a quad within the transaction.
+    pub fn insert_quad(&mut self, quad: Quad) -> Result<bool> {
+        let inserted = !self
+            .inner
+            .contains(quad.as_ref())
+            .map_err(|error| Error::Storage(error.to_string()))?;
+        self.inner.insert(quad.as_ref());
+        Ok(inserted)
+    }
+
+    /// Removes a statement from the default graph within the transaction.
+    pub fn remove(&mut self, statement: impl Into<Triple>) -> Result<bool> {
+        self.remove_from_graph(statement, GraphName::DefaultGraph)
+    }
+
+    /// Removes a statement from a named graph within the transaction.
+    pub fn remove_from_graph(
+        &mut self,
+        statement: impl Into<Triple>,
+        graph_name: impl Into<GraphName>,
+    ) -> Result<bool> {
+        let triple = statement.into();
+        let quad = Quad::new(triple.subject, triple.predicate, triple.object, graph_name);
+        self.remove_quad(&quad)
+    }
+
+    /// Removes a quad within the transaction.
+    pub fn remove_quad(&mut self, quad: &Quad) -> Result<bool> {
+        let removed = self
+            .inner
+            .contains(quad.as_ref())
+            .map_err(|error| Error::Storage(error.to_string()))?;
+        if removed {
+            self.inner.remove(quad.as_ref());
+        }
+        Ok(removed)
+    }
+
+    /// Clears the entire dataset within the transaction.
+    pub fn clear(&mut self) -> Result<()> {
+        self.inner
+            .clear()
+            .map_err(|error| Error::Storage(error.to_string()))
+    }
+
+    /// Clears one graph within the transaction.
+    pub fn clear_graph(&mut self, graph_name: impl Into<GraphName>) -> Result<()> {
+        let graph_name = graph_name.into();
+        self.inner
+            .clear_graph(graph_name.as_ref())
+            .map_err(|error| Error::Storage(error.to_string()))
+    }
+}
+
 /// An RDF graph model backed by an Oxigraph store.
 ///
 /// In-memory models use Oxigraph alone. Persistent models opened with
-/// [`Model::open`] keep an Oxigraph working set and a
-/// [Fjall](https://github.com/fjall-rs/fjall) durable copy of every quad.
+/// [`Model::open`] / [`Model::open_with`] keep an Oxigraph working set and a
+/// Fjall durable copy under Oxiland format v1 (ADR-006).
 ///
 /// Cloning a [`Model`] clones the store handle and shares the same dataset; it
 /// does not deep-copy statements. `Model` is `Send` and `Sync`.
 ///
-/// Mutating methods (`add` / `remove` / `insert_quad` / …) serialize through an
-/// internal lock so the `bool` “newly inserted / removed” return value stays
-/// accurate under concurrent callers that share a cloned handle.
+/// Readers (`find` / query execution) take a shared lock; writers take an
+/// exclusive lock so Fjall reload cannot expose an empty working set.
 ///
 /// # Examples
 ///
@@ -86,7 +166,9 @@ impl Iterator for StatementMatches {
 pub struct Model {
     store: Store,
     disk: Option<DiskStore>,
-    write_lock: Arc<Mutex<()>>,
+    lock: Arc<RwLock<()>>,
+    read_only: bool,
+    in_transaction: Arc<AtomicBool>,
 }
 
 impl Model {
@@ -96,19 +178,29 @@ impl Model {
             .map(|store| Self {
                 store,
                 disk: None,
-                write_lock: Arc::new(Mutex::new(())),
+                lock: Arc::new(RwLock::new(())),
+                read_only: false,
+                in_transaction: Arc::new(AtomicBool::new(false)),
             })
             .map_err(|error| Error::Storage(error.to_string()))
     }
 
-    /// Opens or creates a persistent model at `path`.
-    ///
-    /// Quads are stored in a Fjall keyspace and loaded into an Oxigraph
-    /// in-memory working set for querying. On-disk format compatibility across
-    /// Oxiland versions is not guaranteed in 0.x; see ADR-006.
+    /// Opens or creates a persistent format-v1 model at `path`.
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
-        let path = path.as_ref();
-        let disk = DiskStore::open(path)?;
+        Self::open_with(OpenOptions::fjall(path))
+    }
+
+    /// Opens a persistent model with typed options (ADR-006).
+    pub fn open_with(options: OpenOptions) -> Result<Self> {
+        let path = options.path();
+        if options.is_read_only() && options.can_create() && !path.exists() {
+            return Err(Error::OpenStore {
+                path: path.to_owned(),
+                message: "read-only open cannot create a missing store".into(),
+            });
+        }
+        let disk = DiskStore::open_with_create(path, options.can_create())?;
+        disk.ensure_format_v1(path)?;
         let store = Store::new().map_err(|error| Error::OpenStore {
             path: path.to_owned(),
             message: error.to_string(),
@@ -117,49 +209,242 @@ impl Model {
         Ok(Self {
             store,
             disk: Some(disk),
-            write_lock: Arc::new(Mutex::new(())),
+            lock: Arc::new(RwLock::new(())),
+            read_only: options.is_read_only(),
+            in_transaction: Arc::new(AtomicBool::new(false)),
         })
+    }
+
+    /// Migrates a pre-0.4 experimental Fjall directory to format v1, then opens it.
+    pub fn migrate_legacy_store(path: impl AsRef<Path>) -> Result<Self> {
+        let path = path.as_ref();
+        let disk = DiskStore::open_with_create(path, false)?;
+        disk.migrate_legacy_to_v1()?;
+        Self::open_with(OpenOptions::fjall(path))
+    }
+
+    /// Returns capability bits for this model.
+    #[must_use]
+    pub fn capabilities(&self) -> StorageCapabilities {
+        match &self.disk {
+            None => StorageCapabilities::memory(),
+            Some(_) => StorageCapabilities::fjall(self.read_only),
+        }
+    }
+
+    /// Returns the storage backend for this model.
+    #[must_use]
+    pub fn backend(&self) -> StorageBackend {
+        self.capabilities().backend
     }
 
     /// Returns the underlying Oxigraph store.
     ///
     /// This is an escape hatch for advanced Oxigraph use. Mutations through the
-    /// returned handle bypass Oxiland's write lock and Fjall durability sync.
-    /// On models opened with [`Model::open`], prefer [`Model::insert_quad`],
-    /// [`Model::remove_quad`], and [`crate::Update`] so memory and disk stay
-    /// aligned.
+    /// returned handle bypass Oxiland's lock and Fjall durability sync.
+    /// Prefer [`Model::insert_quad`], [`Model::transaction`], and
+    /// [`crate::Update`] so memory and disk stay aligned.
     #[must_use]
     pub fn store(&self) -> &Store {
         &self.store
     }
 
+    pub(crate) fn with_read_lock<R>(&self, f: impl FnOnce() -> R) -> R {
+        let _guard = self
+            .lock
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        f()
+    }
+
     /// Reports whether a named storage backend is available in this build.
-    ///
-    /// Unknown backend names return [`Error::Unsupported`].
     pub fn storage_backend_available(name: &str) -> Result<bool> {
-        match name {
-            "memory" | "fjall" => Ok(true),
-            "rocksdb" | "redb" => Err(Error::Unsupported(
-                "storage backend was replaced by fjall; use Model::open".into(),
-            )),
-            other => Err(Error::Unsupported(format!(
-                "storage backend '{other}' is not recognized"
-            ))),
+        StorageBackend::from_name(name).map(|_| true)
+    }
+
+    fn ensure_writable(&self) -> Result<()> {
+        if self.read_only {
+            return Err(Error::Unsupported(
+                "model was opened read-only; mutating APIs are unavailable".into(),
+            ));
+        }
+        if self.in_transaction.load(Ordering::Acquire) {
+            return Err(Error::Unsupported(
+                "auto-commit mutation is unavailable while a Model::transaction is open; use the transaction handle"
+                    .into(),
+            ));
+        }
+        Ok(())
+    }
+
+    /// Runs `f` inside an Oxigraph transaction; Fjall models sync on commit.
+    pub fn transaction<R>(
+        &self,
+        f: impl FnOnce(&mut ModelTransaction<'_>) -> Result<R>,
+    ) -> Result<R> {
+        self.ensure_writable()?;
+        let _guard = self
+            .lock
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if self
+            .in_transaction
+            .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+            .is_err()
+        {
+            return Err(Error::Unsupported(
+                "nested Model::transaction is unsupported".into(),
+            ));
+        }
+        let outcome = (|| {
+            let oxi = self
+                .store
+                .start_transaction()
+                .map_err(|error| Error::Storage(error.to_string()))?;
+            let mut tx = ModelTransaction { inner: oxi };
+            let value = f(&mut tx)?;
+            let ModelTransaction { inner } = tx;
+            inner
+                .commit()
+                .map_err(|error| Error::Storage(error.to_string()))?;
+            if let Some(disk) = &self.disk {
+                if let Err(error) = disk.replace_all_from_store(&self.store) {
+                    if let Err(reload_error) = self.reload_store_from_disk_unlocked(disk) {
+                        return Err(Error::Storage(format!(
+                            "durable sync failed after transaction ({error}); rollback from disk also failed ({reload_error})"
+                        )));
+                    }
+                    return Err(Error::Storage(format!(
+                        "durable sync failed after transaction; in-memory store rolled back to disk: {error}"
+                    )));
+                }
+            }
+            Ok(value)
+        })();
+        self.in_transaction.store(false, Ordering::Release);
+        outcome
+    }
+
+    /// Forces a durable sync (Fjall `SyncAll`). No-op success for memory models.
+    pub fn sync(&self) -> Result<()> {
+        let _guard = self
+            .lock
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        match &self.disk {
+            Some(disk) => disk.sync(),
+            None => Ok(()),
         }
     }
 
+    /// Clears all statements (and named graphs) from the model.
+    pub fn clear(&self) -> Result<()> {
+        self.ensure_writable()?;
+        let _guard = self
+            .lock
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        self.store
+            .clear()
+            .map_err(|error| Error::Storage(error.to_string()))?;
+        if let Some(disk) = &self.disk {
+            if let Err(error) = disk.clear_quads() {
+                if let Err(reload_error) = self.reload_store_from_disk_unlocked(disk) {
+                    return Err(Error::Storage(format!(
+                        "durable clear failed ({error}); rollback from disk also failed ({reload_error})"
+                    )));
+                }
+                return Err(error);
+            }
+        }
+        Ok(())
+    }
+
+    /// Clears a single graph/context.
+    pub fn clear_graph(&self, graph_name: impl Into<GraphName>) -> Result<()> {
+        self.ensure_writable()?;
+        let graph_name = graph_name.into();
+        let _guard = self
+            .lock
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        self.store
+            .clear_graph(graph_name.as_ref())
+            .map_err(|error| Error::Storage(error.to_string()))?;
+        if let Some(disk) = &self.disk {
+            if let Err(error) = disk.replace_all_from_store(&self.store) {
+                if let Err(reload_error) = self.reload_store_from_disk_unlocked(disk) {
+                    return Err(Error::Storage(format!(
+                        "durable clear_graph failed ({error}); rollback from disk also failed ({reload_error})"
+                    )));
+                }
+                return Err(error);
+            }
+        }
+        Ok(())
+    }
+
+    /// Inserts many quads inside a single transaction (then durable sync).
+    pub fn bulk_insert_quads(&self, quads: impl IntoIterator<Item = Quad>) -> Result<usize> {
+        let quads: Vec<_> = quads.into_iter().collect();
+        let total = quads.len();
+        self.transaction(|tx| {
+            for quad in quads {
+                tx.insert_quad(quad)?;
+            }
+            Ok(total)
+        })
+    }
+
+    /// Exports the model as N-Quads to a filesystem path (archival helper).
+    pub fn export_nquads_to_path(&self, path: impl AsRef<Path>) -> Result<()> {
+        let path = path.as_ref();
+        let file = File::create(path).map_err(|error| {
+            Error::Io(std::io::Error::new(
+                error.kind(),
+                format!("{}: {}", path.display(), error),
+            ))
+        })?;
+        let mut serializer =
+            RdfSerializer::from_format(RdfFormat::NQuads).for_writer(BufWriter::new(file));
+        for item in self.find(StatementPattern::default()) {
+            let quad = item?;
+            serializer
+                .serialize_quad(QuadRef::from(&quad))
+                .map_err(Error::Io)?;
+        }
+        let writer = serializer.finish().map_err(Error::Io)?;
+        writer
+            .into_inner()
+            .map_err(|error| Error::Io(error.into_error()))?;
+        Ok(())
+    }
+
+    /// Imports N-Quads from a path inside a transaction (atomic on success).
+    pub fn import_nquads_from_path(&self, path: impl AsRef<Path>) -> Result<usize> {
+        let path = path.as_ref();
+        let file = File::open(path).map_err(|error| {
+            Error::Io(std::io::Error::new(
+                error.kind(),
+                format!("{}: {}", path.display(), error),
+            ))
+        })?;
+        let quads = RdfParser::from_format(RdfFormat::NQuads)
+            .rename_blank_nodes()
+            .for_reader(BufReader::new(file))
+            .collect::<std::result::Result<Vec<_>, _>>()
+            .map_err(|error| Error::parse(error.to_string(), None))?;
+        let total = quads.len();
+        self.bulk_insert_quads(quads)?;
+        Ok(total)
+    }
+
     /// Adds a statement to the default graph.
-    ///
-    /// Returns `true` when the statement was newly inserted and `false` when it
-    /// was already present.
     pub fn add(&self, statement: impl Into<Triple>) -> Result<bool> {
         self.add_to_graph(statement, GraphName::DefaultGraph)
     }
 
     /// Adds a statement to a named graph/context.
-    ///
-    /// Returns `true` when the statement was newly inserted and `false` when it
-    /// was already present in that graph.
     pub fn add_to_graph(
         &self,
         statement: impl Into<Triple>,
@@ -171,24 +456,17 @@ impl Model {
     }
 
     /// Inserts a fully formed quad into the model.
-    ///
-    /// Returns `true` when the quad was newly inserted and `false` when it was
-    /// already present. Used by progressive parser loads (ADR-007).
-    ///
-    /// Persistent models store Oxigraph's canonical quad form so typed-literal
-    /// lexical variants cannot create orphan durable keys.
     pub fn insert_quad(&self, quad: Quad) -> Result<bool> {
+        self.ensure_writable()?;
         let _guard = self
-            .write_lock
-            .lock()
+            .lock
+            .write()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         let inserted = !self
             .store
             .contains(quad.as_ref())
             .map_err(|error| Error::Storage(error.to_string()))?;
         if !inserted {
-            // Skip durable writes for RDF-equal duplicates so alternate lexical
-            // forms cannot add a second Fjall key for the same statement.
             return Ok(false);
         }
         self.store
@@ -197,8 +475,6 @@ impl Model {
         if let Some(disk) = &self.disk {
             let canonical = persist::stored_matching_quad(&self.store, &quad)?;
             if let Err(error) = disk.insert(&canonical) {
-                // Reload from disk so memory matches whatever actually persisted
-                // (including SyncAll failure / compensation edge cases).
                 if let Err(reload_error) = self.reload_store_from_disk_unlocked(disk) {
                     let _ = self.store.remove(canonical.as_ref());
                     return Err(Error::Storage(format!(
@@ -212,12 +488,11 @@ impl Model {
     }
 
     /// Removes a fully formed quad from the model.
-    ///
-    /// Returns `true` when a matching quad was removed.
     pub fn remove_quad(&self, quad: &Quad) -> Result<bool> {
+        self.ensure_writable()?;
         let _guard = self
-            .write_lock
-            .lock()
+            .lock
+            .write()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         let removed = self
             .store
@@ -245,15 +520,11 @@ impl Model {
     }
 
     /// Removes a statement from the default graph.
-    ///
-    /// Returns `true` when a matching statement was removed.
     pub fn remove(&self, statement: impl Into<Triple>) -> Result<bool> {
         self.remove_from_graph(statement, GraphName::DefaultGraph)
     }
 
     /// Removes a statement from a named graph/context.
-    ///
-    /// Returns `true` when a matching statement was removed from that graph.
     pub fn remove_from_graph(
         &self,
         statement: impl Into<Triple>,
@@ -275,59 +546,58 @@ impl Model {
         statement: TripleRef<'_>,
         graph_name: GraphNameRef<'_>,
     ) -> Result<bool> {
-        self.store
-            .contains(oxigraph::model::QuadRef::new(
-                statement.subject,
-                statement.predicate,
-                statement.object,
-                graph_name,
-            ))
-            .map_err(|error| Error::Storage(error.to_string()))
+        self.with_read_lock(|| {
+            self.store
+                .contains(oxigraph::model::QuadRef::new(
+                    statement.subject,
+                    statement.predicate,
+                    statement.object,
+                    graph_name,
+                ))
+                .map_err(|error| Error::Storage(error.to_string()))
+        })
     }
 
     /// Returns the number of statements across all contexts.
     pub fn len(&self) -> Result<usize> {
-        self.store
-            .len()
-            .map_err(|error| Error::Storage(error.to_string()))
+        self.with_read_lock(|| {
+            self.store
+                .len()
+                .map_err(|error| Error::Storage(error.to_string()))
+        })
     }
 
     /// Returns whether the model contains no statements.
     pub fn is_empty(&self) -> Result<bool> {
-        self.store
-            .is_empty()
-            .map_err(|error| Error::Storage(error.to_string()))
+        self.with_read_lock(|| {
+            self.store
+                .is_empty()
+                .map_err(|error| Error::Storage(error.to_string()))
+        })
     }
 
     /// Streams quads matching a partial statement/context pattern.
-    ///
-    /// Matching uses a store snapshot and yields results lazily. Callers can
-    /// stop early without materializing the full match set.
     pub fn find(&self, pattern: StatementPattern<'_>) -> StatementMatches {
-        StatementMatches {
+        self.with_read_lock(|| StatementMatches {
             inner: self.store.quads_for_pattern(
                 pattern.subject,
                 pattern.predicate,
                 pattern.object,
                 pattern.graph_name,
             ),
-        }
+        })
     }
 
     /// Runs a store-mutating SPARQL Update under the write lock, then resyncs
-    /// Fjall. If durable sync fails, the in-memory store is reloaded from disk
-    /// so memory and durability stay aligned.
-    ///
-    /// Concurrent `find` / `Query::execute` readers are not blocked by this
-    /// lock. On persistent models, avoid overlapping Update with reads: a
-    /// failed sync temporarily clears and reloads the working set.
+    /// Fjall.
     pub(crate) fn run_sparql_update(
         &self,
         update: impl FnOnce(&Store) -> Result<()>,
     ) -> Result<()> {
+        self.ensure_writable()?;
         let _guard = self
-            .write_lock
-            .lock()
+            .lock
+            .write()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         update(&self.store)?;
         let Some(disk) = &self.disk else {

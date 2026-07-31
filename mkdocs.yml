@@ -62,6 +62,8 @@ nav:
       - Migration from Redland: evaluators/migration-from-redland.md
       - Compatibility contract: COMPATIBILITY.md
       - Parity ledger: parity.md
+      - 0.4 compatibility report: reports/0.4.md
+      - 0.4.0 release checklist: reports/0.4.0-release.md
       - 0.3 compatibility report: reports/0.3.md
       - 0.2 compatibility report: reports/0.2.md
   - Contributors:
@@ -73,8 +75,11 @@ nav:
       - Verification: VERIFICATION.md
       - Decisions: DECISIONS.md
       - Risks: RISKS.md
+      - Milestone 0.4: milestones/0.4.md
       - Milestone 0.3: milestones/0.3.md
       - Milestone 0.2: milestones/0.2.md
+      - Design 0.4 storage API: design/0.4-storage-api.md
+      - Design 0.4 legacy storage: design/0.4-legacy-storage.md
       - Design 0.3 query API: design/0.3-query-api.md
       - Design 0.2 I/O API: design/0.2-io-api.md
   - Project:

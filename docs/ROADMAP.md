@@ -18,7 +18,7 @@ only when its evidence gates are satisfied.
 | 0.1 | Trusted core model | — | `complete` |
 | 0.2 | Redland-shaped RDF I/O | 0.1 | `complete` |
 | 0.3 | Complete query/result workflows | 0.2 | `complete` |
-| 0.4 | Durable storage and transactions | 0.3 | `planned` |
+| 0.4 | Durable storage and transactions | 0.3 | `complete` |
 | 0.5 | Streams, utilities, and observability | 0.4 | `planned` |
 | 0.6 | Accounted safe Rust parity | 0.5 | `planned` |
 | 0.7 | Pythonic package on PyPI | 0.4 (sequenced after 0.6) | `planned` |
@@ -153,6 +153,12 @@ Depends on: 0.2 dataset loading and result serialization.
 
 Outcome: cover durable models and Redland storage semantics with explicit
 backend capabilities.
+
+State: complete
+Execution specification: [milestone 0.4](milestones/0.4.md)
+Evidence: [parity ledger](parity.md),
+[0.4 compatibility report](reports/0.4.md),
+[inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.4.json)
 
 Deliverables:
 

@@ -28,7 +28,7 @@ REQUIRED_FIELDS = {
     "tests",
     "state",
 }
-ALLOWED_MILESTONES = {"0.1", "0.2", "0.3"}
+ALLOWED_MILESTONES = {"0.1", "0.2", "0.3", "0.4"}
 
 
 def fail(message: str) -> None:

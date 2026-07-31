@@ -1,38 +1,71 @@
 # Persistence
 
-`Model::new()` creates an in-memory store. `Model::open(path)` opens an
-**experimental** Fjall-backed durable copy plus an Oxigraph working set.
+`Model::new()` creates an in-memory store. `Model::open(path)` /
+`Model::open_with(OpenOptions::fjall(path))` opens a **supported** Fjall-backed
+durable store (Oxiland format v1, ADR-006) plus an Oxigraph working set.
 
-## Stability
+## Stability (ADR-006)
 
-- On-disk format compatibility across Oxiland / Oxigraph versions is **not**
-  promised in 0.x (see ADR-006, still proposed for 0.4).
-- Do not treat 0.x Fjall directories as archival storage.
-- A supported storage contract is planned for **0.4**.
+- Format v1 stores `__oxiland/meta` beside N-Quads keys. **0.4.x** opens format
+  v1 without migration.
+- Pre-0.4 experimental directories (no metadata) must call
+  `Model::migrate_legacy_store` before `open`.
+- Prefer standards RDF for archival continuity across major upgrades.
 
-## Export before upgrade
-
-Serialize to a standards format before moving stores:
+## Transactions
 
 ```rust
-use oxiland::io::{Serializer, Syntax};
+# use oxiland::terms::{self, Literal, Triple};
 # use oxiland::Model;
+# fn main() -> oxiland::Result<()> {
+let model = Model::new()?;
+model.transaction(|tx| {
+    tx.add(Triple::new(
+        terms::named_node("https://example.com/alice")?,
+        terms::named_node("https://example.com/name")?,
+        Literal::new_simple_literal("Alice"),
+    ))?;
+    Ok(())
+})?;
+# Ok(())
+# }
+```
+
+On Fjall models, durability syncs when the transaction commits. Errors and drops
+roll back the Oxigraph working set without writing a new durable snapshot.
+
+## Atomic import
+
+Prefer `Parser::load_transactional` (or `Model::import_nquads_from_path`) when a
+mid-parse failure must not leave durable partial data. Progressive `load_into`
+still syncs each successful insert.
+
+## Read-only and capabilities
+
+```rust
+# use oxiland::{Model, OpenOptions};
+# let path = std::env::temp_dir().join("oxiland-doc-ro");
+# let _ = Model::open(&path);
+let model = Model::open_with(OpenOptions::fjall(&path).read_only(true))?;
+assert!(model.capabilities().read_only);
+# Ok::<(), oxiland::Error>(())
+```
+
+## Export before major upgrades
+
+```rust
+use oxiland::Model;
 # let model = Model::new()?;
 
-let nq = Serializer::for_syntax(Syntax::NQuads).serialize_model_to_string(&model)?;
-std::fs::write("backup.nq", nq)?;
+model.export_nquads_to_path("backup.nq")?;
 # Ok::<(), Box<dyn std::error::Error>>(())
 ```
 
-Use N-Quads or TriG when you need named graphs.
-
-## Progressive load on disk
-
-`Parser::load_into` syncs each successful insert on Fjall models. A mid-parse
-failure can leave durable partial data. Prefer `load_collecting` when that is
-unacceptable, or load into memory and export.
+Use TriG via `Serializer` when you need a compact named-graph archive.
 
 ## See also
 
 - [FAQ](faq.md)
+- [Storage API design](../design/0.4-storage-api.md)
+- [Legacy backend disposition](../design/0.4-legacy-storage.md)
 - [Roadmap 0.4](../ROADMAP.md)

@@ -1,9 +1,9 @@
 # Redland parity ledger
 
-Last completed milestone: 0.3
-Current development milestone: 0.4 (`planned`)
-Ledger maturity: curated 0.1 core, 0.2 I/O, and 0.3 query/update inventory
-slices; full header-derived generation pending with the broader oracle harness
+Last completed milestone: 0.4
+Current development milestone: 0.5 (`planned`)
+Ledger maturity: curated 0.1 core, 0.2 I/O, 0.3 query/update, and 0.4 storage
+inventory slices; full header-derived generation pending with the broader oracle harness
 
 Target: the documented Redland `librdf` 1.0.17 API (manual labeled 1.0.18).
 
@@ -16,8 +16,9 @@ Inventory revisions:
 - [`compatibility/inventory/redland-1.0.17-oxiland-0.1.json`](compatibility/inventory/redland-1.0.17-oxiland-0.1.json)
 - [`compatibility/inventory/redland-1.0.17-oxiland-0.2.json`](compatibility/inventory/redland-1.0.17-oxiland-0.2.json)
 - [`compatibility/inventory/redland-1.0.17-oxiland-0.3.json`](compatibility/inventory/redland-1.0.17-oxiland-0.3.json)
+- [`compatibility/inventory/redland-1.0.17-oxiland-0.4.json`](compatibility/inventory/redland-1.0.17-oxiland-0.4.json)
 
-0.3 compatibility report: [`docs/reports/0.3.md`](docs/reports/0.3.md)
+0.4 compatibility report: [`docs/reports/0.4.md`](docs/reports/0.4.md)
 
 ## Status vocabulary
 
@@ -40,7 +41,7 @@ Inventory revisions:
 | Nodes | Verified (0.1 slice) | Unstarted | 0.1/0.8 | Oxigraph term re-exports plus InvalidRdf helpers (ADR-004) |
 | Statements | Verified (0.1 slice) | Unstarted | 0.1/0.8 | triples and `StatementPattern` matching |
 | Model | Verified (0.1 slice) | Unstarted | 0.1/0.8 | default and named-graph CRUD, size, streaming find |
-| Storage | Partial | Unstarted | 0.4/0.9 | memory default; fjall persistence via `Model::open` |
+| Storage | Verified (0.4 slice) | Unstarted | 0.4/0.9 | format v1 Fjall; transactions, sync, clear, capabilities (ADR-006) |
 | Streams / iterators | Verified (find + parse + query) | Unstarted | 0.5/0.8 | `StatementMatches`, parser, and query result streams |
 | Parser | Verified (0.2 slice) | Unstarted | 0.2/0.8 | `Parser` facade, Syntax discovery, progressive/collecting load |
 | Serializer | Verified (0.2 slice) | Unstarted | 0.2/0.8 | `Serializer` facade, prefixes, graph/dataset checks |
@@ -50,31 +51,34 @@ Inventory revisions:
 | Hashes / lists | Unreviewed | Unstarted | 0.5/0.8 | likely Rust replacements; rationale required |
 | Heuristics / files / Unicode | Partial (I/O Unicode) | Unstarted | 0.5/0.8 | Unicode literals covered in 0.2 I/O tests |
 | Logging | Unstarted | Unstarted | 0.5/0.8 | callback and `tracing` design pending |
-| Storage plug-ins | Unreviewed | Unstarted | 0.4/0.9 | per-backend decisions required |
+| Storage plug-ins | Dispositioned | Unstarted | 0.4/0.9 | legacy names → Unsupported; see `docs/design/0.4-legacy-storage.md` |
 | `rdfproc` utility | Unstarted | n/a | 0.6 | CLI workflow inventory pending |
 
 ## Current evidence
 
-- Inventory: 22 curated 0.1 entries, 10 curated 0.2 I/O entries, and 10
-  curated 0.3 query/update entries (verified in their slices).
+- Inventory: 22 curated 0.1 entries, 10 curated 0.2 I/O entries, 10 curated
+  0.3 query/update entries, and 10 curated 0.4 storage entries (verified in
+  their slices).
 - Integration tests cover world features, CRUD, named graphs, streaming find,
-  SPARQL query/update/results (`tests/query.rs`), invalid input, unsupported
-  storage, and the 0.2 I/O matrix in `tests/io.rs`.
+  SPARQL query/update/results (`tests/query.rs`), storage/transactions
+  (`tests/storage.rs`), invalid input, unsupported storage, and the 0.2 I/O
+  matrix in `tests/io.rs`.
 - Curated W3C-style syntax cases run through the public facade
   (`tests/conformance.rs`).
 - Native `rapper` I/O oracle/differential and SPARQL facade smoke harnesses are
   available under `compatibility/harness/`.
 - Examples `quick_start`, `contexts`, `parse_serialize`, `select`,
-  `progressive_load`, `construct`, and `update` run in CI.
-- ADR-004, ADR-005, ADR-007, ADR-008, and ADR-009–ADR-012 are accepted.
+  `progressive_load`, `construct`, `update`, and `persistent_transaction` run
+  in CI.
+- ADR-004, ADR-005, ADR-006, ADR-007, ADR-008, and ADR-009–ADR-012 are accepted.
 - Oxigraph 0.5.9 remains pinned with default features disabled.
 
 ## Next ledger upgrade
 
 Generate the remaining Redland symbols from pinned headers once the broader
 oracle harness expands. Expand verified rows only when differential or standards
-fixtures exist for the claimed behavior. Next development focus: **0.4**
-storage/transactions, then utilities (0.5), safe-API accounting (0.6), the
+fixtures exist for the claimed behavior. Next development focus: **0.5**
+streams/utilities/observability, then safe-API accounting (0.6), the
 **Pythonic Python package (0.7)**, and C ABI (0.8+).
 
 “100% parity” is reached only when every public Redland function is represented

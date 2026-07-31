@@ -15,14 +15,14 @@ Turtle / N-Triples / N-Quads / TriG / RDF/XML I/O—backed by pinned
 
 Use it when you want Redland concepts and explicit unsupported/error behavior
 without C ownership; use Oxigraph directly when you only need the engine API.
-Version **0.3.0** covers the trusted core model, Redland-shaped RDF I/O, and
-SPARQL query/update/results with scoped evidence in the [parity ledger](PARITY.md)—not
-C ABI/source compatibility, full `librdf` accounting, or a stable on-disk
-format.
+Version **0.4.0** covers the trusted core model, Redland-shaped RDF I/O,
+SPARQL query/update/results, and durable Fjall storage (format v1) with
+transactions, with scoped evidence in the [parity ledger](PARITY.md)—not
+C ABI/source compatibility or full `librdf` accounting.
 
 > [!IMPORTANT]
 > Compatibility claims are evidence-scoped. See the
-> [parity ledger](PARITY.md) and [0.3 report](docs/reports/0.3.md). Do not read
+> [parity ledger](PARITY.md) and [0.4 report](docs/reports/0.4.md). Do not read
 > “Redland-shaped” as drop-in C or ABI compatibility.
 
 ## When to use Oxiland
@@ -49,7 +49,8 @@ A longer comparison (including Sophia and native Redland) is in
 | SPARQL ASK / SELECT / CONSTRUCT / DESCRIBE | Available; streaming `QueryResults` |
 | RDF parser and serializer facades | Available; Turtle, N-Triples, N-Quads, TriG, RDF/XML |
 | Syntax discovery by name, MIME type, and extension | Available via `Syntax` |
-| Persistent Fjall model | Experimental via `Model::open` (unstable on-disk format until 0.4) |
+| Persistent Fjall model | Available; format v1 via `Model::open` / `open_with` (ADR-006) |
+| Transactions / sync / clear | Available; `Model::transaction`, `sync`, `clear` |
 | SPARQL Update and results serialization | Available; XML/JSON/CSV/TSV + graph serialize helper |
 | Python package (Pythonic PyPI API) | Planned for 0.7 |
 | Full safe Rust Redland accounting | Planned for 0.6 |
@@ -88,7 +89,7 @@ rustc --version   # >= 1.87
 
 ```toml
 [dependencies]
-oxiland = "0.3.0"
+oxiland = "0.4.0"
 ```
 
 ## Quick start
@@ -198,10 +199,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-**Experimental:** on-disk compatibility across Oxiland versions is not
-guaranteed in 0.x. Export with a dataset serializer (for example N-Quads) if
-you need an archival copy. Details:
-[persistence guide](docs/users/persistence.md).
+**Supported (format v1):** on-disk compatibility is promised for Oxiland **0.4.x**
+patch releases (ADR-006). Pre-0.4 experimental directories need
+`Model::migrate_legacy_store`. Prefer N-Quads export for archival copies across
+majors. Details: [persistence guide](docs/users/persistence.md).
 
 ## Documentation
 

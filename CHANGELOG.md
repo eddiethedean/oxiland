@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-30
+
+Durable Fjall storage contract, transactions, and archival helpers over Oxigraph
+0.5.9.
+
+### Added
+
+- Oxiland on-disk **format v1** metadata (`__oxiland/meta`) and
+  `Model::migrate_legacy_store` for pre-0.4 experimental directories (ADR-006)
+- `OpenOptions`, `StorageBackend`, `StorageCapabilities`
+- `Model::open_with`, `transaction` / `ModelTransaction`, `sync`, `clear`,
+  `clear_graph`, `bulk_insert_quads`
+- Read-only Fjall opens; `Parser::load_transactional` /
+  `load_path_transactional`
+- N-Quads archival `export_nquads_to_path` / `import_nquads_from_path`
+- Inventory `redland-1.0.17-oxiland-0.4.json`, design docs, example
+  `persistent_transaction`
+- Compatibility report `docs/reports/0.4.md`
+
+### Changed
+
+- Fjall persistence is a supported 0.4 contract (no longer experimental)
+- Model locking uses `RwLock` so readers do not observe mid-reload empty stores
+- crates.io description covers durable storage
+- User persistence guide rewritten for format v1 and transactions
+
+### Fixed
+
+- Progressive-load docs point at transactional import for atomic durability
+
 ## [0.3.0] - 2026-07-30
 
 Redland-shaped SPARQL query, update, and results over Oxigraph 0.5.9.

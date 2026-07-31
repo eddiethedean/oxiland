@@ -126,7 +126,8 @@ impl Parser {
     /// duplicates that were already present).
     ///
     /// Persistent (`Model::open`) models sync each successful insert, so a
-    /// partial progressive load is durable until 0.4 transactions exist.
+    /// partial progressive load is durable. Prefer [`Parser::load_transactional`]
+    /// when atomic import is required.
     pub fn load_into(&self, model: &Model, reader: impl Read) -> Result<usize> {
         let mut processed = 0usize;
         let mut newly_inserted = 0usize;
@@ -181,6 +182,28 @@ impl Parser {
         let path = path.as_ref();
         let file = File::open(path).map_err(|error| io_with_path(error, path))?;
         self.load_collecting(model, BufReader::new(file))
+    }
+
+    /// Parses the complete input, then inserts inside [`Model::transaction`].
+    ///
+    /// Mid-parse failure leaves the model unchanged. On Fjall models, durability
+    /// is synced only if the transaction commits (ADR-007 / 0.4).
+    pub fn load_transactional(&self, model: &Model, reader: impl Read) -> Result<usize> {
+        let quads = self.parse_reader(reader)?.collect::<Result<Vec<_>>>()?;
+        let total = quads.len();
+        model.transaction(|tx| {
+            for quad in quads {
+                tx.insert_quad(quad)?;
+            }
+            Ok(total)
+        })
+    }
+
+    /// Transactional load from a filesystem path.
+    pub fn load_path_transactional(&self, model: &Model, path: impl AsRef<Path>) -> Result<usize> {
+        let path = path.as_ref();
+        let file = File::open(path).map_err(|error| io_with_path(error, path))?;
+        self.load_transactional(model, BufReader::new(file))
     }
 
     fn build(&self) -> Result<RdfParser> {

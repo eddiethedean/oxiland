@@ -9,6 +9,8 @@ Oxiland APIs.
   0.2 RDF I/O slice.
 - [`redland-1.0.17-oxiland-0.3.json`](redland-1.0.17-oxiland-0.3.json) — curated
   0.3 SPARQL query/update/results slice.
+- [`redland-1.0.17-oxiland-0.4.json`](redland-1.0.17-oxiland-0.4.json) — curated
+  0.4 storage/transactions slice.
 
 Format name/MIME/extension dispositions:
 [`../baseline/format-matrix.json`](../baseline/format-matrix.json).

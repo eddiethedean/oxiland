@@ -242,11 +242,13 @@ impl Query {
     /// [`Error::InvalidRdf`].
     pub fn execute<'a>(&self, model: &'a Model) -> Result<QueryResults<'a>> {
         let prepared = self.prepare()?;
-        let results = prepared
-            .on_store(model.store())
-            .execute()
-            .map_err(|error| Error::SparqlEvaluation(error.to_string()))?;
-        Ok(map_query_results(results))
+        model.with_read_lock(|| {
+            let results = prepared
+                .on_store(model.store())
+                .execute()
+                .map_err(|error| Error::SparqlEvaluation(error.to_string()))?;
+            Ok(map_query_results(results))
+        })
     }
 
     fn ensure_not_ask_for_slice(&self) -> Result<()> {

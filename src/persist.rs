@@ -10,6 +10,9 @@ use oxigraph::store::Store;
 use crate::{Error, Result};
 
 const QUADS_PARTITION: &str = "oxiland_quads";
+pub(crate) const META_KEY: &str = "__oxiland/meta";
+pub(crate) const FORMAT_VERSION: u32 = 1;
+pub(crate) const FORMAT_OXILAND: &str = "0.4.0";
 
 #[cfg(test)]
 thread_local! {
@@ -23,7 +26,7 @@ thread_local! {
 /// Durable quad storage backed by [Fjall](https://github.com/fjall-rs/fjall).
 ///
 /// Oxigraph still provides the in-memory query engine; Fjall holds the durable
-/// copy of every quad.
+/// copy of every quad under Oxiland format v1 (ADR-006).
 #[derive(Clone)]
 pub(crate) struct DiskStore {
     keyspace: Keyspace,
@@ -31,11 +34,23 @@ pub(crate) struct DiskStore {
 }
 
 impl DiskStore {
+    #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) fn open(path: &Path) -> Result<Self> {
-        std::fs::create_dir_all(path).map_err(|error| Error::OpenStore {
-            path: path.to_owned(),
-            message: error.to_string(),
-        })?;
+        Self::open_with_create(path, true)
+    }
+
+    pub(crate) fn open_with_create(path: &Path, create: bool) -> Result<Self> {
+        if create {
+            std::fs::create_dir_all(path).map_err(|error| Error::OpenStore {
+                path: path.to_owned(),
+                message: error.to_string(),
+            })?;
+        } else if !path.exists() {
+            return Err(Error::OpenStore {
+                path: path.to_owned(),
+                message: "path does not exist and OpenOptions::create(false)".into(),
+            });
+        }
 
         let keyspace = Config::new(path).open().map_err(|error| Error::OpenStore {
             path: path.to_owned(),
@@ -51,18 +66,124 @@ impl DiskStore {
         Ok(Self { keyspace, quads })
     }
 
+    pub(crate) fn ensure_format_v1(&self, path: &Path) -> Result<()> {
+        match self.read_format_version()? {
+            Some(version) if version == FORMAT_VERSION => Ok(()),
+            Some(version) => Err(Error::Unsupported(format!(
+                "Oxiland on-disk format version {version} is not supported by this build (expected {FORMAT_VERSION})"
+            ))),
+            None => {
+                if self.has_quad_keys()? {
+                    Err(Error::Unsupported(format!(
+                        "store at {} looks like a pre-0.4 experimental Oxiland directory; call Model::migrate_legacy_store before opening",
+                        path.display()
+                    )))
+                } else {
+                    self.write_format_v1_meta()
+                }
+            }
+        }
+    }
+
+    pub(crate) fn migrate_legacy_to_v1(&self) -> Result<()> {
+        if self.read_format_version()?.is_some() {
+            return Ok(());
+        }
+        // Validate every non-meta key parses as a quad.
+        for entry in self.quads.iter() {
+            let (key, _) = entry.map_err(|error| Error::Storage(error.to_string()))?;
+            let key = std::str::from_utf8(&key).map_err(|error| {
+                Error::Storage(format!("persisted quad key was not UTF-8: {error}"))
+            })?;
+            if key == META_KEY {
+                continue;
+            }
+            let _ = parse_quad(key)?;
+        }
+        self.write_format_v1_meta()
+    }
+
+    pub(crate) fn write_format_v1_meta(&self) -> Result<()> {
+        let meta =
+            format!("{{\"format_version\":{FORMAT_VERSION},\"oxiland\":\"{FORMAT_OXILAND}\"}}");
+        self.quads
+            .insert(META_KEY.as_bytes(), meta.as_bytes())
+            .map_err(|error| Error::Storage(error.to_string()))?;
+        self.keyspace
+            .persist(PersistMode::SyncAll)
+            .map_err(|error| Error::Storage(error.to_string()))
+    }
+
+    pub(crate) fn read_format_version(&self) -> Result<Option<u32>> {
+        match self
+            .quads
+            .get(META_KEY.as_bytes())
+            .map_err(|error| Error::Storage(error.to_string()))?
+        {
+            None => Ok(None),
+            Some(bytes) => {
+                let text = std::str::from_utf8(&bytes).map_err(|error| {
+                    Error::Storage(format!("format metadata was not UTF-8: {error}"))
+                })?;
+                let version = parse_format_version(text)?;
+                Ok(Some(version))
+            }
+        }
+    }
+
+    fn has_quad_keys(&self) -> Result<bool> {
+        for entry in self.quads.iter() {
+            let (key, _) = entry.map_err(|error| Error::Storage(error.to_string()))?;
+            let key = std::str::from_utf8(&key).map_err(|error| {
+                Error::Storage(format!("persisted quad key was not UTF-8: {error}"))
+            })?;
+            if key != META_KEY {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+
     pub(crate) fn load_into(&self, store: &Store) -> Result<()> {
         for entry in self.quads.iter() {
             let (key, _) = entry.map_err(|error| Error::Storage(error.to_string()))?;
             let key = std::str::from_utf8(&key).map_err(|error| {
                 Error::Storage(format!("persisted quad key was not UTF-8: {error}"))
             })?;
+            if key == META_KEY {
+                continue;
+            }
             let quad = parse_quad(key)?;
             store
                 .insert(&quad)
                 .map_err(|error| Error::Storage(error.to_string()))?;
         }
         Ok(())
+    }
+
+    pub(crate) fn sync(&self) -> Result<()> {
+        self.keyspace
+            .persist(PersistMode::SyncAll)
+            .map_err(|error| Error::Storage(error.to_string()))
+    }
+
+    pub(crate) fn clear_quads(&self) -> Result<()> {
+        let mut keys = Vec::new();
+        for entry in self.quads.iter() {
+            let (key, _) = entry.map_err(|error| Error::Storage(error.to_string()))?;
+            let key = std::str::from_utf8(&key).map_err(|error| {
+                Error::Storage(format!("persisted quad key was not UTF-8: {error}"))
+            })?;
+            if key != META_KEY {
+                keys.push(key.to_owned());
+            }
+        }
+        for key in &keys {
+            self.quads
+                .remove(key.as_bytes())
+                .map_err(|error| Error::Storage(error.to_string()))?;
+        }
+        self.sync()
     }
 
     pub(crate) fn insert(&self, quad: &Quad) -> Result<()> {
@@ -97,6 +218,9 @@ impl DiskStore {
             let key = std::str::from_utf8(&key).map_err(|error| {
                 Error::Storage(format!("persisted quad key was not UTF-8: {error}"))
             })?;
+            if key == META_KEY {
+                continue;
+            }
             let parsed = parse_quad(key)?;
             if quads_rdf_equal(&parsed, quad)? {
                 keys.push(key.to_owned());
@@ -140,6 +264,9 @@ impl DiskStore {
             let key = std::str::from_utf8(&key).map_err(|error| {
                 Error::Storage(format!("persisted quad key was not UTF-8: {error}"))
             })?;
+            if key == META_KEY {
+                continue;
+            }
             current.insert(key.to_owned());
         }
 
@@ -211,6 +338,22 @@ impl DiskStore {
 
 fn quad_key(quad: &Quad) -> String {
     format!("{quad} .")
+}
+
+fn parse_format_version(meta: &str) -> Result<u32> {
+    // Minimal JSON parse: look for "format_version": <int>
+    let key = "\"format_version\"";
+    let Some(pos) = meta.find(key) else {
+        return Err(Error::Storage(
+            "format metadata missing format_version".into(),
+        ));
+    };
+    let rest = &meta[pos + key.len()..];
+    let rest = rest.trim_start().trim_start_matches(':').trim_start();
+    let digits: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+    digits
+        .parse::<u32>()
+        .map_err(|_| Error::Storage("format metadata has invalid format_version".into()))
 }
 
 fn parse_quad(key: &str) -> Result<Quad> {
@@ -452,5 +595,30 @@ mod tests {
         drop(model);
         let reopened = Model::open(&path).unwrap();
         assert_eq!(reopened.len().unwrap(), 0);
+    }
+
+    #[test]
+    fn legacy_store_without_meta_requires_migrate() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("legacy");
+        {
+            let model = Model::open(&path).unwrap();
+            model
+                .add(Triple::new(
+                    terms::named_node("https://example.com/s").unwrap(),
+                    terms::named_node("https://example.com/p").unwrap(),
+                    Literal::new_simple_literal("x"),
+                ))
+                .unwrap();
+        }
+        let disk = DiskStore::open(&path).unwrap();
+        disk.quads.remove(META_KEY.as_bytes()).unwrap();
+        disk.sync().unwrap();
+        let err = Model::open(&path);
+        assert!(matches!(err, Err(Error::Unsupported(_))));
+        let migrated = Model::migrate_legacy_store(&path).unwrap();
+        assert_eq!(migrated.len().unwrap(), 1);
+        let disk = DiskStore::open(&path).unwrap();
+        assert_eq!(disk.read_format_version().unwrap(), Some(FORMAT_VERSION));
     }
 }

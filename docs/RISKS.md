@@ -63,10 +63,11 @@ Closing a risk requires evidence that the exposure is gone. Renaming it as a
 known limitation is not closure. A regression may move a mitigated or closed
 risk back to active.
 
-## Current 0.4 focus
+## Current 0.5 focus
 
-The 0.4 release pays particular attention to storage/transaction risks under
-ADR-006. Query/result risks R-001, R-006, R-007, R-008, R-010, and R-012 were
+The 0.5 release pays particular attention to streams, utilities, and
+observability. Storage/transaction risks under ADR-006 were addressed in 0.4
+(format v1 + migrate). Query/result risks R-001, R-006, R-007, R-008, R-010, and R-012 were
 addressed for the 0.3 facade slice and remain monitoring items. R-017 and R-018
 remain monitoring items under ADR-007 and ADR-008. R-003 remains monitored under
 ADR-004. C-specific risks remain monitored until their workstream begins.

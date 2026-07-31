@@ -54,6 +54,7 @@ jobs:
           cargo run --example progressive_load
           cargo run --example construct
           cargo run --example update
+          cargo run --example persistent_transaction
 
       - name: Inventory
         run: python3 scripts/check-inventory.py
@@ -121,6 +122,9 @@ jobs:
 
       - name: Test Fjall persistence
         run: cargo test fjall
+
+      - name: Storage matrix
+        run: cargo test --test storage
 
   msrv:
     name: MSRV (1.87)

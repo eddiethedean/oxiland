@@ -12,7 +12,7 @@ Product guides for writing applications against the published crate:
 1. [Getting started](users/getting-started.md) — install, toolchain, first workflows
 2. [RDF I/O](users/io.md) — syntaxes, GraphTarget, progressive vs collecting load
 3. [SPARQL](users/sparql.md) — Query, Update, and results
-4. [Persistence](users/persistence.md) — experimental Fjall stores and export
+4. [Persistence](users/persistence.md) — Fjall format v1, transactions, archival export
 5. [FAQ and troubleshooting](users/faq.md)
 
 ## Evaluators
@@ -22,9 +22,10 @@ Adoption and compatibility decision material:
 1. [Positioning](evaluators/positioning.md) — vs Oxigraph, Sophia, and Redland
 2. [Migration from Redland](evaluators/migration-from-redland.md)
 3. [Parity ledger](parity.md) — scoped verified claims
-4. [0.3 compatibility report](reports/0.3.md)
-5. [0.2 compatibility report](reports/0.2.md)
-6. [Compatibility contract](COMPATIBILITY.md)
+4. [0.4 compatibility report](reports/0.4.md)
+5. [0.3 compatibility report](reports/0.3.md)
+6. [0.2 compatibility report](reports/0.2.md)
+7. [Compatibility contract](COMPATIBILITY.md)
 
 ## Contributors
 
@@ -32,14 +33,14 @@ Process and planning (compatibility work is vertical-slice driven):
 
 1. [Contributing](contributing.md)
 2. [Project charter](CHARTER.md)
-3. [Roadmap](ROADMAP.md) — next release is **0.4**
-4. [Milestone 0.3](milestones/0.3.md) (complete) · [0.2](milestones/0.2.md)
+3. [Roadmap](ROADMAP.md) — next release is **0.5**
+4. [Milestone 0.4](milestones/0.4.md) (complete) · [0.3](milestones/0.3.md) · [0.2](milestones/0.2.md)
 5. [Execution plan](EXECUTION.md)
 6. [Architecture](ARCHITECTURE.md)
 7. [Verification](VERIFICATION.md)
 8. [Decisions](DECISIONS.md)
 9. [Risks](RISKS.md)
-10. [Reports and release checklists](reports/0.3.md) · [0.3.0 release](reports/0.3.0-release.md)
+10. [Reports and release checklists](reports/0.4.md) · [0.4.0 release](reports/0.4.0-release.md)
 
 ### Document authority (contributors)
 
@@ -48,7 +49,7 @@ Process and planning (compatibility work is vertical-slice driven):
 | Who is Oxiland for and what does 1.0 promise? | [Charter](CHARTER.md) |
 | What exists and is verified now? | [Parity ledger](parity.md) |
 | What release comes next? | [Roadmap](ROADMAP.md) |
-| What must the active release deliver? | [milestones/0.3.md](milestones/0.3.md) (complete); next is 0.4 |
+| What must the active release deliver? | [milestones/0.4.md](milestones/0.4.md) (complete); next is 0.5 |
 | How is work sliced and completed? | [Execution](EXECUTION.md) |
 | Where does code belong? | [Architecture](ARCHITECTURE.md) |
 | What does compatibility mean? | [Compatibility](COMPATIBILITY.md) |

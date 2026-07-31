@@ -311,23 +311,6 @@ Revisit when: a first-class timeout API is required for C consumers.
 
 ## Proposed decisions
 
-### ADR-006 — Persistent storage compatibility boundary
-
-State: proposed  
-Decision deadline: before 0.4
-
-Question: does Oxiland promise only logical dataset compatibility, or any
-on-disk compatibility across Oxigraph/Oxiland versions for the fjall-backed
-`Model::open` store?
-
-Evaluation criteria:
-
-- Oxigraph's storage guarantees;
-- backup and migration feasibility;
-- crash consistency;
-- user expectations from Redland stores;
-- release and support cost.
-
 ### ADR-013 — Python package is Pythonic, not a thin Rust mirror
 
 State: proposed  
@@ -344,6 +327,48 @@ Evaluation criteria:
 - whether rdflib or other ecosystem interop is in scope for 0.7;
 - clear non-goals (no C ABI layering; no claim of Redland Python binding
   drop-in unless separately evidenced).
+
+## Accepted decisions (continued)
+
+### ADR-006 — Persistent storage compatibility boundary
+
+State: accepted  
+Date: 2026-07-30  
+Milestone: 0.4
+
+Decision: Oxiland promises a **versioned Oxiland on-disk format** for
+Fjall-backed `Model::open`, not raw Oxigraph store-directory compatibility and
+not silent forever-forward binary compatibility across Oxiland major versions.
+
+Format v1 stores an `__oxiland/meta` JSON document (`format_version: 1`) beside
+N-Quads quad keys in the Fjall `oxiland_quads` partition. Patch releases in the
+0.4.x line must open format v1 without migration. Pre-0.4 experimental stores
+(no metadata) are opened only via `Model::migrate_legacy_store`, which rewrites
+metadata after validating parseable quad keys; otherwise callers receive
+`Unsupported` with N-Quads archival guidance.
+
+Archival continuity is standards RDF (N-Quads/TriG), not Fjall directories.
+
+Alternatives considered:
+
+- Logical-only compatibility with no on-disk promise (rejected: blocks the 0.4
+  reopen/migrate evidence gate and user upgrade stories).
+- Pin Oxigraph RocksDB directories as the durable API (rejected: Oxiland uses Fjall
+  quad keys + Oxigraph memory working set; would couple the wrong artifact).
+- Silent auto-migration on every `open` (rejected: surprising durable rewrites;
+  prefer an explicit migrate entry point).
+
+Consequences:
+
+- `Model::open` requires format v1 or initializes it for empty new stores.
+- User docs stop calling Fjall “experimental.”
+- R-016 mitigated for 0.4.x; major bumps may introduce format v2 with a
+  documented migrator.
+
+Evidence: `docs/design/0.4-storage-api.md`, `src/persist.rs`,
+`tests/storage.rs`.
+
+Revisit when: introducing format v2 or a second durable backend.
 
 ## ADR template
 

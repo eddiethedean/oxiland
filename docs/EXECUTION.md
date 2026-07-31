@@ -1,7 +1,7 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 0.4 (0.3 complete)
+Current milestone: 0.5 (0.4 complete)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -113,22 +113,23 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Begin 0.4 storage/transactions design (ADR-006).
+1. Begin 0.5 streams/utilities/observability design and inventory.
 2. Expand SPARQL differential fixtures beyond the facade smoke harness.
-3. Keep ADR-006 open until 0.4 storage work starts.
+3. Keep format v1 / ADR-006 migration notes current as 0.5 lands.
 
-## Current 0.4 backlog
-
-See the [roadmap 0.4 section](ROADMAP.md#04-storage-and-transactions) and keep
-ADR-006 moving toward acceptance. Work-package details expand as design spikes
-land; until then:
+## Completed 0.4 backlog
 
 | Priority | Deliverable | Notes |
 |---:|---|---|
-| P0 | ADR-006 storage compatibility boundary | Required before promising on-disk compat |
-| P0 | Transaction / sync / clear APIs | Builds on 0.3 Update |
-| P1 | Storage capability reporting | Explicit Unsupported for legacy backends |
-| P2 | Import/export for archival | N-Quads already available via 0.2 serializers |
+| P0 | ADR-006 storage compatibility boundary | Accepted; format v1 |
+| P0 | Transaction / sync / clear APIs | `Model::transaction`, sync, clear |
+| P1 | Storage capability reporting | `StorageCapabilities` + legacy disposition |
+| P2 | Import/export for archival | N-Quads helpers + transactional load |
+
+## Current 0.5 backlog
+
+See the [roadmap 0.5 section](ROADMAP.md). Work-package details expand as design
+spikes land.
 
 ## Completed 0.3 backlog
 

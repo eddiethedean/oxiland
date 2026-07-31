@@ -32,6 +32,7 @@ MODULES = {
     ROOT / "src" / "error.rs": "oxiland",
     ROOT / "src" / "model.rs": "oxiland",
     ROOT / "src" / "query.rs": "oxiland",
+    ROOT / "src" / "storage.rs": "oxiland",
     ROOT / "src" / "world.rs": "oxiland",
     ROOT / "src" / "io" / "format.rs": "oxiland::io",
     ROOT / "src" / "io" / "parser.rs": "oxiland::io",
@@ -151,6 +152,7 @@ def discover_owned() -> set[str]:
         "oxiland::io::primitives",
         "oxiland::terms",
         "oxiland::sparql",
+        "oxiland::storage",
         "oxiland::terms::named_node",
         "oxiland::terms::blank_node",
         "oxiland::QueryResults",  # re-exported from query module

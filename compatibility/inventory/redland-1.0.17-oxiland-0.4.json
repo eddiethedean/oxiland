@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "milestone": "0.4",
+  "redland_api": "1.0.17",
+  "redland_manual": "1.0.18",
+  "oxiland_version": "0.4.0",
+  "oxigraph_version": "0.5.9",
+  "generated_by": "scripts/check-inventory.py",
+  "notes": "0.4 curated inventory slice for durable storage, transactions, sync/clear, capabilities, and archival helpers (ADR-006).",
+  "entries": [
+    {
+      "id": "librdf.storage.memory",
+      "symbol": "librdf_new_storage (memory)",
+      "kind": "function",
+      "subsystem": "storage",
+      "safe_rust": "Model::new / StorageBackend::Memory",
+      "implementation": "src/model.rs",
+      "tests": ["tests/storage.rs::capabilities_memory_vs_fjall"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.storage.fjall",
+      "symbol": "librdf_new_storage (hashes/file-like durable)",
+      "kind": "function",
+      "subsystem": "storage",
+      "safe_rust": "Model::open / Model::open_with / OpenOptions",
+      "implementation": "src/model.rs",
+      "tests": [
+        "tests/storage.rs::format_v1_round_trip_reopen",
+        "tests/storage.rs::open_create_false_missing_path_fails"
+      ],
+      "state": "verified",
+      "notes": "Oxiland format v1 Fjall store (ADR-006)."
+    },
+    {
+      "id": "librdf.storage.migrate",
+      "symbol": "librdf storage upgrade / reopen",
+      "kind": "function",
+      "subsystem": "storage",
+      "safe_rust": "Model::migrate_legacy_store",
+      "implementation": "src/model.rs",
+      "tests": ["src/persist.rs::legacy_store_without_meta_requires_migrate"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.model.transaction",
+      "symbol": "librdf_model_transaction_start / commit / rollback",
+      "kind": "function",
+      "subsystem": "storage",
+      "safe_rust": "Model::transaction / ModelTransaction",
+      "implementation": "src/model.rs",
+      "tests": [
+        "tests/storage.rs::transaction_commit_and_rollback_memory",
+        "tests/storage.rs::transaction_commit_persists_fjall",
+        "tests/storage.rs::transaction_rollback_fjall_leaves_disk"
+      ],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.model.sync",
+      "symbol": "librdf_model_sync",
+      "kind": "function",
+      "subsystem": "storage",
+      "safe_rust": "Model::sync",
+      "implementation": "src/model.rs",
+      "tests": ["tests/storage.rs::format_v1_round_trip_reopen"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.model.clear",
+      "symbol": "librdf_model_clear / clear context",
+      "kind": "function",
+      "subsystem": "storage",
+      "safe_rust": "Model::clear / Model::clear_graph",
+      "implementation": "src/model.rs",
+      "tests": ["tests/storage.rs::clear_and_clear_graph"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.storage.capabilities",
+      "symbol": "librdf_storage_get_feature / factory features",
+      "kind": "function",
+      "subsystem": "storage",
+      "safe_rust": "StorageCapabilities / Model::capabilities / storage_backend_available",
+      "implementation": "src/storage.rs",
+      "tests": [
+        "tests/storage.rs::capabilities_memory_vs_fjall",
+        "tests/storage.rs::legacy_backends_are_unsupported",
+        "tests/storage.rs::read_only_rejects_writes"
+      ],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.storage.bulk_load",
+      "symbol": "librdf_model bulk add / parser load",
+      "kind": "function",
+      "subsystem": "storage",
+      "safe_rust": "Model::bulk_insert_quads / Parser::load_transactional",
+      "implementation": "src/model.rs",
+      "tests": [
+        "tests/storage.rs::bulk_insert_quads",
+        "tests/storage.rs::transactional_load_is_atomic_on_parse_failure"
+      ],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.storage.archive",
+      "symbol": "storage dump / load serialization",
+      "kind": "function",
+      "subsystem": "storage",
+      "safe_rust": "Model::export_nquads_to_path / Model::import_nquads_from_path",
+      "implementation": "src/model.rs",
+      "tests": ["tests/storage.rs::archival_export_import_round_trip"],
+      "state": "verified"
+    },
+    {
+      "id": "librdf.storage.plugins",
+      "symbol": "librdf_storage_mysql / postgresql / sqlite / virtuoso / …",
+      "kind": "function",
+      "subsystem": "storage",
+      "safe_rust": "StorageBackend::from_name → Unsupported",
+      "implementation": "src/storage.rs",
+      "tests": ["tests/storage.rs::legacy_backends_are_unsupported"],
+      "state": "verified",
+      "notes": "Disposition recorded in docs/design/0.4-legacy-storage.md."
+    }
+  ]
+}
