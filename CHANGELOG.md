@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ADR-025 baseline factory registration (supersedes ADR-018); ADR-026 Raptor
   and Rasqal world bridges; ADR-027 optional LMDB/heed decision (R-023)
 - Full C ABI allowlist covering the public `librdf_*` denominator (`OXILAND_0.10`)
-  with lifecycle coverage and Linux UBSan alongside ASan
+  with lifecycle coverage and Linux ASan/LSan (rustc no longer ships UBSan)
 - Safe Rust storage facade, feature get/set, and factory registration APIs
 - 0.10 qualification bundle: inventory, six-profile parity evidence, three
   performance profiles, soak, fuzz record, and Python stub snapshot

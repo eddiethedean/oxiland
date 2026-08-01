@@ -532,14 +532,8 @@ jobs:
             --target x86_64-unknown-linux-gnu
         env:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
-
-      - name: UBSan CAPI tests (nightly, Linux)
-        run: |
-          RUSTFLAGS="-Zsanitizer=undefined" \
-            cargo +nightly test -p oxiland-capi --locked \
-            --target x86_64-unknown-linux-gnu
-        env:
-          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        # Note: rustc no longer supports `-Zsanitizer=undefined` (UBSan).
+        # ASan/LSan remain the supported FFI sanitizer gate on Linux.
 
   msrv:
     name: MSRV (1.87)
