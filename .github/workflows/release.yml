@@ -150,28 +150,31 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Download release wheels
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          pattern: wheels-*
-          path: dist
-          merge-multiple: true
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4
         with:
           toolchain: stable
 
+      # Package while the tree is still clean: downloading wheels into dist/
+      # before cargo package makes Cargo refuse the dirty working directory.
       - name: Build reproducible source artifacts
         run: |
           set -euo pipefail
           version="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
           cargo package -p oxiland --locked
           cargo package -p oxiland-cli --locked
           cp "target/package/oxiland-${version}.crate" dist/
           cp "target/package/oxiland-cli-${version}.crate" dist/
           git archive --format=tar.gz --prefix="oxiland-${version}/" \
             --output="dist/oxiland-${version}-source.tar.gz" "$GITHUB_SHA"
+
+      - name: Download release wheels
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
 
       - name: Generate SHA-256 manifest
         working-directory: dist

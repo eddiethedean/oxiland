@@ -10,6 +10,7 @@
 /python/target
 /python/.venv
 /python/dist/
+/dist/
 __pycache__/
 .ontocode/
 compatibility/harness/*-result.json
