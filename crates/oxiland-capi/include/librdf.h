@@ -11,6 +11,7 @@ extern "C" {
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 typedef struct librdf_world_s librdf_world;
 typedef struct librdf_storage_s librdf_storage;
@@ -29,20 +30,32 @@ typedef struct librdf_hash_s librdf_hash;
 typedef struct librdf_list_s librdf_list;
 typedef struct librdf_iterator_s librdf_iterator;
 typedef struct librdf_log_message_s librdf_log_message;
+typedef struct librdf_query_factory_s librdf_query_factory;
+typedef struct librdf_parser_factory_s librdf_parser_factory;
+typedef struct librdf_serializer_factory_s librdf_serializer_factory;
+typedef struct librdf_storage_factory_s librdf_storage_factory;
 
+/* Node type constants (Redland-compatible) */
 #define LIBRDF_NODE_TYPE_UNKNOWN  0
 #define LIBRDF_NODE_TYPE_RESOURCE 1
 #define LIBRDF_NODE_TYPE_LITERAL  2
 #define LIBRDF_NODE_TYPE_BLANK    4
+
+typedef int librdf_node_type;
+typedef unsigned int librdf_statement_part;
 
 typedef int (*librdf_log_func)(void *user_data, int code, int level, int facility,
                                const char *message, const char *locator);
 typedef void (*librdf_log_level_func)(void *user_data, const char *message);
 typedef void (*librdf_raptor_init_handler)(void *user_data, void *raptor_world_ptr);
 typedef void (*librdf_rasqal_init_handler)(void *user_data, void *rasqal_world_ptr);
+typedef void* (*librdf_iterator_map_handler)(void *item, void *context);
+typedef void (*librdf_iterator_map_free_context_handler)(void *context);
+typedef void* (*librdf_stream_map_handler)(void *item, void *context);
+typedef void (*librdf_stream_map_free_context_handler)(void *context);
 
 void* librdf_alloc_memory(size_t size);
-ifdef LIBRDF_INTERNAL const char* librdf_basename(const char *name);
+const char* librdf_basename(const char *name);
 void* librdf_calloc_memory(size_t nmemb, size_t size);
 void librdf_destroy_world(void);
 void librdf_digest_final(librdf_digest* digest);
@@ -72,7 +85,7 @@ void librdf_free_stream(librdf_stream* stream);
 void librdf_free_uri(librdf_uri *uri);
 void librdf_free_world(librdf_world *world);
 librdf_uri* librdf_get_concept_ms_namespace(librdf_world *world);
- librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_Alt) #define LIBRDF_MS_Bag(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_Bag) #define LIBRDF_MS_Property(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_Property) #define LIBRDF_MS_Seq(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_Seq) #define LIBRDF_MS_Statement(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_Statement) #define LIBRDF_MS_object(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_object) #define LIBRDF_MS_predicate(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_predicate) #define LIBRDF_MS_subject(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_subject) #define LIBRDF_MS_type(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_type) #define LIBRDF_MS_value(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_value) #define LIBRDF_MS_li(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_li) #define LIBRDF_MS_RDF(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_RDF) #define LIBRDF_MS_Description(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_Description) #define LIBRDF_MS_aboutEach(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_aboutEach) #define LIBRDF_MS_aboutEachPrefix(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_aboutEachPrefix) #define LIBRDF_RS_nodeID(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RS_nodeID) #define LIBRDF_RS_List(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RS_List) #define LIBRDF_RS_first(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RS_first) #define LIBRDF_RS_rest(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RS_rest) #define LIBRDF_RS_nil(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RS_nil) #define LIBRDF_RS_XMLLiteral(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RS_XMLLiteral) #define LIBRDF_S_Class(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_Class) #define LIBRDF_S_ConstraintProperty(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_ConstraintProperty) #define LIBRDF_S_ConstraintResource(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_ConstraintResource) #define LIBRDF_S_Container(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_Container) #define LIBRDF_S_ContainerMembershipProperty(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_ContainerMembershipProperty) #define LIBRDF_S_Literal(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_Literal) #define LIBRDF_S_Resource(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_Resource) #define LIBRDF_S_comment(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_comment) #define LIBRDF_S_domain(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_domain) #define LIBRDF_S_isDefinedBy(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_isDefinedBy) #define LIBRDF_S_label(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_label) #define LIBRDF_S_range(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_range) #define LIBRDF_S_seeAlso(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_seeAlso) #define LIBRDF_S_subClassOf(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_subClassOf) #define LIBRDF_S_subPropertyOf(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_subPropertyOf) #define LIBRDF_S_subPropertyOf(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_subPropertyOf) #define LIBRDF_MS_Alt_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_Alt) #define LIBRDF_MS_Bag_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_Bag) #define LIBRDF_MS_Property_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_Property) #define LIBRDF_MS_Seq_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_Seq) #define LIBRDF_MS_Statement_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_Statement) #define LIBRDF_MS_object_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_object) #define LIBRDF_MS_predicate_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_predicate) #define LIBRDF_MS_subject_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_subject) #define LIBRDF_MS_type_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_type) #define LIBRDF_MS_value_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_value) #define LIBRDF_MS_li_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_li) #define LIBRDF_MS_RDF_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_RDF) #define LIBRDF_MS_Description_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_Description) #define LIBRDF_MS_aboutEach_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_aboutEach) #define LIBRDF_MS_aboutEachPrefix_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_aboutEachPrefix) #define LIBRDF_RS_nodeID_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_RS_nodeID) #define LIBRDF_RS_List_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_RS_List) #define LIBRDF_RS_first_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_RS_first) #define LIBRDF_RS_rest_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_RS_rest) #define LIBRDF_RS_nil_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_RS_nil) #define LIBRDF_RS_XMLLiteral_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_RS_XMLLiteral) #define LIBRDF_S_subPropertyOf_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_subPropertyOf) #define LIBRDF_S_subClassOf_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_subClassOf) #define LIBRDF_S_seeAlso_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_seeAlso) #define LIBRDF_S_range_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_range) #define LIBRDF_S_label_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_label) #define LIBRDF_S_isDefinedBy_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_isDefinedBy) #define LIBRDF_S_domain_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_domain) #define LIBRDF_S_comment_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_comment) #define LIBRDF_S_Resource_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_Resource) #define LIBRDF_S_Literal_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_Literal) #define LIBRDF_S_Container_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_Container) #define LIBRDF_S_ContainerMembershipProperty_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_ContainerMembershipProperty) #define LIBRDF_S_ConstraintResource_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_ConstraintResource) #define LIBRDF_S_ConstraintProperty_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_ConstraintProperty) #define LIBRDF_S_Class_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_Class) #define LIBRDF_RDF11_HTML(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RDF11_HTML) #define LIBRDF_RDF11_langString(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RDF11_langString) #define LIBRDF_URI_RDF_MS(world) librdf_get_concept_ms_namespace(world) #define LIBRDF_URI_RDF_SCHEMA(world) librdf_get_concept_schema_namespace(world) #ifdef __cplusplus } #endif #endif #ifndef LIBRDF_QUERY_H #define LIBRDF_QUERY_H #ifdef LIBRDF_INTERNAL #include <rdf_query_internal.h> #endif #ifdef __cplusplus extern "C" { #endif void librdf_query_register_factory(librdf_world *world, const char *name, const unsigned char *uri_string, void (*factory) (librdf_query_factory*));
+int librdf_get_concept_resource_by_index(void);
 librdf_uri* librdf_get_concept_schema_namespace(librdf_world *world);
 librdf_uri* librdf_get_concept_uri_by_index(librdf_world *world, unsigned int idx);
 int librdf_hash_from_string(librdf_hash* hash, const char *string);
@@ -112,7 +125,7 @@ void librdf_list_set_equals(librdf_list* list, int (*equals) (void* data1, void 
 void* librdf_list_shift(librdf_list* list);
 int librdf_list_size(librdf_list* list);
 int librdf_list_unshift(librdf_list* list, void *data);
-void librdf_log(librdf_world* world, int code, int level, int facility, void *locator, const char *message, ...) REDLAND_PRINTF_FORMAT(6, 7);
+void librdf_log(librdf_world* world, int code, int level, int facility, void *locator, const char *message, ...);
 int librdf_log_message_code(librdf_log_message *message);
 int librdf_log_message_facility(librdf_log_message *message);
 int librdf_log_message_level(librdf_log_message *message);
@@ -213,7 +226,7 @@ librdf_storage* librdf_new_storage_from_factory(librdf_world *world, librdf_stor
 librdf_storage* librdf_new_storage_from_storage(librdf_storage* old_storage);
 librdf_storage* librdf_new_storage_with_options(librdf_world *world, const char *storage_name, const char *name, librdf_hash *options);
 librdf_stream* librdf_new_stream(librdf_world *world, void* context, int (*is_end_method)(void*), int (*next_method)(void*), void* (*get_method)(void*, int), void (*finished_method)(void*));
-librdf_stream* librdf_new_stream_from_node_iterator(librdf_iterator* iterator, librdf_statement* statement, librdf_statement_part field);
+librdf_stream* librdf_new_stream_from_node_iterator(librdf_iterator* iterator, librdf_statement* statement, unsigned int field);
 librdf_uri* librdf_new_uri(librdf_world *world, const unsigned char *uri_string);
 librdf_uri* librdf_new_uri2(librdf_world *world, const unsigned char *uri_string, size_t length);
 librdf_uri* librdf_new_uri_from_filename(librdf_world* world, const char *filename);
@@ -225,6 +238,7 @@ librdf_world* librdf_new_world(void);
 librdf_node* librdf_node_decode(librdf_world *world, size_t* size_p, unsigned char *buffer, size_t length);
 size_t librdf_node_encode(librdf_node* node, unsigned char *buffer, size_t length);
 int librdf_node_equals(librdf_node* first_node, librdf_node* second_node);
+const char * librdf_node_get_blank_identifier(librdf_node *node);
 unsigned char * librdf_node_get_counted_blank_identifier(librdf_node *node, size_t *len_p);
 int librdf_node_get_li_ordinal(librdf_node* node);
 unsigned char* librdf_node_get_literal_value(librdf_node* node);
@@ -233,7 +247,7 @@ char* librdf_node_get_literal_value_as_latin1(librdf_node* node);
 librdf_uri* librdf_node_get_literal_value_datatype_uri(librdf_node* node);
 int librdf_node_get_literal_value_is_wf_xml(librdf_node* node);
 char* librdf_node_get_literal_value_language(librdf_node* node);
-librdf_node_type librdf_node_get_type(librdf_node* node);
+int librdf_node_get_type(librdf_node* node);
 librdf_uri* librdf_node_get_uri(librdf_node* node);
 int librdf_node_is_blank(librdf_node* node);
 int librdf_node_is_literal(librdf_node* node);
@@ -242,6 +256,7 @@ librdf_iterator* librdf_node_new_static_node_iterator(librdf_world* world, librd
 void librdf_node_print(librdf_node* node, FILE *fh);
 librdf_iterator* librdf_node_static_iterator_create(librdf_node** nodes, int size);
 unsigned char* librdf_node_to_counted_string(librdf_node* node, size_t* len_p);
+unsigned char * librdf_node_to_string(librdf_node *node);
 int librdf_node_write(librdf_node* node, void *iostr);
 int librdf_parser_check_name(librdf_world* world, const char *name);
 int librdf_parser_enumerate(librdf_world* world, const unsigned int counter, const char **name, const char **label);
@@ -329,8 +344,8 @@ size_t librdf_statement_decode2(librdf_world* world, librdf_statement* statement
 size_t librdf_statement_decode_parts(librdf_statement* statement, librdf_node** context_node, unsigned char *buffer, size_t length);
 size_t librdf_statement_encode(librdf_statement* statement, unsigned char *buffer, size_t length);
 size_t librdf_statement_encode2(librdf_world* world, librdf_statement* statement, unsigned char *buffer, size_t length);
-size_t librdf_statement_encode_parts(librdf_statement* statement, librdf_node* context_node, unsigned char *buffer, size_t length, librdf_statement_part fields);
-size_t librdf_statement_encode_parts2(librdf_world* world, librdf_statement* statement, librdf_node* context_node, unsigned char *buffer, size_t length, librdf_statement_part fields);
+size_t librdf_statement_encode_parts(librdf_statement* statement, librdf_node* context_node, unsigned char *buffer, size_t length, unsigned int fields);
+size_t librdf_statement_encode_parts2(librdf_world* world, librdf_statement* statement, librdf_node* context_node, unsigned char *buffer, size_t length, unsigned int fields);
 int librdf_statement_equals(librdf_statement* statement1, librdf_statement* statement2);
 librdf_node* librdf_statement_get_object(librdf_statement *statement);
 librdf_node* librdf_statement_get_predicate(librdf_statement *statement);
@@ -342,6 +357,7 @@ void librdf_statement_print(librdf_statement *statement, FILE *fh);
 void librdf_statement_set_object(librdf_statement *statement, librdf_node *node);
 void librdf_statement_set_predicate(librdf_statement *statement, librdf_node *node);
 void librdf_statement_set_subject(librdf_statement *statement, librdf_node *node);
+unsigned char * librdf_statement_to_string(librdf_statement *statement);
 int librdf_statement_write(librdf_statement *statement, void *iostr);
 void librdf_storage_add_reference(librdf_storage *storage);
 int librdf_storage_add_statement(librdf_storage* storage, librdf_statement* statement);
@@ -413,21 +429,14 @@ void * librdf_world_get_rasqal(librdf_world* world);
 void librdf_world_init_mutex(librdf_world *world);
 void librdf_world_open(librdf_world *world);
 void librdf_world_set_digest(librdf_world* world, const char *name);
-void librdf_world_set_error(librdf_world* world, void *user_data, int_func error_handler);
+void librdf_world_set_error(librdf_world* world, void *user_data, librdf_log_level_func error_handler);
 int librdf_world_set_feature(librdf_world* world, librdf_uri *feature, librdf_node* value);
 void librdf_world_set_logger(librdf_world* world, void *user_data, librdf_log_func log_handler);
 void librdf_world_set_raptor(librdf_world* world, void * raptor_world_ptr);
 void librdf_world_set_raptor_init_handler(librdf_world* world, void* user_data, librdf_raptor_init_handler handler);
 void librdf_world_set_rasqal(librdf_world* world, void * rasqal_world_ptr);
 void librdf_world_set_rasqal_init_handler(librdf_world* world, void* user_data, librdf_rasqal_init_handler handler);
-void librdf_world_set_warning(librdf_world* world, void *user_data, int_func warning_handler);
-
-
-const char *librdf_node_get_blank_identifier(librdf_node *node);
-unsigned char *librdf_node_to_string(librdf_node *node);
-unsigned char *librdf_statement_to_string(librdf_statement *statement);
-char *librdf_basename(const char *name);
-
+void librdf_world_set_warning(librdf_world* world, void *user_data, librdf_log_level_func warning_handler);
 #ifdef __cplusplus
 }
 #endif

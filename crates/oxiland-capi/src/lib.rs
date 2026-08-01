@@ -6,6 +6,7 @@
 #![allow(missing_docs)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 #![allow(clippy::too_many_arguments)]
+#![allow(clippy::redundant_closure)]
 
 mod alloc;
 mod error;
