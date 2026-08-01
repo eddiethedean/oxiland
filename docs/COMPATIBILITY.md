@@ -23,7 +23,7 @@ Compatibility has distinct claims:
   results and failures.
 
 No document or release may use “100% parity” without naming its baseline,
-surface, platform/build profile, and evidence revision. For 0.10, “100%
+surface, platform/build profile, and evidence revision. For 0.11, “full
 Redland parity” has the mandatory definition below and is a release gate rather
 than an aspiration.
 
@@ -38,42 +38,58 @@ than an aspiration.
 | C source compatibility | clean builds against Oxiland headers | 0.8 |
 | C ABI compatibility | symbol, layout, calling, and lifecycle tests | 0.9 |
 | Downstream compatibility | selected real consumers pass unchanged | 0.9 |
-| Full Redland 1.0.17 parity | all in-scope safe mappings plus C source, ABI, and observable behavior verified | 0.10 |
+| Full Redland 1.0.17 parity | all in-scope safe mappings plus C source, binary ABI interchange, and observable behavior verified from native raw evidence | 0.11 |
 
 Claims are subsystem- and platform-scoped until 1.0. For example, “parser
 behavior verified on Linux” does not imply full storage ABI compatibility on
 Windows.
 
-## 0.10 full Redland parity gate
+## 0.11 full Redland parity gate
 
-Oxiland 0.10 may ship only when it has **100% parity with the pinned Redland
+Oxiland 0.11 may claim full parity only when it has **100% parity with the pinned Redland
 `librdf` 1.0.17 baseline** (reference manual 1.0.18) on every target and build
 profile in the published support matrix. The denominator is every public
-`librdf` symbol plus every observable behavior exposed through those symbols,
-including Raptor and Rasqal behavior reached through `librdf` and the storage
-factory behavior present in the canonical baseline profiles. Independent
-Raptor/Rasqal APIs, third-party plug-ins absent from those profiles, and
-unpublished targets are outside the denominator.
+`librdf` function and data symbol, installed public declaration, type, enum,
+constant, macro, layout, ownership/callback rule, and observable behavior,
+including Raptor and Rasqal behavior reached through `librdf`, `rdfproc`
+workflows, and the storage/factory behavior present in the canonical baseline
+profiles. Independent Raptor/Rasqal APIs, third-party plug-ins absent from
+those profiles, and unpublished targets are outside the denominator.
 
 Passing requires all of the following:
 
-- every in-scope symbol is implemented in the promised C surface and has
-  source, ABI, ownership/lifecycle, and applicable behavioral evidence;
+- every in-scope item is implemented in the promised C surface and has native
+  source, binary ABI interchange, ownership/lifecycle, and applicable
+  behavioral evidence;
 - every safe Rust mapping is verified, except manual-memory mechanics that are
   genuinely `not-applicable` in Rust; their observable effects and C forms
   remain required;
-- every differential fixture passes under its declared normalization profile
-  on every supported target/profile;
+- every differential obligation executes against native Redland and Oxiland
+  release artifacts and passes under its declared normalization profile on
+  every supported target/profile;
 - the generated report records exactly 100% with numerator, denominator, skip
-  count, target/profile, oracle build, and evidence revision; and
+  count, target/profile, oracle build, tested source revision, and hashes of
+  the fixtures, harnesses, headers, libraries, executables, and packages; and
 - there are no in-scope exclusions, accepted behavioral deviations,
   quarantined compatibility tests, capability-error substitutes, or
   migration-only workarounds.
 
+Additionally, programs built and linked against the pinned Redland artifacts
+must load and pass against Oxiland without recompilation or relinking on every
+supported target. Merely compiling against Oxiland headers or exporting the
+same symbol names is not binary ABI compatibility.
+
 The parity denominator and supported target/profile matrix are frozen before
-0.10 qualification begins. Any failure above blocks 0.10; the remedy is to
+0.11 qualification begins. Any failure above blocks 0.11; the remedy is to
 implement and verify parity. A failing row cannot be deleted from the
 denominator, scoped away, excepted, or waived to turn the report green.
+
+The checked-in 0.10 bundle is qualification scaffolding and historical input,
+not proof for this gate. The 0.11 checker must derive states from raw two-sided
+executions, require each profile to have run on its declared target, bind all
+evidence to the exact tested revision and artifacts, and reject copied profile
+results, asserted pass booleans, missing oracle output, skips, stale evidence,
+and dirty-worktree qualification.
 
 ## Canonical inputs
 
@@ -215,7 +231,7 @@ An accepted deviation records:
 
 Exclusions require review before each release candidate. Convenience is not a
 sufficient rationale for excluding a public Redland behavior, and an in-scope
-exclusion is always a blocker for the 0.10 full-parity gate.
+exclusion is always a blocker for the 0.11 full-parity gate.
 
 ## Change control
 

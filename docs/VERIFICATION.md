@@ -203,19 +203,26 @@ Additional phase gates:
 | 0.7 | Python wheels, type checks, and pytest matrix |
 | 0.8 | exported symbols, C examples, and sanitizers |
 | 0.9 | selected downstream C consumers |
-| 0.10 | **100% Redland 1.0.17 parity and faster than Redland**, Rust/Python/C snapshots, and RC soak |
+| 0.10 | frozen contracts, candidate inventory/C surface, qualification scaffolding, performance candidate, and soak |
+| 0.11 | **demonstrated full Redland 1.0.17 parity**, native cross-platform differentials, source compatibility, and binary ABI interchange |
 
-The 0.10 parity row is a hard gate, not a documentation claim or a waivable
-target. The machine-generated report must show every in-scope public `librdf`
-symbol implemented and every applicable observable behavior verified on every
-supported target/build profile. It must report the numerator, denominator,
-skips, platform/profile, and evidence revision. Any in-scope unreviewed,
-mapped-only, implemented-but-unverified, or excluded row; differential
-mismatch; accepted behavioral deviation; quarantine; capability-error
-substitute; or migration-only workaround blocks 0.10. Safe-Rust-only ownership
-mechanics may be `not-applicable`, but their corresponding C lifecycle behavior
-must still pass. The normative definition is in
-[Compatibility](COMPATIBILITY.md#010-full-redland-parity-gate).
+The 0.11 parity row is a hard gate, not a documentation claim or a waivable
+target. The machine-generated report must derive every state from raw native
+Redland and Oxiland executions on each declared target/profile. It covers the
+complete public denominator, unchanged-source C builds, Redland-built binary
+interchange, and every applicable observable behavior. It reports numerator,
+denominator, skips, platform/profile, exact tested revision, and hashes for all
+inputs and artifacts. Any unreviewed, mapped-only, implemented-but-unverified,
+or excluded item; missing oracle result; differential mismatch; accepted
+deviation; quarantine; capability-error substitute; migration-only workaround;
+stale revision; synthetic pass; or copied profile result blocks 0.11.
+Safe-Rust-only ownership mechanics may be `not-applicable`, but their C
+lifecycle behavior must still pass. The normative definition is in
+[Compatibility](COMPATIBILITY.md#011-full-redland-parity-gate).
+
+The 0.10 checked-in bundle remains useful for regression and tooling tests, but
+it cannot satisfy the 0.11 gate. A 0.11 generator may summarize raw results; it
+may not turn an allowlist or local smoke test into differential evidence.
 
 Flaky tests are quarantined only with an owner, issue, expiry milestone, and a
 replacement signal. Quarantined compatibility tests do not count as passing.

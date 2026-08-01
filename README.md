@@ -12,6 +12,9 @@
 > **Release status:** tip **0.10.0** has passed the checked-in qualification
 > bundle (`scripts/check-0.10-release.py`). Tag and publish when packaging
 > attestation and crates.io/PyPI workflows are run for `v0.10.0`.
+> Milestone **0.11** is now the active full-Redland-parity phase; 0.10's bundle
+> is qualification scaffolding, not a full behavioral/source/binary parity
+> claim.
 
 Oxiland is an embedded RDF toolkit for Rust and Python. It provides validated
 RDF terms, in-memory and persistent datasets, named graphs, SPARQL 1.1, and
@@ -19,7 +22,9 @@ streaming RDF input and output through a compact, typed API—without running a
 database server.
 
 Tip **0.10.0** freezes the intended 1.0 storage contract and adds strict
-release-qualification tooling. It does not yet claim full Redland parity.
+release-qualification tooling. It does not yet claim full Redland parity; the
+[0.11 milestone](docs/milestones/0.11.md) defines the native evidence required
+to make that claim.
 
 | Surface | Install | Best for |
 |---|---|---|
@@ -224,8 +229,8 @@ changes. Persistent format v1 is reopen-compatible across 0.4.x–0.10.x patch
 lines; export standards RDF before major upgrades. See the
 [support policy](SUPPORT.md) and [changelog](CHANGELOG.md).
 
-The 0.10 release remains blocked until the machine-generated qualification
-evidence satisfies both hard gates in the roadmap.
+The full-Redland-parity and 1.0 claims remain blocked on the native evidence
+required by milestone 0.11.
 
 Report suspected vulnerabilities privately according to
 [SECURITY.md](SECURITY.md), not in a public issue.

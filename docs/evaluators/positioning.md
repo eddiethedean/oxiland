@@ -29,7 +29,7 @@ against the application's own requirements.
 | Role | Application-focused Rust/Python packages and CLI | RDF/SPARQL engine |
 | API style | Redland concepts (Model, contexts, Syntax facades) | Native store / SPARQL / I/O types |
 | Compatibility evidence | Inventories, parity ledger, milestone reports | Upstream standards tests |
-| C path | Source-compat preview; full ABI/parity blocked on 0.10 qualification | Not the product goal |
+| C path | Source-compat preview; full ABI/parity is active 0.11 work | Not the product goal |
 | Python path | Typed PyPI package with its own API and production guide | Use the upstream Python surface when direct engine access is preferred |
 | When to pick | The documented Oxiland facade, storage contract, CLI, or migration evidence adds value | Only the native engine API is required |
 
@@ -59,8 +59,10 @@ inventory-backed claims matter.
 | Drop-in ABI | No | N/A |
 
 Oxiland targets measurable migration over time. Tip **0.10** offers an auditable
-expanded C source-compat preview; it does **not yet** claim to replace
-Redland in production C stacks as an ABI drop-in.
+expanded C source-compat preview; it does **not yet** claim to replace Redland
+in production C stacks as an ABI drop-in. Milestone **0.11** requires that
+drop-in claim to be proven with Redland-built binaries before full parity is
+declared.
 
 ## What Oxiland optimizes for
 

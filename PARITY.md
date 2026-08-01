@@ -1,11 +1,12 @@
 # Redland parity ledger
 
 Last completed milestone: 0.10
-Current development milestone: 0.10 (`complete`)
+Current development milestone: 0.11 (`in progress`)
 Ledger maturity: header-derived full public `librdf` 1.0.17 function inventory
 (0.6); Python package usability evidence (0.7); C ABI source-compat preview
 accounting (0.8); curated 0.1–0.5 slices retained for historical evidence;
-0.10 full-parity inventory and qualification bundle
+0.10 candidate full-parity inventory and qualification scaffold; 0.11 native
+differential, source-compatibility, and binary-interchange qualification active
 
 > **Newcomer gloss:** This ledger classifies Redland `librdf_*` symbols and
 > records what Oxiland has implemented with tests for a **stated scope**.
@@ -101,12 +102,29 @@ See [`docs/reports/0.9.md`](https://github.com/eddiethedean/oxiland/blob/main/do
 - ADR-004–ADR-023 accepted as applicable.
 - Oxigraph 0.5.9 remains pinned with default features disabled.
 
-## Current 0.10 qualification
+## Completed 0.10 qualification scaffold
 
-Complete. Inventory, six-profile parity evidence, three performance profiles,
-soak, and fuzz evidence are checked in. `scripts/check-0.10-release.py` passes.
+Complete for its stated scaffold. Inventory, declared six-profile parity data,
+three performance profiles, soak, and fuzz records are checked in.
+`scripts/check-0.10-release.py` passes. This does not establish full Redland
+parity: the profile pass declarations were generated from shared symbol
+presence and local smoke suites rather than native two-sided executions on each
+declared target.
 See the
 [`0.10 qualification report`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.10.md).
 Inventory revision:
 [`redland-1.0.17-oxiland-0.10.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.10.json).
 
+## Current 0.11 qualification
+
+In progress. Milestone 0.11 re-verifies every inherited claim from raw native
+Redland and Oxiland executions, expands the denominator beyond function names,
+and requires unchanged-source C builds plus Redland-built binaries running
+against Oxiland without rebuild or relink. Evidence must be produced separately
+on each supported target/profile and bound to the exact clean revision,
+fixtures, harnesses, and artifacts.
+
+No 0.11 full-parity claim exists until the fail-closed gate described by the
+[`0.11 milestone`](https://github.com/eddiethedean/oxiland/blob/main/docs/milestones/0.11.md)
+passes from raw evidence. Current gaps are tracked in the
+[`0.11 report`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.11.md).

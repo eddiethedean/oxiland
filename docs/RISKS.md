@@ -38,6 +38,8 @@ can never recur. `closed` requires the underlying exposure to be removed.
 | R-021 | Optional storage engines weaken durability or strand backend-specific data | M | H | `mitigated` | Storage | ADR-022/024, sealed adapter, shared conformance/crash matrix (`backend_conformance`), versioned layout markers, RDF export path | first non-Fjall adapter, dependency removal, wrong-backend open, or divergent transaction result | do not promote/freeze the adapter; preserve its reader/export feature and migrate through standards RDF |
 | R-022 | “Faster than Redland” is produced by noise, cherry-picked workloads, or unequal builds | H | H | `mitigated` | Performance | freeze representative workloads and matched-build protocol; raw-sample validators and performance tooling | any tie/loss, unstable result, deleted case, or environment mismatch | repair performance or measurement validity and rerun the full matrix; hold 0.10 |
 | R-023 | Optional LMDB dependency `heed` retains unmaintained `bincode` 1.3.3 | M | M | `mitigated` | Storage | ADR-027: keep heed/bincode for 0.10 with LMDB optional; RustSec audit on lockfiles; track upstream | a vulnerability, format defect, or unsupported-toolchain issue lands in the inherited crate | update `heed` under the storage conformance suite or preserve the LMDB reader/export window while replacing the adapter dependency |
+| R-024 | Qualification metadata asserts target/profile passes that were not executed there | H | H | `active` | Compatibility | 0.11 raw two-sided execution bundles, host attestation, exact-revision/artifact hashes, and a checker that rejects profile fan-out | a profile lacks native Redland output or shares an execution identity with another target | invalidate inherited verification, run the profile on its declared host, and hold the full-parity claim |
+| R-025 | Function-name coverage is mistaken for C source or binary ABI compatibility | H | H | `active` | C ABI | complete header/declaration/layout inventory, unchanged-source builds, ABI tooling, and Redland-built no-rebuild loader tests | a downstream source fails to compile or a Redland-built binary fails to load/run | implement the missing contract or keep the C surface labeled preview; hold 0.11 |
 
 ## Release-blocking rule
 
@@ -67,12 +69,17 @@ Closing a risk requires evidence that the exposure is gone. Renaming it as a
 known limitation is not closure. A regression may move a mitigated or closed
 risk back to active.
 
-## Current 0.10 focus
+## Current 0.11 focus
 
-Mitigated with checked-in controls (status does not waive residual monitoring):
+Immediate blockers and controls:
 
-- R-001 / R-002 / R-006 / R-012 / R-019: inventory
-  `compatibility/inventory/redland-1.0.17-oxiland-0.10.json`, parity evidence
+- R-024: replace shared asserted profile results with native raw executions on
+  each declared target/profile.
+- R-025: expand the denominator beyond function names and prove unchanged
+  source plus no-rebuild binary interchange.
+- R-001 / R-002 / R-006 / R-012 / R-019: treat the 0.10 inventory and bundle
+  as candidate inputs until the 0.11 evidence gate independently re-verifies
+  them.
   `compatibility/qualification/0.10-parity-evidence.json`, and fail-closed
   validators.
 - R-004 / R-009 / R-013: full C ABI surface, lifecycle tests, ASan, and UBSan

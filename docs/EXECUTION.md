@@ -1,7 +1,7 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 0.10 (complete)
+Current milestone: 0.11 (in progress)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -9,7 +9,7 @@ true compatibility surface.
 
 The [project charter](CHARTER.md) constrains scope, the
 [roadmap](ROADMAP.md) defines release outcomes, and
-[milestone plans](milestones/0.10.md) define executable work packages. This document
+[milestone plans](milestones/0.11.md) define executable work packages. This document
 owns the operating model and current work order.
 
 ## Workstreams
@@ -113,10 +113,15 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Tag and publish `v0.10.0` after clean-install attestation on release hosts.
-2. Begin 1.0 readiness review against the frozen 0.10 contracts.
-3. Keep regenerating parity/performance evidence on the three frozen targets
-   whenever the C ABI or storage matrix changes.
+1. Freeze the 0.11 baseline beyond public function names: headers, data
+   exports, types/layouts/constants/macros, ownership, callbacks, factories,
+   `rdfproc`, and behavioral obligations.
+2. Replace asserted profile passes with a two-sided native Redland/Oxiland
+   harness that retains raw observations from each real target/profile.
+3. Establish unchanged-source and no-rebuild binary-interchange corpora, then
+   work subsystem by subsystem until every obligation passes.
+4. Implement a fail-closed 0.11 checker that binds evidence to the exact clean
+   revision and artifacts and rejects copied, stale, skipped, or synthetic data.
 
 ## Completed 0.8 backlog
 
@@ -232,9 +237,10 @@ Work is done when:
 - Review accepted deviations and high risks at every milestone boundary.
 - Review 1.0 scope after 0.6, after 0.7 (Python), and again after 0.9; do not
   defer incompatible safe-API corrections until 0.10.
-- Freeze the Redland parity denominator and supported target/build-profile
-  matrix before 0.10 qualification begins. Track every remaining in-scope
-  deviation as a 0.10 blocker; do not close one by narrowing the denominator.
+- Freeze the complete Redland parity denominator and supported
+  target/build-profile matrix before 0.11 qualification begins. Track every
+  remaining in-scope deviation as a 0.11 blocker; do not close one by narrowing
+  the denominator.
 - Freeze the Redland comparison workloads, datasets, measurement protocol, and
   performance target/profile matrix before 0.10 qualification. Track every
   tie, inconclusive result, and loss as a blocker; do not average it away or

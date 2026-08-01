@@ -155,9 +155,9 @@ inventory revision.
 Version 1.0 means:
 
 - the safe Rust surface promised by the project is reviewed and documented;
-- the 0.10 100% Redland parity gate has passed: every public item and applicable
-  observable behavior in the pinned baseline is verified, with no in-scope
-  exclusion or deviation;
+- the 0.11 demonstrated full Redland parity gate has passed: every public item
+  and applicable observable behavior in the pinned baseline is verified by
+  native, revision-bound evidence, with no in-scope exclusion or deviation;
 - the 0.10 faster-than-Redland gate has passed on every required benchmark and
   supported performance profile, with no tie, loss, or inconclusive result;
 - the published behavioral, source, and ABI matrices meet their stated gates;

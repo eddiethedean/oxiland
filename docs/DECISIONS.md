@@ -804,7 +804,8 @@ Evidence: `docs/design/0.6-safe-api-accounting.md`, `src/io/format.rs`,
 
 Revisit when: a supported extension mechanism is required for 1.0.
 
-Revisit outcome: superseded for the 0.10 full-parity gate by ADR-025.
+Revisit outcome: superseded by ADR-025; its observable factory behavior is
+reverified by the 0.11 full-parity gate.
 
 ### ADR-019 — `oxiland-cli` rdfproc workflow surface
 

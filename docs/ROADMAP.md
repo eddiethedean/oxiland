@@ -1,7 +1,7 @@
 # Oxiland 0.x roadmap
 
 Status: active  
-Applies to: Oxiland 0.1 through 0.10  
+Applies to: Oxiland 0.1 through 0.11
 Companion plans: [architecture](ARCHITECTURE.md),
 [compatibility](COMPATIBILITY.md), [verification](VERIFICATION.md), and
 [execution](EXECUTION.md). Durable backend expansion is specified separately in
@@ -25,7 +25,8 @@ only when its evidence gates are satisfied.
 | 0.7 | Pythonic package on PyPI | 0.4 (sequenced after 0.6) | `complete` |
 | 0.8 | Auditable C ABI preview | 0.6 | `complete` |
 | 0.9 | Downstream C compatibility | 0.8 | `complete` |
-| 0.10 | 100% Redland parity and faster-than-Redland release candidate | 0.9 | `complete` |
+| 0.10 | Freeze 1.0 contracts and build qualification scaffolding | 0.9 | `complete` |
+| 0.11 | Demonstrated full Redland parity from native, revision-bound evidence | 0.10 | `in progress` |
 
 States are `planned`, `in progress`, `blocked`, or `complete`. A state changes
 only after the evidence links are added to the root
@@ -392,11 +393,10 @@ Evidence gates:
 
 Depends on: a sanitizer-clean 0.8 ABI preview.
 
-## 0.10 — Release candidate
+## 0.10 — Qualification scaffold
 
-Outcome: reach 100% parity with the pinned Redland baseline, beat Redland on
-the frozen performance matrix, then freeze and validate the design intended
-for 1.0.
+Outcome: freeze the intended 1.0 contracts, complete the candidate function
+surface, and build the first parity/performance qualification bundle.
 
 State: complete
 
@@ -421,20 +421,14 @@ Deliverables:
 
 Evidence gates:
 
-- **Hard release gate:** the 0.10 release does not ship until the project meets
-  the [100% Redland parity definition](COMPATIBILITY.md#010-full-redland-parity-gate)
-  for Redland `librdf` 1.0.17 (manual 1.0.18) on every supported target and
-  build profile.
-- The generated parity report is exactly 100%: every in-scope public symbol is
-  implemented and every applicable observable behavior is `verified`, with
-  the numerator, denominator, skips, platform/profile, and evidence revision
-  published. Mechanical ownership operations may be `not-applicable` only for
-  the safe Rust mapping; their C ABI and observable lifecycle semantics must
-  still be verified.
-- There are zero in-scope `unreviewed`, `mapped`, `implemented`, or `excluded`
-  inventory rows, zero unexplained differential mismatches, and zero accepted
-  behavioral deviations. A waiver, quarantine, migration workaround, or
-  capability error does not satisfy this gate.
+- The candidate public function inventory is classified, the corresponding C
+  exports exist, and local lifecycle/factory tests pass.
+- The target/profile matrix, storage contract, behavior-evidence schema, and
+  comparison workloads are frozen for the corrective qualification phase.
+- The checked-in 0.10 bundle passes `scripts/check-0.10-release.py`. This proves
+  the 0.10 scaffold is internally consistent; it does **not** establish native
+  cross-platform differential behavior, source compatibility, or binary ABI
+  interchange.
 - **Hard performance gate:** Oxiland must pass the
   [0.10 faster-than-Redland gate](VERIFICATION.md#010-faster-than-redland-gate)
   on every required benchmark and supported performance profile. No required
@@ -450,11 +444,64 @@ Evidence gates:
 - Every supported durable layout has a tested reader/export path, and removing
   an adapter cannot strand the only readable copy of user data.
 
+The 0.10 qualification artifacts are retained for audit history. Their
+`verified` labels are candidates for 0.11 reverification and do not satisfy the
+full-parity claim by themselves.
+
+## 0.11 — Demonstrated full Redland parity
+
+Outcome: prove full parity with pinned Redland `librdf` 1.0.17 using native,
+two-sided, revision-bound evidence on every supported target and profile.
+
+State: in progress
+
+Execution specification: [milestone 0.11](milestones/0.11.md)
+
+Progress report: [0.11 report](reports/0.11.md)
+
+Deliverables:
+
+- A complete public denominator covering functions, exported data, headers,
+  public types/layouts/constants/macros, callbacks, factories, ownership,
+  errors, CLI workflows, and observable behavior.
+- A data-driven harness that executes each obligation through native Redland
+  and Oxiland release artifacts and compares raw observations.
+- Safe Rust workflow mappings derived from passing behavioral evidence.
+- Unchanged-source C builds and actual binary interchange: programs linked
+  against Redland run against Oxiland without recompilation or relinking.
+- Per-target/profile bundles produced by real executions on those hosts and
+  bound to the exact clean source revision, fixtures, harnesses, and artifacts.
+- A fail-closed checker that derives status from raw results and rejects stale,
+  copied, synthesized, incomplete, or wrong-profile evidence.
+- Candidate-bound sanitizer, fuzz, W3C, storage/crash, downstream, packaging,
+  performance, and soak evidence.
+
+Evidence gates:
+
+- Every in-scope inventory item maps to positive, boundary, failure, ownership,
+  and callback obligations as applicable, and every obligation passes through
+  both native implementations.
+- Every required target/profile was actually executed; profile results may not
+  be cloned from a shared symbol list or inferred from another host.
+- C source compatibility passes under warnings-as-errors for the frozen corpus
+  and selected unchanged downstream consumers.
+- Redland-built binaries load and pass against Oxiland without rebuild or
+  relink; library identity, symbol versions, calling conventions, layouts,
+  constants, allocator boundaries, and callbacks are verified.
+- There are zero skips, mismatches, accepted deviations, quarantines,
+  capability-error substitutes, migration-only workarounds, stale revisions,
+  and missing raw artifacts inside the denominator.
+- The exact parity-qualified artifacts pass safety, standards, persistence,
+  packaging, performance, independent-reproduction, and soak gates.
+- User-facing documentation matches the verified matrix and no longer labels
+  the C surface a preview once source and binary gates pass.
+
 ## 1.0 readiness
 
-Version 1.0 is eligible only after 0.10 has passed both the 100% Redland parity
-gate and the faster-than-Redland performance gate. The safe Rust mappings and
-the promised C source, ABI, and behavioral surfaces must meet their published
+Version 1.0 is eligible only after 0.11 has passed the demonstrated full
+Redland parity gate and the exact parity-qualified artifacts have retained the
+faster-than-Redland performance gate. The safe Rust mappings and the promised
+C source, binary ABI, and behavioral surfaces must meet their published
 definitions with no in-scope exclusion or deviation.
 The Python package (if still in the 1.0 promise) must also meet its published
 PyPI contract. Independent Raptor/Rasqal APIs not exposed through `librdf`,

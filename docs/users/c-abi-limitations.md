@@ -34,13 +34,15 @@ these limits as product contract, not temporary footnotes.
   [design/0.8-cabi.md](../design/0.8-cabi.md). Do not assume Redland's
   historical concurrency habits.
 
-## 0.10 status
+## 0.11 status
 
 Downstream consumer matrices, expanded symbol surface, installed-artifact
 packaging smokes, and optional storage adapters shipped in 0.9. See
 the [downstream matrix](https://github.com/eddiethedean/oxiland/blob/main/compatibility/downstream/README.md)
 and the [C ABI guide](c-abi.md).
 
-The 0.10 release remains blocked because the complete Redland symbol and
-behavior denominator is not verified. The shipped header is a snapshot, not a
-claim that omitted 0.9 inventory rows are compatible.
+Full parity remains blocked because the complete Redland source, binary ABI,
+and behavior denominator is not verified from native, revision-bound evidence.
+Milestone 0.11 requires unchanged-source builds and Redland-built binaries to
+pass against Oxiland on every supported target; the shipped header remains a
+preview until those gates pass.

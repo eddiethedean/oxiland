@@ -2,8 +2,8 @@
 
 This page helps maintainers map Redland `librdf` workflows to **Oxiland tip
 0.10** (safe Rust facade + `oxiland-cli` + PyPI package + C source-compat
-preview). Tip 0.10 remains release-blocked and does not yet claim full Redland
-parity. For **symbol-by-symbol** accounting see
+preview). Milestone 0.11 is the active full-parity phase; tip 0.10 does not claim
+full behavioral, source, or binary parity. For **symbol-by-symbol** accounting see
 [redland-symbol-map.md](redland-symbol-map.md), the header-derived safe-API
 inventory
 [`redland-1.0.17-oxiland-0.6.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.6.json),
@@ -33,7 +33,7 @@ Inventory the application rather than translating headers wholesale:
 | Question | Why it matters |
 |---|---|
 | Which parsers, query forms, storage backends, and feature URIs are used? | Determines verified mappings and explicit exclusions |
-| Does the application require C source or ABI compatibility? | The C preview is not an ABI drop-in; full parity and ABI evidence are unmet 0.10 hard gates |
+| Does the application require C source or ABI compatibility? | The C preview is not an ABI drop-in; full parity and ABI evidence remain open 0.11 gates |
 | Which data must survive an upgrade? | Requires N-Quads export, restore rehearsal, and format planning |
 | Are inputs or queries untrusted? | Requires application budgets and isolation beyond library semantics |
 | Which errors and callback orders affect control flow? | Must be covered by differential fixtures, not assumed from successful cases |

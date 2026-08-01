@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Milestone 0.11 for demonstrated Redland parity, requiring native two-sided
+  differentials on every declared target/profile, unchanged-source C builds,
+  no-rebuild binary ABI interchange, exact-revision provenance, and a
+  fail-closed raw-evidence gate
 - Frozen, feature-independent storage descriptors and explicit format-v1
   layout-reader commitments for the intended 1.0 backend matrix
 - Strict machine-readable 0.10 parity and faster-than-Redland qualification
@@ -25,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Full Redland parity is now an active 0.11 gate; the completed 0.10 bundle is
+  classified as qualification scaffolding rather than behavioral/source/binary
+  parity proof
 - Workspace, CLI, C, and Python package versions are aligned at `0.10.0`
 - The 0.10 roadmap state is `complete`; `scripts/check-0.10-release.py` passes
 - Storage capability construction is available uniformly through
