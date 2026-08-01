@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate and enforce the Oxiland 0.10 full-Redland parity report."""
+"""Generate and enforce the Oxiland 0.10 candidate-coverage report."""
 
 from __future__ import annotations
 
@@ -29,6 +29,8 @@ def evaluate(inventory_path: Path, evidence_path: Path) -> dict[str, Any]:
     evidence = load_object(evidence_path)
     if inventory.get("milestone") != "0.10":
         raise ValueError("inventory milestone must be 0.10")
+    if inventory.get("oxiland_version") != "0.10.0":
+        raise ValueError("inventory Oxiland version must be 0.10.0")
     if inventory.get("redland_api") != "1.0.17":
         raise ValueError("inventory must pin Redland 1.0.17")
     entries = inventory.get("entries")
@@ -145,7 +147,7 @@ def main() -> int:
     else:
         print(encoded, end="")
     if not report["passed"]:
-        print("0.10 full-Redland parity gate failed", file=sys.stderr)
+        print("0.10 candidate-coverage gate failed", file=sys.stderr)
         return 1
     return 0
 

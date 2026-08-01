@@ -13,32 +13,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   differentials on every declared target/profile, unchanged-source C builds,
   no-rebuild binary ABI interchange, exact-revision provenance, and a
   fail-closed raw-evidence gate
-- Frozen, feature-independent storage descriptors and explicit format-v1
-  layout-reader commitments for the intended 1.0 backend matrix
-- Strict machine-readable 0.10 parity and faster-than-Redland qualification
-  validators, a frozen target/profile matrix, and regression tests for the
-  no-waiver/no-averaging release rules
-- ADR-024 decision to keep the physical durable adapter sealed for 1.0
-- ADR-025 baseline factory registration (supersedes ADR-018); ADR-026 Raptor
-  and Rasqal world bridges; ADR-027 optional LMDB/heed decision (R-023)
-- Full C ABI allowlist covering the public `librdf_*` denominator (`OXILAND_0.10`)
-  with lifecycle coverage and Linux ASan/LSan (rustc no longer ships UBSan)
-- Safe Rust storage facade, feature get/set, and factory registration APIs
-- 0.10 qualification bundle: inventory, six-profile parity evidence, three
-  performance profiles, soak, fuzz record, and Python stub snapshot
 
 ### Changed
 
 - Full Redland parity is now an active 0.11 gate; the completed 0.10 bundle is
   classified as qualification scaffolding rather than behavioral/source/binary
   parity proof
+
+## [0.10.0] - 2026-07-31
+
+Frozen 1.0-intent storage contracts, expanded the Redland-shaped C preview,
+and introduced fail-closed qualification-scaffold tooling.
+
+### Added
+
+- Frozen, feature-independent storage descriptors and explicit format-v1
+  layout-reader commitments for the intended 1.0 backend matrix
+- Strict machine-readable candidate-coverage and performance qualification
+  validators, a frozen target/profile matrix, and regression tests for the
+  no-waiver/no-averaging rules
+- ADR-024 decision to keep the physical durable adapter sealed for 1.0
+- ADR-025 baseline factory registration (supersedes ADR-018); ADR-026 Raptor
+  and Rasqal world bridges; ADR-027 optional LMDB/heed decision (R-023)
+- Full C ABI allowlist covering the public `librdf_*` denominator (`OXILAND_0.10`)
+  with lifecycle coverage and Linux ASan/LSan (rustc no longer ships UBSan)
+- Safe Rust storage facade, feature get/set, and factory registration APIs
+- 0.10 qualification scaffold: inventory, six-profile candidate evidence,
+  three synthetic performance fixtures, soak and fuzz-smoke records, and a
+  Python stub snapshot
+
+### Changed
+
 - Workspace, CLI, C, and Python package versions are aligned at `0.10.0`
 - The 0.10 roadmap state is `complete`; `scripts/check-0.10-release.py` passes
 - Storage capability construction is available uniformly through
   `StorageCapabilities::for_backend`
-- Risk register marks R-001/002/004/005/006/009/012/013/015/019/021/022/023
-  mitigated where inventory, C ABI, parity, performance, and crash evidence
-  now exist
+- Risk register records mitigations backed by inventory, C ABI, storage, and
+  crash evidence while leaving native performance proof active for 0.11
 
 ### Fixed
 

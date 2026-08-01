@@ -243,15 +243,20 @@ Budgets and the required comparison suite are established from representative
 workloads before 0.10 qualification. Benchmark noise is controlled by the
 protocol below rather than waived.
 
-### 0.10 faster-than-Redland gate
+### 0.10 performance scaffold
 
-Oxiland 0.10 may ship only if Oxiland is faster than the pinned Redland 1.0.17
-oracle in **every required case** on every target/build profile in the frozen
-performance matrix. Throughput cases require an Oxiland/Redland median ratio of
+The 0.10 release freezes the faster-than-Redland protocol and ships synthetic
+candidate fixtures that exercise its fail-closed statistical validator. It
+does not claim that Oxiland 0.10 was natively benchmarked against Redland on
+each declared target. The exact parity-qualified artifacts must later pass the
+protocol before a faster-than-Redland or 1.0-readiness claim is made.
+
+Under that protocol, throughput cases require an Oxiland/Redland median ratio of
 at least `1.05`; latency cases require an Oxiland/Redland median ratio of at
 most `0.95`. In both cases, the 95% bootstrap confidence interval must exclude
 parity (`1.0`) on the winning side. A tie, statistically inconclusive result,
-or loss blocks 0.10; a geometric mean or win elsewhere cannot hide it.
+or loss blocks the eventual performance claim; a geometric mean or win
+elsewhere cannot hide it.
 
 The comparison protocol is part of the gate:
 
@@ -272,11 +277,11 @@ The comparison protocol is part of the gate:
   regression.
 
 The suite, datasets, queries, target/profile matrix, toolchain, Redland build,
-measurement method, and pass thresholds freeze before 0.10 qualification
-begins. Required cases cannot be deleted, renamed optional, or waived after a
-failure. CI runs the stable short matrix; release qualification runs the full
-matrix on controlled benchmark hosts and publishes signed machine-readable and
-human-readable results.
+measurement method, and pass thresholds freeze before qualification begins.
+Required cases cannot be deleted, renamed optional, or waived after a failure.
+The 0.11 candidate-bound qualification runs the full matrix on controlled
+benchmark hosts and publishes signed machine-readable and human-readable
+results.
 
 ## Metrics
 

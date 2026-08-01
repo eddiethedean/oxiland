@@ -105,11 +105,13 @@ See [`docs/reports/0.9.md`](https://github.com/eddiethedean/oxiland/blob/main/do
 ## Completed 0.10 qualification scaffold
 
 Complete for its stated scaffold. Inventory, declared six-profile parity data,
-three performance profiles, soak, and fuzz records are checked in.
+three synthetic performance profiles, a soak record, and fuzz-smoke records are
+checked in.
 `scripts/check-0.10-release.py` passes. This does not establish full Redland
 parity: the profile pass declarations were generated from shared symbol
 presence and local smoke suites rather than native two-sided executions on each
-declared target.
+declared target. The performance fixtures likewise validate the report tooling
+but do not establish native faster-than-Redland results.
 See the
 [`0.10 qualification report`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.10.md).
 Inventory revision:

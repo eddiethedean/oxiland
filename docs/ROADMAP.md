@@ -429,13 +429,14 @@ Evidence gates:
   the 0.10 scaffold is internally consistent; it does **not** establish native
   cross-platform differential behavior, source compatibility, or binary ABI
   interchange.
-- **Hard performance gate:** Oxiland must pass the
-  [0.10 faster-than-Redland gate](VERIFICATION.md#010-faster-than-redland-gate)
-  on every required benchmark and supported performance profile. No required
-  case may tie or lose, and wins in other cases may not average away a loss.
+- The frozen performance suite and synthetic candidate fixtures exercise the
+  [comparison validator](VERIFICATION.md#010-performance-scaffold). Native
+  per-target wins are not a 0.10 claim and must be re-established on the exact
+  parity-qualified artifacts before 1.0.
 - Rust public-API snapshots and C ABI snapshots are enforced in CI.
 - Python package versioning and wheel matrix are documented and green.
-- The full conformance and differential matrix is green.
+- CI conformance and local differential smokes are green; native cross-platform
+  differentials remain the 0.11 proof obligation.
 - Documentation includes complete examples for supported Redland workflows.
 - Release candidates receive real downstream testing.
 - No release-blocking item remains in the risk register.

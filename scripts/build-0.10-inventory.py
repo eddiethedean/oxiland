@@ -165,7 +165,13 @@ def main() -> int:
         ]
 
     src["milestone"] = "0.10"
+    src["oxiland_version"] = "0.10.0"
     src["generated_by"] = "scripts/build-0.10-inventory.py"
+    src["notes"] = (
+        "0.10 candidate inventory: the safe facade and C allowlist are closed "
+        "for qualification-scaffold coverage; native behavioral, source, and "
+        "binary parity remain 0.11 work."
+    )
     DST.write_text(json.dumps(src, indent=2, sort_keys=False) + "\n", encoding="utf-8")
 
     states = Counter(e.get("state") for e in src["entries"] if e["symbol"].startswith("librdf_"))

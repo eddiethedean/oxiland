@@ -158,8 +158,9 @@ Version 1.0 means:
 - the 0.11 demonstrated full Redland parity gate has passed: every public item
   and applicable observable behavior in the pinned baseline is verified by
   native, revision-bound evidence, with no in-scope exclusion or deviation;
-- the 0.10 faster-than-Redland gate has passed on every required benchmark and
-  supported performance profile, with no tie, loss, or inconclusive result;
+- the frozen faster-than-Redland protocol has passed on every required
+  benchmark and supported performance profile using the exact 0.11
+  parity-qualified artifacts, with no tie, loss, or inconclusive result;
 - the published behavioral, source, and ABI matrices meet their stated gates;
 - API, ABI, persistence, MSRV, support, and deprecation policies are published;
 - clean installation and selected downstream workflows work from release

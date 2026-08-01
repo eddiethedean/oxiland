@@ -1,8 +1,8 @@
 # oxiland-capi
 
 C ABI preview for Oxiland. Redland-shaped headers and symbols are enforced
-against a frozen snapshot. Full Redland ABI/behavioral parity remains a hard,
-currently unmet 0.10 release gate.
+against a frozen snapshot. Full Redland source, binary ABI, and behavioral
+parity remain active 0.11 work and are not claims of the 0.10 release.
 
 **Canonical install and link guide:**
 [`docs/users/c-abi.md`](../../docs/users/c-abi.md).

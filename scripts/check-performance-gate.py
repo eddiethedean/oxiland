@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Evaluate the frozen Oxiland 0.10 faster-than-Redland gate.
+"""Evaluate the frozen Oxiland 0.10 performance protocol's statistical rules.
 
 The input contains raw paired-host samples. This program intentionally does
 not run workloads: benchmark drivers may be platform-specific, while the
 qualification arithmetic and failure policy must be identical everywhere.
+Input provenance is enforced by the candidate-bound qualification layer, not
+by this arithmetic validator.
 """
 
 from __future__ import annotations

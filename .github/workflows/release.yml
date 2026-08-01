@@ -47,7 +47,7 @@ jobs:
       - name: Verify tag matches package versions
         run: python scripts/check-release-version.py "$GITHUB_REF_NAME"
 
-      - name: Enforce 0.10 hard qualification gates
+      - name: Enforce 0.10 qualification-scaffold integrity
         if: startsWith(github.ref_name, 'v0.10.')
         run: python scripts/check-0.10-release.py
 

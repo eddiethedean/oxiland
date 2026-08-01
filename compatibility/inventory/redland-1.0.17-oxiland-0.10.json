@@ -3,11 +3,11 @@
   "milestone": "0.10",
   "redland_api": "1.0.17",
   "redland_manual": "1.0.18",
-  "oxiland_version": "0.9.0",
+  "oxiland_version": "0.10.0",
   "oxigraph_version": "0.5.9",
   "generated_by": "scripts/build-0.10-inventory.py",
   "redland_tarball_sha256": "de1847f7b59021c16bdc72abb4d8e2d9187cd6124d69156f3326dd34ee043681",
-  "notes": "0.9 inventory: expanded C allowlist verified; remaining mapped symbols closed as excluded/not-applicable with notes (no unexplained mapped gaps).",
+  "notes": "0.10 candidate inventory: the safe facade and C allowlist are closed for qualification-scaffold coverage; native behavioral, source, and binary parity remain 0.11 work.",
   "entries": [
     {
       "id": "librdf.alloc.memory",

@@ -173,6 +173,7 @@ nav:
           - Risks: RISKS.md
   - Archive:
       - 0.10 qualification scaffold: reports/0.10.md
+      - 0.10.0 release checklist: reports/0.10.0-release.md
       - Milestone 0.10: milestones/0.10.md
       - 0.8 compatibility report: reports/0.8.md
       - 0.8.0 release checklist: reports/0.8.0-release.md

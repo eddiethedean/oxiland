@@ -21,6 +21,7 @@ def load_script(name: str, filename: str):
 performance = load_script("performance_gate", "check-performance-gate.py")
 parity = load_script("parity_gate", "check-0.10-parity.py")
 inventory = load_script("inventory_gate", "check-inventory.py")
+release = load_script("release_gate", "check-0.10-release.py")
 
 
 class PerformanceGateTests(unittest.TestCase):
@@ -114,6 +115,7 @@ class ParityGateTests(unittest.TestCase):
             json.dumps(
                 {
                     "milestone": "0.10",
+                    "oxiland_version": "0.10.0",
                     "redland_api": "1.0.17",
                     "entries": entries,
                 }
@@ -155,8 +157,46 @@ class ParityGateTests(unittest.TestCase):
             inventory_path, evidence_path = self.write_inputs(Path(raw), "excluded")
             self.assertFalse(parity.evaluate(inventory_path, evidence_path)["passed"])
 
+    def test_inventory_version_must_match_release(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            inventory_path, evidence_path = self.write_inputs(Path(raw))
+            data = json.loads(inventory_path.read_text())
+            data["oxiland_version"] = "0.9.0"
+            inventory_path.write_text(json.dumps(data))
+            with self.assertRaisesRegex(ValueError, "version must be 0.10.0"):
+                parity.evaluate(inventory_path, evidence_path)
+
     def test_numeric_milestone_order(self) -> None:
         self.assertGreater(inventory.milestone_key("0.10"), inventory.milestone_key("0.9"))
+
+
+class ReleaseScaffoldTests(unittest.TestCase):
+    def fuzz_record(self) -> dict:
+        return {
+            "schema_version": 1,
+            "milestone": "0.10",
+            "git_revision": "deadbeef",
+            "findings": [],
+            "targets": [
+                {"name": name, "smoke_result": "pass", "findings": []}
+                for name in sorted(release.FUZZ_TARGETS)
+            ],
+        }
+
+    def test_fuzz_smokes_cover_frozen_targets(self) -> None:
+        release.validate_fuzz(self.fuzz_record())
+
+    def test_fuzz_target_finding_is_release_blocking(self) -> None:
+        record = self.fuzz_record()
+        record["targets"][0]["findings"] = ["crash"]
+        with self.assertRaisesRegex(ValueError, "retains findings"):
+            release.validate_fuzz(record)
+
+    def test_fuzz_target_cannot_be_deleted(self) -> None:
+        record = self.fuzz_record()
+        record["targets"].pop()
+        with self.assertRaisesRegex(ValueError, "frozen target set"):
+            release.validate_fuzz(record)
 
 
 if __name__ == "__main__":
