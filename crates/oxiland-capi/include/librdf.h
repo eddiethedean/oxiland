@@ -2,8 +2,7 @@
 #define OXILAND_LIBRDF_H
 
 /**
- * Oxiland 0.10 development C ABI — frozen Redland-shaped snapshot.
- * Full Redland parity remains blocked until the 0.10 qualification gate passes.
+ * Oxiland 0.10 C ABI — Redland-shaped source-compat surface.
  */
 
 #ifdef __cplusplus
@@ -11,6 +10,7 @@ extern "C" {
 #endif
 
 #include <stddef.h>
+#include <stdio.h>
 
 typedef struct librdf_world_s librdf_world;
 typedef struct librdf_storage_s librdf_storage;
@@ -23,9 +23,13 @@ typedef struct librdf_parser_s librdf_parser;
 typedef struct librdf_serializer_s librdf_serializer;
 typedef struct librdf_query_s librdf_query;
 typedef struct librdf_query_results_s librdf_query_results;
+typedef struct librdf_query_results_formatter_s librdf_query_results_formatter;
 typedef struct librdf_digest_s librdf_digest;
+typedef struct librdf_hash_s librdf_hash;
+typedef struct librdf_list_s librdf_list;
+typedef struct librdf_iterator_s librdf_iterator;
+typedef struct librdf_log_message_s librdf_log_message;
 
-/* Node type constants (Redland-compatible) */
 #define LIBRDF_NODE_TYPE_UNKNOWN  0
 #define LIBRDF_NODE_TYPE_RESOURCE 1
 #define LIBRDF_NODE_TYPE_LITERAL  2
@@ -33,176 +37,396 @@ typedef struct librdf_digest_s librdf_digest;
 
 typedef int (*librdf_log_func)(void *user_data, int code, int level, int facility,
                                const char *message, const char *locator);
+typedef void (*librdf_log_level_func)(void *user_data, const char *message);
+typedef void (*librdf_raptor_init_handler)(void *user_data, void *raptor_world_ptr);
+typedef void (*librdf_rasqal_init_handler)(void *user_data, void *rasqal_world_ptr);
 
-/* World */
-librdf_world *librdf_new_world(void);
-void librdf_free_world(librdf_world *world);
-void librdf_world_open(librdf_world *world);
-int librdf_world_set_logger(librdf_world *world, void *user_data, librdf_log_func logger);
-void librdf_log_simple(librdf_world *world, int code, int level, int facility,
-                       const char *message);
-
-/* Storage */
-librdf_storage *librdf_new_storage(librdf_world *world, const char *storage_name,
-                                   const char *name, const char *options);
-void librdf_free_storage(librdf_storage *storage);
-int librdf_storage_open(librdf_storage *storage, librdf_model *model);
-int librdf_storage_enumerate(librdf_world *world, unsigned int counter, const char **name,
-                             const char **label);
-int librdf_storage_sync(librdf_storage *storage);
-
-/* Model */
-librdf_model *librdf_new_model(librdf_world *world, librdf_storage *storage,
-                               const char *options);
+void* librdf_alloc_memory(size_t size);
+ifdef LIBRDF_INTERNAL const char* librdf_basename(const char *name);
+void* librdf_calloc_memory(size_t nmemb, size_t size);
+void librdf_destroy_world(void);
+void librdf_digest_final(librdf_digest* digest);
+void* librdf_digest_get_digest(librdf_digest* digest);
+size_t librdf_digest_get_digest_length(librdf_digest* digest);
+void librdf_digest_init(librdf_digest* digest);
+void librdf_digest_print(librdf_digest* digest, FILE* fh);
+char* librdf_digest_to_string(librdf_digest* digest);
+void librdf_digest_update(librdf_digest* digest, const unsigned char *buf, size_t length);
+void librdf_digest_update_string(librdf_digest* digest, const unsigned char *string);
+char* librdf_files_temporary_file_name(void);
+void librdf_free_digest(librdf_digest *digest);
+void librdf_free_hash(librdf_hash *hash);
+void librdf_free_iterator(librdf_iterator* iterator);
+void librdf_free_list(librdf_list* list);
+void librdf_free_memory(void *ptr);
 void librdf_free_model(librdf_model *model);
-int librdf_model_add_statement(librdf_model *model, librdf_statement *statement);
-int librdf_model_remove_statement(librdf_model *model, librdf_statement *statement);
-int librdf_model_contains_statement(librdf_model *model, librdf_statement *statement);
-int librdf_model_size(librdf_model *model);
-librdf_stream *librdf_model_find_statements(librdf_model *model,
-                                            librdf_statement *statement);
-int librdf_model_sync(librdf_model *model);
-librdf_stream *librdf_model_as_stream(librdf_model *model);
-int librdf_model_add(librdf_model *model, librdf_node *subject, librdf_node *predicate,
-                     librdf_node *object);
-int librdf_model_add_string_literal_statement(librdf_model *model, librdf_node *subject,
-    librdf_node *predicate, const unsigned char *literal, const char *xml_language,
-    int is_wf_xml);
-int librdf_model_add_typed_literal_statement(librdf_model *model, librdf_node *subject,
-    librdf_node *predicate, const unsigned char *literal, const char *xml_language,
-    librdf_uri *datatype_uri);
-int librdf_model_context_add_statement(librdf_model *model, librdf_node *context,
-                                       librdf_statement *statement);
-int librdf_model_context_remove_statement(librdf_model *model, librdf_node *context,
-                                          librdf_statement *statement);
-librdf_stream *librdf_model_context_as_stream(librdf_model *model, librdf_node *context);
-int librdf_model_contains_context(librdf_model *model, librdf_node *context);
-int librdf_model_supports_contexts(librdf_model *model);
-librdf_stream *librdf_model_find_statements_in_context(librdf_model *model,
-    librdf_statement *statement, librdf_node *context);
-unsigned char *librdf_model_to_string(librdf_model *model, librdf_uri *base_uri);
-int librdf_model_update(librdf_model *model, const unsigned char *update_string);
-librdf_query_results *librdf_model_query_execute(librdf_model *model, librdf_query *query);
-
-/* Terms */
-librdf_uri *librdf_new_uri(librdf_world *world, const unsigned char *uri_string);
+void librdf_free_node(librdf_node* node);
+void librdf_free_parser(librdf_parser *parser);
+void librdf_free_query(librdf_query *query);
+void librdf_free_query_results(librdf_query_results* query_results);
+void librdf_free_query_results_formatter(librdf_query_results_formatter* formatter);
+void librdf_free_serializer(librdf_serializer *serializer);
+void librdf_free_statement(librdf_statement* statement);
+void librdf_free_storage(librdf_storage *storage);
+void librdf_free_stream(librdf_stream* stream);
 void librdf_free_uri(librdf_uri *uri);
-const char *librdf_uri_as_string(librdf_uri *uri);
-unsigned char *librdf_uri_to_string(librdf_uri *uri);
-int librdf_uri_equals(librdf_uri *first_uri, librdf_uri *second_uri);
-int librdf_uri_compare(librdf_uri *first_uri, librdf_uri *second_uri);
-int librdf_uri_is_file_uri(librdf_uri *uri);
-char *librdf_uri_to_filename(librdf_uri *uri);
+void librdf_free_world(librdf_world *world);
+librdf_uri* librdf_get_concept_ms_namespace(librdf_world *world);
+ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_Alt) #define LIBRDF_MS_Bag(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_Bag) #define LIBRDF_MS_Property(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_Property) #define LIBRDF_MS_Seq(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_Seq) #define LIBRDF_MS_Statement(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_Statement) #define LIBRDF_MS_object(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_object) #define LIBRDF_MS_predicate(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_predicate) #define LIBRDF_MS_subject(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_subject) #define LIBRDF_MS_type(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_type) #define LIBRDF_MS_value(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_value) #define LIBRDF_MS_li(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_li) #define LIBRDF_MS_RDF(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_RDF) #define LIBRDF_MS_Description(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_Description) #define LIBRDF_MS_aboutEach(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_aboutEach) #define LIBRDF_MS_aboutEachPrefix(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_MS_aboutEachPrefix) #define LIBRDF_RS_nodeID(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RS_nodeID) #define LIBRDF_RS_List(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RS_List) #define LIBRDF_RS_first(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RS_first) #define LIBRDF_RS_rest(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RS_rest) #define LIBRDF_RS_nil(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RS_nil) #define LIBRDF_RS_XMLLiteral(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RS_XMLLiteral) #define LIBRDF_S_Class(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_Class) #define LIBRDF_S_ConstraintProperty(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_ConstraintProperty) #define LIBRDF_S_ConstraintResource(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_ConstraintResource) #define LIBRDF_S_Container(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_Container) #define LIBRDF_S_ContainerMembershipProperty(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_ContainerMembershipProperty) #define LIBRDF_S_Literal(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_Literal) #define LIBRDF_S_Resource(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_Resource) #define LIBRDF_S_comment(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_comment) #define LIBRDF_S_domain(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_domain) #define LIBRDF_S_isDefinedBy(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_isDefinedBy) #define LIBRDF_S_label(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_label) #define LIBRDF_S_range(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_range) #define LIBRDF_S_seeAlso(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_seeAlso) #define LIBRDF_S_subClassOf(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_subClassOf) #define LIBRDF_S_subPropertyOf(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_subPropertyOf) #define LIBRDF_S_subPropertyOf(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_S_subPropertyOf) #define LIBRDF_MS_Alt_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_Alt) #define LIBRDF_MS_Bag_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_Bag) #define LIBRDF_MS_Property_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_Property) #define LIBRDF_MS_Seq_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_Seq) #define LIBRDF_MS_Statement_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_Statement) #define LIBRDF_MS_object_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_object) #define LIBRDF_MS_predicate_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_predicate) #define LIBRDF_MS_subject_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_subject) #define LIBRDF_MS_type_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_type) #define LIBRDF_MS_value_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_value) #define LIBRDF_MS_li_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_li) #define LIBRDF_MS_RDF_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_RDF) #define LIBRDF_MS_Description_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_Description) #define LIBRDF_MS_aboutEach_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_aboutEach) #define LIBRDF_MS_aboutEachPrefix_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_MS_aboutEachPrefix) #define LIBRDF_RS_nodeID_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_RS_nodeID) #define LIBRDF_RS_List_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_RS_List) #define LIBRDF_RS_first_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_RS_first) #define LIBRDF_RS_rest_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_RS_rest) #define LIBRDF_RS_nil_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_RS_nil) #define LIBRDF_RS_XMLLiteral_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_RS_XMLLiteral) #define LIBRDF_S_subPropertyOf_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_subPropertyOf) #define LIBRDF_S_subClassOf_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_subClassOf) #define LIBRDF_S_seeAlso_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_seeAlso) #define LIBRDF_S_range_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_range) #define LIBRDF_S_label_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_label) #define LIBRDF_S_isDefinedBy_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_isDefinedBy) #define LIBRDF_S_domain_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_domain) #define LIBRDF_S_comment_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_comment) #define LIBRDF_S_Resource_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_Resource) #define LIBRDF_S_Literal_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_Literal) #define LIBRDF_S_Container_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_Container) #define LIBRDF_S_ContainerMembershipProperty_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_ContainerMembershipProperty) #define LIBRDF_S_ConstraintResource_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_ConstraintResource) #define LIBRDF_S_ConstraintProperty_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_ConstraintProperty) #define LIBRDF_S_Class_URI(world) \ librdf_get_concept_uri_by_index(world, LIBRDF_CONCEPT_S_Class) #define LIBRDF_RDF11_HTML(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RDF11_HTML) #define LIBRDF_RDF11_langString(world) \ librdf_get_concept_resource_by_index(world, LIBRDF_CONCEPT_RDF11_langString) #define LIBRDF_URI_RDF_MS(world) librdf_get_concept_ms_namespace(world) #define LIBRDF_URI_RDF_SCHEMA(world) librdf_get_concept_schema_namespace(world) #ifdef __cplusplus } #endif #endif #ifndef LIBRDF_QUERY_H #define LIBRDF_QUERY_H #ifdef LIBRDF_INTERNAL #include <rdf_query_internal.h> #endif #ifdef __cplusplus extern "C" { #endif void librdf_query_register_factory(librdf_world *world, const char *name, const unsigned char *uri_string, void (*factory) (librdf_query_factory*));
+librdf_uri* librdf_get_concept_schema_namespace(librdf_world *world);
+librdf_uri* librdf_get_concept_uri_by_index(librdf_world *world, unsigned int idx);
+int librdf_hash_from_string(librdf_hash* hash, const char *string);
+char* librdf_hash_get(librdf_hash* hash, const char *key);
+int librdf_hash_get_as_boolean(librdf_hash* hash, const char *key);
+long librdf_hash_get_as_long(librdf_hash* hash, const char *key);
+char* librdf_hash_get_del(librdf_hash* hash, const char *key);
+unsigned char* librdf_hash_interpret_template(const unsigned char* template_string, librdf_hash* dictionary, const unsigned char* prefix, const unsigned char* suffix);
+void librdf_hash_print(librdf_hash* hash, FILE *fh);
+void librdf_hash_print_keys(librdf_hash* hash, FILE *fh);
+void librdf_hash_print_values(librdf_hash* hash, const char *key_string, FILE *fh);
+int librdf_hash_put_strings(librdf_hash* hash, const char *key, const char *value);
+char* librdf_hash_to_string(librdf_hash* hash, const char *filter[]);
+char* librdf_heuristic_gen_name(const char *name);
+const char* librdf_heuristic_get_blank_node(const char *node);
+int librdf_heuristic_is_blank_node(const char *node);
+int librdf_heuristic_object_is_literal(const char *object);
+void librdf_init_world(char *digest_factory_name, void* not_used2);
+int librdf_iterator_add_map(librdf_iterator* iterator, librdf_iterator_map_handler map_function, librdf_iterator_map_free_context_handler free_context, void *map_context);
+int librdf_iterator_end(librdf_iterator* iterator);
+void* librdf_iterator_get_context(librdf_iterator* iterator);
+void* librdf_iterator_get_key(librdf_iterator* iterator);
+void* librdf_iterator_get_object(librdf_iterator* iterator);
+void* librdf_iterator_get_value(librdf_iterator* iterator);
+int librdf_iterator_have_elements(librdf_iterator* iterator);
+int librdf_iterator_next(librdf_iterator* iterator);
+unsigned char* librdf_latin1_to_utf8(const unsigned char *input, int length, int *output_length);
+unsigned char* librdf_latin1_to_utf8_2(const unsigned char *input, size_t length, size_t *output_length);
+int librdf_list_add(librdf_list* list, void *data);
+void librdf_list_clear(librdf_list* list);
+int librdf_list_contains(librdf_list* list, void *data);
+void librdf_list_foreach(librdf_list* list, void (*fn)(void *, void *), void *user_data);
+librdf_iterator* librdf_list_get_iterator(librdf_list* list);
+void* librdf_list_pop(librdf_list* list);
+void * librdf_list_remove(librdf_list *list, void *data);
+void librdf_list_set_equals(librdf_list* list, int (*equals) (void* data1, void *data2));
+void* librdf_list_shift(librdf_list* list);
+int librdf_list_size(librdf_list* list);
+int librdf_list_unshift(librdf_list* list, void *data);
+void librdf_log(librdf_world* world, int code, int level, int facility, void *locator, const char *message, ...) REDLAND_PRINTF_FORMAT(6, 7);
+int librdf_log_message_code(librdf_log_message *message);
+int librdf_log_message_facility(librdf_log_message *message);
+int librdf_log_message_level(librdf_log_message *message);
+void * librdf_log_message_locator(librdf_log_message *message);
+const char * librdf_log_message_message(librdf_log_message *message);
+void librdf_log_simple(librdf_world* world, int code, int level, int facility, void *locator, const char *message);
+int librdf_model_add(librdf_model* model, librdf_node* subject, librdf_node* predicate, librdf_node* object);
+int librdf_model_add_statement(librdf_model* model, librdf_statement* statement);
+int librdf_model_add_statements(librdf_model* model, librdf_stream* statement_stream);
+int librdf_model_add_string_literal_statement(librdf_model* model, librdf_node* subject, librdf_node* predicate, const unsigned char* literal, const char *xml_language, int is_wf_xml);
+int librdf_model_add_submodel(librdf_model* model, librdf_model* sub_model);
+int librdf_model_add_typed_literal_statement(librdf_model* model, librdf_node* subject, librdf_node* predicate, const unsigned char* literal, const char *xml_language, librdf_uri *datatype_uri);
+librdf_stream* librdf_model_as_stream(librdf_model* model);
+int librdf_model_contains_context(librdf_model* model, librdf_node* context);
+int librdf_model_contains_statement(librdf_model* model, librdf_statement* statement);
+int librdf_model_context_add_statement(librdf_model* model, librdf_node* context, librdf_statement* statement);
+int librdf_model_context_add_statements(librdf_model* model, librdf_node* context, librdf_stream* stream);
+librdf_stream* librdf_model_context_as_stream(librdf_model* model, librdf_node* context);
+int librdf_model_context_remove_statement(librdf_model* model, librdf_node* context, librdf_statement* statement);
+int librdf_model_context_remove_statements(librdf_model* model, librdf_node* context);
+librdf_stream* librdf_model_context_serialize(librdf_model* model, librdf_node* context);
+int librdf_model_enumerate(librdf_world* world, const unsigned int counter, const char **name, const char **label);
+librdf_stream* librdf_model_find_statements(librdf_model* model, librdf_statement* statement);
+librdf_stream* librdf_model_find_statements_in_context(librdf_model* model, librdf_statement* statement, librdf_node* context_node);
+librdf_stream* librdf_model_find_statements_with_options(librdf_model* model, librdf_statement* statement, librdf_node* context_node, librdf_hash* options);
+librdf_node* librdf_model_get_arc(librdf_model *model, librdf_node *source, librdf_node *target);
+librdf_iterator* librdf_model_get_arcs(librdf_model *model, librdf_node *source, librdf_node *target);
+librdf_iterator* librdf_model_get_arcs_in(librdf_model *model, librdf_node *node);
+librdf_iterator* librdf_model_get_arcs_out(librdf_model *model, librdf_node *node);
+librdf_iterator* librdf_model_get_contexts(librdf_model* model);
+librdf_node* librdf_model_get_feature(librdf_model* model, librdf_uri* feature);
+librdf_node* librdf_model_get_source(librdf_model *model, librdf_node *arc, librdf_node *target);
+librdf_iterator* librdf_model_get_sources(librdf_model *model, librdf_node *arc, librdf_node *target);
+librdf_storage* librdf_model_get_storage(librdf_model *model);
+librdf_node* librdf_model_get_target(librdf_model *model, librdf_node *source, librdf_node *arc);
+librdf_iterator* librdf_model_get_targets(librdf_model *model, librdf_node *source, librdf_node *arc);
+int librdf_model_has_arc_in(librdf_model *model, librdf_node *node, librdf_node *property);
+int librdf_model_has_arc_out(librdf_model *model, librdf_node *node, librdf_node *property);
+int librdf_model_load(librdf_model* model, librdf_uri *uri, const char *name, const char *mime_type, librdf_uri *type_uri);
+void librdf_model_print(librdf_model *model, FILE *fh);
+librdf_query_results* librdf_model_query_execute(librdf_model* model, librdf_query* query);
+int librdf_model_remove_statement(librdf_model* model, librdf_statement* statement);
+int librdf_model_remove_submodel(librdf_model* model, librdf_model* sub_model);
+librdf_stream* librdf_model_serialise(librdf_model* model);
+int librdf_model_set_feature(librdf_model* model, librdf_uri* feature, librdf_node* value);
+int librdf_model_size(librdf_model* model);
+int librdf_model_supports_contexts(librdf_model* model);
+int librdf_model_sync(librdf_model* model);
+unsigned char* librdf_model_to_counted_string(librdf_model* model, librdf_uri *uri, const char *name, const char *mime_type, librdf_uri *type_uri, size_t* string_length_p);
+unsigned char* librdf_model_to_string(librdf_model* model, librdf_uri *uri, const char *name, const char *mime_type, librdf_uri *type_uri);
+int librdf_model_transaction_commit(librdf_model* model);
+void* librdf_model_transaction_get_handle(librdf_model* model);
+int librdf_model_transaction_rollback(librdf_model* model);
+int librdf_model_transaction_start(librdf_model* model);
+int librdf_model_transaction_start_with_handle(librdf_model* model, void* handle);
+int librdf_model_update(librdf_model *model, const unsigned char *update_string);
+int librdf_model_write(librdf_model *model, void * iostr);
+librdf_digest* librdf_new_digest(librdf_world *world, const char *name);
+librdf_iterator* librdf_new_empty_iterator(librdf_world *world);
+librdf_stream* librdf_new_empty_stream(librdf_world *world);
+librdf_hash* librdf_new_hash(librdf_world *world, const char *name);
+librdf_hash* librdf_new_hash_from_array_of_strings(librdf_world *world, const char *name, const char **array);
+librdf_hash* librdf_new_hash_from_hash(librdf_hash* old_hash);
+librdf_hash* librdf_new_hash_from_string(librdf_world *world, const char *name, const char *string);
+librdf_iterator* librdf_new_iterator(librdf_world *world, void *context, int (*is_end_method)(void*), int (*next_method)(void*), void* (*get_method)(void*, int), void (*finished_method)(void*));
+librdf_list* librdf_new_list(librdf_world *world);
+librdf_model* librdf_new_model(librdf_world *world, librdf_storage *storage, const char* options_string);
+librdf_model* librdf_new_model_from_model(librdf_model* model);
+librdf_model* librdf_new_model_with_options(librdf_world *world, librdf_storage *storage, librdf_hash* options);
+librdf_node* librdf_new_node(librdf_world* world);
+librdf_node* librdf_new_node_from_blank_identifier(librdf_world* world, const unsigned char *identifier);
+librdf_node* librdf_new_node_from_counted_blank_identifier(librdf_world* world, const unsigned char *identifier, size_t identifier_len);
+librdf_node* librdf_new_node_from_counted_uri_string(librdf_world* world, const unsigned char *uri_string, size_t len);
+librdf_node* librdf_new_node_from_literal(librdf_world* world, const unsigned char *string, const char *xml_language, int is_wf_xml);
+librdf_node* librdf_new_node_from_node(librdf_node *node);
+librdf_node* librdf_new_node_from_normalised_uri_string(librdf_world* world, const unsigned char *uri_string, librdf_uri *source_uri, librdf_uri *base_uri);
+librdf_node* librdf_new_node_from_typed_counted_literal(librdf_world *world, const unsigned char *value, size_t value_len, const char *xml_language, size_t xml_language_len, librdf_uri* datatype_uri);
+librdf_node* librdf_new_node_from_typed_literal(librdf_world *world, const unsigned char *value, const char *xml_language, librdf_uri* datatype_uri);
+librdf_node* librdf_new_node_from_uri(librdf_world* world, librdf_uri *uri);
+librdf_node* librdf_new_node_from_uri_local_name(librdf_world* world, librdf_uri *uri, const unsigned char *local_name);
+librdf_node* librdf_new_node_from_uri_string(librdf_world* world, const unsigned char *uri_string);
+librdf_parser* librdf_new_parser(librdf_world* world, const char *name, const char *mime_type, librdf_uri *type_uri);
+librdf_parser* librdf_new_parser_from_factory(librdf_world* world, librdf_parser_factory *factory);
+librdf_query* librdf_new_query(librdf_world* world, const char *name, librdf_uri* uri, const unsigned char *query_string, librdf_uri* base_uri);
+librdf_query* librdf_new_query_from_factory(librdf_world* world, librdf_query_factory* factory, const char *name, librdf_uri* uri, const unsigned char* query_string, librdf_uri* base_uri);
+librdf_query* librdf_new_query_from_query(librdf_query* old_query);
+librdf_query_results_formatter* librdf_new_query_results_formatter(librdf_query_results* query_results, const char *name, librdf_uri* uri);
+librdf_query_results_formatter* librdf_new_query_results_formatter2(librdf_query_results* query_results, const char *name, const char* mime_type, librdf_uri* uri);
+librdf_query_results_formatter* librdf_new_query_results_formatter_by_mime_type(librdf_query_results* query_results, const char *mime_type);
+librdf_serializer* librdf_new_serializer(librdf_world* world, const char *name, const char *mime_type, librdf_uri *type_uri);
+librdf_serializer* librdf_new_serializer_from_factory(librdf_world* world, librdf_serializer_factory *factory);
+librdf_statement* librdf_new_statement(librdf_world* world);
+librdf_statement* librdf_new_statement_from_nodes(librdf_world *world, librdf_node* subject, librdf_node* predicate, librdf_node* object);
+librdf_statement* librdf_new_statement_from_statement(librdf_statement* statement);
+librdf_statement* librdf_new_statement_from_statement2(librdf_statement* statement);
+librdf_storage* librdf_new_storage(librdf_world *world, const char *storage_name, const char *name, const char *options_string);
+librdf_storage* librdf_new_storage_from_factory(librdf_world *world, librdf_storage_factory* factory, const char *name, librdf_hash* options);
+librdf_storage* librdf_new_storage_from_storage(librdf_storage* old_storage);
+librdf_storage* librdf_new_storage_with_options(librdf_world *world, const char *storage_name, const char *name, librdf_hash *options);
+librdf_stream* librdf_new_stream(librdf_world *world, void* context, int (*is_end_method)(void*), int (*next_method)(void*), void* (*get_method)(void*, int), void (*finished_method)(void*));
+librdf_stream* librdf_new_stream_from_node_iterator(librdf_iterator* iterator, librdf_statement* statement, librdf_statement_part field);
+librdf_uri* librdf_new_uri(librdf_world *world, const unsigned char *uri_string);
+librdf_uri* librdf_new_uri2(librdf_world *world, const unsigned char *uri_string, size_t length);
+librdf_uri* librdf_new_uri_from_filename(librdf_world* world, const char *filename);
+librdf_uri* librdf_new_uri_from_uri(librdf_uri* old_uri);
+librdf_uri* librdf_new_uri_from_uri_local_name(librdf_uri* old_uri, const unsigned char *local_name);
+librdf_uri* librdf_new_uri_normalised_to_base(const unsigned char *uri_string, librdf_uri* source_uri, librdf_uri* base_uri);
+librdf_uri* librdf_new_uri_relative_to_base(librdf_uri* base_uri, const unsigned char *uri_string);
+librdf_world* librdf_new_world(void);
+librdf_node* librdf_node_decode(librdf_world *world, size_t* size_p, unsigned char *buffer, size_t length);
+size_t librdf_node_encode(librdf_node* node, unsigned char *buffer, size_t length);
+int librdf_node_equals(librdf_node* first_node, librdf_node* second_node);
+unsigned char * librdf_node_get_counted_blank_identifier(librdf_node *node, size_t *len_p);
+int librdf_node_get_li_ordinal(librdf_node* node);
+unsigned char* librdf_node_get_literal_value(librdf_node* node);
+unsigned char* librdf_node_get_literal_value_as_counted_string(librdf_node* node, size_t* len_p);
+char* librdf_node_get_literal_value_as_latin1(librdf_node* node);
+librdf_uri* librdf_node_get_literal_value_datatype_uri(librdf_node* node);
+int librdf_node_get_literal_value_is_wf_xml(librdf_node* node);
+char* librdf_node_get_literal_value_language(librdf_node* node);
+librdf_node_type librdf_node_get_type(librdf_node* node);
+librdf_uri* librdf_node_get_uri(librdf_node* node);
+int librdf_node_is_blank(librdf_node* node);
+int librdf_node_is_literal(librdf_node* node);
+int librdf_node_is_resource(librdf_node* node);
+librdf_iterator* librdf_node_new_static_node_iterator(librdf_world* world, librdf_node** nodes, int size);
+void librdf_node_print(librdf_node* node, FILE *fh);
+librdf_iterator* librdf_node_static_iterator_create(librdf_node** nodes, int size);
+unsigned char* librdf_node_to_counted_string(librdf_node* node, size_t* len_p);
+int librdf_node_write(librdf_node* node, void *iostr);
+int librdf_parser_check_name(librdf_world* world, const char *name);
+int librdf_parser_enumerate(librdf_world* world, const unsigned int counter, const char **name, const char **label);
+char* librdf_parser_get_accept_header(librdf_parser* parser);
+const void * librdf_parser_get_description(librdf_world* world, unsigned int counter);
+librdf_node* librdf_parser_get_feature(librdf_parser* parser, librdf_uri *feature);
+int librdf_parser_get_namespaces_seen_count(librdf_parser* parser);
+const char* librdf_parser_get_namespaces_seen_prefix(librdf_parser* parser, int offset);
+librdf_uri* librdf_parser_get_namespaces_seen_uri(librdf_parser* parser, int offset);
+void * librdf_parser_get_uri_filter(librdf_parser* parser, void** user_data_p);
+const char* librdf_parser_guess_name(const char *mime_type, const unsigned char *buffer, const unsigned char *identifier);
+const char* librdf_parser_guess_name2(librdf_world* world, const char *mime_type, const unsigned char *buffer, const unsigned char *identifier);
+librdf_stream* librdf_parser_parse_as_stream(librdf_parser* parser, librdf_uri* uri, librdf_uri* base_uri);
+librdf_stream* librdf_parser_parse_counted_string_as_stream(librdf_parser* parser, const unsigned char *string, size_t length, librdf_uri* base_uri);
+int librdf_parser_parse_counted_string_into_model(librdf_parser* parser, const unsigned char *string, size_t length, librdf_uri* base_uri, librdf_model* model);
+librdf_stream* librdf_parser_parse_file_handle_as_stream(librdf_parser* parser, FILE* fh, int close_fh, librdf_uri* base_uri);
+int librdf_parser_parse_file_handle_into_model(librdf_parser* parser, FILE *fh, int close_fh, librdf_uri* base_uri, librdf_model* model);
+int librdf_parser_parse_into_model(librdf_parser* parser, librdf_uri* uri, librdf_uri* base_uri, librdf_model* model);
+librdf_stream* librdf_parser_parse_iostream_as_stream(librdf_parser* parser, void *iostream, librdf_uri* base_uri);
+int librdf_parser_parse_iostream_into_model(librdf_parser* parser, void *iostream, librdf_uri* base_uri, librdf_model* model);
+librdf_stream* librdf_parser_parse_string_as_stream(librdf_parser* parser, const unsigned char* string, librdf_uri* base_uri);
+int librdf_parser_parse_string_into_model(librdf_parser* parser, const unsigned char *string, librdf_uri* base_uri, librdf_model* model);
+void librdf_parser_register_factory(librdf_world *world, const char *name, const char *label, const char *mime_type, const unsigned char *uri_string, void (*factory) (librdf_parser_factory*));
+void librdf_parser_set_error(librdf_parser* parser, void *user_data, void (*error_fn)(void *user_data, const char *msg, ...));
+int librdf_parser_set_feature(librdf_parser* parser, librdf_uri* feature, librdf_node* value);
+void librdf_parser_set_uri_filter(librdf_parser* parser, void * filter, void* user_data);
+void librdf_parser_set_warning(librdf_parser* parser, void *user_data, void (*warning_fn)(void *user_data, const char *msg, ...));
+librdf_query_results* librdf_query_execute(librdf_query* query, librdf_model *model);
+int librdf_query_get_limit(librdf_query *query);
+int librdf_query_get_offset(librdf_query *query);
+const void * librdf_query_language_get_description(librdf_world* world, unsigned int counter);
+int librdf_query_languages_enumerate(librdf_world* world, const unsigned int counter, const char **name, const unsigned char **uri_string);
+void librdf_query_register_factory(librdf_world *world, const char *name, const unsigned char *uri_string, void (*factory)(void *));
+librdf_stream* librdf_query_results_as_stream(librdf_query_results* query_results);
+int librdf_query_results_finished(librdf_query_results* query_results);
+int librdf_query_results_formats_check(librdf_world* world, const char *name, librdf_uri* uri, const char *mime_type);
+int librdf_query_results_formats_enumerate(librdf_world* world, const unsigned int counter, const char **name, const char **label, const unsigned char **uri_string, const char **mime_type);
+const void * librdf_query_results_formats_get_description(librdf_world* world, unsigned int counter);
+int librdf_query_results_formatter_write(void *iostr, librdf_query_results_formatter* formatter, librdf_query_results* query_results, librdf_uri *base_uri);
+const char* librdf_query_results_get_binding_name(librdf_query_results* query_results, int offset);
+librdf_node* librdf_query_results_get_binding_value(librdf_query_results* query_results, int offset);
+librdf_node* librdf_query_results_get_binding_value_by_name(librdf_query_results* query_results, const char *name);
+int librdf_query_results_get_bindings(librdf_query_results* query_results, const char ***names, librdf_node **values);
+int librdf_query_results_get_bindings_count(librdf_query_results* query_results);
+int librdf_query_results_get_boolean(librdf_query_results *query_results);
+int librdf_query_results_get_count(librdf_query_results* query_results);
+int librdf_query_results_is_bindings(librdf_query_results *query_results);
+int librdf_query_results_is_boolean(librdf_query_results *query_results);
+int librdf_query_results_is_graph(librdf_query_results *query_results);
+int librdf_query_results_is_syntax(librdf_query_results* query_results);
+int librdf_query_results_next(librdf_query_results* query_results);
+unsigned char* librdf_query_results_to_counted_string(librdf_query_results *query_results, librdf_uri *format_uri, librdf_uri *base_uri, size_t *length_p);
+unsigned char* librdf_query_results_to_counted_string2(librdf_query_results *query_results, const char *name, const char *mime_type, librdf_uri *format_uri, librdf_uri *base_uri, size_t *length_p);
+int librdf_query_results_to_file(librdf_query_results *query_results, const char *name, librdf_uri *format_uri, librdf_uri *base_uri);
+int librdf_query_results_to_file2(librdf_query_results *query_results, const char *name, const char *mime_type, librdf_uri *format_uri, librdf_uri *base_uri);
+int librdf_query_results_to_file_handle(librdf_query_results *query_results, FILE *handle, librdf_uri *format_uri, librdf_uri *base_uri);
+int librdf_query_results_to_file_handle2(librdf_query_results *query_results, FILE *handle, const char *name, const char *mime_type, librdf_uri *format_uri, librdf_uri *base_uri);
+unsigned char* librdf_query_results_to_string(librdf_query_results *query_results, librdf_uri *format_uri, librdf_uri *base_uri);
+unsigned char* librdf_query_results_to_string2(librdf_query_results *query_results, const char *name, const char *mime_type, librdf_uri *format_uri, librdf_uri *base_uri);
+int librdf_query_set_limit(librdf_query *query, int limit);
+int librdf_query_set_offset(librdf_query *query, int offset);
+int librdf_serializer_check_name(librdf_world* world, const char *name);
+int librdf_serializer_enumerate(librdf_world* world, const unsigned int counter, const char **name, const char **label);
+const void * librdf_serializer_get_description(librdf_world* world, unsigned int counter);
+librdf_node* librdf_serializer_get_feature(librdf_serializer* serializer, librdf_uri *feature);
+void librdf_serializer_register_factory(librdf_world *world, const char *name, const char *label, const char *mime_type, const unsigned char *uri_string, void (*factory) (librdf_serializer_factory*));
+int librdf_serializer_serialize_model(librdf_serializer* serializer, FILE *handle, librdf_uri* base_uri, librdf_model* model);
+unsigned char* librdf_serializer_serialize_model_to_counted_string(librdf_serializer* serializer, librdf_uri* base_uri, librdf_model* model, size_t *length_p);
+int librdf_serializer_serialize_model_to_file(librdf_serializer* serializer, const char *name, librdf_uri* base_uri, librdf_model* model);
+int librdf_serializer_serialize_model_to_file_handle(librdf_serializer* serializer, FILE *handle, librdf_uri* base_uri, librdf_model* model);
+int librdf_serializer_serialize_model_to_iostream(librdf_serializer* serializer, librdf_uri* base_uri, librdf_model *model, void * iostr);
+unsigned char* librdf_serializer_serialize_model_to_string(librdf_serializer* serializer, librdf_uri* base_uri, librdf_model* model);
+unsigned char* librdf_serializer_serialize_stream_to_counted_string(librdf_serializer* serializer, librdf_uri* base_uri, librdf_stream* stream, size_t *length_p);
+int librdf_serializer_serialize_stream_to_file(librdf_serializer* serializer, const char *name, librdf_uri* base_uri, librdf_stream* stream);
+int librdf_serializer_serialize_stream_to_file_handle(librdf_serializer* serializer, FILE *handle, librdf_uri* base_uri, librdf_stream *stream);
+int librdf_serializer_serialize_stream_to_iostream(librdf_serializer* serializer, librdf_uri* base_uri, librdf_stream *stream, void * iostr);
+unsigned char* librdf_serializer_serialize_stream_to_string(librdf_serializer* serializer, librdf_uri* base_uri, librdf_stream* stream);
+void librdf_serializer_set_error(librdf_serializer* serializer, void *user_data, void (*error_fn)(void *user_data, const char *msg, ...));
+int librdf_serializer_set_feature(librdf_serializer* serializer, librdf_uri *feature, librdf_node* value);
+int librdf_serializer_set_namespace(librdf_serializer* serializer, librdf_uri *uri, const char *prefix);
+void librdf_serializer_set_warning(librdf_serializer* serializer, void *user_data, void (*warning_fn)(void *user_data, const char *msg, ...));
+void librdf_statement_clear(librdf_statement *statement);
+size_t librdf_statement_decode(librdf_statement* statement, unsigned char *buffer, size_t length);
+size_t librdf_statement_decode2(librdf_world* world, librdf_statement* statement, librdf_node** context_node, unsigned char *buffer, size_t length);
+size_t librdf_statement_decode_parts(librdf_statement* statement, librdf_node** context_node, unsigned char *buffer, size_t length);
+size_t librdf_statement_encode(librdf_statement* statement, unsigned char *buffer, size_t length);
+size_t librdf_statement_encode2(librdf_world* world, librdf_statement* statement, unsigned char *buffer, size_t length);
+size_t librdf_statement_encode_parts(librdf_statement* statement, librdf_node* context_node, unsigned char *buffer, size_t length, librdf_statement_part fields);
+size_t librdf_statement_encode_parts2(librdf_world* world, librdf_statement* statement, librdf_node* context_node, unsigned char *buffer, size_t length, librdf_statement_part fields);
+int librdf_statement_equals(librdf_statement* statement1, librdf_statement* statement2);
+librdf_node* librdf_statement_get_object(librdf_statement *statement);
+librdf_node* librdf_statement_get_predicate(librdf_statement *statement);
+librdf_node* librdf_statement_get_subject(librdf_statement *statement);
+void librdf_statement_init(librdf_world *world, librdf_statement *statement);
+int librdf_statement_is_complete(librdf_statement *statement);
+int librdf_statement_match(librdf_statement* statement, librdf_statement* partial_statement);
+void librdf_statement_print(librdf_statement *statement, FILE *fh);
+void librdf_statement_set_object(librdf_statement *statement, librdf_node *node);
+void librdf_statement_set_predicate(librdf_statement *statement, librdf_node *node);
+void librdf_statement_set_subject(librdf_statement *statement, librdf_node *node);
+int librdf_statement_write(librdf_statement *statement, void *iostr);
+void librdf_storage_add_reference(librdf_storage *storage);
+int librdf_storage_add_statement(librdf_storage* storage, librdf_statement* statement);
+int librdf_storage_add_statements(librdf_storage* storage, librdf_stream* statement_stream);
+int librdf_storage_close(librdf_storage* storage);
+int librdf_storage_contains_statement(librdf_storage* storage, librdf_statement* statement);
+int librdf_storage_context_add_statement(librdf_storage* storage, librdf_node* context, librdf_statement* statement);
+int librdf_storage_context_add_statements(librdf_storage* storage, librdf_node* context, librdf_stream* stream);
+librdf_stream* librdf_storage_context_as_stream(librdf_storage* storage, librdf_node* context);
+int librdf_storage_context_remove_statement(librdf_storage* storage, librdf_node* context, librdf_statement* statement);
+int librdf_storage_context_remove_statements(librdf_storage* storage, librdf_node* context);
+librdf_stream* librdf_storage_context_serialise(librdf_storage* storage, librdf_node* context);
+int librdf_storage_enumerate(librdf_world* world, const unsigned int counter, const char **name, const char **label);
+librdf_stream* librdf_storage_find_statements(librdf_storage* storage, librdf_statement* statement);
+librdf_stream* librdf_storage_find_statements_in_context(librdf_storage* storage, librdf_statement* statement, librdf_node* context_node);
+librdf_stream* librdf_storage_find_statements_with_options(librdf_storage* storage, librdf_statement* statement, librdf_node* context_node, librdf_hash* options);
+librdf_iterator* librdf_storage_get_arcs(librdf_storage *storage, librdf_node *source, librdf_node *target);
+librdf_iterator* librdf_storage_get_arcs_in(librdf_storage *storage, librdf_node *node);
+librdf_iterator* librdf_storage_get_arcs_out(librdf_storage *storage, librdf_node *node);
+librdf_iterator* librdf_storage_get_contexts(librdf_storage* storage);
+librdf_node* librdf_storage_get_feature(librdf_storage* storage, librdf_uri* feature);
+void * librdf_storage_get_instance(librdf_storage *storage);
+librdf_iterator* librdf_storage_get_sources(librdf_storage *storage, librdf_node *arc, librdf_node *target);
+librdf_iterator* librdf_storage_get_targets(librdf_storage *storage, librdf_node *source, librdf_node *arc);
+librdf_world * librdf_storage_get_world(librdf_storage *storage);
+int librdf_storage_has_arc_in(librdf_storage *storage, librdf_node *node, librdf_node *property);
+int librdf_storage_has_arc_out(librdf_storage *storage, librdf_node *node, librdf_node *property);
+int librdf_storage_open(librdf_storage* storage, librdf_model *model);
+librdf_query_results* librdf_storage_query_execute(librdf_storage* storage, librdf_query *query);
+int librdf_storage_register_factory(librdf_world *world, const char *name, const char *label, void (*factory) (librdf_storage_factory*));
+void librdf_storage_remove_reference(librdf_storage *storage);
+int librdf_storage_remove_statement(librdf_storage* storage, librdf_statement* statement);
+librdf_stream* librdf_storage_serialise(librdf_storage* storage);
+int librdf_storage_set_feature(librdf_storage* storage, librdf_uri* feature, librdf_node* value);
+void librdf_storage_set_instance(librdf_storage *storage, void * instance);
+int librdf_storage_size(librdf_storage* storage);
+int librdf_storage_supports_query(librdf_storage* storage, librdf_query *query);
+int librdf_storage_sync(librdf_storage *storage);
+int librdf_storage_transaction_commit(librdf_storage* storage);
+void* librdf_storage_transaction_get_handle(librdf_storage* storage);
+int librdf_storage_transaction_rollback(librdf_storage* storage);
+int librdf_storage_transaction_start(librdf_storage* storage);
+int librdf_storage_transaction_start_with_handle(librdf_storage* storage, void* handle);
+int librdf_stream_add_map(librdf_stream* stream, librdf_stream_map_handler map_function, librdf_stream_map_free_context_handler free_context, void *map_context);
+int librdf_stream_end(librdf_stream* stream);
+void* librdf_stream_get_context(librdf_stream* stream);
+librdf_node* librdf_stream_get_context2(librdf_stream* stream);
+librdf_statement* librdf_stream_get_object(librdf_stream* stream);
+int librdf_stream_next(librdf_stream* stream);
+void librdf_stream_print(librdf_stream *stream, FILE *fh);
+int librdf_stream_write(librdf_stream *stream, void *iostr);
+int librdf_unicode_char_to_utf8(unsigned int c, unsigned char *output, int length);
+unsigned char* librdf_uri_as_counted_string(librdf_uri *uri, size_t *len_p);
+unsigned char* librdf_uri_as_string(librdf_uri *uri);
+int librdf_uri_compare(librdf_uri* uri1, librdf_uri* uri2);
+int librdf_uri_equals(librdf_uri* first_uri, librdf_uri* second_uri);
+int librdf_uri_is_file_uri(librdf_uri* uri);
+void librdf_uri_print(librdf_uri* uri, FILE *fh);
+unsigned char* librdf_uri_to_counted_string(librdf_uri* uri, size_t* len_p);
+const char* librdf_uri_to_filename(librdf_uri* uri);
+unsigned char* librdf_uri_to_string(librdf_uri* uri);
+void librdf_utf8_print(const unsigned char *input, int length, FILE *stream);
+unsigned char* librdf_utf8_to_latin1(const unsigned char *input, int length, int *output_length);
+unsigned char* librdf_utf8_to_latin1_2(const unsigned char *input, size_t length, unsigned char discard, size_t *output_length);
+int librdf_utf8_to_unicode_char(unsigned int *output, const unsigned char *input, int length);
+librdf_node* librdf_world_get_feature(librdf_world* world, librdf_uri *feature);
+void * librdf_world_get_raptor(librdf_world* world);
+void * librdf_world_get_rasqal(librdf_world* world);
+void librdf_world_init_mutex(librdf_world *world);
+void librdf_world_open(librdf_world *world);
+void librdf_world_set_digest(librdf_world* world, const char *name);
+void librdf_world_set_error(librdf_world* world, void *user_data, int_func error_handler);
+int librdf_world_set_feature(librdf_world* world, librdf_uri *feature, librdf_node* value);
+void librdf_world_set_logger(librdf_world* world, void *user_data, librdf_log_func log_handler);
+void librdf_world_set_raptor(librdf_world* world, void * raptor_world_ptr);
+void librdf_world_set_raptor_init_handler(librdf_world* world, void* user_data, librdf_raptor_init_handler handler);
+void librdf_world_set_rasqal(librdf_world* world, void * rasqal_world_ptr);
+void librdf_world_set_rasqal_init_handler(librdf_world* world, void* user_data, librdf_rasqal_init_handler handler);
+void librdf_world_set_warning(librdf_world* world, void *user_data, int_func warning_handler);
 
-librdf_node *librdf_new_node_from_uri_string(librdf_world *world,
-                                             const unsigned char *uri_string);
-librdf_node *librdf_new_node_from_literal(librdf_world *world,
-                                          const unsigned char *string,
-                                          const char *xml_language, int is_wf_xml);
-librdf_node *librdf_new_node_from_blank_identifier(librdf_world *world,
-                                                   const unsigned char *identifier);
-void librdf_free_node(librdf_node *node);
-int librdf_node_get_type(librdf_node *node);
-int librdf_node_is_resource(librdf_node *node);
-int librdf_node_is_literal(librdf_node *node);
-int librdf_node_is_blank(librdf_node *node);
-librdf_uri *librdf_node_get_uri(librdf_node *node);
-const char *librdf_node_get_literal_value(librdf_node *node);
-const char *librdf_node_get_literal_value_language(librdf_node *node);
+
 const char *librdf_node_get_blank_identifier(librdf_node *node);
 unsigned char *librdf_node_to_string(librdf_node *node);
-int librdf_node_equals(librdf_node *first_node, librdf_node *second_node);
-
-librdf_statement *librdf_new_statement(librdf_world *world);
-librdf_statement *librdf_new_statement_from_nodes(librdf_world *world,
-                                                  librdf_node *subject,
-                                                  librdf_node *predicate,
-                                                  librdf_node *object);
-void librdf_free_statement(librdf_statement *statement);
-void librdf_statement_clear(librdf_statement *statement);
-librdf_node *librdf_statement_get_subject(librdf_statement *statement);
-librdf_node *librdf_statement_get_predicate(librdf_statement *statement);
-librdf_node *librdf_statement_get_object(librdf_statement *statement);
-void librdf_statement_set_subject(librdf_statement *statement, librdf_node *node);
-void librdf_statement_set_predicate(librdf_statement *statement, librdf_node *node);
-void librdf_statement_set_object(librdf_statement *statement, librdf_node *node);
-int librdf_statement_equals(librdf_statement *first, librdf_statement *second);
-int librdf_statement_match(librdf_statement *statement, librdf_statement *partial_statement);
-int librdf_statement_is_complete(librdf_statement *statement);
 unsigned char *librdf_statement_to_string(librdf_statement *statement);
-
-/* Stream */
-int librdf_stream_end(librdf_stream *stream);
-int librdf_stream_next(librdf_stream *stream);
-librdf_statement *librdf_stream_get_object(librdf_stream *stream);
-void librdf_free_stream(librdf_stream *stream);
-
-/* Parser */
-librdf_parser *librdf_new_parser(librdf_world *world, const char *name,
-                                 const char *mime_type, librdf_uri *type_uri);
-void librdf_free_parser(librdf_parser *parser);
-int librdf_parser_check_name(librdf_world *world, const char *name);
-int librdf_parser_parse_string_into_model(librdf_parser *parser,
-                                          const unsigned char *string,
-                                          librdf_uri *base_uri, librdf_model *model);
-int librdf_parser_parse_counted_string_into_model(librdf_parser *parser,
-                                                  const unsigned char *string,
-                                                  size_t length, librdf_uri *base_uri,
-                                                  librdf_model *model);
-
-/* Serializer */
-librdf_serializer *librdf_new_serializer(librdf_world *world, const char *name,
-                                         const char *mime_type, librdf_uri *type_uri);
-void librdf_free_serializer(librdf_serializer *serializer);
-int librdf_serializer_check_name(librdf_world *world, const char *name);
-unsigned char *librdf_serializer_serialize_model_to_string(librdf_serializer *serializer,
-                                                           librdf_uri *base_uri,
-                                                           librdf_model *model);
-unsigned char *librdf_serializer_serialize_model_to_counted_string(
-    librdf_serializer *serializer, librdf_uri *base_uri, librdf_model *model,
-    size_t *length_p);
-int librdf_serializer_serialize_model_to_file(librdf_serializer *serializer,
-                                              const char *name, librdf_uri *base_uri,
-                                              librdf_model *model);
-
-/* Query */
-librdf_query *librdf_new_query(librdf_world *world, const char *name, librdf_uri *uri,
-                               const unsigned char *query_string, librdf_uri *query_uri);
-void librdf_free_query(librdf_query *query);
-int librdf_query_results_is_boolean(librdf_query_results *query_results);
-int librdf_query_results_get_boolean(librdf_query_results *query_results);
-int librdf_query_results_is_bindings(librdf_query_results *query_results);
-int librdf_query_results_is_graph(librdf_query_results *query_results);
-librdf_stream *librdf_query_results_as_stream(librdf_query_results *query_results);
-int librdf_query_results_finished(librdf_query_results *query_results);
-int librdf_query_results_next(librdf_query_results *query_results);
-const char *librdf_query_results_get_binding_name(librdf_query_results *query_results,
-                                                  int offset);
-librdf_node *librdf_query_results_get_binding_value(librdf_query_results *query_results,
-                                                    int offset);
-int librdf_query_results_get_bindings_count(librdf_query_results *query_results);
-void librdf_free_query_results(librdf_query_results *query_results);
-
-/* Digests */
-librdf_digest *librdf_new_digest(librdf_world *world, const char *name);
-void librdf_free_digest(librdf_digest *digest);
-void librdf_digest_init(librdf_digest *digest);
-void librdf_digest_update(librdf_digest *digest, const unsigned char *buffer, size_t length);
-void librdf_digest_update_string(librdf_digest *digest, const unsigned char *string);
-void librdf_digest_final(librdf_digest *digest);
-char *librdf_digest_to_string(librdf_digest *digest);
-unsigned char *librdf_digest_get_digest(librdf_digest *digest);
-size_t librdf_digest_get_digest_length(librdf_digest *digest);
-
-/* UTF-8 / path helpers */
-unsigned char *librdf_utf8_to_latin1(const unsigned char *input, size_t length,
-                                     size_t *output_length);
-unsigned char *librdf_latin1_to_utf8(const unsigned char *input, size_t length,
-                                     size_t *output_length);
 char *librdf_basename(const char *name);
-
-/* Alloc */
-void librdf_free_memory(void *ptr);
 
 #ifdef __cplusplus
 }

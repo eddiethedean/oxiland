@@ -14,7 +14,9 @@ use oxigraph::store::{QuadIter, Store, Transaction as OxigraphTransaction};
 use crate::io::{BomStrippingReader, map_rdf_parse_error};
 use crate::storage::{
     self, DurableStore, DurableStoreOps, OpenOptions, StorageBackend, StorageCapabilities,
+    StorageFacade,
 };
+use crate::world::{BridgeToken, FeatureMap, FeatureValue, World};
 use crate::{Error, Result};
 
 /// A partial triple pattern, equivalent to Redland's statement matching API.
@@ -173,6 +175,10 @@ pub struct Model {
     read_only: bool,
     in_transaction: Arc<AtomicBool>,
     txn_owner: Arc<Mutex<Option<ThreadId>>>,
+    world: World,
+    feature_map: FeatureMap,
+    storage_features: FeatureMap,
+    storage_instance: Arc<RwLock<Option<BridgeToken>>>,
 }
 
 struct InTransactionGuard<'a> {
@@ -191,18 +197,82 @@ impl Drop for InTransactionGuard<'_> {
 }
 
 impl Model {
-    /// Creates an empty in-memory model.
+    /// Creates an empty in-memory model with a fresh [`World`].
     pub fn new() -> Result<Self> {
+        Self::with_world(World::new())
+    }
+
+    /// Creates an empty in-memory model associated with `world`.
+    pub fn with_world(world: World) -> Result<Self> {
         Store::new()
-            .map(|store| Self {
-                store,
-                disk: None,
-                lock: Arc::new(RwLock::new(())),
-                read_only: false,
-                in_transaction: Arc::new(AtomicBool::new(false)),
-                txn_owner: Arc::new(Mutex::new(None)),
-            })
+            .map(|store| Self::from_parts(store, None, false, world))
             .map_err(|error| Error::Storage(error.to_string()))
+    }
+
+    fn from_parts(store: Store, disk: Option<DurableStore>, read_only: bool, world: World) -> Self {
+        Self {
+            store,
+            disk,
+            lock: Arc::new(RwLock::new(())),
+            read_only,
+            in_transaction: Arc::new(AtomicBool::new(false)),
+            txn_owner: Arc::new(Mutex::new(None)),
+            world,
+            feature_map: FeatureMap::new(),
+            storage_features: FeatureMap::new(),
+            storage_instance: Arc::new(RwLock::new(None)),
+        }
+    }
+
+    /// Returns the associated [`World`].
+    #[must_use]
+    pub fn world(&self) -> &World {
+        &self.world
+    }
+
+    /// Assigns a model feature (`librdf_model_set_feature`).
+    pub fn set_feature(&self, iri: impl Into<String>, value: FeatureValue) {
+        self.feature_map.set(iri, value);
+    }
+
+    /// Returns a model feature (`librdf_model_get_feature`).
+    #[must_use]
+    pub fn feature(&self, iri: &str) -> Option<FeatureValue> {
+        self.feature_map.get(iri)
+    }
+
+    /// Assigns a storage feature used by [`crate::storage::StorageFacade`].
+    pub fn set_storage_feature(&self, iri: impl Into<String>, value: FeatureValue) {
+        self.storage_features.set(iri, value);
+    }
+
+    /// Returns a storage feature.
+    #[must_use]
+    pub fn storage_feature(&self, iri: &str) -> Option<FeatureValue> {
+        self.storage_features.get(iri)
+    }
+
+    /// Opaque storage instance token (`librdf_storage_get/set_instance`).
+    #[must_use]
+    pub fn storage_instance(&self) -> Option<BridgeToken> {
+        *self
+            .storage_instance
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    /// Sets the opaque storage instance token.
+    pub fn set_storage_instance(&self, token: Option<BridgeToken>) {
+        *self
+            .storage_instance
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = token;
+    }
+
+    /// Returns a Redland `librdf_storage_*`-shaped view of this model.
+    #[must_use]
+    pub fn as_storage(&self) -> StorageFacade<'_> {
+        StorageFacade::new(self)
     }
 
     /// Opens or creates a persistent format-v1 model at `path`.
@@ -240,14 +310,12 @@ impl Model {
             message: error.to_string(),
         })?;
         disk.load_into(&store)?;
-        Ok(Self {
+        Ok(Self::from_parts(
             store,
-            disk: Some(disk),
-            lock: Arc::new(RwLock::new(())),
-            read_only: options.is_read_only(),
-            in_transaction: Arc::new(AtomicBool::new(false)),
-            txn_owner: Arc::new(Mutex::new(None)),
-        })
+            Some(disk),
+            options.is_read_only(),
+            World::new(),
+        ))
     }
 
     /// Copies this model into a newly created destination store.

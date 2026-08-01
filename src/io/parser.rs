@@ -8,6 +8,7 @@ use oxigraph::model::{GraphName, Quad};
 use crate::io::Syntax;
 use crate::io::bom::{BomStrippingReader, strip_utf8_bom_bytes, strip_utf8_bom_str};
 use crate::io::location::SourceLocation;
+use crate::world::{FeatureMap, FeatureValue};
 use crate::{Error, Model, Result};
 
 /// Configured RDF parser facade (ADR-007 / ADR-008).
@@ -19,6 +20,7 @@ pub struct Parser {
     syntax: Syntax,
     base_iri: Option<String>,
     graph_target: GraphTarget,
+    features: FeatureMap,
 }
 
 impl Parser {
@@ -29,7 +31,19 @@ impl Parser {
             syntax,
             base_iri: None,
             graph_target: GraphTarget::DefaultGraph,
+            features: FeatureMap::new(),
         }
+    }
+
+    /// Sets a parser feature (Redland `librdf_parser_set_feature`).
+    pub fn set_feature(&self, iri: impl Into<String>, value: FeatureValue) {
+        self.features.set(iri, value);
+    }
+
+    /// Returns a parser feature when set.
+    #[must_use]
+    pub fn feature(&self, iri: &str) -> Option<FeatureValue> {
+        self.features.get(iri)
     }
 
     /// Returns the configured syntax.

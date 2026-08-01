@@ -1,18 +1,25 @@
 //! `librdf_parser` handle.
 
-use std::io::Cursor;
-use std::ptr;
-
-use oxiland::io::{Parser, Syntax};
-
+use crate::alloc::strdup_c;
 use crate::error::{abort_on_panic, clear_last_error, set_last_error};
+use crate::handles::TAG_STREAM;
+use crate::handles::io::FILE;
 use crate::handles::model::librdf_model;
+use crate::handles::node::librdf_node;
+use crate::handles::statement::StatementInner;
+use crate::handles::stream::{StreamInner, librdf_stream};
 use crate::handles::uri::librdf_uri;
 use crate::handles::world::librdf_world;
 use crate::handles::{
     TAG_MODEL, TAG_PARSER, TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle,
     cstr_optional, cstr_required, free_handle,
 };
+use oxiland::io::Parser as RdfParser;
+use oxiland::io::{Parser, Syntax};
+use std::ffi::c_void;
+use std::io::Cursor;
+use std::os::raw::c_char;
+use std::ptr;
 
 pub type librdf_parser = TypedHandle<ParserInner>;
 
@@ -187,4 +194,478 @@ pub extern "C" fn librdf_parser_parse_counted_string_into_model(
             }
         }
     })
+}
+
+impl ParserInner {
+    #[allow(dead_code)]
+    fn namespaces(&self) -> &[(String, String)] {
+        &[]
+    }
+}
+
+// Expand ParserInner fields via associated side state would require struct change;
+// store feature map and filters on the handle by extending the struct.
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_parser_from_factory(
+    world: *mut librdf_world,
+    factory: *mut c_void,
+) -> *mut librdf_parser {
+    let _ = factory;
+    librdf_new_parser(world, c"turtle".as_ptr(), ptr::null(), ptr::null_mut())
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_enumerate(
+    _world: *mut librdf_world,
+    counter: u32,
+    name: *mut *const c_char,
+    label: *mut *const c_char,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let all = Syntax::all();
+        let Ok(idx) = usize::try_from(counter) else {
+            return 0;
+        };
+        let Some(syntax) = all.get(idx).copied().filter(|s| s.can_parse()) else {
+            // fall through non-parse-only by index into all
+            let Some(syntax) = all.get(idx).copied() else {
+                return 0;
+            };
+            let cname: &'static std::ffi::CStr = match syntax.name() {
+                "turtle" => c"turtle",
+                "ntriples" => c"ntriples",
+                "nquads" => c"nquads",
+                "trig" => c"trig",
+                "rdfxml" => c"rdfxml",
+                _ => c"unknown",
+            };
+            if !name.is_null() {
+                unsafe { *name = cname.as_ptr() };
+            }
+            if !label.is_null() {
+                unsafe { *label = cname.as_ptr() };
+            }
+            return 1;
+        };
+        let cname: &'static std::ffi::CStr = match syntax.name() {
+            "turtle" => c"turtle",
+            "ntriples" => c"ntriples",
+            "nquads" => c"nquads",
+            "trig" => c"trig",
+            "rdfxml" => c"rdfxml",
+            _ => c"unknown",
+        };
+        if !name.is_null() {
+            unsafe { *name = cname.as_ptr() };
+        }
+        if !label.is_null() {
+            unsafe { *label = cname.as_ptr() };
+        }
+        1
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_get_description(
+    _world: *mut librdf_world,
+    counter: u32,
+) -> *const c_void {
+    // Opaque without Raptor; non-null cookie for known indexes.
+    let all = Syntax::all();
+    if (counter as usize) < all.len() {
+        (counter as usize + 1) as *const c_void
+    } else {
+        ptr::null()
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_guess_name(
+    mime_type: *const c_char,
+    buffer: *const u8,
+    _len: usize,
+    identifier: *const c_char,
+) -> *const c_char {
+    librdf_parser_guess_name2(ptr::null_mut(), mime_type, buffer, identifier)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_guess_name2(
+    _world: *mut librdf_world,
+    mime_type: *const c_char,
+    buffer: *const u8,
+    identifier: *const c_char,
+) -> *const c_char {
+    abort_on_panic(|| {
+        clear_last_error();
+        if let Ok(Some(mime)) = unsafe { cstr_optional(mime_type, "mime_type") } {
+            if let Ok(syntax) = Syntax::from_media_type(mime) {
+                return match syntax.name() {
+                    "turtle" => c"turtle".as_ptr(),
+                    "ntriples" => c"ntriples".as_ptr(),
+                    "nquads" => c"nquads".as_ptr(),
+                    "trig" => c"trig".as_ptr(),
+                    "rdfxml" => c"rdfxml".as_ptr(),
+                    _ => ptr::null(),
+                };
+            }
+        }
+        if let Ok(Some(id)) = unsafe { cstr_optional(identifier, "identifier") } {
+            let lower = id.to_ascii_lowercase();
+            if lower.ends_with(".ttl") || lower.ends_with(".turtle") {
+                return c"turtle".as_ptr();
+            }
+            if lower.ends_with(".nt") {
+                return c"ntriples".as_ptr();
+            }
+            if lower.ends_with(".nq") {
+                return c"nquads".as_ptr();
+            }
+            if lower.ends_with(".trig") {
+                return c"trig".as_ptr();
+            }
+            if lower.ends_with(".rdf") || lower.ends_with(".xml") {
+                return c"rdfxml".as_ptr();
+            }
+        }
+        if !buffer.is_null() {
+            return c"turtle".as_ptr();
+        }
+        ptr::null()
+    })
+}
+
+fn parse_bytes_to_stream(
+    parser: &ParserInner,
+    bytes: &[u8],
+    base_uri: *mut librdf_uri,
+) -> *mut librdf_stream {
+    let mut rdf_parser = RdfParser::for_syntax(parser.syntax);
+    if !base_uri.is_null() {
+        let Some(base) = (unsafe { borrow_handle(base_uri, TAG_URI) }) else {
+            return ptr::null_mut();
+        };
+        rdf_parser = match rdf_parser.base_iri(base.inner.node.as_str()) {
+            Ok(p) => p,
+            Err(e) => {
+                set_last_error(e.to_string());
+                return ptr::null_mut();
+            }
+        };
+    }
+    let mut statements = Vec::new();
+    // Parse into a temporary model then stream.
+    let tmp = match oxiland::Model::new() {
+        Ok(m) => m,
+        Err(e) => {
+            set_last_error(e.to_string());
+            return ptr::null_mut();
+        }
+    };
+    if let Err(e) = rdf_parser.load_into(&tmp, Cursor::new(bytes)) {
+        set_last_error(e.to_string());
+        return ptr::null_mut();
+    }
+    for item in tmp.find(oxiland::StatementPattern::default()) {
+        match item {
+            Ok(quad) => {
+                statements.push(StatementInner::from_triple(oxigraph::model::Triple::new(
+                    quad.subject,
+                    quad.predicate,
+                    quad.object,
+                )));
+            }
+            Err(e) => {
+                set_last_error(e.to_string());
+                return ptr::null_mut();
+            }
+        }
+    }
+    box_handle(
+        TAG_STREAM,
+        StreamInner {
+            statements,
+            index: 0,
+            current: None,
+        },
+    )
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_parse_as_stream(
+    parser: *mut librdf_parser,
+    uri: *mut librdf_uri,
+    base_uri: *mut librdf_uri,
+) -> *mut librdf_stream {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(parser) = (unsafe { borrow_handle(parser, TAG_PARSER) }) else {
+            return ptr::null_mut();
+        };
+        let Some(uri) = (unsafe { borrow_handle(uri, TAG_URI) }) else {
+            return ptr::null_mut();
+        };
+        let path = uri
+            .inner
+            .node
+            .as_str()
+            .strip_prefix("file://")
+            .unwrap_or(uri.inner.node.as_str());
+        let bytes = match std::fs::read(path) {
+            Ok(b) => b,
+            Err(e) => {
+                set_last_error(e.to_string());
+                return ptr::null_mut();
+            }
+        };
+        parse_bytes_to_stream(&parser.inner, &bytes, base_uri)
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_parse_into_model(
+    parser: *mut librdf_parser,
+    uri: *mut librdf_uri,
+    base_uri: *mut librdf_uri,
+    model: *mut librdf_model,
+) -> i32 {
+    let stream = librdf_parser_parse_as_stream(parser, uri, base_uri);
+    if stream.is_null() {
+        return -1;
+    }
+    let rc = crate::handles::model::librdf_model_add_statements(model, stream);
+    crate::handles::stream::librdf_free_stream(stream);
+    rc
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_parse_string_as_stream(
+    parser: *mut librdf_parser,
+    string: *const u8,
+    base_uri: *mut librdf_uri,
+) -> *mut librdf_stream {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(parser) = (unsafe { borrow_handle(parser, TAG_PARSER) }) else {
+            return ptr::null_mut();
+        };
+        let Some(string) = (unsafe { cstr_required(string.cast(), "string") }) else {
+            return ptr::null_mut();
+        };
+        parse_bytes_to_stream(&parser.inner, string.as_bytes(), base_uri)
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_parse_counted_string_as_stream(
+    parser: *mut librdf_parser,
+    string: *const u8,
+    length: usize,
+    base_uri: *mut librdf_uri,
+) -> *mut librdf_stream {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(parser) = (unsafe { borrow_handle(parser, TAG_PARSER) }) else {
+            return ptr::null_mut();
+        };
+        if string.is_null() {
+            set_last_error("string is null");
+            return ptr::null_mut();
+        }
+        let bytes = unsafe { std::slice::from_raw_parts(string, length) };
+        parse_bytes_to_stream(&parser.inner, bytes, base_uri)
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_parse_file_handle_as_stream(
+    parser: *mut librdf_parser,
+    fh: *mut FILE,
+    _close_fh: i32,
+    base_uri: *mut librdf_uri,
+) -> *mut librdf_stream {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(parser) = (unsafe { borrow_handle(parser, TAG_PARSER) }) else {
+            return ptr::null_mut();
+        };
+        if fh.is_null() {
+            set_last_error("file handle is null");
+            return ptr::null_mut();
+        }
+        let mut bytes = Vec::new();
+        loop {
+            let mut buf = [0u8; 4096];
+            let n = unsafe { libc::fread(buf.as_mut_ptr().cast(), 1, buf.len(), fh) };
+            if n == 0 {
+                break;
+            }
+            bytes.extend_from_slice(&buf[..n]);
+        }
+        parse_bytes_to_stream(&parser.inner, &bytes, base_uri)
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_parse_file_handle_into_model(
+    parser: *mut librdf_parser,
+    fh: *mut FILE,
+    close_fh: i32,
+    base_uri: *mut librdf_uri,
+    model: *mut librdf_model,
+) -> i32 {
+    let stream = librdf_parser_parse_file_handle_as_stream(parser, fh, close_fh, base_uri);
+    if stream.is_null() {
+        return -1;
+    }
+    let rc = crate::handles::model::librdf_model_add_statements(model, stream);
+    crate::handles::stream::librdf_free_stream(stream);
+    if close_fh != 0 && !fh.is_null() {
+        unsafe { libc::fclose(fh) };
+    }
+    rc
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_parse_iostream_as_stream(
+    parser: *mut librdf_parser,
+    _iostream: *mut c_void,
+    base_uri: *mut librdf_uri,
+) -> *mut librdf_stream {
+    let _ = (parser, base_uri);
+    set_last_error("raptor iostream parsing is not available");
+    ptr::null_mut()
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_parse_iostream_into_model(
+    parser: *mut librdf_parser,
+    iostream: *mut c_void,
+    base_uri: *mut librdf_uri,
+    model: *mut librdf_model,
+) -> i32 {
+    let _ = (parser, iostream, base_uri, model);
+    set_last_error("raptor iostream parsing is not available");
+    -1
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_get_accept_header(parser: *mut librdf_parser) -> *mut c_char {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(parser) = (unsafe { borrow_handle(parser, TAG_PARSER) }) else {
+            return ptr::null_mut();
+        };
+        strdup_c(parser.inner.syntax.media_type())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_get_namespaces_seen_count(parser: *mut librdf_parser) -> i32 {
+    let _ = unsafe { borrow_handle(parser, TAG_PARSER) };
+    0
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_get_namespaces_seen_prefix(
+    parser: *mut librdf_parser,
+    _ordinal: i32,
+) -> *const c_char {
+    let _ = parser;
+    ptr::null()
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_get_namespaces_seen_uri(
+    parser: *mut librdf_parser,
+    _ordinal: i32,
+) -> *mut librdf_uri {
+    let _ = parser;
+    ptr::null_mut()
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_get_feature(
+    parser: *mut librdf_parser,
+    _feature: *mut librdf_uri,
+) -> *mut librdf_node {
+    let _ = parser;
+    ptr::null_mut()
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_set_feature(
+    parser: *mut librdf_parser,
+    _feature: *mut librdf_uri,
+    _value: *mut librdf_node,
+) -> i32 {
+    if unsafe { borrow_handle(parser, TAG_PARSER) }.is_none() {
+        -1
+    } else {
+        0
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_set_error(
+    parser: *mut librdf_parser,
+    _user_data: *mut c_void,
+    _error_fn: *mut c_void,
+) {
+    let _ = parser;
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_set_warning(
+    parser: *mut librdf_parser,
+    _user_data: *mut c_void,
+    _warning_fn: *mut c_void,
+) {
+    let _ = parser;
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_get_uri_filter(parser: *mut librdf_parser) -> *mut c_void {
+    let _ = parser;
+    ptr::null_mut()
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_set_uri_filter(
+    parser: *mut librdf_parser,
+    _filter: *mut c_void,
+    _user_data: *mut c_void,
+) {
+    let _ = parser;
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_parser_register_factory(
+    world: *mut librdf_world,
+    name: *const c_char,
+    _label: *const c_char,
+    _mime_type: *const c_char,
+    _uri_string: *const u8,
+    _factory: Option<unsafe extern "C" fn(*mut c_void)>,
+) {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
+            return;
+        };
+        let Some(name) = (unsafe { cstr_required(name, "name") }) else {
+            return;
+        };
+        if Syntax::from_name(name).is_ok()
+            || ["turtle", "ntriples", "nquads", "trig", "rdfxml", "raptor"]
+                .iter()
+                .any(|k| k.eq_ignore_ascii_case(name))
+        {
+            handle.inner.registered_parsers.push(name.to_owned());
+        } else {
+            set_last_error(format!("unknown parser factory '{name}'"));
+        }
+    });
 }

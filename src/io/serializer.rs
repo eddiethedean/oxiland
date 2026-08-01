@@ -6,6 +6,7 @@ use oxigraph::io::RdfSerializer;
 use oxigraph::model::{GraphNameRef, Quad, QuadRef, Triple, TripleRef};
 
 use crate::io::Syntax;
+use crate::world::{FeatureMap, FeatureValue};
 use crate::{Error, Model, Result, StatementPattern};
 
 /// Configured RDF serializer facade.
@@ -17,6 +18,7 @@ pub struct Serializer {
     syntax: Syntax,
     prefixes: Vec<(String, String)>,
     base_iri: Option<String>,
+    features: FeatureMap,
 }
 
 impl Serializer {
@@ -27,7 +29,19 @@ impl Serializer {
             syntax,
             prefixes: Vec::new(),
             base_iri: None,
+            features: FeatureMap::new(),
         }
+    }
+
+    /// Sets a serializer feature (Redland `librdf_serializer_set_feature`).
+    pub fn set_feature(&self, iri: impl Into<String>, value: FeatureValue) {
+        self.features.set(iri, value);
+    }
+
+    /// Returns a serializer feature when set.
+    #[must_use]
+    pub fn feature(&self, iri: &str) -> Option<FeatureValue> {
+        self.features.get(iri)
     }
 
     /// Returns the configured syntax.

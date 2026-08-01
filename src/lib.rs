@@ -38,6 +38,7 @@
 #![warn(missing_docs)]
 
 mod error;
+pub mod factory;
 pub mod io;
 mod model;
 mod query;
@@ -53,9 +54,11 @@ pub use query::{
 };
 pub use storage::{
     LayoutReaderPolicy, OpenOptions, StorageBackend, StorageBackendDescriptor, StorageCapabilities,
-    compiled_backends, is_known_backend_name, supported_backends,
+    StorageFacade, compiled_backends, is_known_backend_name, supported_backends,
 };
-pub use world::{FeatureValue, LogFacility, LogLevel, LogRecord, World};
+pub use world::{
+    BridgeToken, FeatureMap, FeatureValue, LogFacility, LogLevel, LogRecord, StorageFeatures, World,
+};
 
 /// RDF term, triple, quad, and graph-name types used by Oxiland.
 ///

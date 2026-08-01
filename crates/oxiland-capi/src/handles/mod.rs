@@ -6,8 +6,16 @@ use std::sync::{LazyLock, Mutex};
 
 use crate::error::set_last_error;
 
+pub mod concepts;
 pub mod digest;
+pub mod files;
+pub mod hash;
 pub mod helpers;
+pub mod heuristics;
+pub mod io;
+pub mod iterator;
+pub mod list;
+pub mod log_msg;
 pub mod model;
 pub mod node;
 pub mod parser;
@@ -31,6 +39,10 @@ pub const TAG_SERIALIZER: u32 = 0x4F58_5709;
 pub const TAG_QUERY: u32 = 0x4F58_570A;
 pub const TAG_QUERY_RESULTS: u32 = 0x4F58_570B;
 pub const TAG_DIGEST: u32 = 0x4F58_570C;
+pub const TAG_HASH: u32 = 0x4F58_570D;
+pub const TAG_LIST: u32 = 0x4F58_570E;
+pub const TAG_ITERATOR: u32 = 0x4F58_570F;
+pub const TAG_QUERY_RESULTS_FORMATTER: u32 = 0x4F58_5710;
 pub const TAG_FREED: u32 = 0xDEAD_F00D;
 
 static LIVE: LazyLock<Mutex<HashMap<usize, u32>>> = LazyLock::new(|| Mutex::new(HashMap::new()));

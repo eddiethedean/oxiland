@@ -1,21 +1,22 @@
 //! `librdf_node` handle.
 
-use std::os::raw::c_char;
-use std::ptr;
-
-use oxigraph::model::{
-    BlankNode, Literal, NamedNode, NamedNodeRef, NamedOrBlankNode, NamedOrBlankNodeRef, Term,
-    TermRef,
-};
-
 use crate::alloc::strdup_c;
 use crate::error::{abort_on_panic, clear_last_error, set_last_error};
+use crate::handles::io::{FILE, write_iostream, writeln_file};
+use crate::handles::iterator::{box_items, librdf_iterator};
 use crate::handles::uri::{UriInner, librdf_uri};
 use crate::handles::world::librdf_world;
 use crate::handles::{
     TAG_NODE, TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle, cstr_optional,
     cstr_required, free_handle,
 };
+use oxigraph::model::{
+    BlankNode, Literal, NamedNode, NamedNodeRef, NamedOrBlankNode, NamedOrBlankNodeRef, Term,
+    TermRef,
+};
+use std::ffi::c_void;
+use std::os::raw::c_char;
+use std::ptr;
 
 pub type librdf_node = TypedHandle<NodeInner>;
 
@@ -350,4 +351,476 @@ pub unsafe fn take_node(ptr: *mut librdf_node) -> Option<NodeInner> {
     let inner = NodeInner::from_term(handle.inner.term.clone());
     unsafe { free_handle(ptr, TAG_NODE) };
     Some(inner)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_node(world: *mut librdf_world) -> *mut librdf_node {
+    // Redland creates an empty/unknown node; we use a fresh blank.
+    librdf_new_node_from_blank_identifier(world, ptr::null())
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_node_from_uri(
+    world: *mut librdf_world,
+    uri: *mut librdf_uri,
+) -> *mut librdf_node {
+    abort_on_panic(|| {
+        clear_last_error();
+        if unsafe { borrow_handle(world, TAG_WORLD) }.is_none() {
+            return ptr::null_mut();
+        }
+        let Some(uri) = (unsafe { borrow_handle(uri, TAG_URI) }) else {
+            return ptr::null_mut();
+        };
+        box_handle(
+            TAG_NODE,
+            NodeInner::from_term(Term::NamedNode(uri.inner.node.clone())),
+        )
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_node_from_uri_local_name(
+    world: *mut librdf_world,
+    uri: *mut librdf_uri,
+    local_name: *const c_char,
+) -> *mut librdf_node {
+    abort_on_panic(|| {
+        clear_last_error();
+        if unsafe { borrow_handle(world, TAG_WORLD) }.is_none() {
+            return ptr::null_mut();
+        }
+        let Some(uri) = (unsafe { borrow_handle(uri, TAG_URI) }) else {
+            return ptr::null_mut();
+        };
+        let Some(local) = (unsafe { cstr_required(local_name, "local_name") }) else {
+            return ptr::null_mut();
+        };
+        let iri = format!("{}{local}", uri.inner.node.as_str());
+        match NamedNode::new(iri) {
+            Ok(n) => box_handle(TAG_NODE, NodeInner::from_term(Term::NamedNode(n))),
+            Err(e) => {
+                set_last_error(e.to_string());
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_node_from_normalised_uri_string(
+    world: *mut librdf_world,
+    uri_string: *const c_char,
+    source_uri: *mut librdf_uri,
+    base_uri: *mut librdf_uri,
+) -> *mut librdf_node {
+    let _ = (source_uri, base_uri);
+    librdf_new_node_from_uri_string(world, uri_string)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_node_from_node(node: *mut librdf_node) -> *mut librdf_node {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(node) = (unsafe { borrow_handle(node, TAG_NODE) }) else {
+            return ptr::null_mut();
+        };
+        box_handle(TAG_NODE, node.inner.clone())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_node_from_counted_uri_string(
+    world: *mut librdf_world,
+    uri_string: *const c_char,
+    length: usize,
+) -> *mut librdf_node {
+    abort_on_panic(|| {
+        clear_last_error();
+        if uri_string.is_null() {
+            set_last_error("uri_string is null");
+            return ptr::null_mut();
+        }
+        let bytes = unsafe { std::slice::from_raw_parts(uri_string.cast::<u8>(), length) };
+        let s = match std::str::from_utf8(bytes) {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("uri_string is not UTF-8");
+                return ptr::null_mut();
+            }
+        };
+        let c = match std::ffi::CString::new(s) {
+            Ok(c) => c,
+            Err(_) => {
+                set_last_error("uri_string contains NUL");
+                return ptr::null_mut();
+            }
+        };
+        librdf_new_node_from_uri_string(world, c.as_ptr())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_node_from_counted_blank_identifier(
+    world: *mut librdf_world,
+    identifier: *const u8,
+    length: usize,
+) -> *mut librdf_node {
+    abort_on_panic(|| {
+        clear_last_error();
+        if identifier.is_null() {
+            return librdf_new_node_from_blank_identifier(world, ptr::null());
+        }
+        let bytes = unsafe { std::slice::from_raw_parts(identifier, length) };
+        let s = match std::str::from_utf8(bytes) {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("identifier is not UTF-8");
+                return ptr::null_mut();
+            }
+        };
+        let c = match std::ffi::CString::new(s) {
+            Ok(c) => c,
+            Err(_) => {
+                set_last_error("identifier contains NUL");
+                return ptr::null_mut();
+            }
+        };
+        librdf_new_node_from_blank_identifier(world, c.as_ptr().cast())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_node_from_typed_literal(
+    world: *mut librdf_world,
+    value: *const c_char,
+    xml_language: *const c_char,
+    datatype_uri: *mut librdf_uri,
+) -> *mut librdf_node {
+    abort_on_panic(|| {
+        clear_last_error();
+        if unsafe { borrow_handle(world, TAG_WORLD) }.is_none() {
+            return ptr::null_mut();
+        }
+        let Some(value) = (unsafe { cstr_required(value, "value") }) else {
+            return ptr::null_mut();
+        };
+        let language = match unsafe { cstr_optional(xml_language, "xml_language") } {
+            Ok(v) => v,
+            Err(()) => return ptr::null_mut(),
+        };
+        if language.is_some_and(|l| !l.is_empty()) && !datatype_uri.is_null() {
+            set_last_error("typed literal cannot have language");
+            return ptr::null_mut();
+        }
+        let literal = if !datatype_uri.is_null() {
+            let Some(dt) = (unsafe { borrow_handle(datatype_uri, TAG_URI) }) else {
+                return ptr::null_mut();
+            };
+            Literal::new_typed_literal(value, dt.inner.node.clone())
+        } else if let Some(lang) = language.filter(|l| !l.is_empty()) {
+            match Literal::new_language_tagged_literal(value, lang) {
+                Ok(l) => l,
+                Err(e) => {
+                    set_last_error(e.to_string());
+                    return ptr::null_mut();
+                }
+            }
+        } else {
+            Literal::new_simple_literal(value)
+        };
+        box_handle(TAG_NODE, NodeInner::from_term(Term::Literal(literal)))
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_node_from_typed_counted_literal(
+    world: *mut librdf_world,
+    value: *const c_char,
+    value_len: usize,
+    xml_language: *const c_char,
+    xml_language_len: usize,
+    datatype_uri: *mut librdf_uri,
+) -> *mut librdf_node {
+    abort_on_panic(|| {
+        clear_last_error();
+        if value.is_null() {
+            set_last_error("value is null");
+            return ptr::null_mut();
+        }
+        let vbytes = unsafe { std::slice::from_raw_parts(value.cast::<u8>(), value_len) };
+        let v = match std::str::from_utf8(vbytes) {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("value is not UTF-8");
+                return ptr::null_mut();
+            }
+        };
+        let lang_c = if xml_language.is_null() || xml_language_len == 0 {
+            None
+        } else {
+            let lbytes =
+                unsafe { std::slice::from_raw_parts(xml_language.cast::<u8>(), xml_language_len) };
+            match std::str::from_utf8(lbytes) {
+                Ok(s) => Some(s.to_owned()),
+                Err(_) => {
+                    set_last_error("language is not UTF-8");
+                    return ptr::null_mut();
+                }
+            }
+        };
+        let vc = match std::ffi::CString::new(v) {
+            Ok(c) => c,
+            Err(_) => {
+                set_last_error("value contains NUL");
+                return ptr::null_mut();
+            }
+        };
+        let lc = lang_c
+            .as_ref()
+            .and_then(|l| std::ffi::CString::new(l.as_str()).ok());
+        librdf_new_node_from_typed_literal(
+            world,
+            vc.as_ptr(),
+            lc.as_ref().map(|c| c.as_ptr()).unwrap_or(ptr::null()),
+            datatype_uri,
+        )
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_node_get_li_ordinal(node: *mut librdf_node) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(node) = (unsafe { borrow_handle(node, TAG_NODE) }) else {
+            return -1;
+        };
+        let Term::NamedNode(n) = &node.inner.term else {
+            return -1;
+        };
+        let s = n.as_str();
+        const PREFIX: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#_";
+        if let Some(rest) = s.strip_prefix(PREFIX) {
+            rest.parse().unwrap_or(-1)
+        } else {
+            -1
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_node_get_literal_value_as_counted_string(
+    node: *mut librdf_node,
+    len_p: *mut usize,
+) -> *const c_char {
+    let p = librdf_node_get_literal_value(node);
+    if !p.is_null() && !len_p.is_null() {
+        let s = unsafe { std::ffi::CStr::from_ptr(p) };
+        unsafe { *len_p = s.to_bytes().len() };
+    }
+    p
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_node_get_literal_value_as_latin1(node: *mut librdf_node) -> *mut c_char {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(node) = (unsafe { borrow_handle(node, TAG_NODE) }) else {
+            return ptr::null_mut();
+        };
+        let Term::Literal(lit) = &node.inner.term else {
+            return ptr::null_mut();
+        };
+        let mut out = Vec::new();
+        for ch in lit.value().chars() {
+            out.push(if (ch as u32) <= 0xff { ch as u8 } else { b'?' });
+        }
+        out.push(0);
+        let ptr = unsafe { libc::malloc(out.len()) }.cast::<c_char>();
+        if ptr.is_null() {
+            set_last_error("out of memory");
+            return ptr::null_mut();
+        }
+        unsafe { ptr::copy_nonoverlapping(out.as_ptr().cast(), ptr, out.len()) };
+        ptr
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_node_get_literal_value_datatype_uri(
+    node: *mut librdf_node,
+) -> *mut librdf_uri {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(node) = (unsafe { borrow_handle(node, TAG_NODE) }) else {
+            return ptr::null_mut();
+        };
+        let Term::Literal(lit) = &node.inner.term else {
+            return ptr::null_mut();
+        };
+        // Always has a datatype in RDF 1.1 (xsd:string / rdf:langString / explicit)
+        box_handle(TAG_URI, UriInner::new(lit.datatype().into_owned()))
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_node_get_literal_value_is_wf_xml(node: *mut librdf_node) -> i32 {
+    // Oxiland does not track wf-xml; return 0.
+    let _ = node;
+    0
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_node_get_counted_blank_identifier(
+    node: *mut librdf_node,
+    len_p: *mut usize,
+) -> *const c_char {
+    let p = librdf_node_get_blank_identifier(node);
+    if !p.is_null() && !len_p.is_null() {
+        let s = unsafe { std::ffi::CStr::from_ptr(p) };
+        unsafe { *len_p = s.to_bytes().len() };
+    }
+    p
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_node_to_counted_string(
+    node: *mut librdf_node,
+    len_p: *mut usize,
+) -> *mut u8 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(node) = (unsafe { borrow_handle(node, TAG_NODE) }) else {
+            return ptr::null_mut();
+        };
+        let text = node.inner.term.to_string();
+        if !len_p.is_null() {
+            unsafe { *len_p = text.len() };
+        }
+        strdup_c(&text).cast()
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_node_print(node: *mut librdf_node, fh: *mut FILE) {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(node) = (unsafe { borrow_handle(node, TAG_NODE) }) else {
+            return;
+        };
+        let _ = writeln_file(fh, &node.inner.term.to_string());
+    });
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_node_write(node: *mut librdf_node, iostr: *mut c_void) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(node) = (unsafe { borrow_handle(node, TAG_NODE) }) else {
+            return -1;
+        };
+        write_iostream(iostr, node.inner.term.to_string().as_bytes())
+    })
+}
+
+/// Encode node as length-prefixed UTF-8 (Oxiland portable encoding).
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_node_encode(
+    node: *mut librdf_node,
+    buffer: *mut u8,
+    length: usize,
+) -> usize {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(node) = (unsafe { borrow_handle(node, TAG_NODE) }) else {
+            return 0;
+        };
+        let text = node.inner.term.to_string();
+        let needed = text.len() + 1;
+        if buffer.is_null() || length < needed {
+            return needed;
+        }
+        unsafe {
+            ptr::copy_nonoverlapping(text.as_ptr(), buffer, text.len());
+            *buffer.add(text.len()) = 0;
+        }
+        needed
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_node_decode(
+    node: *mut librdf_node,
+    buffer: *const u8,
+    length: usize,
+) -> usize {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(node) = (unsafe { borrow_handle(node, TAG_NODE) }) else {
+            return 0;
+        };
+        if buffer.is_null() || length == 0 {
+            return 0;
+        }
+        let bytes = unsafe { std::slice::from_raw_parts(buffer, length) };
+        let end = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
+        let text = match std::str::from_utf8(&bytes[..end]) {
+            Ok(t) => t,
+            Err(_) => {
+                set_last_error("decode buffer not UTF-8");
+                return 0;
+            }
+        };
+        // Best-effort: IRI, blank, or literal string.
+        let term = if let Some(id) = text.strip_prefix("_:") {
+            BlankNode::new(id).ok().map(Term::BlankNode)
+        } else if text.starts_with('<') && text.ends_with('>') {
+            NamedNode::new(&text[1..text.len() - 1])
+                .ok()
+                .map(Term::NamedNode)
+        } else if text.starts_with('"') {
+            Some(Term::Literal(Literal::new_simple_literal(
+                text.trim_matches('"'),
+            )))
+        } else {
+            NamedNode::new(text).ok().map(Term::NamedNode)
+        };
+        match term {
+            Some(t) => {
+                node.inner = NodeInner::from_term(t);
+                end + if end < bytes.len() { 1 } else { 0 }
+            }
+            None => 0,
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_node_static_iterator_create(
+    nodes: *mut *mut librdf_node,
+    length: i32,
+) -> *mut librdf_iterator {
+    abort_on_panic(|| {
+        clear_last_error();
+        if nodes.is_null() || length < 0 {
+            return ptr::null_mut();
+        }
+        let len = length as usize;
+        let mut items = Vec::with_capacity(len);
+        for i in 0..len {
+            let p = unsafe { *nodes.add(i) };
+            items.push(p.cast());
+        }
+        box_items(items)
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_node_new_static_node_iterator(
+    world: *mut librdf_world,
+    nodes: *mut *mut librdf_node,
+    length: i32,
+) -> *mut librdf_iterator {
+    let _ = world;
+    librdf_node_static_iterator_create(nodes, length)
 }

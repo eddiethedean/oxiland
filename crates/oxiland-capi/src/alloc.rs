@@ -24,6 +24,42 @@ pub fn strdup_c(value: &str) -> *mut c_char {
     ptr
 }
 
+/// Allocates `size` bytes (pair with [`librdf_free_memory`]).
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_alloc_memory(size: usize) -> *mut c_void {
+    abort_on_panic(|| {
+        clear_last_error();
+        if size == 0 {
+            return ptr::null_mut();
+        }
+        let p = unsafe { libc::malloc(size) };
+        if p.is_null() {
+            set_last_error("out of memory");
+        }
+        p
+    })
+}
+
+/// Allocates and zeroes `nmemb * size` bytes.
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_calloc_memory(nmemb: usize, size: usize) -> *mut c_void {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(bytes) = nmemb.checked_mul(size) else {
+            set_last_error("allocation size overflow");
+            return ptr::null_mut();
+        };
+        if bytes == 0 {
+            return ptr::null_mut();
+        }
+        let p = unsafe { libc::calloc(nmemb, size) };
+        if p.is_null() {
+            set_last_error("out of memory");
+        }
+        p
+    })
+}
+
 /// Frees a pointer previously returned by Oxiland C string/buffer APIs.
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_free_memory(ptr: *mut c_void) {

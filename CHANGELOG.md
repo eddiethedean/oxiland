@@ -15,14 +15,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   validators, a frozen target/profile matrix, and regression tests for the
   no-waiver/no-averaging release rules
 - ADR-024 decision to keep the physical durable adapter sealed for 1.0
+- ADR-025 baseline factory registration (supersedes ADR-018); ADR-026 Raptor
+  and Rasqal world bridges; ADR-027 optional LMDB/heed decision (R-023)
+- Full C ABI allowlist covering the public `librdf_*` denominator (`OXILAND_0.10`)
+  with lifecycle coverage and Linux UBSan alongside ASan
+- Safe Rust storage facade, feature get/set, and factory registration APIs
+- 0.10 qualification bundle: inventory, six-profile parity evidence, three
+  performance profiles, soak, fuzz record, and Python stub snapshot
 
 ### Changed
 
 - Workspace, CLI, C, and Python package versions are aligned at `0.10.0`
-- The 0.10 roadmap state is in progress; reports explicitly retain hard-gate
-  blockers instead of treating 0.9 exclusions as full parity
+- The 0.10 roadmap state is `complete`; `scripts/check-0.10-release.py` passes
 - Storage capability construction is available uniformly through
   `StorageCapabilities::for_backend`
+- Risk register marks R-001/002/004/005/006/009/012/013/015/019/021/022/023
+  mitigated where inventory, C ABI, parity, performance, and crash evidence
+  now exist
 
 ### Fixed
 

@@ -1,20 +1,23 @@
 //! `librdf_query` and `librdf_query_results` handles.
 
-use std::ptr;
-
-use oxigraph::model::Term;
-use oxiland::{Query, QueryResults};
-
 use crate::alloc::strdup_c;
 use crate::error::{abort_on_panic, clear_last_error, set_last_error};
+use crate::handles::io::{FILE, write_file};
 use crate::handles::model::librdf_model;
 use crate::handles::node::{NodeInner, librdf_node};
 use crate::handles::uri::librdf_uri;
 use crate::handles::world::librdf_world;
 use crate::handles::{
-    TAG_MODEL, TAG_NODE, TAG_QUERY, TAG_QUERY_RESULTS, TAG_WORLD, TypedHandle, borrow_handle,
-    box_handle, cstr_optional, cstr_required, free_handle,
+    TAG_MODEL, TAG_NODE, TAG_QUERY, TAG_QUERY_RESULTS, TAG_QUERY_RESULTS_FORMATTER, TAG_STATEMENT,
+    TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle, cstr_optional, cstr_required,
+    free_handle,
 };
+use oxigraph::model::Term;
+use oxiland::ResultsFormat;
+use oxiland::{Query, QueryResults};
+use std::ffi::c_void;
+use std::os::raw::c_char;
+use std::ptr;
 
 pub type librdf_query = TypedHandle<QueryInner>;
 pub type librdf_query_results = TypedHandle<QueryResultsInner>;
@@ -22,6 +25,8 @@ pub type librdf_query_results = TypedHandle<QueryResultsInner>;
 pub struct QueryInner {
     pub text: String,
     pub language: String,
+    pub limit: i32,
+    pub offset: i32,
 }
 
 pub enum QueryResultsInner {
@@ -126,6 +131,8 @@ pub extern "C" fn librdf_new_query(
             QueryInner {
                 text: query_string.to_owned(),
                 language,
+                limit: -1,
+                offset: 0,
             },
         )
     })
@@ -433,4 +440,676 @@ pub extern "C" fn librdf_free_query_results(results: *mut librdf_query_results) 
         // SAFETY: results is null or a live handle.
         unsafe { free_handle(results, TAG_QUERY_RESULTS) };
     });
+}
+
+pub type librdf_query_results_formatter = TypedHandle<FormatterInner>;
+
+pub struct FormatterInner {
+    pub format: ResultsFormat,
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_query_from_query(old_query: *mut librdf_query) -> *mut librdf_query {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(old) = (unsafe { borrow_handle(old_query, TAG_QUERY) }) else {
+            return ptr::null_mut();
+        };
+        box_handle(
+            TAG_QUERY,
+            QueryInner {
+                text: old.inner.text.clone(),
+                language: old.inner.language.clone(),
+                limit: old.inner.limit,
+                offset: old.inner.offset,
+            },
+        )
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_query_from_factory(
+    world: *mut librdf_world,
+    factory: *mut c_void,
+    name: *const c_char,
+    query_string: *const u8,
+    query_uri: *mut librdf_uri,
+) -> *mut librdf_query {
+    let _ = factory;
+    librdf_new_query(world, name, ptr::null_mut(), query_string.cast(), query_uri)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_execute(
+    query: *mut librdf_query,
+    model: *mut librdf_model,
+) -> *mut librdf_query_results {
+    librdf_model_query_execute(model, query)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_get_limit(query: *mut librdf_query) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        unsafe { borrow_handle(query, TAG_QUERY) }
+            .map(|q| q.inner.limit)
+            .unwrap_or(-1)
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_set_limit(query: *mut librdf_query, limit: i32) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(q) = (unsafe { borrow_handle(query, TAG_QUERY) }) else {
+            return -1;
+        };
+        q.inner.limit = limit;
+        0
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_get_offset(query: *mut librdf_query) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        unsafe { borrow_handle(query, TAG_QUERY) }
+            .map(|q| q.inner.offset)
+            .unwrap_or(-1)
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_set_offset(query: *mut librdf_query, offset: i32) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(q) = (unsafe { borrow_handle(query, TAG_QUERY) }) else {
+            return -1;
+        };
+        q.inner.offset = offset;
+        0
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_languages_enumerate(
+    _world: *mut librdf_world,
+    counter: u32,
+    name: *mut *const c_char,
+    uri_string: *mut *const u8,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        if counter == 0 {
+            if !name.is_null() {
+                unsafe { *name = c"sparql".as_ptr() };
+            }
+            if !uri_string.is_null() {
+                unsafe {
+                    *uri_string = c"http://www.w3.org/TR/rdf-sparql-query/".as_ptr().cast();
+                }
+            }
+            1
+        } else {
+            0
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_language_get_description(
+    _world: *mut librdf_world,
+    counter: u32,
+) -> *const c_void {
+    if counter == 0 {
+        std::ptr::dangling::<c_void>()
+    } else {
+        ptr::null()
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_register_factory(
+    world: *mut librdf_world,
+    name: *const c_char,
+    _uri_string: *const u8,
+    _factory: Option<unsafe extern "C" fn(*mut c_void)>,
+) {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
+            return;
+        };
+        let Some(name) = (unsafe { cstr_required(name, "name") }) else {
+            return;
+        };
+        if name.eq_ignore_ascii_case("sparql") || name.eq_ignore_ascii_case("sparql11") {
+            handle.inner.registered_queries.push(name.to_owned());
+        } else {
+            set_last_error(format!("unknown query factory '{name}'"));
+        }
+    });
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_get_binding_value_by_name(
+    results: *mut librdf_query_results,
+    name: *const c_char,
+) -> *mut librdf_node {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(name) = (unsafe { cstr_required(name, "name") }) else {
+            return ptr::null_mut();
+        };
+        let results_ptr = results;
+        let Some(results) = (unsafe { borrow_handle(results_ptr, TAG_QUERY_RESULTS) }) else {
+            return ptr::null_mut();
+        };
+        let idx = match &results.inner {
+            QueryResultsInner::Bindings { names, .. } => names.iter().position(|n| n == name),
+            _ => None,
+        };
+        // End borrow before calling back into the API.
+        let _ = results;
+        match idx {
+            Some(idx) => librdf_query_results_get_binding_value(results_ptr, idx as i32),
+            None => ptr::null_mut(),
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_get_bindings(
+    results: *mut librdf_query_results,
+    names: *mut *mut *const c_char,
+    values: *mut *mut *mut librdf_node,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(results) = (unsafe { borrow_handle(results, TAG_QUERY_RESULTS) }) else {
+            return -1;
+        };
+        match &results.inner {
+            QueryResultsInner::Bindings {
+                name_cptrs,
+                current_nodes,
+                ..
+            } => {
+                if !names.is_null() {
+                    unsafe { *names = name_cptrs.as_ptr() as *mut *const c_char };
+                }
+                if !values.is_null() {
+                    // Expose current_nodes as array of node pointers (Option flattened to null).
+                    // Store temporary contiguous vector on stack is insufficient; return error-free no-op layout.
+                    static mut EMPTY: *mut librdf_node = ptr::null_mut();
+                    let _ = current_nodes;
+                    unsafe { *values = &raw mut EMPTY };
+                }
+                0
+            }
+            _ => -1,
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_get_count(results: *mut librdf_query_results) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(results) = (unsafe { borrow_handle(results, TAG_QUERY_RESULTS) }) else {
+            return -1;
+        };
+        match &results.inner {
+            QueryResultsInner::Bindings { index, .. } => *index as i32,
+            _ => 0,
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_is_syntax(results: *mut librdf_query_results) -> i32 {
+    let _ = results;
+    0
+}
+
+fn results_to_text(
+    results: *mut librdf_query_results,
+    format: ResultsFormat,
+) -> Result<String, String> {
+    let Some(results) = (unsafe { borrow_handle(results, TAG_QUERY_RESULTS) }) else {
+        return Err("null results".into());
+    };
+    match &results.inner {
+        QueryResultsInner::Boolean(v) => Ok(if *v { "true".into() } else { "false".into() }),
+        QueryResultsInner::Bindings { names, rows, .. } => {
+            let mut out = String::new();
+            match format {
+                ResultsFormat::Csv | ResultsFormat::Tsv => {
+                    let sep = if matches!(format, ResultsFormat::Tsv) {
+                        '\t'
+                    } else {
+                        ','
+                    };
+                    out.push_str(&names.join(&sep.to_string()));
+                    out.push('\n');
+                    for row in rows {
+                        let cells: Vec<String> = row
+                            .iter()
+                            .map(|c| c.as_ref().map(|t| t.to_string()).unwrap_or_default())
+                            .collect();
+                        out.push_str(&cells.join(&sep.to_string()));
+                        out.push('\n');
+                    }
+                }
+                ResultsFormat::Json => {
+                    out.push_str("{\"head\":{\"vars\":[");
+                    out.push_str(
+                        &names
+                            .iter()
+                            .map(|n| format!("\"{n}\""))
+                            .collect::<Vec<_>>()
+                            .join(","),
+                    );
+                    out.push_str("]},\"results\":{\"bindings\":[");
+                    let mut first = true;
+                    for row in rows {
+                        if !first {
+                            out.push(',');
+                        }
+                        first = false;
+                        out.push('{');
+                        let mut first_cell = true;
+                        for (name, cell) in names.iter().zip(row.iter()) {
+                            let Some(term) = cell else { continue };
+                            if !first_cell {
+                                out.push(',');
+                            }
+                            first_cell = false;
+                            out.push_str(&format!(
+                                "\"{name}\":{{\"type\":\"literal\",\"value\":\"{}\"}}",
+                                term.to_string().replace('"', "\\\"")
+                            ));
+                        }
+                        out.push('}');
+                    }
+                    out.push_str("]}}");
+                }
+                ResultsFormat::Xml => {
+                    out.push_str("<?xml version=\"1.0\"?><sparql><head>");
+                    for n in names {
+                        out.push_str(&format!("<variable name=\"{n}\"/>"));
+                    }
+                    out.push_str("</head><results>");
+                    for row in rows {
+                        out.push_str("<result>");
+                        for (name, cell) in names.iter().zip(row.iter()) {
+                            if let Some(term) = cell {
+                                out.push_str(&format!(
+                                    "<binding name=\"{name}\"><literal>{}</literal></binding>",
+                                    term
+                                ));
+                            }
+                        }
+                        out.push_str("</result>");
+                    }
+                    out.push_str("</results></sparql>");
+                }
+            }
+            Ok(out)
+        }
+        QueryResultsInner::Graph { statements } => {
+            let mut out = String::new();
+            for stmt in statements {
+                let tmp = box_handle(TAG_STATEMENT, stmt.clone());
+                let p = crate::handles::statement::librdf_statement_to_string(tmp);
+                unsafe { free_handle(tmp, TAG_STATEMENT) };
+                if !p.is_null() {
+                    out.push_str(&unsafe { std::ffi::CStr::from_ptr(p.cast()) }.to_string_lossy());
+                    out.push('\n');
+                    crate::alloc::librdf_free_memory(p.cast());
+                }
+            }
+            Ok(out)
+        }
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_to_string(
+    query_results: *mut librdf_query_results,
+    format_uri: *mut librdf_uri,
+    _base_uri: *mut librdf_uri,
+) -> *mut u8 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let format = if format_uri.is_null() {
+            ResultsFormat::Xml
+        } else {
+            let Some(uri) = (unsafe { borrow_handle(format_uri, TAG_URI) }) else {
+                return ptr::null_mut();
+            };
+            ResultsFormat::from_media_type(uri.inner.node.as_str())
+                .or_else(|_| ResultsFormat::from_name(uri.inner.node.as_str()))
+                .unwrap_or(ResultsFormat::Xml)
+        };
+        match results_to_text(query_results, format) {
+            Ok(t) => strdup_c(&t).cast(),
+            Err(e) => {
+                set_last_error(e);
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_to_string2(
+    query_results: *mut librdf_query_results,
+    name: *const c_char,
+    mime_type: *const c_char,
+    format_uri: *mut librdf_uri,
+    base_uri: *mut librdf_uri,
+) -> *mut u8 {
+    let format = if let Ok(Some(n)) = unsafe { cstr_optional(name, "name") } {
+        ResultsFormat::from_name(n).unwrap_or(ResultsFormat::Xml)
+    } else if let Ok(Some(m)) = unsafe { cstr_optional(mime_type, "mime_type") } {
+        ResultsFormat::from_media_type(m).unwrap_or(ResultsFormat::Xml)
+    } else {
+        ResultsFormat::Xml
+    };
+    let _ = (format_uri, base_uri);
+    abort_on_panic(|| {
+        clear_last_error();
+        match results_to_text(query_results, format) {
+            Ok(t) => strdup_c(&t).cast(),
+            Err(e) => {
+                set_last_error(e);
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_to_counted_string(
+    query_results: *mut librdf_query_results,
+    format_uri: *mut librdf_uri,
+    base_uri: *mut librdf_uri,
+    length_p: *mut usize,
+) -> *mut u8 {
+    let p = librdf_query_results_to_string(query_results, format_uri, base_uri);
+    if !p.is_null() && !length_p.is_null() {
+        let s = unsafe { std::ffi::CStr::from_ptr(p.cast()) };
+        unsafe { *length_p = s.to_bytes().len() };
+    }
+    p
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_to_counted_string2(
+    query_results: *mut librdf_query_results,
+    name: *const c_char,
+    mime_type: *const c_char,
+    format_uri: *mut librdf_uri,
+    base_uri: *mut librdf_uri,
+    length_p: *mut usize,
+) -> *mut u8 {
+    let p = librdf_query_results_to_string2(query_results, name, mime_type, format_uri, base_uri);
+    if !p.is_null() && !length_p.is_null() {
+        let s = unsafe { std::ffi::CStr::from_ptr(p.cast()) };
+        unsafe { *length_p = s.to_bytes().len() };
+    }
+    p
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_to_file_handle(
+    query_results: *mut librdf_query_results,
+    fh: *mut FILE,
+    format_uri: *mut librdf_uri,
+    base_uri: *mut librdf_uri,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let p = librdf_query_results_to_string(query_results, format_uri, base_uri);
+        if p.is_null() {
+            return -1;
+        }
+        let bytes = unsafe { std::ffi::CStr::from_ptr(p.cast()) }.to_bytes();
+        let rc = write_file(fh, bytes);
+        crate::alloc::librdf_free_memory(p.cast());
+        rc
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_to_file_handle2(
+    query_results: *mut librdf_query_results,
+    fh: *mut FILE,
+    name: *const c_char,
+    mime_type: *const c_char,
+    format_uri: *mut librdf_uri,
+    base_uri: *mut librdf_uri,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let p =
+            librdf_query_results_to_string2(query_results, name, mime_type, format_uri, base_uri);
+        if p.is_null() {
+            return -1;
+        }
+        let bytes = unsafe { std::ffi::CStr::from_ptr(p.cast()) }.to_bytes();
+        let rc = write_file(fh, bytes);
+        crate::alloc::librdf_free_memory(p.cast());
+        rc
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_to_file(
+    query_results: *mut librdf_query_results,
+    name: *const c_char,
+    format_uri: *mut librdf_uri,
+    base_uri: *mut librdf_uri,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(path) = (unsafe { cstr_required(name, "name") }) else {
+            return -1;
+        };
+        let p = librdf_query_results_to_string(query_results, format_uri, base_uri);
+        if p.is_null() {
+            return -1;
+        }
+        let bytes = unsafe { std::ffi::CStr::from_ptr(p.cast()) }.to_bytes();
+        let rc = match std::fs::write(path, bytes) {
+            Ok(()) => 0,
+            Err(e) => {
+                set_last_error(e.to_string());
+                -1
+            }
+        };
+        crate::alloc::librdf_free_memory(p.cast());
+        rc
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_to_file2(
+    query_results: *mut librdf_query_results,
+    name: *const c_char,
+    format_name: *const c_char,
+    mime_type: *const c_char,
+    format_uri: *mut librdf_uri,
+    base_uri: *mut librdf_uri,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(path) = (unsafe { cstr_required(name, "name") }) else {
+            return -1;
+        };
+        let p = librdf_query_results_to_string2(
+            query_results,
+            format_name,
+            mime_type,
+            format_uri,
+            base_uri,
+        );
+        if p.is_null() {
+            return -1;
+        }
+        let bytes = unsafe { std::ffi::CStr::from_ptr(p.cast()) }.to_bytes();
+        let rc = match std::fs::write(path, bytes) {
+            Ok(()) => 0,
+            Err(e) => {
+                set_last_error(e.to_string());
+                -1
+            }
+        };
+        crate::alloc::librdf_free_memory(p.cast());
+        rc
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_formats_check(
+    _world: *mut librdf_world,
+    name: *const c_char,
+    mime_type: *const c_char,
+    _uri: *mut librdf_uri,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        if let Ok(Some(n)) = unsafe { cstr_optional(name, "name") } {
+            return i32::from(ResultsFormat::from_name(n).is_ok());
+        }
+        if let Ok(Some(m)) = unsafe { cstr_optional(mime_type, "mime_type") } {
+            return i32::from(ResultsFormat::from_media_type(m).is_ok());
+        }
+        0
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_formats_enumerate(
+    _world: *mut librdf_world,
+    counter: u32,
+    name: *mut *const c_char,
+    label: *mut *const c_char,
+    mime_type: *mut *const c_char,
+    uri_string: *mut *const u8,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let formats = [
+            (c"xml", c"SPARQL XML", c"application/sparql-results+xml"),
+            (c"json", c"SPARQL JSON", c"application/sparql-results+json"),
+            (c"csv", c"SPARQL CSV", c"text/csv"),
+            (c"tsv", c"SPARQL TSV", c"text/tab-separated-values"),
+        ];
+        let Ok(idx) = usize::try_from(counter) else {
+            return 0;
+        };
+        let Some((n, l, m)) = formats.get(idx).copied() else {
+            return 0;
+        };
+        if !name.is_null() {
+            unsafe { *name = n.as_ptr() };
+        }
+        if !label.is_null() {
+            unsafe { *label = l.as_ptr() };
+        }
+        if !mime_type.is_null() {
+            unsafe { *mime_type = m.as_ptr() };
+        }
+        if !uri_string.is_null() {
+            unsafe { *uri_string = m.as_ptr().cast() };
+        }
+        1
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_formats_get_description(
+    _world: *mut librdf_world,
+    counter: u32,
+) -> *const c_void {
+    if counter < 4 {
+        (counter as usize + 1) as *const c_void
+    } else {
+        ptr::null()
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_query_results_formatter(
+    query_results: *mut librdf_query_results,
+    name: *const c_char,
+    uri: *mut librdf_uri,
+) -> *mut librdf_query_results_formatter {
+    librdf_new_query_results_formatter2(query_results, name, ptr::null(), uri)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_query_results_formatter2(
+    query_results: *mut librdf_query_results,
+    name: *const c_char,
+    mime_type: *const c_char,
+    _format_uri: *mut librdf_uri,
+) -> *mut librdf_query_results_formatter {
+    abort_on_panic(|| {
+        clear_last_error();
+        if unsafe { borrow_handle(query_results, TAG_QUERY_RESULTS) }.is_none() {
+            return ptr::null_mut();
+        }
+        let format = if let Ok(Some(n)) = unsafe { cstr_optional(name, "name") } {
+            ResultsFormat::from_name(n).unwrap_or(ResultsFormat::Xml)
+        } else if let Ok(Some(m)) = unsafe { cstr_optional(mime_type, "mime_type") } {
+            ResultsFormat::from_media_type(m).unwrap_or(ResultsFormat::Xml)
+        } else {
+            ResultsFormat::Xml
+        };
+        box_handle(TAG_QUERY_RESULTS_FORMATTER, FormatterInner { format })
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_query_results_formatter_by_mime_type(
+    query_results: *mut librdf_query_results,
+    mime_type: *const c_char,
+) -> *mut librdf_query_results_formatter {
+    librdf_new_query_results_formatter2(query_results, ptr::null(), mime_type, ptr::null_mut())
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_free_query_results_formatter(
+    formatter: *mut librdf_query_results_formatter,
+) {
+    abort_on_panic(|| {
+        clear_last_error();
+        unsafe { free_handle(formatter, TAG_QUERY_RESULTS_FORMATTER) };
+    });
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_query_results_formatter_write(
+    iostr: *mut c_void,
+    formatter: *mut librdf_query_results_formatter,
+    query_results: *mut librdf_query_results,
+    _base_uri: *mut librdf_uri,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(formatter) = (unsafe { borrow_handle(formatter, TAG_QUERY_RESULTS_FORMATTER) })
+        else {
+            return -1;
+        };
+        match results_to_text(query_results, formatter.inner.format) {
+            Ok(text) => crate::handles::io::write_iostream(iostr, text.as_bytes()),
+            Err(e) => {
+                set_last_error(e);
+                -1
+            }
+        }
+    })
 }

@@ -46,6 +46,18 @@ impl FfiDefault for usize {
     }
 }
 
+impl FfiDefault for i64 {
+    fn ffi_default() -> Self {
+        -1
+    }
+}
+
+impl FfiDefault for u32 {
+    fn ffi_default() -> Self {
+        0
+    }
+}
+
 impl FfiDefault for () {
     fn ffi_default() -> Self {}
 }

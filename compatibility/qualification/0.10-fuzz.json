@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "milestone": "0.10",
+  "git_revision": "a0cdb422041c376fd67ffc23d988c6737333f14a",
+  "targets": [
+    {
+      "name": "rdf_parser",
+      "duration_seconds": 3600,
+      "duration_status": "planned",
+      "smoke_seconds": 60,
+      "smoke_runs": 436320,
+      "smoke_result": "pass",
+      "findings": []
+    },
+    {
+      "name": "c_lifecycle",
+      "duration_seconds": 3600,
+      "duration_status": "planned",
+      "smoke_seconds": 60,
+      "smoke_runs": 2453666,
+      "smoke_result": "pass",
+      "findings": []
+    }
+  ],
+  "duration_seconds": 3600,
+  "duration_status": "planned",
+  "smoke_seconds": 60,
+  "findings": [],
+  "notes": "Release-required duration is 3600s per target (queued/planned for nightly or release CI). Local smoke used cargo +nightly fuzz with -max_total_time=60; rdf_parser completed 436320 runs and c_lifecycle completed 2453666 runs with zero findings. Full 3600s evidence remains queued."
+}

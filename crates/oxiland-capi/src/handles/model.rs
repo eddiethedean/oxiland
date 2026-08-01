@@ -1,26 +1,42 @@
 //! `librdf_model` handle.
 
-use std::os::raw::c_char;
-use std::ptr;
-
-use oxigraph::model::{GraphName, NamedNodeRef, NamedOrBlankNodeRef, TermRef, TripleRef};
-use oxiland::{Model, OpenOptions, StatementPattern, StorageBackend};
-
+use crate::alloc::strdup_c;
 use crate::error::{abort_on_panic, clear_last_error, set_last_error};
+use crate::handles::hash::librdf_hash;
+use crate::handles::io::{FILE, write_iostream, writeln_file};
+use crate::handles::iterator::{box_items, librdf_iterator};
+use crate::handles::node::NodeInner;
 use crate::handles::node::librdf_node;
 use crate::handles::statement::{StatementInner, librdf_statement};
 use crate::handles::storage::librdf_storage;
 use crate::handles::stream::{StreamInner, librdf_stream};
+use crate::handles::stream::{librdf_stream_end, librdf_stream_get_object, librdf_stream_next};
+use crate::handles::uri::librdf_uri;
 use crate::handles::world::librdf_world;
 use crate::handles::{
     TAG_MODEL, TAG_STATEMENT, TAG_STORAGE, TAG_STREAM, TAG_WORLD, TypedHandle, borrow_handle,
     box_handle, free_handle,
 };
+use crate::handles::{TAG_NODE, TAG_URI, cstr_optional};
+use oxigraph::model::Term;
+use oxigraph::model::{GraphName, NamedNodeRef, NamedOrBlankNodeRef, TermRef, TripleRef};
+use oxiland::io::{Parser, Serializer, Syntax};
+use oxiland::{Model, OpenOptions, StatementPattern, StorageBackend};
+use std::collections::HashSet;
+use std::ffi::c_void;
+use std::io::Cursor;
+use std::os::raw::c_char;
+use std::path::Path;
+use std::ptr;
 
 pub type librdf_model = TypedHandle<ModelInner>;
 
 pub struct ModelInner {
     pub model: Model,
+    pub storage: *mut librdf_storage,
+    pub features: std::collections::HashMap<String, String>,
+    pub in_transaction: bool,
+    pub transaction_handle: *mut std::ffi::c_void,
 }
 
 /// Creates a model from storage (`memory` → [`Model::new`], `fjall` → open path).
@@ -54,7 +70,18 @@ pub extern "C" fn librdf_new_model(
         match model {
             Ok(model) => {
                 storage.inner.opened = true;
-                box_handle(TAG_MODEL, ModelInner { model })
+                let handle = box_handle(
+                    TAG_MODEL,
+                    ModelInner {
+                        model,
+                        storage,
+                        features: std::collections::HashMap::new(),
+                        in_transaction: false,
+                        transaction_handle: ptr::null_mut(),
+                    },
+                );
+                storage.inner.model = Some(handle);
+                handle
             }
             Err(error) => {
                 set_last_error(error.to_string());
@@ -779,5 +806,806 @@ pub extern "C" fn librdf_model_update(model: *mut librdf_model, update_string: *
                 -1
             }
         }
+    })
+}
+
+fn node_term(node: *mut librdf_node) -> Option<Term> {
+    let n = unsafe { borrow_handle(node, TAG_NODE) }?;
+    Some(n.inner.term.clone())
+}
+
+fn collect_matching_nodes(
+    model: &Model,
+    want_subject: Option<&Term>,
+    want_predicate: Option<&Term>,
+    want_object: Option<&Term>,
+    project: fn(&oxigraph::model::Quad) -> Term,
+) -> Result<Vec<*mut c_void>, String> {
+    let mut out = Vec::new();
+    let mut seen = HashSet::new();
+    for item in model.find(StatementPattern::default()) {
+        let quad = item.map_err(|e| e.to_string())?;
+        let s = Term::from(quad.subject.clone());
+        let p = Term::from(quad.predicate.clone());
+        let o = quad.object.clone();
+        if want_subject.is_some_and(|t| t != &s) {
+            continue;
+        }
+        if want_predicate.is_some_and(|t| t != &p) {
+            continue;
+        }
+        if want_object.is_some_and(|t| t != &o) {
+            continue;
+        }
+        let term = project(&quad);
+        if seen.insert(term.to_string()) {
+            let ptr = box_handle(TAG_NODE, NodeInner::from_term(term));
+            out.push(ptr.cast());
+        }
+    }
+    Ok(out)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_model_with_options(
+    world: *mut librdf_world,
+    storage: *mut librdf_storage,
+    _options: *mut librdf_hash,
+) -> *mut librdf_model {
+    librdf_new_model(world, storage, ptr::null())
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_model_from_model(model: *mut librdf_model) -> *mut librdf_model {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return ptr::null_mut();
+        };
+        // Memory snapshot via N-Quads round-trip through a fresh memory model.
+        let world = unsafe { borrow_handle(model.inner.storage, TAG_STORAGE) }
+            .map(|s| s.inner.world)
+            .unwrap_or(ptr::null_mut());
+        let storage = crate::handles::storage::librdf_new_storage(
+            world,
+            c"memory".as_ptr(),
+            ptr::null(),
+            ptr::null(),
+        );
+        if storage.is_null() {
+            return ptr::null_mut();
+        }
+        let new_model = librdf_new_model(world, storage, ptr::null());
+        if new_model.is_null() {
+            crate::handles::storage::librdf_free_storage(storage);
+            return ptr::null_mut();
+        }
+        let stream = librdf_model_as_stream(model as *mut _);
+        // Re-borrow after creating new model
+        let _ = librdf_model_add_statements(new_model, stream);
+        crate::handles::stream::librdf_free_stream(stream);
+        new_model
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_enumerate(
+    _world: *mut librdf_world,
+    counter: u32,
+    name: *mut *const c_char,
+    label: *mut *const c_char,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        if counter == 0 {
+            if !name.is_null() {
+                unsafe { *name = c"memory".as_ptr() };
+            }
+            if !label.is_null() {
+                unsafe { *label = c"memory".as_ptr() };
+            }
+            1
+        } else {
+            0
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_get_storage(model: *mut librdf_model) -> *mut librdf_storage {
+    abort_on_panic(|| {
+        clear_last_error();
+        unsafe { borrow_handle(model, TAG_MODEL) }
+            .map(|m| m.inner.storage)
+            .unwrap_or(ptr::null_mut())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_add_statements(
+    model: *mut librdf_model,
+    statement_stream: *mut librdf_stream,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        if unsafe { borrow_handle(model, TAG_MODEL) }.is_none() {
+            return -1;
+        }
+        if unsafe { borrow_handle(statement_stream, TAG_STREAM) }.is_none() {
+            return -1;
+        }
+        while librdf_stream_end(statement_stream) == 0 {
+            let stmt = librdf_stream_get_object(statement_stream);
+            if librdf_model_add_statement(model, stmt) != 0 {
+                return -1;
+            }
+            if librdf_stream_next(statement_stream) != 0 {
+                break;
+            }
+        }
+        0
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_context_add_statements(
+    model: *mut librdf_model,
+    context: *mut librdf_node,
+    stream: *mut librdf_stream,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        if unsafe { borrow_handle(stream, TAG_STREAM) }.is_none() {
+            return -1;
+        }
+        while librdf_stream_end(stream) == 0 {
+            let stmt = librdf_stream_get_object(stream);
+            if librdf_model_context_add_statement(model, context, stmt) != 0 {
+                return -1;
+            }
+            if librdf_stream_next(stream) != 0 {
+                break;
+            }
+        }
+        0
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_context_remove_statements(
+    model: *mut librdf_model,
+    context: *mut librdf_node,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        let Some(context) = (unsafe { borrow_handle(context, TAG_NODE) }) else {
+            return -1;
+        };
+        let graph = match context_graph(&context.inner) {
+            Ok(g) => g,
+            Err(e) => {
+                set_last_error(e);
+                return -1;
+            }
+        };
+        match model.inner.model.clear_graph(graph) {
+            Ok(()) => 0,
+            Err(e) => {
+                set_last_error(e.to_string());
+                -1
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_context_serialize(
+    model: *mut librdf_model,
+    context: *mut librdf_node,
+) -> *mut librdf_stream {
+    librdf_model_context_as_stream(model, context)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_find_statements_with_options(
+    model: *mut librdf_model,
+    statement: *mut librdf_statement,
+    context_node: *mut librdf_node,
+    _options: *mut librdf_hash,
+) -> *mut librdf_stream {
+    if context_node.is_null() {
+        librdf_model_find_statements(model, statement)
+    } else {
+        librdf_model_find_statements_in_context(model, statement, context_node)
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_get_sources(
+    model: *mut librdf_model,
+    arc: *mut librdf_node,
+    target: *mut librdf_node,
+) -> *mut librdf_iterator {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return ptr::null_mut();
+        };
+        let pred = node_term(arc);
+        let obj = node_term(target);
+        match collect_matching_nodes(&model.inner.model, None, pred.as_ref(), obj.as_ref(), |q| {
+            Term::from(q.subject.clone())
+        }) {
+            Ok(items) => box_items(items),
+            Err(e) => {
+                set_last_error(e);
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_get_arcs(
+    model: *mut librdf_model,
+    source: *mut librdf_node,
+    target: *mut librdf_node,
+) -> *mut librdf_iterator {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return ptr::null_mut();
+        };
+        let subj = node_term(source);
+        let obj = node_term(target);
+        match collect_matching_nodes(&model.inner.model, subj.as_ref(), None, obj.as_ref(), |q| {
+            Term::from(q.predicate.clone())
+        }) {
+            Ok(items) => box_items(items),
+            Err(e) => {
+                set_last_error(e);
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_get_targets(
+    model: *mut librdf_model,
+    source: *mut librdf_node,
+    arc: *mut librdf_node,
+) -> *mut librdf_iterator {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return ptr::null_mut();
+        };
+        let subj = node_term(source);
+        let pred = node_term(arc);
+        match collect_matching_nodes(
+            &model.inner.model,
+            subj.as_ref(),
+            pred.as_ref(),
+            None,
+            |q| q.object.clone(),
+        ) {
+            Ok(items) => box_items(items),
+            Err(e) => {
+                set_last_error(e);
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_get_source(
+    model: *mut librdf_model,
+    arc: *mut librdf_node,
+    target: *mut librdf_node,
+) -> *mut librdf_node {
+    let it = librdf_model_get_sources(model, arc, target);
+    if it.is_null() {
+        return ptr::null_mut();
+    }
+    let obj = crate::handles::iterator::librdf_iterator_get_object(it);
+    // Caller owns returned node; leave iterator's item (shared ownership issue).
+    // Clone via term:
+    let node = if obj.is_null() {
+        ptr::null_mut()
+    } else {
+        let term = unsafe { borrow_handle(obj.cast::<librdf_node>(), TAG_NODE) }
+            .map(|n| n.inner.term.clone());
+        match term {
+            Some(t) => box_handle(TAG_NODE, NodeInner::from_term(t)),
+            None => ptr::null_mut(),
+        }
+    };
+    crate::handles::iterator::librdf_free_iterator(it);
+    node
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_get_arc(
+    model: *mut librdf_model,
+    source: *mut librdf_node,
+    target: *mut librdf_node,
+) -> *mut librdf_node {
+    let it = librdf_model_get_arcs(model, source, target);
+    if it.is_null() {
+        return ptr::null_mut();
+    }
+    let obj = crate::handles::iterator::librdf_iterator_get_object(it);
+    let node = if obj.is_null() {
+        ptr::null_mut()
+    } else {
+        let term = unsafe { borrow_handle(obj.cast::<librdf_node>(), TAG_NODE) }
+            .map(|n| n.inner.term.clone());
+        match term {
+            Some(t) => box_handle(TAG_NODE, NodeInner::from_term(t)),
+            None => ptr::null_mut(),
+        }
+    };
+    crate::handles::iterator::librdf_free_iterator(it);
+    node
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_get_target(
+    model: *mut librdf_model,
+    source: *mut librdf_node,
+    arc: *mut librdf_node,
+) -> *mut librdf_node {
+    let it = librdf_model_get_targets(model, source, arc);
+    if it.is_null() {
+        return ptr::null_mut();
+    }
+    let obj = crate::handles::iterator::librdf_iterator_get_object(it);
+    let node = if obj.is_null() {
+        ptr::null_mut()
+    } else {
+        let term = unsafe { borrow_handle(obj.cast::<librdf_node>(), TAG_NODE) }
+            .map(|n| n.inner.term.clone());
+        match term {
+            Some(t) => box_handle(TAG_NODE, NodeInner::from_term(t)),
+            None => ptr::null_mut(),
+        }
+    };
+    crate::handles::iterator::librdf_free_iterator(it);
+    node
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_get_arcs_in(
+    model: *mut librdf_model,
+    node: *mut librdf_node,
+) -> *mut librdf_iterator {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return ptr::null_mut();
+        };
+        let obj = node_term(node);
+        match collect_matching_nodes(&model.inner.model, None, None, obj.as_ref(), |q| {
+            Term::from(q.predicate.clone())
+        }) {
+            Ok(items) => box_items(items),
+            Err(e) => {
+                set_last_error(e);
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_get_arcs_out(
+    model: *mut librdf_model,
+    node: *mut librdf_node,
+) -> *mut librdf_iterator {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return ptr::null_mut();
+        };
+        let subj = node_term(node);
+        match collect_matching_nodes(&model.inner.model, subj.as_ref(), None, None, |q| {
+            Term::from(q.predicate.clone())
+        }) {
+            Ok(items) => box_items(items),
+            Err(e) => {
+                set_last_error(e);
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_has_arc_in(
+    model: *mut librdf_model,
+    node: *mut librdf_node,
+    property: *mut librdf_node,
+) -> i32 {
+    let it = librdf_model_get_arcs_in(model, node);
+    if it.is_null() {
+        return 0;
+    }
+    let mut found = 0;
+    let want = node_term(property);
+    while crate::handles::iterator::librdf_iterator_end(it) == 0 {
+        let obj = crate::handles::iterator::librdf_iterator_get_object(it);
+        if let (Some(want), Some(got)) = (
+            want.as_ref(),
+            unsafe { borrow_handle(obj.cast::<librdf_node>(), TAG_NODE) }
+                .map(|n| n.inner.term.clone()),
+        ) {
+            if want == &got {
+                found = 1;
+                break;
+            }
+        }
+        if crate::handles::iterator::librdf_iterator_next(it) != 0 {
+            break;
+        }
+    }
+    crate::handles::iterator::librdf_free_iterator(it);
+    found
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_has_arc_out(
+    model: *mut librdf_model,
+    node: *mut librdf_node,
+    property: *mut librdf_node,
+) -> i32 {
+    let it = librdf_model_get_arcs_out(model, node);
+    if it.is_null() {
+        return 0;
+    }
+    let mut found = 0;
+    let want = node_term(property);
+    while crate::handles::iterator::librdf_iterator_end(it) == 0 {
+        let obj = crate::handles::iterator::librdf_iterator_get_object(it);
+        if let (Some(want), Some(got)) = (
+            want.as_ref(),
+            unsafe { borrow_handle(obj.cast::<librdf_node>(), TAG_NODE) }
+                .map(|n| n.inner.term.clone()),
+        ) {
+            if want == &got {
+                found = 1;
+                break;
+            }
+        }
+        if crate::handles::iterator::librdf_iterator_next(it) != 0 {
+            break;
+        }
+    }
+    crate::handles::iterator::librdf_free_iterator(it);
+    found
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_get_contexts(model: *mut librdf_model) -> *mut librdf_iterator {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return ptr::null_mut();
+        };
+        let mut seen = HashSet::new();
+        let mut items = Vec::new();
+        for item in model.inner.model.find(StatementPattern::default()) {
+            match item {
+                Ok(quad) => {
+                    if let GraphName::NamedNode(n) = quad.graph_name {
+                        if seen.insert(n.as_str().to_owned()) {
+                            items.push(
+                                box_handle(TAG_NODE, NodeInner::from_term(Term::NamedNode(n)))
+                                    .cast(),
+                            );
+                        }
+                    }
+                }
+                Err(e) => {
+                    set_last_error(e.to_string());
+                    return ptr::null_mut();
+                }
+            }
+        }
+        box_items(items)
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_get_feature(
+    model: *mut librdf_model,
+    feature: *mut librdf_uri,
+) -> *mut librdf_node {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return ptr::null_mut();
+        };
+        let Some(feature) = (unsafe { borrow_handle(feature, TAG_URI) }) else {
+            return ptr::null_mut();
+        };
+        match model.inner.features.get(feature.inner.node.as_str()) {
+            Some(v) => box_handle(
+                TAG_NODE,
+                NodeInner::from_term(Term::Literal(oxigraph::model::Literal::new_simple_literal(
+                    v,
+                ))),
+            ),
+            None => ptr::null_mut(),
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_set_feature(
+    model: *mut librdf_model,
+    feature: *mut librdf_uri,
+    value: *mut librdf_node,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        let Some(feature) = (unsafe { borrow_handle(feature, TAG_URI) }) else {
+            return -1;
+        };
+        let Some(value) = (unsafe { borrow_handle(value, TAG_NODE) }) else {
+            return -1;
+        };
+        let text = match &value.inner.term {
+            Term::Literal(l) => l.value().to_owned(),
+            other => other.to_string(),
+        };
+        model
+            .inner
+            .features
+            .insert(feature.inner.node.as_str().to_owned(), text);
+        0
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_load(
+    model: *mut librdf_model,
+    uri: *mut librdf_uri,
+    name: *const c_char,
+    mime_type: *const c_char,
+    _type_uri: *mut librdf_uri,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        let Some(uri) = (unsafe { borrow_handle(uri, TAG_URI) }) else {
+            return -1;
+        };
+        let syntax_name = unsafe { cstr_optional(name, "name") }.ok().flatten();
+        let mime = unsafe { cstr_optional(mime_type, "mime_type") }
+            .ok()
+            .flatten();
+        let syntax = if let Some(n) = syntax_name {
+            Syntax::from_name(n).unwrap_or(Syntax::Turtle)
+        } else if let Some(m) = mime {
+            Syntax::from_media_type(m).unwrap_or(Syntax::Turtle)
+        } else {
+            Syntax::Turtle
+        };
+        let path = match oxiland::utility::file_uri_to_path(uri.inner.node.as_str()) {
+            Ok(p) => p,
+            Err(_) => {
+                // Treat as local path string
+                Path::new(uri.inner.node.as_str()).to_path_buf()
+            }
+        };
+        let bytes = match std::fs::read(&path) {
+            Ok(b) => b,
+            Err(e) => {
+                set_last_error(e.to_string());
+                return -1;
+            }
+        };
+        match Parser::for_syntax(syntax).load_into(&model.inner.model, Cursor::new(bytes)) {
+            Ok(_) => 0,
+            Err(e) => {
+                set_last_error(e.to_string());
+                -1
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_to_counted_string(
+    model: *mut librdf_model,
+    _uri: *mut librdf_uri,
+    name: *const c_char,
+    mime_type: *const c_char,
+    _type_uri: *mut librdf_uri,
+    string_length_p: *mut usize,
+) -> *mut u8 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return ptr::null_mut();
+        };
+        let syntax_name = unsafe { cstr_optional(name, "name") }.ok().flatten();
+        let mime = unsafe { cstr_optional(mime_type, "mime_type") }
+            .ok()
+            .flatten();
+        let syntax = if let Some(n) = syntax_name {
+            Syntax::from_name(n).unwrap_or(Syntax::Turtle)
+        } else if let Some(m) = mime {
+            Syntax::from_media_type(m).unwrap_or(Syntax::Turtle)
+        } else {
+            Syntax::Turtle
+        };
+        match Serializer::for_syntax(syntax).serialize_model_to_string(&model.inner.model) {
+            Ok(text) => {
+                if !string_length_p.is_null() {
+                    unsafe { *string_length_p = text.len() };
+                }
+                strdup_c(&text).cast()
+            }
+            Err(e) => {
+                set_last_error(e.to_string());
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_print(model: *mut librdf_model, fh: *mut FILE) {
+    abort_on_panic(|| {
+        clear_last_error();
+        let text_ptr = librdf_model_to_string(model, ptr::null_mut());
+        if text_ptr.is_null() {
+            return;
+        }
+        let text = unsafe { std::ffi::CStr::from_ptr(text_ptr.cast()) }.to_string_lossy();
+        let _ = writeln_file(fh, &text);
+        crate::alloc::librdf_free_memory(text_ptr.cast());
+    });
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_write(model: *mut librdf_model, iostr: *mut c_void) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let text_ptr = librdf_model_to_string(model, ptr::null_mut());
+        if text_ptr.is_null() {
+            return -1;
+        }
+        let text = unsafe { std::ffi::CStr::from_ptr(text_ptr.cast()) }.to_bytes();
+        let rc = write_iostream(iostr, text);
+        crate::alloc::librdf_free_memory(text_ptr.cast());
+        rc
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_serialise(model: *mut librdf_model) -> *mut librdf_stream {
+    librdf_model_as_stream(model)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_add_submodel(
+    model: *mut librdf_model,
+    sub_model: *mut librdf_model,
+) -> i32 {
+    let stream = librdf_model_as_stream(sub_model);
+    if stream.is_null() {
+        return -1;
+    }
+    let rc = librdf_model_add_statements(model, stream);
+    crate::handles::stream::librdf_free_stream(stream);
+    rc
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_remove_submodel(
+    model: *mut librdf_model,
+    sub_model: *mut librdf_model,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let stream = librdf_model_as_stream(sub_model);
+        if stream.is_null() {
+            return -1;
+        }
+        while librdf_stream_end(stream) == 0 {
+            let stmt = librdf_stream_get_object(stream);
+            let _ = librdf_model_remove_statement(model, stmt);
+            if librdf_stream_next(stream) != 0 {
+                break;
+            }
+        }
+        crate::handles::stream::librdf_free_stream(stream);
+        0
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_transaction_start(model: *mut librdf_model) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        if model.inner.in_transaction {
+            set_last_error("transaction already active");
+            return -1;
+        }
+        model.inner.in_transaction = true;
+        0
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_transaction_start_with_handle(
+    model: *mut librdf_model,
+    handle: *mut c_void,
+) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        model.inner.in_transaction = true;
+        model.inner.transaction_handle = handle;
+        0
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_transaction_commit(model: *mut librdf_model) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        model.inner.in_transaction = false;
+        model.inner.transaction_handle = ptr::null_mut();
+        match model.inner.model.sync() {
+            Ok(()) => 0,
+            Err(e) => {
+                set_last_error(e.to_string());
+                -1
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_transaction_rollback(model: *mut librdf_model) -> i32 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
+            return -1;
+        };
+        model.inner.in_transaction = false;
+        model.inner.transaction_handle = ptr::null_mut();
+        0
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_model_transaction_get_handle(model: *mut librdf_model) -> *mut c_void {
+    abort_on_panic(|| {
+        clear_last_error();
+        unsafe { borrow_handle(model, TAG_MODEL) }
+            .map(|m| m.inner.transaction_handle)
+            .unwrap_or(ptr::null_mut())
     })
 }

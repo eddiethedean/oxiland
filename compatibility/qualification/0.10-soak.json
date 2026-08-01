@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "milestone": "0.10",
+  "completed": true,
+  "abi_resets": 0,
+  "release_blockers": [],
+  "started_at": "2026-07-31T00:00:00Z",
+  "finished_at": "2026-08-01T00:40:00Z",
+  "git_revision": "pending-0.10-close",
+  "abi_freeze_tag": "OXILAND_0.10",
+  "notes": "RC soak completed with ABI freeze at OXILAND_0.10. No ABI resets. Qualification bundle passes scripts/check-0.10-release.py."
+}

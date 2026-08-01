@@ -351,3 +351,70 @@ fn logger_callback_can_replace_itself_without_deadlock() {
     librdf_log_simple(world, 0, 1, 0, cstr("hello").as_ptr());
     librdf_free_world(world);
 }
+
+#[test]
+fn hash_list_iterator_lifecycle() {
+    let world = librdf_new_world();
+    let hash = librdf_new_hash(world, cstr("memory").as_ptr());
+    assert!(!hash.is_null());
+    assert_eq!(
+        librdf_hash_put_strings(hash, cstr("k").as_ptr(), cstr("v").as_ptr()),
+        0
+    );
+    let got = librdf_hash_get(hash, cstr("k").as_ptr());
+    assert!(!got.is_null());
+    assert_eq!(unsafe { CStr::from_ptr(got) }.to_string_lossy(), "v");
+    librdf_free_memory(got.cast());
+    librdf_free_hash(hash);
+
+    let list = librdf_new_list(world);
+    assert!(!list.is_null());
+    let a = std::ptr::dangling_mut::<c_void>();
+    let b = 2usize as *mut c_void;
+    assert_eq!(librdf_list_add(list, a), 0);
+    assert_eq!(librdf_list_unshift(list, b), 0);
+    assert_eq!(librdf_list_size(list), 2);
+    assert_eq!(librdf_list_contains(list, a), 1);
+    assert_eq!(librdf_list_shift(list), b);
+    assert_eq!(librdf_list_pop(list), a);
+    let it = librdf_list_get_iterator(list);
+    assert!(!it.is_null());
+    assert_eq!(librdf_iterator_end(it), 1);
+    librdf_free_iterator(it);
+    librdf_free_list(list);
+
+    let empty = librdf_new_empty_iterator(world);
+    assert!(!empty.is_null());
+    assert_eq!(librdf_iterator_end(empty), 1);
+    librdf_free_iterator(empty);
+    librdf_free_list(ptr::null_mut());
+    librdf_free_hash(ptr::null_mut());
+    librdf_free_iterator(ptr::null_mut());
+    librdf_free_world(world);
+}
+
+#[test]
+fn alloc_and_raptor_bridge_lifecycle() {
+    let p = librdf_alloc_memory(16);
+    assert!(!p.is_null());
+    librdf_free_memory(p);
+    let z = librdf_calloc_memory(4, 8);
+    assert!(!z.is_null());
+    librdf_free_memory(z);
+
+    let world = librdf_new_world();
+    let marker = 0xABCDusize as *mut c_void;
+    librdf_world_set_raptor(world, marker);
+    assert_eq!(librdf_world_get_raptor(world), marker);
+    librdf_world_set_rasqal(world, marker);
+    assert_eq!(librdf_world_get_rasqal(world), marker);
+    assert_eq!(
+        librdf_storage_register_factory(world, cstr("memory").as_ptr(), ptr::null(), None),
+        0
+    );
+    assert_eq!(
+        librdf_storage_register_factory(world, cstr("nope").as_ptr(), ptr::null(), None),
+        -1
+    );
+    librdf_free_world(world);
+}

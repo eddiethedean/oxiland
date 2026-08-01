@@ -11,7 +11,11 @@ directory also contains all of the following:
 - `performance/{target}__release-default.json` for every frozen performance
   target, retaining all raw samples and resource-budget observations; and
 - `0.10-soak.json` recording a completed RC soak, zero ABI resets, and no
-  release blocker.
+  release blocker;
+- `0.10-fuzz.json` recording fuzz targets, release-required duration, git
+  revision, and unresolved findings (empty when clean); and
+- performance raw samples under `performance/` for every frozen performance
+  profile.
 
 Run `python3 scripts/check-0.10-release.py`. Missing data is a failure. The
 validator consumes raw evidence; checked-in summary prose is never accepted as

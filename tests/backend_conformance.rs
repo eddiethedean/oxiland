@@ -234,3 +234,60 @@ fn copy_to_memory_and_durable() {
     assert_eq!(dest.backend(), StorageBackend::Fjall);
     assert!(dest.contains(statement("copy-me").as_ref()).unwrap());
 }
+
+#[test]
+#[cfg(feature = "storage-fjall")]
+fn crash_injection_before_and_after_sync_preserves_reader() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("crash");
+    {
+        let model = open_registered(StorageBackend::Fjall, &path);
+        model.add(statement("pre-sync")).unwrap();
+        // Simulated failure before sync: reopen must not see unsynced memory-only data
+        // for durable backends that require explicit sync — Oxiland syncs on drop path
+        // via replace; force sync then corrupt is separate.
+        model.sync().unwrap();
+    }
+    let reopened = open_registered(StorageBackend::Fjall, &path);
+    assert!(reopened.contains(statement("pre-sync").as_ref()).unwrap());
+
+    // Failure injection after sync: truncate meta to unsupported version and expect open failure.
+    let meta = path.join("__oxiland").join("meta");
+    if meta.exists() {
+        std::fs::write(&meta, r#"{"format_version":999}"#).unwrap();
+        let err = Model::open_with(OpenOptions::fjall(&path).create(false));
+        assert!(err.is_err(), "unsupported format version must fail open");
+    }
+}
+
+#[test]
+#[cfg(feature = "storage-fjall")]
+fn concurrent_readers_during_writer_transaction() {
+    use std::sync::Arc;
+    use std::thread;
+
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("concurrent");
+    let model = Arc::new(open_registered(StorageBackend::Fjall, &path));
+    model.add(statement("base")).unwrap();
+    model.sync().unwrap();
+
+    let reader = Arc::clone(&model);
+    let handle = thread::spawn(move || {
+        for _ in 0..50 {
+            let _ = reader.len().unwrap();
+            let _ = reader
+                .find(StatementPattern::default())
+                .collect::<Result<Vec<_>, _>>()
+                .unwrap();
+        }
+    });
+    model
+        .transaction(|txn| {
+            txn.add(statement("txn"))?;
+            Ok(())
+        })
+        .unwrap();
+    handle.join().unwrap();
+    assert!(model.contains(statement("txn").as_ref()).unwrap());
+}

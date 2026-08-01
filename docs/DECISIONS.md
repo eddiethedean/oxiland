@@ -35,6 +35,9 @@ tradeoffs are reviewed.
 | [ADR-022](#adr-022-sealed-durable-adapter-and-optional-backend-matrix) | Sealed durable adapter and optional backend matrix |
 | [ADR-023](#adr-023-c-abi-ownership-panic-and-allocator-contract) | C ABI ownership, panic, and allocator contract |
 | [ADR-024](#adr-024-freeze-first-party-storage-and-keep-the-adapter-sealed) | Freeze first-party storage and keep the adapter sealed |
+| [ADR-025](#adr-025-baseline-factory-registration-for-010-parity) | Baseline factory registration for 0.10 parity |
+| [ADR-026](#adr-026-raptor-and-rasqal-world-bridges-for-librdf) | Raptor and Rasqal world bridges for `librdf` |
+| [ADR-027](#adr-027-keep-heedbincode-for-optional-lmdb-in-010) | Keep heed/bincode for optional LMDB in 0.10 |
 
 ## Decision states
 
@@ -490,6 +493,103 @@ Evidence: `src/storage/mod.rs`, `src/storage/durable.rs`,
 Revisit when: after 1.0, only with a provider design and third-party prototype
 that pass the full storage conformance/failure-injection suite.
 
+### ADR-025 — Baseline factory registration for 0.10 parity
+
+State: accepted  
+Date: 2026-07-31  
+Milestone: 0.10
+
+Context: The 0.10 hard gate forbids in-scope safe exclusions. ADR-018 excluded
+parser/serializer/storage/query factory registration from the safe facade, but
+those `librdf_*_register_factory` symbols remain in the public Redland
+denominator. Independent third-party plug-ins absent from the pinned baseline
+profiles stay outside the denominator per `COMPATIBILITY.md`.
+
+Decision:
+
+- Supersede ADR-018 for 0.10+.
+- Implement `register_*_factory` on the safe facade and C ABI for the closed
+  set of built-in factories present in the pinned Redland baseline profiles
+  (built-in syntaxes, SPARQL, and first-party storage backends).
+- Re-registering a built-in name is idempotent and succeeds.
+- Names outside the baseline built-in set fail observably (no silent success).
+- Do not load arbitrary native plug-in modules or execute caller-supplied
+  factory callbacks that would bypass Oxigraph/Oxiland safety boundaries.
+
+Alternatives: keep ADR-018 exclusions (blocks 0.10); accept arbitrary `dlopen`
+plugins; capability-error substitutes (forbidden by the hard gate).
+
+Consequences: inventory factory rows become `verified` on safe and C surfaces.
+Discovery enums remain the preferred Rust API; registration exists for Redland
+workflow parity.
+
+Evidence: `src/factory.rs`, C ABI factory exports, inventory 0.10 rows.
+
+Revisit when: a supported third-party extension mechanism is required after 1.0.
+
+### ADR-026 — Raptor and Rasqal world bridges for `librdf`
+
+State: accepted  
+Date: 2026-07-31  
+Milestone: 0.10
+
+Context: Redland exposes `librdf_world_get/set_raptor`, Rasqal equivalents, and
+init-handler hooks. Independent Raptor/Rasqal APIs are outside the Oxiland
+denominator, but bridges reached through `librdf` are in-scope for 0.10.
+
+Decision:
+
+- Store opaque bridge tokens on `World` (usize slots for raptor, rasqal, and
+  their init handlers). Safe Rust never dereferences them.
+- C ABI get/set functions read and write those tokens as `void *`.
+- Oxiland parsing and SPARQL continue to use Oxigraph; the bridges exist for
+  embedding parity and do not require linking stock Raptor/Rasqal.
+
+Alternatives: exclude the bridges (blocks 0.10); link stock Raptor/Rasqal and
+route I/O through them (rejected for the Oxigraph engine boundary).
+
+Consequences: world bridge symbols become `verified`; embedding callers can
+round-trip opaque handles.
+
+Evidence: `src/world.rs`, `crates/oxiland-capi` world exports, inventory 0.10.
+
+Revisit when: an embedding integration requires live Raptor/Rasqal callbacks.
+
+### ADR-027 — Keep heed/bincode for optional LMDB in 0.10
+
+State: accepted  
+Date: 2026-07-31  
+Milestone: 0.10
+
+Context: cargo-audit reports that optional LMDB adapter dependency `heed`
+still pulls unmaintained `bincode` 1.3.3 (R-023). That is a maintenance
+warning, not a current RustSec vulnerability advisory. Replacing `heed` or
+vendoring a different LMDB binding mid-qualification would churn the optional
+backend matrix without closing a confirmed vulnerability.
+
+Decision:
+
+- Accept keeping `heed` (and inherited `bincode` 1.3.3) for the optional
+  `storage-lmdb` feature through the 0.10 release candidate.
+- Keep LMDB optional (never a default-feature dependency).
+- Continue tracking upstream `heed` releases and RustSec for `bincode`;
+  upgrade or replace under the storage conformance suite when a maintained
+  path lands or a vulnerability is published.
+- Do not treat the maintenance warning alone as a 0.10 release blocker.
+
+Alternatives: drop LMDB from 0.10; replace `heed` immediately; vendor a fork
+that drops `bincode`.
+
+Consequences: R-023 is mitigated (accepted residual maintenance exposure on
+an optional feature). Default and Fjall-only builds are unaffected. A real
+advisory or unsupported-toolchain break reopens contingency under R-023.
+
+Evidence: `docs/RISKS.md` R-023, optional `storage-lmdb` feature, cargo-audit
+CI lockfile coverage.
+
+Revisit when: `heed` drops or replaces `bincode`, a RustSec advisory lands, or
+post-1.0 LMDB packaging review.
+
 ### ADR-017 — Python package is Pythonic, not a thin Rust mirror
 
 State: accepted  
@@ -673,11 +773,17 @@ Evidence: `docs/evaluators/migration-from-redland.md`,
 
 Revisit when: C ABI needs explicit list/hash handles.
 
+Revisit outcome (0.10): the C ABI implements Redland-shaped `librdf_hash` /
+`librdf_list` opaque handles over internal maps and vectors. Safe Rust rows
+remain `not-applicable` with `safe_n_a_kind: "ownership-mechanic"`. Their C
+forms must be `verified`.
+
 ### ADR-018 — Factory registration disposition for safe Rust
 
-State: accepted  
+State: superseded  
 Date: 2026-07-30  
-Milestone: 0.6
+Milestone: 0.6  
+Superseded by: [ADR-025](#adr-025-baseline-factory-registration-for-010-parity)
 
 Context: Redland exposes parser/serializer/storage/query factory registration
 APIs. Architecture asked which registrations are safe and useful in Rust.
@@ -697,6 +803,8 @@ Evidence: `docs/design/0.6-safe-api-accounting.md`, `src/io/format.rs`,
 `src/storage/mod.rs`.
 
 Revisit when: a supported extension mechanism is required for 1.0.
+
+Revisit outcome: superseded for the 0.10 full-parity gate by ADR-025.
 
 ### ADR-019 — `oxiland-cli` rdfproc workflow surface
 

@@ -17,6 +17,7 @@
 )]
 mod backend_marker;
 mod durable;
+mod facade;
 #[cfg(feature = "storage-fjall")]
 mod fjall;
 #[cfg_attr(
@@ -40,6 +41,7 @@ mod rocksdb;
 mod sqlite;
 
 pub(crate) use durable::{DurableStore, DurableStoreOps};
+pub use facade::StorageFacade;
 pub(crate) use format_v1::stored_matching_quad;
 
 use std::path::{Path, PathBuf};

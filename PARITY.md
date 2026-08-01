@@ -1,10 +1,11 @@
 # Redland parity ledger
 
-Last completed milestone: 0.9
-Current development milestone: 0.10 (`in progress`)
+Last completed milestone: 0.10
+Current development milestone: 0.10 (`complete`)
 Ledger maturity: header-derived full public `librdf` 1.0.17 function inventory
 (0.6); Python package usability evidence (0.7); C ABI source-compat preview
-accounting (0.8); curated 0.1–0.5 slices retained for historical evidence
+accounting (0.8); curated 0.1–0.5 slices retained for historical evidence;
+0.10 full-parity inventory and qualification bundle
 
 > **Newcomer gloss:** This ledger classifies Redland `librdf_*` symbols and
 > records what Oxiland has implemented with tests for a **stated scope**.
@@ -28,6 +29,8 @@ Inventory revisions:
 - [`redland-1.0.17-oxiland-0.5.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.5.json)
 - [`redland-1.0.17-oxiland-0.6.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.6.json)
 - [`redland-1.0.17-oxiland-0.8.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.8.json)
+- [`redland-1.0.17-oxiland-0.9.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.9.json)
+- [`redland-1.0.17-oxiland-0.10.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.10.json)
 
 0.6 compatibility report: [`docs/reports/0.6.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.6.md)
 · 0.7 report: [`docs/reports/0.7.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.7.md)
@@ -100,7 +103,10 @@ See [`docs/reports/0.9.md`](https://github.com/eddiethedean/oxiland/blob/main/do
 
 ## Current 0.10 qualification
 
-The target/profile and performance matrices are frozen and strict report
-validators are implemented. The hard gate is not yet satisfied: the 0.9
-inventory still contains safe and C exclusions that 0.10 forbids. See the
+Complete. Inventory, six-profile parity evidence, three performance profiles,
+soak, and fuzz evidence are checked in. `scripts/check-0.10-release.py` passes.
+See the
 [`0.10 qualification report`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.10.md).
+Inventory revision:
+[`redland-1.0.17-oxiland-0.10.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.10.json).
+

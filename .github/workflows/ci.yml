@@ -116,6 +116,11 @@ jobs:
       - name: Public API snapshot
         run: scripts/generate-public-api.sh check
 
+      - name: Python stub snapshot
+        run: |
+          chmod +x scripts/check-python-stub-snapshot.sh
+          scripts/check-python-stub-snapshot.sh
+
       - name: Install RDF oracle
         run: |
           sudo apt-get update
@@ -527,6 +532,14 @@ jobs:
             --target x86_64-unknown-linux-gnu
         env:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+
+      - name: UBSan CAPI tests (nightly, Linux)
+        run: |
+          RUSTFLAGS="-Zsanitizer=undefined" \
+            cargo +nightly test -p oxiland-capi --locked \
+            --target x86_64-unknown-linux-gnu
+        env:
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
 
   msrv:
     name: MSRV (1.87)

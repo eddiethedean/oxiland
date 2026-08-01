@@ -1,17 +1,17 @@
 //! `librdf_uri` handle.
 
-use std::os::raw::c_char;
-use std::ptr;
-
-use oxigraph::model::NamedNode;
-use oxiland::utility::file_uri_to_path;
-
 use crate::alloc::strdup_c;
 use crate::error::{abort_on_panic, clear_last_error, set_last_error};
+use crate::handles::io::{FILE, writeln_file};
 use crate::handles::world::librdf_world;
 use crate::handles::{
     TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle, cstr_required, free_handle,
 };
+use oxigraph::model::NamedNode;
+use oxiland::utility::file_uri_to_path;
+use std::os::raw::c_char;
+use std::path::Path;
+use std::ptr;
 
 pub type librdf_uri = TypedHandle<UriInner>;
 
@@ -153,4 +153,178 @@ pub extern "C" fn librdf_uri_to_filename(uri: *mut librdf_uri) -> *mut c_char {
             }
         }
     })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_uri2(
+    world: *mut librdf_world,
+    uri_string: *const c_char,
+    length: usize,
+) -> *mut librdf_uri {
+    abort_on_panic(|| {
+        clear_last_error();
+        if uri_string.is_null() {
+            set_last_error("uri_string is null");
+            return ptr::null_mut();
+        }
+        let bytes = unsafe { std::slice::from_raw_parts(uri_string.cast::<u8>(), length) };
+        let s = match std::str::from_utf8(bytes) {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("uri_string not UTF-8");
+                return ptr::null_mut();
+            }
+        };
+        let c = match std::ffi::CString::new(s) {
+            Ok(c) => c,
+            Err(_) => {
+                set_last_error("uri_string contains NUL");
+                return ptr::null_mut();
+            }
+        };
+        librdf_new_uri(world, c.as_ptr())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_uri_from_uri(old_uri: *mut librdf_uri) -> *mut librdf_uri {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(old) = (unsafe { borrow_handle(old_uri, TAG_URI) }) else {
+            return ptr::null_mut();
+        };
+        box_handle(TAG_URI, UriInner::new(old.inner.node.clone()))
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_uri_from_uri_local_name(
+    old_uri: *mut librdf_uri,
+    local_name: *const c_char,
+) -> *mut librdf_uri {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(old) = (unsafe { borrow_handle(old_uri, TAG_URI) }) else {
+            return ptr::null_mut();
+        };
+        let Some(local) = (unsafe { cstr_required(local_name, "local_name") }) else {
+            return ptr::null_mut();
+        };
+        match NamedNode::new(format!("{}{local}", old.inner.node.as_str())) {
+            Ok(n) => box_handle(TAG_URI, UriInner::new(n)),
+            Err(e) => {
+                set_last_error(e.to_string());
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_uri_from_filename(
+    world: *mut librdf_world,
+    filename: *const c_char,
+) -> *mut librdf_uri {
+    abort_on_panic(|| {
+        clear_last_error();
+        if unsafe { borrow_handle(world, TAG_WORLD) }.is_none() {
+            return ptr::null_mut();
+        }
+        let Some(filename) = (unsafe { cstr_required(filename, "filename") }) else {
+            return ptr::null_mut();
+        };
+        let path = Path::new(filename);
+        let iri = if let Ok(canon) = std::fs::canonicalize(path) {
+            format!("file://{}", canon.display())
+        } else if filename.starts_with('/') {
+            format!("file://{filename}")
+        } else {
+            format!("file:{filename}")
+        };
+        match NamedNode::new(iri.replace('\\', "/")) {
+            Ok(n) => box_handle(TAG_URI, UriInner::new(n)),
+            Err(e) => {
+                set_last_error(e.to_string());
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_uri_normalised_to_base(
+    uri_string: *const c_char,
+    source_uri: *mut librdf_uri,
+    base_uri: *mut librdf_uri,
+) -> *mut librdf_uri {
+    let _ = source_uri;
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(base) = (unsafe { borrow_handle(base_uri, TAG_URI) }) else {
+            return ptr::null_mut();
+        };
+        let Some(uri_string) = (unsafe { cstr_required(uri_string, "uri_string") }) else {
+            return ptr::null_mut();
+        };
+        // Absolute stays; relative appends to base.
+        let iri = if uri_string.contains("://") {
+            uri_string.to_owned()
+        } else {
+            format!("{}{uri_string}", base.inner.node.as_str())
+        };
+        match NamedNode::new(iri) {
+            Ok(n) => box_handle(TAG_URI, UriInner::new(n)),
+            Err(e) => {
+                set_last_error(e.to_string());
+                ptr::null_mut()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_new_uri_relative_to_base(
+    base_uri: *mut librdf_uri,
+    uri_string: *const c_char,
+) -> *mut librdf_uri {
+    librdf_new_uri_normalised_to_base(uri_string, ptr::null_mut(), base_uri)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_uri_as_counted_string(
+    uri: *mut librdf_uri,
+    len_p: *mut usize,
+) -> *const c_char {
+    let p = librdf_uri_as_string(uri);
+    if !p.is_null() && !len_p.is_null() {
+        let s = unsafe { std::ffi::CStr::from_ptr(p) };
+        unsafe { *len_p = s.to_bytes().len() };
+    }
+    p
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_uri_to_counted_string(uri: *mut librdf_uri, len_p: *mut usize) -> *mut u8 {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(uri) = (unsafe { borrow_handle(uri, TAG_URI) }) else {
+            return ptr::null_mut();
+        };
+        let text = uri.inner.node.as_str();
+        if !len_p.is_null() {
+            unsafe { *len_p = text.len() };
+        }
+        strdup_c(text).cast()
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_uri_print(uri: *mut librdf_uri, fh: *mut FILE) {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(uri) = (unsafe { borrow_handle(uri, TAG_URI) }) else {
+            return;
+        };
+        let _ = writeln_file(fh, uri.inner.node.as_str());
+    });
 }

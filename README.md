@@ -9,9 +9,9 @@
 [![License](https://img.shields.io/crates/l/oxiland)](LICENSE-APACHE)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/eddiethedean/oxiland)
 
-> **Release status:** the latest project release tag is **0.9.0**. This
-> repository tip is **0.10.0** and remains release-blocked until every parity,
-> performance, packaging, and RC-soak gate passes.
+> **Release status:** tip **0.10.0** has passed the checked-in qualification
+> bundle (`scripts/check-0.10-release.py`). Tag and publish when packaging
+> attestation and crates.io/PyPI workflows are run for `v0.10.0`.
 
 Oxiland is an embedded RDF toolkit for Rust and Python. It provides validated
 RDF terms, in-memory and persistent datasets, named graphs, SPARQL 1.1, and

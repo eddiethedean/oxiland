@@ -1,16 +1,15 @@
 //! Digest handles (0.9).
 
-use std::os::raw::c_char;
-use std::ptr;
-
-use oxiland::utility::{DigestAlgorithm, digest_bytes};
-
 use crate::alloc::strdup_c;
 use crate::error::{abort_on_panic, clear_last_error, set_last_error};
+use crate::handles::io::{FILE, writeln_file};
 use crate::handles::world::librdf_world;
 use crate::handles::{
     TAG_DIGEST, TAG_WORLD, TypedHandle, borrow_handle, box_handle, cstr_required, free_handle,
 };
+use oxiland::utility::{DigestAlgorithm, digest_bytes};
+use std::os::raw::c_char;
+use std::ptr;
 
 pub type librdf_digest = TypedHandle<DigestInner>;
 
@@ -196,4 +195,18 @@ pub extern "C" fn librdf_digest_get_digest_length(digest: *mut librdf_digest) ->
             .map(|b| b.len())
             .unwrap_or(0usize)
     })
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn librdf_digest_print(digest: *mut librdf_digest, fh: *mut FILE) {
+    abort_on_panic(|| {
+        clear_last_error();
+        let p = librdf_digest_to_string(digest);
+        if p.is_null() {
+            return;
+        }
+        let text = unsafe { std::ffi::CStr::from_ptr(p) }.to_string_lossy();
+        let _ = writeln_file(fh, &text);
+        crate::alloc::librdf_free_memory(p.cast());
+    });
 }

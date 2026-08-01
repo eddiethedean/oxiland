@@ -3,6 +3,10 @@
 /site
 /target
 /fuzz/target
+/fuzz/corpus/c_lifecycle/*
+!/fuzz/corpus/c_lifecycle/iri-valid
+/fuzz/corpus/rdf_parser/*
+!/fuzz/corpus/rdf_parser/turtle-valid
 /python/target
 /python/.venv
 /python/dist/

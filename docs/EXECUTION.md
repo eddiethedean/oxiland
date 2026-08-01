@@ -1,7 +1,7 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 0.10 (0.9 complete)
+Current milestone: 0.10 (complete)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -113,16 +113,10 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Replace every 0.9 C exclusion / C `not-applicable` row with a verified C
-   implementation and lifecycle/behavior evidence.
-2. Close safe-Rust in-scope exclusions and run the complete differential matrix
-   on all six frozen target/build profiles.
-3. Run the frozen faster-than-Redland suite on its three controlled performance
-   profiles; repair every tie, inconclusive interval, or loss.
-4. Complete packaged-layout readers, crash/failure injection, fuzz/sanitizer,
-   W3C, downstream, wheel, clean-install, and uninstall qualification.
-5. Start the RC soak only after API/ABI snapshots and every preceding hard gate
-   are green; any ABI reset restarts the soak.
+1. Tag and publish `v0.10.0` after clean-install attestation on release hosts.
+2. Begin 1.0 readiness review against the frozen 0.10 contracts.
+3. Keep regenerating parity/performance evidence on the three frozen targets
+   whenever the C ABI or storage matrix changes.
 
 ## Completed 0.8 backlog
 
