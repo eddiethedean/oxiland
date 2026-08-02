@@ -473,11 +473,15 @@ def main() -> int:
         )
         return 1
 
-    if find_redland_lib() is None and not Path("/opt/homebrew/bin/rdfproc").is_file():
-        # Still allow rapper-based path if rdfproc/rapper exist.
-        if subprocess.run(["which", "rapper"], capture_output=True).returncode != 0:
-            print("native Redland tools not found; refusing synthetic pass", file=sys.stderr)
-            return 1
+    import shutil
+
+    if (
+        find_redland_lib() is None
+        and shutil.which("rdfproc") is None
+        and shutil.which("rapper") is None
+    ):
+        print("native Redland tools not found; refusing synthetic pass", file=sys.stderr)
+        return 1
 
     fixtures = []
     if args.fixtures:

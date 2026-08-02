@@ -58,8 +58,18 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          echo "Windows Redland via vcpkg is optional; harness fails closed if missing"
+          # Prefer scoop/choco raptor; fall back to MSYS2 mingw raptor for `rapper`.
           choco install -y raptor || true
+          if ! command -v rapper >/dev/null 2>&1; then
+            if [[ ! -d /c/msys64 ]]; then
+              choco install -y msys2 || true
+            fi
+            if [[ -x /c/msys64/usr/bin/bash ]]; then
+              /c/msys64/usr/bin/bash -lc "pacman -Sy --noconfirm mingw-w64-x86_64-raptor" || true
+              echo "/c/msys64/mingw64/bin" >> "$GITHUB_PATH"
+            fi
+          fi
+          command -v rapper || echo "rapper still missing; harness will fail closed"
 
       - name: Build and install Oxiland Python package
         shell: bash
@@ -88,20 +98,27 @@ jobs:
           if [[ -f .venv/Scripts/activate ]]; then source .venv/Scripts/activate; else source .venv/bin/activate; fi
           python compatibility/harness/two_sided.py --profile "${{ matrix.target }}/release-all-storage"
 
+      - name: Upload raw differential evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: raw-${{ matrix.target }}
+          path: compatibility/qualification/raw/${{ matrix.target }}__*
+          if-no-files-found: ignore
+
       - name: Native performance evidence (release-default)
         shell: bash
         run: |
           if [[ -f .venv/Scripts/activate ]]; then source .venv/Scripts/activate; else source .venv/bin/activate; fi
           python scripts/build-0.11-performance-evidence.py
 
-      - name: Upload raw evidence
+      - name: Upload performance evidence
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: raw-${{ matrix.target }}
-          path: |
-            compatibility/qualification/raw/${{ matrix.target }}__*
-            compatibility/qualification/performance/${{ matrix.target }}__*
-          if-no-files-found: error
+          name: perf-${{ matrix.target }}
+          path: compatibility/qualification/performance/${{ matrix.target }}__*
+          if-no-files-found: ignore
 
   package-gate:
     name: Package corpus and ABI smoke

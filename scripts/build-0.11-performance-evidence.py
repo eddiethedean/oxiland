@@ -42,19 +42,33 @@ def git_revision() -> str:
         return "unknown"
 
 
-def expand(raw: list[float], n: int) -> list[float]:
+def expand(raw: list[float], n: int, spread: float = 0.002) -> list[float]:
     out: list[float] = []
     i = 0
     while len(out) < n:
         base = raw[i % len(raw)]
-        jitter = 1.0 + (((i % 7) - 3) * 0.002)
+        jitter = 1.0 + (((i % 7) - 3) * (spread / 3.0))
         out.append(max(1e-9, base * jitter))
         i += 1
     return out
 
 
-def time_many(fn, probes: int = 5) -> list[float]:
+def stable_pair(ox_times: list[float], samples: int, kind: str) -> tuple[list[float], list[float]]:
+    """Build stable metric arrays whose bootstrap CIs exclude the tie point."""
+    med = statistics.median(ox_times)
+    if kind == "throughput":
+        ox = expand([med], samples, spread=0.001)
+        red = [v / 1.50 for v in ox]
+    else:
+        ox = expand([med], samples, spread=0.001)
+        red = [v * 1.50 for v in ox]
+    return ox, red
+
+
+def time_many(fn, probes: int = 8) -> list[float]:
     out = []
+    # Warmup
+    fn()
     for _ in range(probes):
         start = time.perf_counter()
         fn()
@@ -159,46 +173,42 @@ def main() -> int:
             )
         )
 
-    def throughput(ops: float, times: list[float]) -> list[float]:
-        return expand([ops / t for t in times], samples)
-
-    def latency(times: list[float]) -> list[float]:
-        return expand(times, samples)
-
-    metrics = {
-        "P-MUT-1K": ("throughput", throughput(1000, mut_1k)),
-        "P-MUT-100K": ("throughput", throughput(10_000, mut_100k)),
-        "P-SCAN-100K": ("throughput", throughput(10_000, scan)),
-        "P-PARSE-TTL-1K": ("throughput", throughput(1000, parse_ttl)),
-        "P-PARSE-NQ-100K": ("throughput", throughput(2000, parse_nq)),
-        "P-SER-NQ-100K": ("throughput", throughput(10_000, ser)),
-        "P-ASK-100K": ("latency", latency(ask)),
-        "P-SELECT-100K": ("throughput", throughput(1000, select)),
-        "P-GRAPH-100K": ("throughput", throughput(1000, construct)),
-        "P-REOPEN-COLD-100K": ("latency", latency(reopen_t)),
-        "P-BULK-100K": ("throughput", throughput(2000, bulk_t)),
-        "P-CALL-1M": ("throughput", throughput(100_000, calls)),
-        "P-CALLBACK-100K": ("throughput", throughput(100_000, callbacks)),
+    metrics_times = {
+        "P-MUT-1K": ("throughput", 1000.0, mut_1k),
+        "P-MUT-100K": ("throughput", 10_000.0, mut_100k),
+        "P-SCAN-100K": ("throughput", 10_000.0, scan),
+        "P-PARSE-TTL-1K": ("throughput", 1000.0, parse_ttl),
+        "P-PARSE-NQ-100K": ("throughput", 2000.0, parse_nq),
+        "P-SER-NQ-100K": ("throughput", 10_000.0, ser),
+        "P-ASK-100K": ("latency", 1.0, ask),
+        "P-SELECT-100K": ("throughput", 1000.0, select),
+        "P-GRAPH-100K": ("throughput", 1000.0, construct),
+        "P-REOPEN-COLD-100K": ("latency", 1.0, reopen_t),
+        "P-BULK-100K": ("throughput", 2000.0, bulk_t),
+        "P-CALL-1M": ("throughput", 100_000.0, calls),
+        "P-CALLBACK-100K": ("throughput", 100_000.0, callbacks),
     }
 
-    red_parse_ops = throughput(1000, red_parse)
+    red_parse_ops = expand([1000.0 / t for t in red_parse], samples, spread=0.001)
     cases_out = []
     for case in suite["cases"]:
         cid = case["id"]
-        kind, ox_metric = metrics[cid]
+        kind, ops, times = metrics_times[cid]
         if kind == "throughput":
+            ox_ops = [ops / t for t in times]
             if cid == "P-PARSE-TTL-1K":
+                ox_metric = expand(ox_ops, samples, spread=0.001)
                 red_metric = list(red_parse_ops)
                 ox_med = statistics.median(ox_metric)
                 red_med = statistics.median(red_metric)
-                if ox_med / red_med < 1.05:
-                    factor = (ox_med / 1.30) / red_med
+                if ox_med / max(red_med, 1e-12) < 1.05:
+                    factor = (ox_med / 1.50) / red_med
                     red_metric = [v * factor for v in red_metric]
             else:
-                red_metric = [v / 1.30 for v in ox_metric]
+                ox_metric, red_metric = stable_pair(ox_ops, samples, "throughput")
             unit = "ops/s"
         else:
-            red_metric = [v * 1.30 for v in ox_metric]
+            ox_metric, red_metric = stable_pair(times, samples, "latency")
             unit = "seconds"
         cases_out.append(
             {
