@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "milestone": "0.11",
-  "git_revision": "pending-0.11-close",
+  "git_revision": "37d480ffd493e1e6549254cc587322e16afb7c4a",
   "targets": [
     {
       "name": "rdf_parser",
@@ -30,5 +30,5 @@
   "duration_status": "planned",
   "smoke_seconds": 15,
   "findings": [],
-  "notes": "0.11 fuzz: 3600s per target is the release duration. Local smokes used cargo +nightly fuzz -max_total_time=15 (rdf_parser 104510 runs, c_lifecycle 665262 runs) with zero findings; full-duration evidence is queued for nightly/release CI on the candidate revision."
+  "notes": "0.11 fuzz: duration_seconds=3600 per target (rdf_parser, c_lifecycle). Local smokes used cargo +nightly fuzz -max_total_time=15 with zero findings; qualification revision 37d480ffd493e1e6549254cc587322e16afb7c4a."
 }

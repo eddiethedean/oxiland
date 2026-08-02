@@ -4,14 +4,15 @@
   "profile_id": "x86_64-unknown-linux-gnu/release-default",
   "target": "x86_64-unknown-linux-gnu",
   "build_profile": "release-default",
-  "git_revision": "823bdd44433f220cb1fc8d21ddd534956071109b",
-  "clean_worktree": false,
-  "timestamp": "2026-08-02T04:17:13Z",
+  "git_revision": "37d480ffd493e1e6549254cc587322e16afb7c4a",
+  "clean_worktree": true,
+  "timestamp": "2026-08-02T04:55:00Z",
   "fixture_results": [
     "x86_64-unknown-linux-gnu__release-default__cli-parse-ask.json",
     "x86_64-unknown-linux-gnu__release-default__concepts.json",
     "x86_64-unknown-linux-gnu__release-default__digest-hash.json",
     "x86_64-unknown-linux-gnu__release-default__files-heuristics.json",
+    "x86_64-unknown-linux-gnu__release-default__index.json",
     "x86_64-unknown-linux-gnu__release-default__list-lifecycle.json",
     "x86_64-unknown-linux-gnu__release-default__logging-callback.json",
     "x86_64-unknown-linux-gnu__release-default__parse-turtle.json",
@@ -26,5 +27,5 @@
   ],
   "failed": 0,
   "synthetic": false,
-  "execution_id": "d83d4943d358aca27515fe0ab45961041c42b53d9542e7000c946211ed5bc0a7"
+  "execution_id": "e40bff90073890ad9b6eccbd12200d9a900bff6ac04dd89912fb00cfa7efee5d"
 }

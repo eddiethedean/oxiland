@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.11.0] - 2026-08-02
 
-Demonstrated Redland-parity infrastructure: frozen baseline and obligations,
-two-sided native differentials, fail-closed release checker, C source corpus,
-and librdf-compatible packaging.
+Demonstrated Redland parity: frozen baseline and obligations, six-cell native
+two-sided differentials, fail-closed release checker, C source corpus,
+librdf-compatible packaging, and revision-bound soak/performance evidence.
 
 ### Added
 
@@ -23,12 +23,15 @@ and librdf-compatible packaging.
   with ABI-swap smoke
 - Obligation-linked safe Rust tests (`tests/obligations_0_11.rs`)
 - Cross-platform qualification workflow (`.github/workflows/qualify-0.11.yml`)
+- Six-cell raw + native performance qualification bundle (Linux, macOS, Windows)
 
 ### Changed
 
 - Workspace, CLI, C, and Python package versions aligned at `0.11.0`
 - C ABI soft stubs: tagged iostreams, factory callbacks, parser features, log locator
 - `symbols.version` exports `OXILAND_0.11` with `LIBRDF_1.0.17` alias
+- User docs retire “preview” framing where 0.11 gates pass; remaining behavioral
+  gaps stay documented in `docs/users/c-abi-limitations.md`
 
 ## [0.10.0] - 2026-07-31
 

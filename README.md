@@ -9,27 +9,26 @@
 [![License](https://img.shields.io/crates/l/oxiland)](LICENSE-APACHE)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/eddiethedean/oxiland)
 
-> **Release status:** tip **0.11.0** delivers the demonstrated Redland-parity
-> evidence infrastructure (baseline freeze, two-sided harness, fail-closed
-> checker, C corpus, librdf-compat packaging). Full six-cell raw evidence and
-> `scripts/check-0.11-release.py` remain the release gate for the parity claim.
+> **Release status:** tip **0.11.0** demonstrates Redland parity on the frozen
+> matrix (six native differential cells, C corpus, librdf-compat packaging).
+> Reproduce with `scripts/check-0.11-release.py` against
+> `compatibility/qualification/`.
 
 Oxiland is an embedded RDF toolkit for Rust and Python. It provides validated
 RDF terms, in-memory and persistent datasets, named graphs, SPARQL 1.1, and
 streaming RDF input and output through a compact, typed API—without running a
 database server.
 
-Tip **0.10.0** freezes the intended 1.0 storage contract and adds strict
-release-qualification tooling. It does not yet claim full Redland parity; the
-[0.11 milestone](docs/milestones/0.11.md) defines the native evidence required
-to make that claim.
+Tip **0.11.0** closes the demonstrated Redland-parity gate defined in the
+[0.11 milestone](docs/milestones/0.11.md). See the
+[parity report](docs/reports/0.11.md) and [parity ledger](PARITY.md).
 
 | Surface | Install | Best for |
 |---|---|---|
-| Rust library | `oxiland = "0.10.0"` from crates.io, or path/git for tip 0.10 | Native applications and services |
+| Rust library | `oxiland = "0.11.0"` from crates.io, or path/git for tip | Native applications and services |
 | Python package | `python -m pip install oxiland` | Python data pipelines and embedded RDF applications |
 | Command line | `cargo install oxiland-cli` | Store inspection, imports, exports, and scripted queries |
-| C ABI preview | Build from this repo: `cargo build -p oxiland-capi` | Redland-**shaped** C **source** preview (not on crates.io; not ABI drop-in) |
+| C ABI | Build from this repo: `cargo build -p oxiland-capi` | Redland-shaped C source + librdf-compat packaging (not on crates.io) |
 
 Oxiland uses [Oxigraph](https://oxigraph.org/) 0.5.9 for standards-oriented RDF
 and SPARQL execution and Fjall for its supported durable store. The primary
@@ -46,7 +45,7 @@ Rust crate forbids unsafe code.
 - RDF and SPARQL result serialization;
 - digest, IRI, file-URI, Unicode, namespace, vocabulary, and logging utilities;
 - Python wheels for CPython 3.10–3.14 with bundled type information;
-- C source-compat preview (`oxiland-capi`) for an expanded allowlist;
+- C Redland-shaped surface (`oxiland-capi`) with librdf-compat packaging;
 - Redland workflow migration guidance and inventory-backed compatibility claims.
 
 ## Install
@@ -96,7 +95,7 @@ oxiland-cli --help
 
 Installs the latest published CLI from crates.io.
 
-### C ABI preview (tip only)
+### C ABI (tip only)
 
 Not published to crates.io (`publish = false`). Clone this repository, then:
 
@@ -104,7 +103,7 @@ Not published to crates.io (`publish = false`). Clone this repository, then:
 cargo build -p oxiland-capi --release
 ```
 
-See the [C ABI preview guide](docs/users/c-abi.md).
+See the [C ABI guide](docs/users/c-abi.md).
 
 ## Rust quick start
 
@@ -198,7 +197,7 @@ does not silently guess syntax from document contents.
 | Python | [Overview](docs/users/python.md) · [API](docs/users/python-api.md) · [Production](docs/users/python-production.md) |
 | Rust | [Overview](docs/users/rust.md) · [API on docs.rs](https://docs.rs/oxiland) · [Production](docs/users/rust-production.md) |
 | Command line | [CLI guide](docs/users/cli.md) |
-| C ABI preview | [C guide](docs/users/c-abi.md) · [Limitations](docs/users/c-abi-limitations.md) |
+| C ABI | [C guide](docs/users/c-abi.md) · [Limitations](docs/users/c-abi-limitations.md) |
 | Examples | [Runnable examples](docs/users/examples.md) |
 | Troubleshooting | [FAQ](docs/users/faq.md) |
 | Evaluation | [Positioning](docs/evaluators/positioning.md) · [Compatibility contract](docs/COMPATIBILITY.md) |
@@ -209,26 +208,27 @@ Published guides are available at
 
 ## Compatibility and scope
 
-Oxiland supports Redland-shaped concepts and migration workflows. Tip **0.10.0**
-ships an expanded **C source-compat preview** (`oxiland-capi`)—it
-is **not** an ABI drop-in for existing Redland binaries. The Python package is
-not an rdflib adapter. Every compatibility statement is scoped by subsystem,
-platform, and evidence in the [parity ledger](PARITY.md).
+Oxiland supports Redland-shaped concepts and migration workflows. Tip **0.11.0**
+ships `oxiland-capi` with demonstrated source and librdf-compat binary evidence
+on the frozen matrix—see [limitations](docs/users/c-abi-limitations.md) for
+remaining behavioral gaps. The Python package is not an rdflib adapter. Every
+compatibility statement is scoped by subsystem, platform, and evidence in the
+[parity ledger](PARITY.md).
 
 Choose Oxigraph directly when only its native engine API is required. Choose
 Oxiland when its stable facade, explicit unsupported errors, persistent-store
-contract, Python package, CLI, C preview, or Redland migration evidence adds
+contract, Python package, CLI, C surface, or Redland migration evidence adds
 value.
 
 ## Stability and support
 
 Oxiland is pre-1.0. Minor 0.x releases may contain documented public API
-changes. Persistent format v1 is reopen-compatible across 0.4.x–0.10.x patch
+changes. Persistent format v1 is reopen-compatible across 0.4.x–0.11.x patch
 lines; export standards RDF before major upgrades. See the
 [support policy](SUPPORT.md) and [changelog](CHANGELOG.md).
 
-The full-Redland-parity and 1.0 claims remain blocked on the native evidence
-required by milestone 0.11.
+Milestone 0.11 demonstrated Redland parity on the frozen matrix; version 1.0
+still requires the readiness gates in [ROADMAP](docs/ROADMAP.md).
 
 Report suspected vulnerabilities privately according to
 [SECURITY.md](SECURITY.md), not in a public issue.

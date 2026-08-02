@@ -4,14 +4,15 @@
   "profile_id": "x86_64-unknown-linux-gnu/release-all-storage",
   "target": "x86_64-unknown-linux-gnu",
   "build_profile": "release-all-storage",
-  "git_revision": "823bdd44433f220cb1fc8d21ddd534956071109b",
-  "clean_worktree": false,
-  "timestamp": "2026-08-02T04:17:13Z",
+  "git_revision": "37d480ffd493e1e6549254cc587322e16afb7c4a",
+  "clean_worktree": true,
+  "timestamp": "2026-08-02T04:55:01Z",
   "fixture_results": [
     "x86_64-unknown-linux-gnu__release-all-storage__cli-parse-ask.json",
     "x86_64-unknown-linux-gnu__release-all-storage__concepts.json",
     "x86_64-unknown-linux-gnu__release-all-storage__digest-hash.json",
     "x86_64-unknown-linux-gnu__release-all-storage__files-heuristics.json",
+    "x86_64-unknown-linux-gnu__release-all-storage__index.json",
     "x86_64-unknown-linux-gnu__release-all-storage__list-lifecycle.json",
     "x86_64-unknown-linux-gnu__release-all-storage__logging-callback.json",
     "x86_64-unknown-linux-gnu__release-all-storage__parse-turtle.json",
@@ -26,5 +27,5 @@
   ],
   "failed": 0,
   "synthetic": false,
-  "execution_id": "e6dccae13a7490f6517ab0ccb67ac701905563bf46f0321306bb6cc9ce5c0aa3"
+  "execution_id": "0c75fdeff7c6be9a2270ef32ea3f54153c705442308e06f78071d74811417f88"
 }

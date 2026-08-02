@@ -26,7 +26,7 @@ only when its evidence gates are satisfied.
 | 0.8 | Auditable C ABI preview | 0.6 | `complete` |
 | 0.9 | Downstream C compatibility | 0.8 | `complete` |
 | 0.10 | Freeze 1.0 contracts and build qualification scaffolding | 0.9 | `complete` |
-| 0.11 | Demonstrated full Redland parity from native, revision-bound evidence | 0.10 | `in progress` |
+| 0.11 | Demonstrated full Redland parity from native, revision-bound evidence | 0.10 | `complete` |
 
 States are `planned`, `in progress`, `blocked`, or `complete`. A state changes
 only after the evidence links are added to the root
@@ -454,7 +454,7 @@ full-parity claim by themselves.
 Outcome: prove full parity with pinned Redland `librdf` 1.0.17 using native,
 two-sided, revision-bound evidence on every supported target and profile.
 
-State: in progress
+State: complete
 
 Execution specification: [milestone 0.11](milestones/0.11.md)
 

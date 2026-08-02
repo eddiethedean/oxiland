@@ -4,9 +4,9 @@
   "profile_id": "aarch64-apple-darwin/release-all-storage",
   "target": "aarch64-apple-darwin",
   "build_profile": "release-all-storage",
-  "git_revision": "823bdd44433f220cb1fc8d21ddd534956071109b",
-  "clean_worktree": false,
-  "timestamp": "2026-08-02T04:18:11Z",
+  "git_revision": "37d480ffd493e1e6549254cc587322e16afb7c4a",
+  "clean_worktree": true,
+  "timestamp": "2026-08-02T04:54:42Z",
   "fixture_results": [
     "aarch64-apple-darwin__release-all-storage__cli-parse-ask.json",
     "aarch64-apple-darwin__release-all-storage__concepts.json",
@@ -27,5 +27,5 @@
   ],
   "failed": 0,
   "synthetic": false,
-  "execution_id": "294a5088b56b75e68f377bf62e3e18f69afe060794d4adb620382c94d3ce32a6"
+  "execution_id": "f8237c73cd5e9cd211c28d247bc7e9eabce7b36fc9031aeeb74eb3ef6cc1e0b6"
 }

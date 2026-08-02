@@ -141,10 +141,10 @@ def main() -> int:
             else:
                 entry["state"] = "verified"
             entry["c_state"] = "verified"
-            entry["notes"] = (
-                (entry.get("notes") or "")
-                + " | 0.11: verified from raw differentials"
-            ).strip(" |")
+            prior = entry.get("notes") or ""
+            marker = "0.11: verified from raw differentials"
+            if marker not in prior:
+                entry["notes"] = (prior + " | " + marker).strip(" |")
         else:
             # Keep ownership N/A; otherwise remain implemented candidate.
             if entry.get("safe_n_a_kind") == "ownership-mechanic":

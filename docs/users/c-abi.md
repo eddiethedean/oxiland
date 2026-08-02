@@ -7,8 +7,12 @@ workflows against Oxiland. Milestone 0.11 also packages a **Redland-compatible
 shared library name** (`librdf.0` / `librdf.so.0`) for binary ABI interchange
 experiments; full parity still requires the qualification gate.
 
-!!! warning "Preview limitations"
-    Read [C ABI limitations](c-abi-limitations.md) before integrating. Source corpus and ABI swap scripts live under `compatibility/downstream/`; treat interchange results as evidence, not a completed 0.11 claim until the checker passes.
+!!! note "Verified matrix"
+    Milestone 0.11 closed the source corpus and librdf-compat packaging gates on
+    the frozen targets/profiles. Read [C ABI limitations](c-abi-limitations.md)
+    for remaining behavioral gaps (factories, iostream tagging, log surface).
+    Interchange evidence lives under `compatibility/downstream/` and
+    `compatibility/qualification/`.
 
 ## Prerequisites
 

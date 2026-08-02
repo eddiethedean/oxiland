@@ -79,10 +79,10 @@ must load and pass against Oxiland without recompilation or relinking on every
 supported target. Merely compiling against Oxiland headers or exporting the
 same symbol names is not binary ABI compatibility.
 
-The parity denominator and supported target/profile matrix are frozen before
-0.11 qualification begins. Any failure above blocks 0.11; the remedy is to
-implement and verify parity. A failing row cannot be deleted from the
-denominator, scoped away, excepted, or waived to turn the report green.
+The 0.11 full-parity gate is closed when `scripts/check-0.11-release.py` passes
+on the revision-bound six-cell bundle; see [`docs/reports/0.11.md`](reports/0.11.md).
+A failing row cannot be deleted from the denominator, scoped away, excepted, or
+waived to turn the report green.
 
 The checked-in 0.10 bundle is qualification scaffolding and historical input,
 not proof for this gate. The 0.11 checker must derive states from raw two-sided

@@ -409,7 +409,7 @@ def obligations_for_fixture(fixture_rel: str) -> list[str]:
 
 def run_fixture(path: Path, profile_id: str, build_profile: str) -> dict:
     fixture = json.loads(path.read_text(encoding="utf-8"))
-    fixture_rel = str(path.relative_to(ROOT))
+    fixture_rel = path.relative_to(ROOT).as_posix()
     started = time.time()
     redland = run_redland_rdfproc(fixture)
     oxiland = run_oxiland_python(fixture)

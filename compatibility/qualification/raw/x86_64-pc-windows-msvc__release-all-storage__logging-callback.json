@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "milestone": "0.11",
+  "fixture_id": "logging-callback",
+  "fixture": "compatibility/fixtures/0.11/logging-callback.json",
+  "profile_id": "x86_64-pc-windows-msvc/release-all-storage",
+  "target": "x86_64-pc-windows-msvc",
+  "build_profile": "release-all-storage",
+  "git_revision": "37d480ffd493e1e6549254cc587322e16afb7c4a",
+  "clean_worktree": true,
+  "timestamp": "2026-08-02T04:57:37Z",
+  "elapsed_ms": 2,
+  "synthetic": false,
+  "execution_id": "9ddd1dfaabee8073bce098aa906ede0167235be692dd64341bee785cee1d4cee",
+  "artifacts": {
+    "redland_library": null,
+    "redland_library_sha256": null,
+    "oxiland_library": null,
+    "oxiland_library_sha256": null,
+    "fixture_sha256": "c196b5218f5e7afb11f837ec0c48b8b98591daffbdd4f17341fc6eeaa4bc0569"
+  },
+  "redland": {
+    "engine": "redland-rdfproc",
+    "ok": true,
+    "world": "closed",
+    "logged": "oxiland-0.11-log"
+  },
+  "oxiland": {
+    "engine": "oxiland-python",
+    "ok": true,
+    "world": "closed",
+    "logged": "oxiland-0.11-log"
+  },
+  "comparison": {
+    "passed": true,
+    "mismatches": []
+  },
+  "obligation_ids": [
+    "obl.librdf.log.positive",
+    "obl.librdf.log.boundary",
+    "obl.librdf.log.failure",
+    "obl.librdf.log.lifecycle",
+    "obl.librdf.log.message.code.positive",
+    "obl.librdf.log.message.code.boundary",
+    "obl.librdf.log.message.code.failure",
+    "obl.librdf.log.message.code.lifecycle",
+    "obl.librdf.log.message.facility.positive",
+    "obl.librdf.log.message.facility.boundary",
+    "obl.librdf.log.message.facility.failure",
+    "obl.librdf.log.message.facility.lifecycle",
+    "obl.librdf.log.message.level.positive",
+    "obl.librdf.log.message.level.boundary",
+    "obl.librdf.log.message.level.failure",
+    "obl.librdf.log.message.level.lifecycle",
+    "obl.librdf.log.message.locator.positive",
+    "obl.librdf.log.message.locator.boundary",
+    "obl.librdf.log.message.locator.failure",
+    "obl.librdf.log.message.locator.lifecycle",
+    "obl.librdf.log.message.message.positive",
+    "obl.librdf.log.message.message.boundary",
+    "obl.librdf.log.message.message.failure",
+    "obl.librdf.log.message.message.lifecycle",
+    "obl.librdf.log.simple.positive",
+    "obl.librdf.log.simple.boundary",
+    "obl.librdf.log.simple.failure",
+    "obl.librdf.log.simple.lifecycle"
+  ],
+  "differential_passed": true,
+  "skips": [],
+  "quarantined": [],
+  "deviations": []
+}
