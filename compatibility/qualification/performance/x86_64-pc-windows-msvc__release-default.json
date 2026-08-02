@@ -934,5 +934,6 @@
       "observed": 1.1,
       "maximum": 1.5
     }
-  ]
+  ],
+  "synthetic": false
 }

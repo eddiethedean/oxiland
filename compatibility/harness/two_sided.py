@@ -431,6 +431,11 @@ def worktree_clean_for_qualification() -> bool:
         "compatibility/qualification/0.11-",
         "compatibility/inventory/0.11-obligations.json",
         "compatibility/inventory/redland-1.0.17-oxiland-0.11.json",
+        ".venv/",
+        "python/.venv/",
+        "python/target/",
+        "target/",
+        "fuzz/Cargo.lock",
     )
     for line in out.splitlines():
         path = line[3:].strip()

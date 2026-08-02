@@ -6,17 +6,17 @@
   "profile_id": "aarch64-apple-darwin/release-all-storage",
   "target": "aarch64-apple-darwin",
   "build_profile": "release-all-storage",
-  "git_revision": "7413610099fbe537785543942709e949bd534622",
-  "clean_worktree": true,
-  "timestamp": "2026-08-02T04:06:46Z",
+  "git_revision": "823bdd44433f220cb1fc8d21ddd534956071109b",
+  "clean_worktree": false,
+  "timestamp": "2026-08-02T04:18:10Z",
   "elapsed_ms": 0,
   "synthetic": false,
-  "execution_id": "dcc118a27dcc893f589c992ad39666b4f6ade12ce9a422660a4cc934a947dfb7",
+  "execution_id": "6c2688b88d90b91bdedac606880f98bdf081b9c56b2e18bc1c64d038fb214411",
   "artifacts": {
     "redland_library": "/opt/homebrew/opt/redland/lib/librdf.dylib",
     "redland_library_sha256": "934d01aa41b8287303ccee269c46656166bb47f8aa585915035697e82202abfc",
-    "oxiland_library": "/Volumes/T7/coding/oxiland/target/release/liboxiland_capi.dylib",
-    "oxiland_library_sha256": "c35684158d490856fd7bd3dd99f9d03bc04fd08e281e07bed796e72139411d1b",
+    "oxiland_library": null,
+    "oxiland_library_sha256": null,
     "fixture_sha256": "b8d5890266db13a574f607f9ca58102538becff20c2fb3d47d3d26f95ace62ee"
   },
   "redland": {

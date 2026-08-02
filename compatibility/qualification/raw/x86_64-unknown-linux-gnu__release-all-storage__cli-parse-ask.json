@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "milestone": "0.11",
+  "fixture_id": "cli-parse-ask",
+  "fixture": "compatibility/fixtures/0.11/cli-parse-ask.json",
+  "profile_id": "x86_64-unknown-linux-gnu/release-all-storage",
+  "target": "x86_64-unknown-linux-gnu",
+  "build_profile": "release-all-storage",
+  "git_revision": "823bdd44433f220cb1fc8d21ddd534956071109b",
+  "clean_worktree": false,
+  "timestamp": "2026-08-02T04:17:13Z",
+  "elapsed_ms": 7,
+  "synthetic": false,
+  "execution_id": "8777dff262928ced074680d29f75c018f7fe034375a58080e30d87a933761538",
+  "artifacts": {
+    "redland_library": "/usr/lib/x86_64-linux-gnu/librdf.so.0",
+    "redland_library_sha256": "64f65e946929b19d7516b9af09913041de1658c8a17a972eb979d6dd64cc9f8e",
+    "oxiland_library": null,
+    "oxiland_library_sha256": null,
+    "fixture_sha256": "26b7f14f548e36e17e23a5ec62bb81d0f09124f11bfffa829cc7b7e285a86c01"
+  },
+  "redland": {
+    "engine": "redland-rdfproc",
+    "ok": true,
+    "bytes": "<http://example.org/s> <http://example.org/p> <http://example.org/o> .",
+    "size": 1,
+    "stream_count": 1,
+    "parsed": true,
+    "ask": true,
+    "select_count": 1,
+    "contains_ok": true,
+    "nodes": 2
+  },
+  "oxiland": {
+    "engine": "oxiland-python",
+    "ok": true,
+    "ask": true
+  },
+  "comparison": {
+    "passed": true,
+    "mismatches": []
+  },
+  "obligation_ids": [],
+  "differential_passed": true,
+  "skips": [],
+  "quarantined": [],
+  "deviations": []
+}
