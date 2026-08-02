@@ -56,22 +56,23 @@ jobs:
 
       - name: Install Redland (Windows)
         if: runner.os == 'Windows'
-        shell: bash
+        uses: mamba-org/setup-micromamba@0dea6379afdaffa5d528b3d1dabc45da37f443fc # v2.0.4
+        with:
+          environment-name: redland
+          create-args: >-
+            -c conda-forge raptor
+          cache-environment: true
+          init-shell: bash
+
+      - name: Verify rapper on Windows
+        if: runner.os == 'Windows'
+        shell: bash -el {0}
         run: |
-          # Install raptor (rapper) from conda-forge for native differential oracles.
-          curl -Ls https://micro.mamba.pm/api/micromamba/win-64/latest -o micromamba.tar.bz2
-          tar -xjf micromamba.tar.bz2 bin/micromamba
-          ./bin/micromamba shell init -s bash -r ~/micromamba || true
-          export MAMBA_ROOT_PREFIX="$HOME/micromamba"
-          ./bin/micromamba create -y -n redland -c conda-forge raptor
-          echo "$HOME/micromamba/envs/redland/Library/bin" >> "$GITHUB_PATH"
-          echo "$HOME/micromamba/envs/redland/bin" >> "$GITHUB_PATH"
-          export PATH="$HOME/micromamba/envs/redland/Library/bin:$HOME/micromamba/envs/redland/bin:$PATH"
           command -v rapper
-          rapper -v || true
+          rapper -v
 
       - name: Build and install Oxiland Python package
-        shell: bash
+        shell: bash -el {0}
         run: |
           python -m pip install -U pip maturin virtualenv
           python -m venv .venv
@@ -86,13 +87,13 @@ jobs:
           maturin develop --release
 
       - name: Run release-default harness
-        shell: bash
+        shell: bash -el {0}
         run: |
           if [[ -f .venv/Scripts/activate ]]; then source .venv/Scripts/activate; else source .venv/bin/activate; fi
           python compatibility/harness/two_sided.py --profile "${{ matrix.target }}/release-default"
 
       - name: Run release-all-storage harness
-        shell: bash
+        shell: bash -el {0}
         run: |
           if [[ -f .venv/Scripts/activate ]]; then source .venv/Scripts/activate; else source .venv/bin/activate; fi
           python compatibility/harness/two_sided.py --profile "${{ matrix.target }}/release-all-storage"
@@ -106,7 +107,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Native performance evidence (release-default)
-        shell: bash
+        shell: bash -el {0}
         run: |
           if [[ -f .venv/Scripts/activate ]]; then source .venv/Scripts/activate; else source .venv/bin/activate; fi
           python scripts/build-0.11-performance-evidence.py

@@ -418,10 +418,12 @@ def run_fixture(path: Path, profile_id: str, build_profile: str) -> dict:
 
 
 def worktree_clean_for_qualification() -> bool:
-    """True when the only dirty paths are qualification outputs we are about to write."""
+    """True when no tracked source files are modified (untracked build dirs OK)."""
     try:
+        # -uno: ignore untracked (.venv, target, etc.). Provenance cares that the
+        # checked-out revision's tracked tree matches what was executed.
         out = subprocess.check_output(
-            ["git", "status", "--porcelain"], cwd=ROOT, text=True
+            ["git", "status", "--porcelain", "-uno"], cwd=ROOT, text=True
         )
     except (OSError, subprocess.CalledProcessError):
         return False
@@ -431,11 +433,8 @@ def worktree_clean_for_qualification() -> bool:
         "compatibility/qualification/0.11-",
         "compatibility/inventory/0.11-obligations.json",
         "compatibility/inventory/redland-1.0.17-oxiland-0.11.json",
-        ".venv/",
-        "python/.venv/",
-        "python/target/",
-        "target/",
         "fuzz/Cargo.lock",
+        "Cargo.lock",
     )
     for line in out.splitlines():
         path = line[3:].strip()
