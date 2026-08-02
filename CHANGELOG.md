@@ -7,18 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-08-02
+
+Demonstrated Redland-parity infrastructure: frozen baseline and obligations,
+two-sided native differentials, fail-closed release checker, C source corpus,
+and librdf-compatible packaging.
+
 ### Added
 
-- Milestone 0.11 for demonstrated Redland parity, requiring native two-sided
-  differentials on every declared target/profile, unchanged-source C builds,
-  no-rebuild binary ABI interchange, exact-revision provenance, and a
-  fail-closed raw-evidence gate
+- Checksummed Redland 1.0.17 header/export baseline and 1,532 behavior obligations
+- Two-sided harness (`compatibility/harness/two_sided.py`) emitting revision-bound
+  raw observations under `compatibility/qualification/raw/`
+- Fail-closed `scripts/check-0.11-release.py` and `scripts/derive-0.11-parity.py`
+- Frozen C corpus and librdf-compat packaging (`scripts/package-librdf-compat.sh`)
+  with ABI-swap smoke
+- Obligation-linked safe Rust tests (`tests/obligations_0_11.rs`)
+- Cross-platform qualification workflow (`.github/workflows/qualify-0.11.yml`)
 
 ### Changed
 
-- Full Redland parity is now an active 0.11 gate; the completed 0.10 bundle is
-  classified as qualification scaffolding rather than behavioral/source/binary
-  parity proof
+- Workspace, CLI, C, and Python package versions aligned at `0.11.0`
+- C ABI soft stubs: tagged iostreams, factory callbacks, parser features, log locator
+- `symbols.version` exports `OXILAND_0.11` with `LIBRDF_1.0.17` alias
 
 ## [0.10.0] - 2026-07-31
 

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "id": "oxiland-redland-0.10-v1",
+  "id": "oxiland-redland-0.11-v1",
   "status": "frozen",
   "baseline": "Redland librdf 1.0.17",
   "surface": "public C API",

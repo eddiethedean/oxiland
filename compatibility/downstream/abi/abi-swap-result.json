@@ -4,10 +4,10 @@
   "work_package": "WP-11-06",
   "test": "abi-swap",
   "target": "aarch64-apple-darwin",
-  "git_revision": "c3913fb620489c017cf1c405d16a699b6cc95eac",
+  "git_revision": "8897087e42029801e6b6360b0fceb19e13a4d402",
   "clean_worktree": false,
-  "timestamp": "2026-08-02T03:29:25Z",
-  "elapsed_ms": 449,
+  "timestamp": "2026-08-02T03:49:12Z",
+  "elapsed_ms": 486,
   "synthetic": false,
   "artifacts": {
     "probe": "/Volumes/T7/coding/oxiland/target/abi-swap/abi_probe",

@@ -4,14 +4,15 @@
   "profile_id": "aarch64-apple-darwin/release-default",
   "target": "aarch64-apple-darwin",
   "build_profile": "release-default",
-  "git_revision": "c3913fb620489c017cf1c405d16a699b6cc95eac",
+  "git_revision": "8897087e42029801e6b6360b0fceb19e13a4d402",
   "clean_worktree": false,
-  "timestamp": "2026-08-02T03:30:15Z",
+  "timestamp": "2026-08-02T03:48:32Z",
   "fixture_results": [
     "aarch64-apple-darwin__release-default__cli-parse-ask.json",
     "aarch64-apple-darwin__release-default__concepts.json",
     "aarch64-apple-darwin__release-default__digest-hash.json",
     "aarch64-apple-darwin__release-default__files-heuristics.json",
+    "aarch64-apple-darwin__release-default__index.json",
     "aarch64-apple-darwin__release-default__list-lifecycle.json",
     "aarch64-apple-darwin__release-default__logging-callback.json",
     "aarch64-apple-darwin__release-default__parse-turtle.json",
@@ -26,5 +27,5 @@
   ],
   "failed": 0,
   "synthetic": false,
-  "execution_id": "7a9d4e6d186524a5467f4061b3c5e138bf8ec1026d1a895d9cc4ffd99d9ea68b"
+  "execution_id": "cf1dee7731c9ae3f114c2be49b52171d23a6819ab272c3f531d2bc6556cfd485"
 }

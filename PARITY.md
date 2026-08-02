@@ -1,12 +1,15 @@
 # Redland parity ledger
 
 Last completed milestone: 0.10
-Current development milestone: 0.11 (`in progress`)
+Current development milestone: 0.11 (`in progress` — infrastructure landed;
+cross-platform raw bundles + fail-closed release gate still required for the
+full claim)
 Ledger maturity: header-derived full public `librdf` 1.0.17 function inventory
 (0.6); Python package usability evidence (0.7); C ABI source-compat preview
 accounting (0.8); curated 0.1–0.5 slices retained for historical evidence;
-0.10 candidate full-parity inventory and qualification scaffold; 0.11 native
-differential, source-compatibility, and binary-interchange qualification active
+0.10 candidate full-parity inventory and qualification scaffold; 0.11 baseline
+freeze, obligation catalog, two-sided harness, C corpus, librdf-compat
+packaging, and fail-closed checker active
 
 > **Newcomer gloss:** This ledger classifies Redland `librdf_*` symbols and
 > records what Oxiland has implemented with tests for a **stated scope**.
@@ -120,13 +123,8 @@ Inventory revision:
 ## Current 0.11 qualification
 
 In progress. Milestone 0.11 re-verifies every inherited claim from raw native
-Redland and Oxiland executions, expands the denominator beyond function names,
-and requires unchanged-source C builds plus Redland-built binaries running
-against Oxiland without rebuild or relink. Evidence must be produced separately
-on each supported target/profile and bound to the exact clean revision,
-fixtures, harnesses, and artifacts.
-
-No 0.11 full-parity claim exists until the fail-closed gate described by the
-[`0.11 milestone`](https://github.com/eddiethedean/oxiland/blob/main/docs/milestones/0.11.md)
-passes from raw evidence. Current gaps are tracked in the
-[`0.11 report`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.11.md).
+Redland and Oxiland executions. Delivered: checksummed baseline and obligations,
+two-sided harness, fail-closed checker, C corpus, librdf-compat ABI packaging,
+and local aarch64 raw differentials. Remaining: independently executed Linux and
+Windows raw bundles, native performance on every performance profile, full-duration
+fuzz, and a green `scripts/check-0.11-release.py` run.

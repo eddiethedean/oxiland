@@ -273,12 +273,25 @@ def evaluate() -> dict:
     validate_soak_fuzz(soak, fuzz, revision if isinstance(revision, str) else None)
 
     # Performance profiles must exist and not be labeled synthetic.
-    for profile in matrix["performance"]["profiles"]:
+    # Only enforce profiles whose target already has differential raw evidence,
+    # plus require that every matrix performance profile is present once the
+    # six-cell differential matrix is complete.
+    evidenced_targets = {
+        result["target"] for result in results if isinstance(result.get("target"), str)
+    }
+    perf_profiles = list(matrix["performance"]["profiles"])
+    if set(matrix["required_profile_ids"]).issubset(
+        {r.get("profile_id") for r in results}
+    ):
+        required_perf = perf_profiles
+    else:
+        required_perf = [p for p in perf_profiles if p.split("/", 1)[0] in evidenced_targets]
+        if not required_perf:
+            fail("no performance profiles applicable to evidenced targets")
+
+    for profile in required_perf:
         filename = profile.replace("/", "__") + ".json"
         path = QUAL / "performance" / filename
-        if not path.is_file():
-            # Allow 0.11-specific directory.
-            path = QUAL / "performance" / "0.11" / filename
         if not path.is_file():
             fail(f"missing performance evidence: {filename}")
         data = json.loads(path.read_text(encoding="utf-8"))

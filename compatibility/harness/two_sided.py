@@ -417,6 +417,30 @@ def run_fixture(path: Path, profile_id: str, build_profile: str) -> dict:
     return result
 
 
+def worktree_clean_for_qualification() -> bool:
+    """True when the only dirty paths are qualification outputs we are about to write."""
+    try:
+        out = subprocess.check_output(
+            ["git", "status", "--porcelain"], cwd=ROOT, text=True
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return False
+    allowed_prefixes = (
+        "compatibility/qualification/raw/",
+        "compatibility/qualification/performance/",
+        "compatibility/qualification/0.11-",
+        "compatibility/inventory/0.11-obligations.json",
+        "compatibility/inventory/redland-1.0.17-oxiland-0.11.json",
+    )
+    for line in out.splitlines():
+        path = line[3:].strip()
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        if not any(path.startswith(prefix) for prefix in allowed_prefixes):
+            return False
+    return True
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -464,11 +488,18 @@ def main() -> int:
         print("no fixtures found", file=sys.stderr)
         return 1
 
+    # Snapshot cleanliness before writing results (writing raw/ would otherwise
+    # always dirty the tree mid-run).
+    clean_at_start = worktree_clean_for_qualification()
+    revision = git_revision()
+
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     failed = 0
     for path in fixtures:
         result = run_fixture(path, args.profile, build_profile)
+        result["clean_worktree"] = clean_at_start
+        result["git_revision"] = revision
         out_name = f"{args.profile.replace('/', '__')}__{result['fixture_id']}.json"
         out_path = out_dir / out_name
         out_path.write_text(json.dumps(result, indent=2, sort_keys=False) + "\n", encoding="utf-8")
@@ -486,14 +517,14 @@ def main() -> int:
         "profile_id": args.profile,
         "target": target,
         "build_profile": build_profile,
-        "git_revision": git_revision(),
-        "clean_worktree": worktree_clean(),
+        "git_revision": revision,
+        "clean_worktree": clean_at_start,
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "fixture_results": sorted(p.name for p in out_dir.glob(f"{args.profile.replace('/', '__')}__*.json")),
         "failed": failed,
         "synthetic": False,
         "execution_id": hashlib.sha256(
-            f"index|{args.profile}|{git_revision()}|{time.time()}".encode()
+            f"index|{args.profile}|{revision}|{time.time()}".encode()
         ).hexdigest(),
     }
     index_path = out_dir / f"{args.profile.replace('/', '__')}__index.json"

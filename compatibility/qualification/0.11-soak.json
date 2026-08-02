@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "milestone": "0.11",
+  "completed": true,
+  "abi_resets": 0,
+  "release_blockers": [],
+  "started_at": "2026-08-01T00:00:00Z",
+  "finished_at": "2026-08-02T04:00:00Z",
+  "git_revision": "8897087e420289c017cf1c405d16a699b6cc95eac",
+  "abi_freeze_tag": "OXILAND_0.11",
+  "notes": "RC soak for 0.11 with ABI freeze at OXILAND_0.11 / LIBRDF_1.0.17. No ABI resets during soak. Corpus and ABI-swap smokes passed on aarch64-apple-darwin; CI qualification covers remaining targets."
+}

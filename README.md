@@ -9,12 +9,10 @@
 [![License](https://img.shields.io/crates/l/oxiland)](LICENSE-APACHE)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/eddiethedean/oxiland)
 
-> **Release status:** tip **0.10.0** has passed the checked-in qualification
-> bundle (`scripts/check-0.10-release.py`). Tag and publish when packaging
-> attestation and crates.io/PyPI workflows are run for `v0.10.0`.
-> Milestone **0.11** is now the active full-Redland-parity phase; 0.10's bundle
-> is qualification scaffolding, not a full behavioral/source/binary parity
-> claim.
+> **Release status:** tip **0.11.0** delivers the demonstrated Redland-parity
+> evidence infrastructure (baseline freeze, two-sided harness, fail-closed
+> checker, C corpus, librdf-compat packaging). Full six-cell raw evidence and
+> `scripts/check-0.11-release.py` remain the release gate for the parity claim.
 
 Oxiland is an embedded RDF toolkit for Rust and Python. It provides validated
 RDF terms, in-memory and persistent datasets, named graphs, SPARQL 1.1, and
@@ -28,7 +26,7 @@ to make that claim.
 
 | Surface | Install | Best for |
 |---|---|---|
-| Rust library | `oxiland = "0.9.0"` from crates.io, or path/git for tip 0.10 | Native applications and services |
+| Rust library | `oxiland = "0.10.0"` from crates.io, or path/git for tip 0.10 | Native applications and services |
 | Python package | `python -m pip install oxiland` | Python data pipelines and embedded RDF applications |
 | Command line | `cargo install oxiland-cli` | Store inspection, imports, exports, and scripted queries |
 | C ABI preview | Build from this repo: `cargo build -p oxiland-capi` | Redland-**shaped** C **source** preview (not on crates.io; not ABI drop-in) |
@@ -61,7 +59,7 @@ Oxiland requires Rust **1.87 or newer**.
 
 ```toml
 [dependencies]
-oxiland = "0.9.0"
+oxiland = "0.10.0"
 ```
 
 **This repository tip (0.10.0 APIs and qualification tooling):**
