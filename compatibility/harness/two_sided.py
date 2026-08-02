@@ -496,9 +496,18 @@ def main() -> int:
         print("no fixtures found", file=sys.stderr)
         return 1
 
-    # Snapshot cleanliness before writing results (writing raw/ would otherwise
-    # always dirty the tree mid-run).
     clean_at_start = worktree_clean_for_qualification()
+    if not clean_at_start:
+        try:
+            dirty = subprocess.check_output(
+                ["git", "status", "--porcelain", "-uno"], cwd=ROOT, text=True
+            ).strip()
+        except (OSError, subprocess.CalledProcessError):
+            dirty = "<unavailable>"
+        print(
+            f"warning: tracked worktree not clean for qualification:\n{dirty}",
+            file=sys.stderr,
+        )
     revision = git_revision()
 
     out_dir = Path(args.out_dir)
