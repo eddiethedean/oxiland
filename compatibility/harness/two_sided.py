@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import platform
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -196,23 +197,52 @@ def run_oxiland_python(fixture: dict) -> dict:
     return observations
 
 
-def run_redland_rdfproc(fixture: dict) -> dict:
-    """Execute overlapping rdfproc workflows against native Redland."""
+def find_redland_cli() -> tuple[str | None, str | None]:
+    """Locate rdfproc and/or rapper. Windows hosts may only expose *.exe names."""
     rdfproc = None
-    for candidate in ("/opt/homebrew/bin/rdfproc", "/usr/bin/rdfproc", "rdfproc"):
-        path = Path(candidate) if candidate.startswith("/") else None
-        if path and path.is_file():
-            rdfproc = str(path)
+    for candidate in (
+        "/opt/homebrew/bin/rdfproc",
+        "/usr/bin/rdfproc",
+        "rdfproc",
+        "rdfproc.exe",
+    ):
+        if candidate.startswith("/") and Path(candidate).is_file():
+            rdfproc = candidate
             break
-        which = subprocess.run(["which", candidate], capture_output=True, text=True)
-        if which.returncode == 0:
-            rdfproc = which.stdout.strip()
+        found = shutil.which(candidate)
+        if found:
+            rdfproc = found
             break
-    if not rdfproc:
-        return {"ok": False, "error": "native rdfproc not found", "engine": "redland-rdfproc"}
+    rapper = None
+    for candidate in (
+        "/opt/homebrew/bin/rapper",
+        "/usr/bin/rapper",
+        "rapper",
+        "rapper.exe",
+    ):
+        if candidate.startswith("/") and Path(candidate).is_file():
+            rapper = candidate
+            break
+        found = shutil.which(candidate)
+        if found:
+            rapper = found
+            break
+    return rdfproc, rapper
+
+
+def run_redland_rdfproc(fixture: dict) -> dict:
+    """Execute overlapping Redland oracle workflows (rdfproc and/or rapper)."""
+    rdfproc, rapper_bin = find_redland_cli()
+    if not rdfproc and not rapper_bin:
+        return {
+            "ok": False,
+            "error": "native Redland tools not found (need rdfproc or rapper)",
+            "engine": "redland-rdfproc",
+        }
 
     turtle = fixture.get("turtle")
-    observations: dict = {"engine": "redland-rdfproc", "ok": True}
+    engine = "redland-rdfproc" if rdfproc else "redland-rapper"
+    observations: dict = {"engine": engine, "ok": True}
     try:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -221,10 +251,16 @@ def run_redland_rdfproc(fixture: dict) -> dict:
             # Prefer parsing via rapper + model through a small C program when needed.
             # For ASK/size-like fixtures, use rapper count + rasqal where available.
             if turtle:
+                if not rapper_bin:
+                    return {
+                        "ok": False,
+                        "error": "rapper not found (required for turtle fixtures)",
+                        "engine": engine,
+                    }
                 ttl = tmp_path / "data.ttl"
                 ttl.write_text(turtle, encoding="utf-8")
                 rapper = subprocess.run(
-                    ["rapper", "-i", "turtle", "-c", str(ttl)],
+                    [rapper_bin, "-i", "turtle", "-c", str(ttl)],
                     capture_output=True,
                     text=True,
                 )
@@ -232,7 +268,7 @@ def run_redland_rdfproc(fixture: dict) -> dict:
                     return {
                         "ok": False,
                         "error": rapper.stderr.strip() or "rapper failed",
-                        "engine": "redland-rdfproc",
+                        "engine": engine,
                     }
                 # rapper -c prints "rapper: Parsing returned N triple(s)"
                 count = 0
@@ -246,7 +282,7 @@ def run_redland_rdfproc(fixture: dict) -> dict:
                 if count == 0 and rapper.returncode == 0:
                     # Fallback: serialize and count non-empty lines.
                     dumped = subprocess.run(
-                        ["rapper", "-i", "turtle", "-o", "ntriples", str(ttl)],
+                        [rapper_bin, "-i", "turtle", "-o", "ntriples", str(ttl)],
                         capture_output=True,
                         text=True,
                     )
@@ -435,6 +471,7 @@ def worktree_clean_for_qualification() -> bool:
         "compatibility/inventory/redland-1.0.17-oxiland-0.11.json",
         "fuzz/Cargo.lock",
         "Cargo.lock",
+        "python/Cargo.lock",
     )
     for line in out.splitlines():
         path = line[3:].strip()
@@ -477,13 +514,8 @@ def main() -> int:
         )
         return 1
 
-    import shutil
-
-    if (
-        find_redland_lib() is None
-        and shutil.which("rdfproc") is None
-        and shutil.which("rapper") is None
-    ):
+    rdfproc, rapper_bin = find_redland_cli()
+    if find_redland_lib() is None and rdfproc is None and rapper_bin is None:
         print("native Redland tools not found; refusing synthetic pass", file=sys.stderr)
         return 1
 

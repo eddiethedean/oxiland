@@ -58,17 +58,35 @@ jobs:
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@40677d36a502eb2cf0fb808cc9dec31bf6152638 # v2.28.0
         with:
-          msystem: MINGW64
+          msystem: UCRT64
           update: true
-          install: mingw-w64-x86_64-raptor
+          install: >-
+            mingw-w64-ucrt-x86_64-raptor
+            mingw-w64-ucrt-x86_64-rasqal
+            mingw-w64-ucrt-x86_64-redland
           path-type: inherit
 
-      - name: Verify rapper on Windows
+      - name: Verify Redland tools on Windows
         if: runner.os == 'Windows'
         shell: msys2 {0}
         run: |
           command -v rapper
           rapper -v
+          command -v rdfproc
+          rdfproc -h | head -n 5
+
+      - name: Add MSYS2 UCRT64 tools to PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          for d in /d/a/_temp/msys64/ucrt64/bin /c/msys64/ucrt64/bin; do
+            if [[ -d "$d" ]]; then
+              echo "$d" >> "$GITHUB_PATH"
+              echo "Added $d to PATH"
+            fi
+          done
+          command -v rapper || true
+          rapper -v || true
 
       - name: Build and install Oxiland Python package
         shell: bash
@@ -89,25 +107,12 @@ jobs:
         shell: bash
         run: |
           if [[ -f .venv/Scripts/activate ]]; then source .venv/Scripts/activate; else source .venv/bin/activate; fi
-          # Ensure MSYS2 mingw rapper is visible on Windows PATH when present.
-          if [[ -d /d/a/_temp/msys64/mingw64/bin ]]; then
-            export PATH="/d/a/_temp/msys64/mingw64/bin:$PATH"
-          fi
-          if [[ -d /c/msys64/mingw64/bin ]]; then
-            export PATH="/c/msys64/mingw64/bin:$PATH"
-          fi
           python compatibility/harness/two_sided.py --profile "${{ matrix.target }}/release-default"
 
       - name: Run release-all-storage harness
         shell: bash
         run: |
           if [[ -f .venv/Scripts/activate ]]; then source .venv/Scripts/activate; else source .venv/bin/activate; fi
-          if [[ -d /d/a/_temp/msys64/mingw64/bin ]]; then
-            export PATH="/d/a/_temp/msys64/mingw64/bin:$PATH"
-          fi
-          if [[ -d /c/msys64/mingw64/bin ]]; then
-            export PATH="/c/msys64/mingw64/bin:$PATH"
-          fi
           python compatibility/harness/two_sided.py --profile "${{ matrix.target }}/release-all-storage"
 
       - name: Upload raw differential evidence
@@ -122,12 +127,6 @@ jobs:
         shell: bash
         run: |
           if [[ -f .venv/Scripts/activate ]]; then source .venv/Scripts/activate; else source .venv/bin/activate; fi
-          if [[ -d /d/a/_temp/msys64/mingw64/bin ]]; then
-            export PATH="/d/a/_temp/msys64/mingw64/bin:$PATH"
-          fi
-          if [[ -d /c/msys64/mingw64/bin ]]; then
-            export PATH="/c/msys64/mingw64/bin:$PATH"
-          fi
           python scripts/build-0.11-performance-evidence.py
 
       - name: Upload performance evidence
