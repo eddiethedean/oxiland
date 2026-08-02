@@ -1,0 +1,11 @@
+{
+  "id": "logging-callback",
+  "description": "Emit a log message through the world logger path",
+  "normalization_profile": "diagnostics",
+  "steps": [
+    {"op": "world_open"},
+    {"op": "log_simple", "message": "oxiland-0.11-log"},
+    {"op": "world_close"}
+  ],
+  "expect": {"ok": true}
+}

@@ -43,6 +43,7 @@ pub const TAG_HASH: u32 = 0x4F58_570D;
 pub const TAG_LIST: u32 = 0x4F58_570E;
 pub const TAG_ITERATOR: u32 = 0x4F58_570F;
 pub const TAG_QUERY_RESULTS_FORMATTER: u32 = 0x4F58_5710;
+pub const TAG_IOSTREAM: u32 = 0x4F58_5711;
 pub const TAG_FREED: u32 = 0xDEAD_F00D;
 
 static LIVE: LazyLock<Mutex<HashMap<usize, u32>>> = LazyLock::new(|| Mutex::new(HashMap::new()));

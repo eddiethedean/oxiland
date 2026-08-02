@@ -1,0 +1,15 @@
+{
+  "id": "sparql-ask-select",
+  "description": "SPARQL ASK and SELECT against a one-triple model",
+  "normalization_profile": "rdf-dataset",
+  "turtle": "<http://example.org/alice> <http://schema.org/name> \"Alice\" .",
+  "steps": [
+    {"op": "world_open"},
+    {"op": "model_memory"},
+    {"op": "parse_turtle_into_model"},
+    {"op": "ask", "query": "ASK { ?s ?p ?o }"},
+    {"op": "select_count", "query": "SELECT ?s WHERE { ?s ?p ?o }"},
+    {"op": "world_close"}
+  ],
+  "expect": {"ok": true, "ask": true, "select_count": 1}
+}

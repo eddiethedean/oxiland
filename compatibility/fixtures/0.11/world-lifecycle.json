@@ -1,0 +1,11 @@
+{
+  "id": "world-lifecycle",
+  "description": "World open/close and feature probe",
+  "normalization_profile": "lifecycle",
+  "steps": [
+    {"op": "world_open"},
+    {"op": "world_get_feature", "uri": "http://feature.librdf.org/index"},
+    {"op": "world_close"}
+  ],
+  "expect": {"ok": true}
+}

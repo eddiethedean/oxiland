@@ -40,6 +40,11 @@ pub use handles::helpers::{
     librdf_utf8_print, librdf_utf8_to_latin1, librdf_utf8_to_latin1_2, librdf_utf8_to_unicode_char,
 };
 
+pub use handles::io::{
+    oxiland_free_iostream, oxiland_iostream_data, oxiland_new_iostream,
+    oxiland_new_iostream_from_bytes,
+};
+
 pub use handles::heuristics::{
     librdf_heuristic_gen_name, librdf_heuristic_get_blank_node, librdf_heuristic_is_blank_node,
     librdf_heuristic_object_is_literal,
@@ -230,4 +235,5 @@ pub use handles::statement::librdf_statement;
 pub use handles::storage::librdf_storage;
 pub use handles::stream::librdf_stream;
 pub use handles::uri::librdf_uri;
+pub use handles::io::librdf_iostream;
 pub use handles::world::librdf_world;

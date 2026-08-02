@@ -2,7 +2,7 @@
 #define OXILAND_LIBRDF_H
 
 /**
- * Oxiland 0.10 C ABI — Redland-shaped source-compat surface.
+ * Oxiland 0.11 C ABI — Redland-shaped source-compat surface.
  */
 
 #ifdef __cplusplus

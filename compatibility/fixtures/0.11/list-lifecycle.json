@@ -1,0 +1,11 @@
+{
+  "id": "list-lifecycle",
+  "description": "List create/add/size/free (ownership mechanic)",
+  "normalization_profile": "lifecycle",
+  "steps": [
+    {"op": "world_open"},
+    {"op": "list_lifecycle"},
+    {"op": "world_close"}
+  ],
+  "expect": {"ok": true, "size": 1}
+}

@@ -348,7 +348,7 @@ fn logger_callback_can_replace_itself_without_deadlock() {
         librdf_world_set_logger(world, world.cast(), Some(clear_logger_from_callback),),
         0
     );
-    librdf_log_simple(world, 0, 1, 0, cstr("hello").as_ptr());
+    librdf_log_simple(world, 0, 1, 0, ptr::null_mut(), cstr("hello").as_ptr());
     librdf_free_world(world);
 }
 
@@ -414,7 +414,104 @@ fn alloc_and_raptor_bridge_lifecycle() {
     );
     assert_eq!(
         librdf_storage_register_factory(world, cstr("nope").as_ptr(), ptr::null(), None),
+        0
+    );
+    librdf_free_world(world);
+}
+
+static mut FACTORY_HITS: u32 = 0;
+
+unsafe extern "C" fn count_factory(_factory: *mut c_void) {
+    unsafe { FACTORY_HITS += 1 };
+}
+
+#[test]
+fn parser_iostream_parse_and_serialize_roundtrip() {
+    let world = librdf_new_world();
+    librdf_world_open(world);
+    let storage = librdf_new_storage(world, cstr("memory").as_ptr(), ptr::null(), ptr::null());
+    let model = librdf_new_model(world, storage, ptr::null());
+    let parser = librdf_new_parser(world, cstr("turtle").as_ptr(), ptr::null(), ptr::null_mut());
+    assert!(!parser.is_null());
+
+    let turtle = b"<http://example.org/s> <http://example.org/p> <http://example.org/o> .\n";
+    let iostream = oxiland_new_iostream_from_bytes(turtle.to_vec());
+    assert_eq!(
+        librdf_parser_parse_iostream_into_model(parser, iostream.cast(), ptr::null_mut(), model),
+        0
+    );
+    assert_eq!(librdf_model_size(model), 1);
+
+    let serializer =
+        librdf_new_serializer(world, cstr("ntriples").as_ptr(), ptr::null(), ptr::null_mut());
+    let out = oxiland_new_iostream();
+    assert_eq!(
+        librdf_serializer_serialize_model_to_iostream(
+            serializer,
+            ptr::null_mut(),
+            model,
+            out.cast()
+        ),
+        0
+    );
+    let bytes = oxiland_iostream_data(out).expect("iostream bytes");
+    assert!(std::str::from_utf8(&bytes).unwrap().contains("example.org/s"));
+
+    // Unknown non-null iostream must fail (not silent success).
+    let garbage = 0x1usize as *mut c_void;
+    assert_eq!(
+        librdf_serializer_serialize_model_to_iostream(
+            serializer,
+            ptr::null_mut(),
+            model,
+            garbage
+        ),
         -1
     );
+    assert!(librdf_parser_parse_iostream_as_stream(parser, ptr::null_mut(), ptr::null_mut()).is_null());
+
+    oxiland_free_iostream(iostream);
+    oxiland_free_iostream(out);
+    librdf_free_serializer(serializer);
+    librdf_free_parser(parser);
+    librdf_free_model(model);
+    librdf_free_storage(storage);
+    librdf_free_world(world);
+}
+
+#[test]
+fn parser_factory_register_invokes_callback_and_creates_parser() {
+    unsafe { FACTORY_HITS = 0 };
+    let world = librdf_new_world();
+    librdf_parser_register_factory(
+        world,
+        cstr("custom-parser").as_ptr(),
+        ptr::null(),
+        ptr::null(),
+        ptr::null(),
+        Some(count_factory),
+    );
+    assert_eq!(unsafe { FACTORY_HITS }, 1);
+
+    let parser = librdf_new_parser(
+        world,
+        cstr("custom-parser").as_ptr(),
+        ptr::null(),
+        ptr::null_mut(),
+    );
+    assert!(!parser.is_null());
+    assert_eq!(unsafe { FACTORY_HITS }, 2);
+
+    let feature_uri = librdf_new_uri(world, cstr("http://example.org/feature").as_ptr());
+    let value = librdf_new_node_from_literal(world, cstr("on").as_ptr(), ptr::null(), 0);
+    assert_eq!(librdf_parser_set_feature(parser, feature_uri, value), 0);
+    let got = librdf_parser_get_feature(parser, feature_uri);
+    assert!(!got.is_null());
+    let lit = librdf_node_get_literal_value(got);
+    assert_eq!(unsafe { CStr::from_ptr(lit) }.to_string_lossy(), "on");
+    librdf_free_node(got);
+    librdf_free_node(value);
+    librdf_free_uri(feature_uri);
+    librdf_free_parser(parser);
     librdf_free_world(world);
 }

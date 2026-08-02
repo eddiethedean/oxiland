@@ -1,12 +1,14 @@
 # C ABI
 
-Oxiland 0.10 development ships a **source-compatible Redland-shaped** C library
-(`oxiland-capi`) with an expanded allowlist. Use this surface to try a world →
-storage → model → parse/serialize → ASK/SELECT workflow against Oxiland. It is
-**not** a binary drop-in for `librdf`.
+Oxiland 0.11 ships a **source-compatible Redland-shaped** C library
+(`oxiland-capi`, version `0.11.0`, `publish = false`) with a frozen allowlist.
+Use this surface for world → storage → model → parse/serialize → ASK/SELECT
+workflows against Oxiland. Milestone 0.11 also packages a **Redland-compatible
+shared library name** (`librdf.0` / `librdf.so.0`) for binary ABI interchange
+experiments; full parity still requires the qualification gate.
 
 !!! warning "Preview limitations"
-    Read [C ABI limitations](c-abi-limitations.md) before integrating. Source and Oxiland ABI claims are measured in 0.9; Redland `.so` swap is not claimed.
+    Read [C ABI limitations](c-abi-limitations.md) before integrating. Source corpus and ABI swap scripts live under `compatibility/downstream/`; treat interchange results as evidence, not a completed 0.11 claim until the checker passes.
 
 ## Prerequisites
 
@@ -34,11 +36,31 @@ Artifacts (paths relative to the repo root):
 | Static library | `target/release/liboxiland_capi.a` |
 | Shared library (macOS) | `target/release/liboxiland_capi.dylib` |
 | Shared library (ELF) | `target/release/liboxiland_capi.so` |
+| Compat shared library (macOS) | `target/release/compat/librdf.0.dylib` (+ `librdf.dylib`) |
+| Compat shared library (ELF) | `target/release/compat/librdf.so.0` (+ `librdf.so`) |
 | Header | `crates/oxiland-capi/include/librdf.h` |
 | pkg-config template | `crates/oxiland-capi/oxiland.pc.in` |
-| Symbol version script (ELF) | `crates/oxiland-capi/symbols.version` |
+| Drop-in Redland pkg-config | `crates/oxiland-capi/librdf-compat.pc.in` |
+| Symbol version script (ELF) | `crates/oxiland-capi/symbols.version` (`OXILAND_0.11` + `LIBRDF_1.0.17`) |
 
 Debug builds place the same libraries under `target/debug/`.
+
+### Redland-compatible packaging (0.11)
+
+```console
+cargo build -p oxiland-capi --release
+scripts/package-librdf-compat.sh
+```
+
+On macOS the script sets `@rpath/librdf.0.dylib` via `install_name_tool`. On
+Linux it sets soname `librdf.so.0` with `patchelf` when available. Point
+`DYLD_LIBRARY_PATH` / `LD_LIBRARY_PATH` (or pkg-config) at
+`target/release/compat` for load-without-rebuild checks:
+
+```console
+compatibility/downstream/abi/run-abi-swap.sh
+compatibility/downstream/corpus/run-corpus.sh
+```
 
 ## Compile and link (repo root)
 
@@ -73,18 +95,21 @@ Link with `-loxiland_capi` (the cdylib / staticlib name is `liboxiland_capi`).
 
 1. Copy `crates/oxiland-capi/oxiland.pc.in` to a writable location (for
    example `./oxiland.pc`).
-2. Substitute `@PREFIX@` with the install prefix that contains `include/` and
-   `lib/` (or point `prefix` at a staging directory you layout yourself).
+2. Substitute `@PREFIX@` and `@VERSION@` (use `0.11.0` for the C API crate).
 3. Put that directory on `PKG_CONFIG_PATH` and query flags:
 
 ```console
-cp crates/oxiland-capi/oxiland.pc.in ./oxiland.pc
-# edit ./oxiland.pc: replace @PREFIX@ with your prefix
+sed 's|@PREFIX@|'"$PWD"'/stage|g; s|@VERSION@|0.11.0|g' \
+  crates/oxiland-capi/oxiland.pc.in > ./oxiland.pc
 export PKG_CONFIG_PATH="$PWD:${PKG_CONFIG_PATH:-}"
 pkg-config --cflags --libs oxiland
 ```
 
 The template ships `Name: oxiland` and links `-loxiland_capi`.
+
+For a Redland drop-in name (`-lrdf`), use `librdf-compat.pc.in` (or the
+`redland.pc` written by `scripts/package-librdf-compat.sh` under
+`target/release/compat/`).
 
 ## Frozen development snapshot
 

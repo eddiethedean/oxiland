@@ -23,7 +23,7 @@ use crate::handles::query::{librdf_model_query_execute, librdf_query, librdf_que
 use crate::handles::statement::librdf_statement;
 use crate::handles::stream::librdf_stream;
 use crate::handles::uri::librdf_uri;
-use crate::handles::world::librdf_world;
+use crate::handles::world::{RegisteredFactory, invoke_factory, librdf_world};
 use crate::handles::{
     TAG_STORAGE, TAG_WORLD, TypedHandle, borrow_handle, box_handle, cstr_optional, cstr_required,
     free_handle,
@@ -57,9 +57,9 @@ pub extern "C" fn librdf_new_storage(
     abort_on_panic(|| {
         clear_last_error();
         // SAFETY: world is null or a live world handle.
-        if unsafe { borrow_handle(world, TAG_WORLD) }.is_none() {
+        let Some(world_handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
             return ptr::null_mut();
-        }
+        };
         // SAFETY: storage_name is a C string when non-null.
         let Some(storage_name) = (unsafe { cstr_required(storage_name, "storage_name") }) else {
             return ptr::null_mut();
@@ -67,8 +67,14 @@ pub extern "C" fn librdf_new_storage(
         let backend = match StorageBackend::from_name(storage_name) {
             Ok(b) => b,
             Err(error) => {
-                set_last_error(error.to_string());
-                return ptr::null_mut();
+                let key = storage_name.to_ascii_lowercase();
+                if let Some(entry) = world_handle.inner.storage_factories.get(&key) {
+                    invoke_factory(entry.factory);
+                    StorageBackend::Memory
+                } else {
+                    set_last_error(error.to_string());
+                    return ptr::null_mut();
+                }
             }
         };
         // SAFETY: name is optional C string.
@@ -604,7 +610,7 @@ pub extern "C" fn librdf_storage_register_factory(
     world: *mut librdf_world,
     name: *const c_char,
     _label: *const c_char,
-    _factory: Option<unsafe extern "C" fn(*mut c_void)>,
+    factory: Option<unsafe extern "C" fn(*mut c_void)>,
 ) -> i32 {
     abort_on_panic(|| {
         clear_last_error();
@@ -614,18 +620,16 @@ pub extern "C" fn librdf_storage_register_factory(
         let Some(name) = (unsafe { cstr_required(name, "name") }) else {
             return -1;
         };
-        let known = [
-            "memory", "fjall", "redb", "rocksdb", "sqlite", "lmdb", "hashes", "file", "uri",
-            "trees",
-        ];
-        if known.iter().any(|k| k.eq_ignore_ascii_case(name))
-            || StorageBackend::from_name(name).is_ok()
-        {
-            handle.inner.registered_storages.push(name.to_owned());
-            0
-        } else {
-            set_last_error(format!("unknown storage factory '{name}'"));
-            -1
-        }
+        let key = name.to_ascii_lowercase();
+        invoke_factory(factory);
+        handle.inner.registered_storages.push(name.to_owned());
+        handle.inner.storage_factories.insert(
+            key,
+            RegisteredFactory {
+                name: name.to_owned(),
+                factory,
+            },
+        );
+        0
     })
 }

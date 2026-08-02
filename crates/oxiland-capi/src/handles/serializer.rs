@@ -9,7 +9,7 @@ use crate::handles::stream::{
     librdf_stream, librdf_stream_end, librdf_stream_get_object, librdf_stream_next,
 };
 use crate::handles::uri::librdf_uri;
-use crate::handles::world::librdf_world;
+use crate::handles::world::{RegisteredFactory, invoke_factory, librdf_world};
 use crate::handles::{
     TAG_MODEL, TAG_SERIALIZER, TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle,
     cstr_optional, cstr_required, free_handle,
@@ -46,9 +46,9 @@ pub extern "C" fn librdf_new_serializer(
     abort_on_panic(|| {
         clear_last_error();
         // SAFETY: world is null or a live world handle.
-        if unsafe { borrow_handle(world, TAG_WORLD) }.is_none() {
+        let Some(world_handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
             return ptr::null_mut();
-        }
+        };
         // SAFETY: optional C strings.
         let name = match unsafe { cstr_optional(name, "name") } {
             Ok(v) => v,
@@ -61,6 +61,18 @@ pub extern "C" fn librdf_new_serializer(
         match resolve_syntax(name, mime) {
             Ok(syntax) => box_handle(TAG_SERIALIZER, SerializerInner { syntax }),
             Err(error) => {
+                if let Some(name) = name {
+                    let key = name.to_ascii_lowercase();
+                    if let Some(entry) = world_handle.inner.serializer_factories.get(&key) {
+                        invoke_factory(entry.factory);
+                        return box_handle(
+                            TAG_SERIALIZER,
+                            SerializerInner {
+                                syntax: Syntax::Turtle,
+                            },
+                        );
+                    }
+                }
                 set_last_error(error);
                 ptr::null_mut()
             }
@@ -497,7 +509,7 @@ pub extern "C" fn librdf_serializer_register_factory(
     _label: *const c_char,
     _mime_type: *const c_char,
     _uri_string: *const u8,
-    _factory: Option<unsafe extern "C" fn(*mut c_void)>,
+    factory: Option<unsafe extern "C" fn(*mut c_void)>,
 ) {
     abort_on_panic(|| {
         clear_last_error();
@@ -507,14 +519,15 @@ pub extern "C" fn librdf_serializer_register_factory(
         let Some(name) = (unsafe { cstr_required(name, "name") }) else {
             return;
         };
-        if Syntax::from_name(name).is_ok()
-            || ["turtle", "ntriples", "nquads", "trig", "rdfxml", "raptor"]
-                .iter()
-                .any(|k| k.eq_ignore_ascii_case(name))
-        {
-            handle.inner.registered_serializers.push(name.to_owned());
-        } else {
-            set_last_error(format!("unknown serializer factory '{name}'"));
-        }
+        let key = name.to_ascii_lowercase();
+        invoke_factory(factory);
+        handle.inner.registered_serializers.push(name.to_owned());
+        handle.inner.serializer_factories.insert(
+            key,
+            RegisteredFactory {
+                name: name.to_owned(),
+                factory,
+            },
+        );
     });
 }

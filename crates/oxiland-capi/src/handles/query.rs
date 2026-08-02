@@ -6,7 +6,7 @@ use crate::handles::io::{FILE, write_file};
 use crate::handles::model::librdf_model;
 use crate::handles::node::{NodeInner, librdf_node};
 use crate::handles::uri::librdf_uri;
-use crate::handles::world::librdf_world;
+use crate::handles::world::{RegisteredFactory, invoke_factory, librdf_world};
 use crate::handles::{
     TAG_MODEL, TAG_NODE, TAG_QUERY, TAG_QUERY_RESULTS, TAG_QUERY_RESULTS_FORMATTER, TAG_STATEMENT,
     TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle, cstr_optional, cstr_required,
@@ -110,19 +110,25 @@ pub extern "C" fn librdf_new_query(
     abort_on_panic(|| {
         clear_last_error();
         // SAFETY: world is null or a live world handle.
-        if unsafe { borrow_handle(world, TAG_WORLD) }.is_none() {
+        let Some(world_handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
             return ptr::null_mut();
-        }
+        };
         // SAFETY: C strings.
         let language = match unsafe { cstr_optional(name, "name") } {
             Ok(Some(n)) => n.to_ascii_lowercase(),
             Ok(None) => "sparql".to_string(),
             Err(()) => return ptr::null_mut(),
         };
-        if language != "sparql" {
+        let language = if language == "sparql" || language == "sparql11" {
+            "sparql".to_string()
+        } else if let Some(entry) = world_handle.inner.query_factories.get(&language) {
+            invoke_factory(entry.factory);
+            // Custom factories are accepted for registration lifecycle; execute via SPARQL.
+            "sparql".to_string()
+        } else {
             set_last_error(format!("unsupported query language '{language}'"));
             return ptr::null_mut();
-        }
+        };
         let Some(query_string) = (unsafe { cstr_required(query_string, "query_string") }) else {
             return ptr::null_mut();
         };
@@ -573,7 +579,7 @@ pub extern "C" fn librdf_query_register_factory(
     world: *mut librdf_world,
     name: *const c_char,
     _uri_string: *const u8,
-    _factory: Option<unsafe extern "C" fn(*mut c_void)>,
+    factory: Option<unsafe extern "C" fn(*mut c_void)>,
 ) {
     abort_on_panic(|| {
         clear_last_error();
@@ -583,11 +589,16 @@ pub extern "C" fn librdf_query_register_factory(
         let Some(name) = (unsafe { cstr_required(name, "name") }) else {
             return;
         };
-        if name.eq_ignore_ascii_case("sparql") || name.eq_ignore_ascii_case("sparql11") {
-            handle.inner.registered_queries.push(name.to_owned());
-        } else {
-            set_last_error(format!("unknown query factory '{name}'"));
-        }
+        let key = name.to_ascii_lowercase();
+        invoke_factory(factory);
+        handle.inner.registered_queries.push(name.to_owned());
+        handle.inner.query_factories.insert(
+            key,
+            RegisteredFactory {
+                name: name.to_owned(),
+                factory,
+            },
+        );
     });
 }
 

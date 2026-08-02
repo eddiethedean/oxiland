@@ -1,0 +1,13 @@
+{
+  "id": "storage-memory",
+  "description": "Memory storage open and model binding",
+  "normalization_profile": "lifecycle",
+  "steps": [
+    {"op": "world_open"},
+    {"op": "storage_memory"},
+    {"op": "model_from_storage"},
+    {"op": "model_size"},
+    {"op": "world_close"}
+  ],
+  "expect": {"ok": true, "size": 0}
+}

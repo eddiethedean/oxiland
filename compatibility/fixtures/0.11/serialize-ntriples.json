@@ -1,0 +1,14 @@
+{
+  "id": "serialize-ntriples",
+  "description": "Serialize model to N-Triples",
+  "normalization_profile": "bytes",
+  "turtle": "<http://example.org/s> <http://example.org/p> <http://example.org/o> .",
+  "steps": [
+    {"op": "world_open"},
+    {"op": "model_memory"},
+    {"op": "parse_turtle_into_model"},
+    {"op": "serialize_ntriples"},
+    {"op": "world_close"}
+  ],
+  "expect": {"ok": true, "contains": "<http://example.org/s>"}
+}

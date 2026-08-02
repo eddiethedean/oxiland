@@ -6,9 +6,10 @@ these limits as product contract, not temporary footnotes.
 ## Not a Redland drop-in
 
 - **Not ABI-compatible** with existing Redland (`librdf`) shared libraries.
-  Recompile against Oxiland headers; do not expect binary interchange.
-- **Not a complete historical `librdf` surface.** Symbols outside the 0.9
-  allowlist are omitted or excluded with inventory notes.
+  Recompile against Oxiland headers; do not expect binary interchange until
+  packaging and binary-ABI gates in milestone 0.11 complete.
+- **Not a complete historical `librdf` surface.** Symbols outside the allowlist
+  are omitted or excluded with inventory notes.
 - **Not a guarantee** that every Redland C program will compile unchanged.
   Programs that call symbols outside the allowlist will not link.
 
@@ -16,9 +17,19 @@ these limits as product contract, not temporary footnotes.
 
 - CONSTRUCT/DESCRIBE are available via `librdf_query_results_is_graph` /
   `librdf_query_results_as_stream`.
-- `librdf_world_set_logger` receives only messages emitted through
-  `librdf_log_simple`; full Redland factory registration and logging surfaces
-  remain out of scope.
+- `librdf_world_set_logger` invokes the registered callback for messages
+  emitted through `librdf_log_simple` / `librdf_log`. Broader Redland log
+  facilities (Raptor locator-rich messages, per-level handlers with `va_list`)
+  remain simplified.
+- `librdf_*_register_factory` stores the factory function pointer on the world,
+  invokes it at registration time, and consults it when creating an unknown
+  named parser/serializer/storage/query. Custom factories do **not** install a
+  full Redland vtable; parse/serialize/query still run on Oxiland built-ins
+  (Turtle/SPARQL/memory fallbacks).
+- iostream arguments (`raptor_iostream*` in Redland headers) are **not** Raptor
+  objects. Non-null iostream pointers must be Oxiland tagged handles created
+  with `oxiland_new_iostream` / `oxiland_new_iostream_from_bytes` (Rust helpers
+  in `oxiland_capi`). Unknown non-null pointers fail; null write sinks succeed.
 - Optional durable backends open when compiled (`storage-redb`,
   `storage-rocksdb`, `storage-sqlite`, `storage-lmdb`); otherwise they remain
   known-but-not-compiled.

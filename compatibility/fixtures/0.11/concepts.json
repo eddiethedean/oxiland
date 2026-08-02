@@ -1,0 +1,11 @@
+{
+  "id": "concepts",
+  "description": "Probe built-in RDF concepts via world",
+  "normalization_profile": "lifecycle",
+  "steps": [
+    {"op": "world_open"},
+    {"op": "concepts_probe"},
+    {"op": "world_close"}
+  ],
+  "expect": {"ok": true}
+}

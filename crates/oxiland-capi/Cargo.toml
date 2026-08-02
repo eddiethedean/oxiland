@@ -1,9 +1,9 @@
 [package]
 name = "oxiland-capi"
-version = "0.10.0"
+version = "0.11.0"
 edition = "2024"
 rust-version = "1.87"
-description = "C ABI preview for Oxiland (Redland-shaped source-compat)"
+description = "C ABI for Oxiland (Redland-shaped source-compat; 0.11 librdf packaging)"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
 repository = "https://github.com/eddiethedean/oxiland"

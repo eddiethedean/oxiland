@@ -24,15 +24,15 @@ pub extern "C" fn librdf_log(
     code: i32,
     level: i32,
     facility: i32,
+    locator: *mut c_void,
     message: *const c_char,
-    _locator: *mut c_void,
 ) -> i32 {
     abort_on_panic(|| {
         clear_last_error();
         if unsafe { borrow_handle(world, TAG_WORLD) }.is_none() {
             return -1;
         }
-        librdf_log_simple(world, code, level, facility, message);
+        librdf_log_simple(world, code, level, facility, locator, message);
         0
     })
 }

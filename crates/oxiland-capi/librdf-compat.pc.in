@@ -1,0 +1,10 @@
+prefix=@PREFIX@
+exec_prefix=${prefix}
+libdir=@LIBDIR@
+includedir=@INCLUDEDIR@
+
+Name: Redland
+Description: Oxiland drop-in Redland-compatible C ABI (librdf soname)
+Version: @VERSION@
+Libs: -L${libdir} -lrdf
+Cflags: -I${includedir}

@@ -39,6 +39,7 @@ ALLOWED_MILESTONES = {
     "0.8",
     "0.9",
     "0.10",
+    "0.11",
 }
 C_ABI_REQUIRED_FROM = "0.8"
 
@@ -156,6 +157,16 @@ def validate_inventory(path: Path) -> None:
                 f"{path.name}: 0.6 forbids mapped (unimplemented) entries "
                 f"({len(mapped)} remain), e.g. {mapped[:5]}"
             )
+
+    if milestone == "0.11":
+        for entry in entries:
+            obligations = entry.get("obligations")
+            if not isinstance(obligations, list) or not obligations:
+                fail(f"{path.name}:{entry['id']}: 0.11 requires non-empty obligations")
+            if entry["state"] == "excluded":
+                fail(f"{path.name}:{entry['id']}: 0.11 forbids excluded entries")
+            if entry.get("deviations"):
+                fail(f"{path.name}:{entry['id']}: 0.11 forbids deviations")
 
     counts = Counter(entry["state"] for entry in entries)
     print(f"inventory ok: {path.relative_to(ROOT)}")

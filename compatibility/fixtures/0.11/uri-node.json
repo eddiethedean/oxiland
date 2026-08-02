@@ -1,0 +1,13 @@
+{
+  "id": "uri-node",
+  "description": "URI and node construction",
+  "normalization_profile": "rdf-dataset",
+  "steps": [
+    {"op": "world_open"},
+    {"op": "uri_new", "string": "http://example.org/alice"},
+    {"op": "node_from_uri_string", "string": "http://example.org/alice"},
+    {"op": "node_from_literal", "string": "Alice"},
+    {"op": "world_close"}
+  ],
+  "expect": {"ok": true, "nodes": 2}
+}

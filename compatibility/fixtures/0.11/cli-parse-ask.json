@@ -1,0 +1,10 @@
+{
+  "id": "cli-parse-ask",
+  "description": "rdfproc-shaped parse + ASK workflow",
+  "normalization_profile": "rdf-dataset",
+  "turtle": "<http://example.org/s> <http://example.org/p> <http://example.org/o> .",
+  "steps": [
+    {"op": "cli_parse_ask", "query": "ASK { ?s ?p ?o }"}
+  ],
+  "expect": {"ok": true, "ask": true}
+}

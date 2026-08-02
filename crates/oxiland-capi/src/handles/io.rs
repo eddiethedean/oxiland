@@ -1,13 +1,60 @@
 //! Shared FILE / iostream helpers for C ABI print/write APIs.
+//!
+//! Oxiland does not embed Raptor `raptor_iostream`. Instead, iostream
+//! arguments that are non-null must be Oxiland tagged handles created via
+//! [`oxiland_new_iostream`] / [`oxiland_new_iostream_from_bytes`].
 
 use std::ffi::c_void;
 use std::os::raw::c_char;
 use std::slice;
 
 use crate::error::set_last_error;
+use crate::handles::{TAG_IOSTREAM, TypedHandle, borrow_handle, box_handle, free_handle};
 
 #[allow(clippy::upper_case_acronyms)]
 pub type FILE = libc::FILE;
+
+/// In-memory byte buffer used wherever Redland would pass a `raptor_iostream*`.
+pub struct OxilandIostream {
+    pub data: Vec<u8>,
+}
+
+pub type librdf_iostream = TypedHandle<OxilandIostream>;
+
+/// Creates an empty Oxiland iostream handle (for serialize/write sinks).
+pub fn oxiland_new_iostream() -> *mut librdf_iostream {
+    box_handle(TAG_IOSTREAM, OxilandIostream { data: Vec::new() })
+}
+
+/// Creates an Oxiland iostream handle seeded with `data` (for parse sources).
+pub fn oxiland_new_iostream_from_bytes(data: Vec<u8>) -> *mut librdf_iostream {
+    box_handle(TAG_IOSTREAM, OxilandIostream { data })
+}
+
+/// Frees an Oxiland iostream. Null is a no-op.
+pub fn oxiland_free_iostream(iostream: *mut librdf_iostream) {
+    // SAFETY: null or a live iostream from oxiland_new_iostream*.
+    unsafe { free_handle(iostream, TAG_IOSTREAM) };
+}
+
+/// Borrows the accumulated bytes from a live iostream handle.
+pub fn oxiland_iostream_data(iostream: *mut librdf_iostream) -> Option<Vec<u8>> {
+    // SAFETY: null or a live iostream handle.
+    unsafe { borrow_handle(iostream, TAG_IOSTREAM) }.map(|h| h.inner.data.clone())
+}
+
+/// Read bytes from an Oxiland iostream handle (`*mut OxilandIostream` tagged).
+pub fn read_iostream_bytes(iostream: *mut c_void) -> Result<Vec<u8>, String> {
+    if iostream.is_null() {
+        return Err("iostream is null".into());
+    }
+    let ptr = iostream.cast::<librdf_iostream>();
+    // SAFETY: pointer is non-null; borrow_handle validates the tag/registry.
+    match unsafe { borrow_handle(ptr, TAG_IOSTREAM) } {
+        Some(handle) => Ok(handle.inner.data.clone()),
+        None => Err("iostream is not an Oxiland iostream handle".into()),
+    }
+}
 
 /// Write bytes to a C FILE* (null = no-op success).
 pub fn write_file(fh: *mut FILE, bytes: &[u8]) -> i32 {
@@ -29,11 +76,26 @@ pub fn writeln_file(fh: *mut FILE, text: &str) -> i32 {
     write_file(fh, &buf)
 }
 
-/// Best-effort write to opaque raptor_iostream* stored as void*.
-/// When null, succeeds. When non-null, treats as unused and returns 0
-/// (Oxiland does not embed Raptor iostreams).
-pub fn write_iostream(_iostr: *mut c_void, _bytes: &[u8]) -> i32 {
-    0
+/// Append bytes to an Oxiland iostream handle.
+///
+/// Null succeeds (same convention as [`write_file`]). Non-null pointers that
+/// are not live `TAG_IOSTREAM` handles fail — silent success is not allowed.
+pub fn write_iostream(iostr: *mut c_void, bytes: &[u8]) -> i32 {
+    if iostr.is_null() {
+        return 0;
+    }
+    let ptr = iostr.cast::<librdf_iostream>();
+    // SAFETY: pointer is non-null; borrow_handle validates the tag/registry.
+    match unsafe { borrow_handle(ptr, TAG_IOSTREAM) } {
+        Some(handle) => {
+            handle.inner.data.extend_from_slice(bytes);
+            0
+        }
+        None => {
+            set_last_error("iostream is not an Oxiland iostream handle");
+            -1
+        }
+    }
 }
 
 #[allow(dead_code)]

@@ -37,6 +37,15 @@ pub type librdf_rasqal_init_handler = Option<
     unsafe extern "C" fn(user_data: *mut std::ffi::c_void, rasqal_world: *mut std::ffi::c_void),
 >;
 
+/// Redland-shaped factory init callback (`void (*)(librdf_*_factory*)`).
+pub type FactoryInitFn = Option<unsafe extern "C" fn(*mut c_void)>;
+
+/// Stored `librdf_*_register_factory` entry.
+pub struct RegisteredFactory {
+    pub name: String,
+    pub factory: FactoryInitFn,
+}
+
 pub struct WorldInner {
     pub world: World,
     pub opened: bool,
@@ -53,6 +62,10 @@ pub struct WorldInner {
     pub registered_serializers: Vec<String>,
     pub registered_storages: Vec<String>,
     pub registered_queries: Vec<String>,
+    pub parser_factories: std::collections::HashMap<String, RegisteredFactory>,
+    pub serializer_factories: std::collections::HashMap<String, RegisteredFactory>,
+    pub storage_factories: std::collections::HashMap<String, RegisteredFactory>,
+    pub query_factories: std::collections::HashMap<String, RegisteredFactory>,
 }
 
 /// Creates a new world handle.
@@ -78,9 +91,24 @@ pub extern "C" fn librdf_new_world() -> *mut librdf_world {
                 registered_serializers: Vec::new(),
                 registered_storages: Vec::new(),
                 registered_queries: Vec::new(),
+                parser_factories: std::collections::HashMap::new(),
+                serializer_factories: std::collections::HashMap::new(),
+                storage_factories: std::collections::HashMap::new(),
+                query_factories: std::collections::HashMap::new(),
             },
         )
     })
+}
+
+/// Invokes a stored factory init callback with an opaque cookie, if present.
+pub(crate) fn invoke_factory(factory: FactoryInitFn) {
+    if let Some(cb) = factory {
+        let mut cookie: usize = 0;
+        // SAFETY: caller-registered C callback; cookie is a valid stack address for the call.
+        unsafe {
+            cb((&mut cookie as *mut usize).cast());
+        }
+    }
 }
 
 /// Frees a world. Null is a no-op.
@@ -136,6 +164,7 @@ pub extern "C" fn librdf_log_simple(
     code: i32,
     level: i32,
     facility: i32,
+    locator: *mut c_void,
     message: *const c_char,
 ) {
     abort_on_panic(|| {
@@ -168,6 +197,7 @@ pub extern "C" fn librdf_log_simple(
         };
         if let (Some((Some(cb), user_data)), msg) = logger {
             let cmsg = std::ffi::CString::new(msg).unwrap_or_default();
+            // SAFETY: callback registered by librdf_world_set_logger; message is live CString.
             unsafe {
                 cb(
                     user_data,
@@ -175,7 +205,7 @@ pub extern "C" fn librdf_log_simple(
                     level,
                     facility,
                     cmsg.as_ptr(),
-                    std::ptr::null(),
+                    locator.cast(),
                 );
             }
         }

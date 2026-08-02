@@ -1,0 +1,14 @@
+{
+  "id": "parse-turtle",
+  "description": "Parse Turtle string into model",
+  "normalization_profile": "rdf-dataset",
+  "turtle": "@prefix ex: <http://example.org/> .\nex:s ex:p ex:o .",
+  "steps": [
+    {"op": "world_open"},
+    {"op": "model_memory"},
+    {"op": "parse_turtle_into_model"},
+    {"op": "model_size"},
+    {"op": "world_close"}
+  ],
+  "expect": {"ok": true, "size": 1}
+}

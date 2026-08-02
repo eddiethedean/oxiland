@@ -1,0 +1,15 @@
+{
+  "id": "statement-model",
+  "description": "Add statement and model size",
+  "normalization_profile": "rdf-dataset",
+  "turtle": "<http://example.org/alice> <http://schema.org/name> \"Alice\" .",
+  "steps": [
+    {"op": "world_open"},
+    {"op": "model_memory"},
+    {"op": "parse_turtle_into_model"},
+    {"op": "model_size"},
+    {"op": "ask", "query": "ASK { <http://example.org/alice> <http://schema.org/name> \"Alice\" }"},
+    {"op": "world_close"}
+  ],
+  "expect": {"ok": true, "size": 1, "ask": true}
+}

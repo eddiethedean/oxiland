@@ -1,0 +1,2129 @@
+{
+  "schema_version": 1,
+  "milestone": "0.11",
+  "frozen_at": "2026-08-02T03:24:57Z",
+  "generated_by": "scripts/build-0.11-baseline.py",
+  "git_revision": "c3913fb620489c017cf1c405d16a699b6cc95eac",
+  "redland": {
+    "api": "1.0.17",
+    "manual": "1.0.18",
+    "tarball_url": "https://download.librdf.org/source/redland-1.0.17.tar.gz",
+    "tarball_sha256": "de1847f7b59021c16bdc72abb4d8e2d9187cd6124d69156f3326dd34ee043681",
+    "raptor": {
+      "version": "2.0.16",
+      "notes": "Pinned packaged Raptor2 used by Homebrew/reference installs"
+    },
+    "rasqal": {
+      "version": "0.9.33",
+      "notes": "Pinned packaged Rasqal used by Homebrew/reference installs"
+    },
+    "configure_flags": [
+      "--with-raptor=system",
+      "--with-rasqal=system",
+      "--enable-release"
+    ],
+    "soname": {
+      "darwin": "librdf.0.dylib",
+      "linux": "librdf.so.0",
+      "windows": "librdf-0.dll"
+    },
+    "compatibility_version": "1.0.0"
+  },
+  "oxigraph_version": "0.5.9",
+  "headers": [
+    {
+      "path": "compatibility/baseline/headers/librdf.h",
+      "sha256": "ec5d08db7d4f94c88e15d92e61ff6ed6a796412aee7b4f561d89f7b263f15435",
+      "role": "public",
+      "bytes": "8480",
+      "lines": "435"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_concepts.h",
+      "sha256": "88119cb345e2d72f63e4a144ddb84d87b3bf3bbb92832bad926ffa87737e7b7b",
+      "role": "public",
+      "bytes": "17833",
+      "lines": "746"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_digest.h",
+      "sha256": "04669c2681222a20670bd628bfdc165e66ccc48eb0ce107ac5f58ac98da6317f",
+      "role": "public",
+      "bytes": "1934",
+      "lines": "71"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_hash.h",
+      "sha256": "50fd6bf865713d8803a5a7ac1e00269b4653c80a33434750e50bc869f9e64853",
+      "role": "public",
+      "bytes": "2968",
+      "lines": "98"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_init.h",
+      "sha256": "6634e1e5fb3e95bdf557c4c105f011e221eda5d32e2ceb6b6d77e3301e84800f",
+      "role": "public",
+      "bytes": "3654",
+      "lines": "124"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_iterator.h",
+      "sha256": "795deea77f399d3a91feb6ca7bed3a6c0f68b5fa4cfe9758c4cd5f436b77c992",
+      "role": "public",
+      "bytes": "3736",
+      "lines": "115"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_list.h",
+      "sha256": "6835a0bfa499318ace48072db5dcdd84b6059f9563118d9c81be943824b10703",
+      "role": "public",
+      "bytes": "2152",
+      "lines": "80"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_log.h",
+      "sha256": "8bba910cc1c7b7387f16847aeb94c556cba2916624b53ca10f3607c81b738276",
+      "role": "public",
+      "bytes": "4976",
+      "lines": "177"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_model.h",
+      "sha256": "9dad97d86843bc2031ec56df1f2d118c9d6acfdc4100b75c920464166f67f7c6",
+      "role": "public",
+      "bytes": "8002",
+      "lines": "228"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_node.h",
+      "sha256": "fef350861519b2a05a8cbd2e28761f42a1bbabba8dbfbea003764154e9d8a865",
+      "role": "public",
+      "bytes": "6488",
+      "lines": "199"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_parser.h",
+      "sha256": "896d56cf8b748d8329f8ae6ed4a12063c506067c94f69dd7d0e8f93bdef5d777",
+      "role": "public",
+      "bytes": "5356",
+      "lines": "126"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_query.h",
+      "sha256": "cdfe71cf5d8cd6eca5addff0d15eb5f0455815828548dab94878dad1e3fe11f7",
+      "role": "public",
+      "bytes": "6727",
+      "lines": "146"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_raptor.h",
+      "sha256": "dc6f5cd75bc2a7ca5cfbedc7d271393ae99f61a89a644522fed72039384ba5d9",
+      "role": "public",
+      "bytes": "1183",
+      "lines": "48"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_serializer.h",
+      "sha256": "93ae8e9366232dbdb77b108bab2aa88433799273fa8619b19bbc085b6b8eca92",
+      "role": "public",
+      "bytes": "4549",
+      "lines": "104"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_statement.h",
+      "sha256": "9171cc934055a1bfbd87b89f8b88c1093ca189df7092b5e34de9a022f2aca6f5",
+      "role": "public",
+      "bytes": "5434",
+      "lines": "151"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_storage.h",
+      "sha256": "b997f30cbf4994e2941406e5d3468288881012a99c627cb7a03509982463e04b",
+      "role": "public",
+      "bytes": "6448",
+      "lines": "172"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_storage_module.h",
+      "sha256": "15747a63beb8db8c922b7275736dd1e404b493399563f00aff73e0ae225f9921",
+      "role": "public",
+      "bytes": "10772",
+      "lines": "268"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_stream.h",
+      "sha256": "d62b1b3960c1c525ef5b4813ef229f083a28225e4c2ebf10b6f136bc66660ffe",
+      "role": "public",
+      "bytes": "3632",
+      "lines": "116"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_uri.h",
+      "sha256": "294714f1b2f910314fad04ba8c0c127ae68155f8c26a57f394b3d49b85c246c1",
+      "role": "public",
+      "bytes": "2958",
+      "lines": "97"
+    },
+    {
+      "path": "compatibility/baseline/headers/rdf_utf8.h",
+      "sha256": "6a8155b869583d3a1d9b8aa56a665e27af683aa578b9769335d56fe5461593cc",
+      "role": "public",
+      "bytes": "2027",
+      "lines": "66"
+    },
+    {
+      "path": "compatibility/baseline/headers/redland.h",
+      "sha256": "e267b183a0f6d212733f3e05a5d563d1d29cc248a63a50b9a5e4b097f2b78afb",
+      "role": "public",
+      "bytes": "1062",
+      "lines": "36"
+    }
+  ],
+  "header_index_sha256": "389cf1006e5baa43cd8b803cda4240b0f17d079a83b1bba5157e5487dc73e659",
+  "exports": {
+    "host_triple": "aarch64-apple-darwin",
+    "path": "compatibility/baseline/exports/librdf-aarch64-apple-darwin.txt",
+    "artifact_sha256": "934d01aa41b8287303ccee269c46656166bb47f8aa585915035697e82202abfc",
+    "symbol_count": 479,
+    "symbols": [
+      {
+        "name": "librdf_alloc_memory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_basename",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_calloc_memory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_copyright_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_destroy_world",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_digest_final",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_digest_get_digest",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_digest_get_digest_length",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_digest_init",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_digest_md5_constructor",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_digest_print",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_digest_register_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_digest_sha1_constructor",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_digest_to_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_digest_update",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_digest_update_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_fatal",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_files_temporary_file_name",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_finish_concepts",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_finish_digest",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_finish_hash",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_finish_model",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_finish_node",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_finish_parser",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_finish_query",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_finish_raptor",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_finish_serializer",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_finish_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_finish_storage",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_finish_uri",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_digest",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_hash",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_hash_cursor",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_hash_datum",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_iterator",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_list",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_memory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_model",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_node",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_parser",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_query",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_query_results",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_query_results_formatter",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_serializer",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_sql_config",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_storage",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_stream",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_uri",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_free_world",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_get_concept_by_name",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_get_concept_ms_namespace",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_get_concept_resource_by_index",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_get_concept_schema_namespace",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_get_concept_uri_by_index",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_get_digest_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_get_hash_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_get_model_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_get_parser_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_get_query_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_get_serializer_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_get_storage_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_close",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_cursor_get_first",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_cursor_get_next",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_cursor_get_next_value",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_cursor_set",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_delete",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_delete_all",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_exists",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_from_array_of_strings",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_from_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_hash_get",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_get_all",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_get_as_boolean",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_get_as_long",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_get_del",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_get_fd",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_get_one",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_interpret_template",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_keys",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_open",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_print",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_print_keys",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_print_values",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_put",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_put_strings",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_register_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_sync",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_hash_to_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_hash_values_count",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_heuristic_gen_name",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_heuristic_get_blank_node",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_heuristic_is_blank_node",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_heuristic_object_is_literal",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_home_url_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_init_concepts",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_digest",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_hash",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_hash_memory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_model",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_model_storage",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_node",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_parser",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_query",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_raptor",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_serializer",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_storage",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_storage_file",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_storage_hashes",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_storage_list",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_storage_trees",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_uri",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_init_world",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_iterator_add_map",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_iterator_end",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_iterator_get_context",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_iterator_get_key",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_iterator_get_object",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_iterator_get_value",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_iterator_have_elements",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_iterator_next",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_latin1_to_utf8",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_latin1_to_utf8_2",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_license_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_list_add",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_list_clear",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_list_contains",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_list_foreach",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_list_get_iterator",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_list_pop",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_list_remove",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_list_set_equals",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_list_shift",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_list_size",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_list_unshift",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_log",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_log_message_code",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_log_message_facility",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_log_message_level",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_log_message_locator",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_log_message_message",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_log_simple",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_add",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_add_reference",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_add_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_add_statements",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_add_string_literal_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_add_submodel",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_add_typed_literal_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_as_stream",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_contains_context",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_contains_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_context_add_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_context_add_statements",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_context_as_stream",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_context_remove_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_context_remove_statements",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_context_serialize",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_enumerate",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_find_statements",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_find_statements_in_context",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_find_statements_with_options",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_get_arc",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_get_arcs",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_get_arcs_in",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_get_arcs_out",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_get_contexts",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_get_feature",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_get_source",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_get_sources",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_get_storage",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_get_target",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_get_targets",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_has_arc_in",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_has_arc_out",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_load",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_print",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_query_execute",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_register_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_remove_reference",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_remove_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_remove_submodel",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_serialise",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_set_feature",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_size",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_supports_contexts",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_sync",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_to_counted_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_model_to_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_model_transaction_commit",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_transaction_get_handle",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_transaction_rollback",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_transaction_start",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_transaction_start_with_handle",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_model_write",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_digest",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_digest_from_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_empty_iterator",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_empty_stream",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_hash",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_hash_cursor",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_hash_datum",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_hash_from_array_of_strings",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_hash_from_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_hash_from_hash",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_hash_from_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_new_iterator",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_list",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_model",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_model_from_model",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_model_with_options",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_node",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_node_from_blank_identifier",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_node_from_counted_blank_identifier",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_node_from_counted_uri_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_new_node_from_literal",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_node_from_node",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_node_from_normalised_uri_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_new_node_from_typed_counted_literal",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_node_from_typed_literal",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_node_from_uri",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_node_from_uri_local_name",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_node_from_uri_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_new_parser",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_parser_from_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_query",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_query_from_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_query_from_query",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_query_results_formatter",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_query_results_formatter2",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_query_results_formatter_by_mime_type",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_serializer",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_serializer_from_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_sql_config",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_sql_config_for_storage",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_statement_from_nodes",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_statement_from_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_statement_from_statement2",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_storage",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_storage_from_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_storage_from_storage",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_storage_with_options",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_stream",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_stream_from_node_iterator",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_uri",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_uri2",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_uri_from_filename",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_uri_from_uri",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_uri_from_uri_local_name",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_uri_normalised_to_base",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_uri_relative_to_base",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_new_world",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_decode",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_encode",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_equals",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_get_blank_identifier",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_get_counted_blank_identifier",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_get_li_ordinal",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_get_literal_value",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_get_literal_value_as_counted_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_node_get_literal_value_as_latin1",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_get_literal_value_datatype_uri",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_get_literal_value_is_wf_xml",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_get_literal_value_language",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_get_type",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_get_uri",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_is_blank",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_is_literal",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_is_resource",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_new_static_node_iterator",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_print",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_static_iterator_create",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_node_to_counted_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_node_to_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_node_write",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_check_name",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_enumerate",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_get_accept_header",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_get_description",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_get_feature",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_get_namespaces_seen_count",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_get_namespaces_seen_prefix",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_get_namespaces_seen_uri",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_get_uri_filter",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_guess_name",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_guess_name2",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_parse_as_stream",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_parse_counted_string_as_stream",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_parse_counted_string_into_model",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_parse_file_handle_as_stream",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_parse_file_handle_into_model",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_parse_into_model",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_parse_iostream_as_stream",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_parse_iostream_into_model",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_parse_string_as_stream",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_parse_string_into_model",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_raptor_constructor",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_raptor_destructor",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_register_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_set_error",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_set_feature",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_set_uri_filter",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_parser_set_warning",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_add_query_result",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_execute",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_get_limit",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_get_offset",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_language_get_description",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_languages_enumerate",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_rasqal_constructor",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_rasqal_destructor",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_register_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_remove_query_result",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_as_stream",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_finished",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_formats_check",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_formats_enumerate",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_formats_get_description",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_formatter_write",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_get_binding_name",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_get_binding_value",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_get_binding_value_by_name",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_get_bindings",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_get_bindings_count",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_get_boolean",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_get_count",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_is_bindings",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_is_boolean",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_is_graph",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_is_syntax",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_next",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_to_counted_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_query_results_to_counted_string2",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_to_file",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_to_file2",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_to_file_handle",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_to_file_handle2",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_results_to_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_query_results_to_string2",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_set_limit",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_query_set_offset",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_raptor_free_bnode_hash",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_raptor_reset_bnode_hash",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_check_name",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_enumerate",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_get_description",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_get_feature",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_raptor_constructor",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_register_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_serialize_model",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_serialize_model_to_counted_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_serializer_serialize_model_to_file",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_serialize_model_to_file_handle",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_serialize_model_to_iostream",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_serialize_model_to_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_serializer_serialize_stream_to_counted_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_serializer_serialize_stream_to_file",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_serialize_stream_to_file_handle",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_serialize_stream_to_iostream",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_serialize_stream_to_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_serializer_set_error",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_set_feature",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_set_namespace",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_serializer_set_warning",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_short_copyright_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_statement_clear",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_decode",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_decode2",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_decode_parts",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_encode",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_encode2",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_encode_parts",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_encode_parts2",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_equals",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_get_object",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_get_predicate",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_get_subject",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_init",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_is_complete",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_match",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_print",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_set_object",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_set_predicate",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_set_subject",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_statement_to_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_statement_write",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_add_reference",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_add_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_add_statements",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_close",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_contains_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_context_add_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_context_add_statements",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_context_as_stream",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_context_remove_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_context_remove_statements",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_context_serialise",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_enumerate",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_find_statements",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_find_statements_in_context",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_find_statements_with_options",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_get_arcs",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_get_arcs_in",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_get_arcs_out",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_get_contexts",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_get_feature",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_get_instance",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_get_sources",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_get_targets",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_get_world",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_has_arc_in",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_has_arc_out",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_load_all_modules",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_open",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_query_execute",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_register_factory",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_remove_reference",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_remove_statement",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_serialise",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_set_feature",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_set_instance",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_size",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_sql_dbconfig_predicates",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_supports_query",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_sync",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_transaction_commit",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_transaction_get_handle",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_transaction_rollback",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_transaction_start",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_storage_transaction_start_with_handle",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_stream_add_map",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_stream_end",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_stream_get_context",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_stream_get_context2",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_stream_get_object",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_stream_next",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_stream_print",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_stream_statement_find_map",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_stream_write",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_test_error",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_test_warning",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_unicode_char_to_utf8",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_uri_as_counted_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_uri_as_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_uri_compare",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_uri_equals",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_uri_get_digest",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_uri_is_file_uri",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_uri_print",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_uri_to_counted_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_uri_to_filename",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_uri_to_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_utf8_print",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_utf8_to_latin1",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_utf8_to_latin1_2",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_utf8_to_unicode_char",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_version_decimal",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_version_major",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_version_minor",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_version_release",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_version_string",
+        "kind": "data"
+      },
+      {
+        "name": "librdf_world_get_feature",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_world_get_genid",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_world_get_raptor",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_world_get_rasqal",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_world_init_mutex",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_world_open",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_world_set_digest",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_world_set_error",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_world_set_feature",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_world_set_logger",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_world_set_raptor",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_world_set_raptor_init_handler",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_world_set_rasqal",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_world_set_rasqal_init_handler",
+        "kind": "function"
+      },
+      {
+        "name": "librdf_world_set_warning",
+        "kind": "function"
+      }
+    ]
+  },
+  "cli": {
+    "rdfproc_workflows": [
+      "parse",
+      "print",
+      "serialize",
+      "query",
+      "ask",
+      "add",
+      "remove",
+      "contains",
+      "contexts",
+      "size"
+    ],
+    "fixture_refs": [
+      "compatibility/fixtures/0.11/cli-parse-ask.json",
+      "compatibility/fixtures/0.11/world-lifecycle.json"
+    ]
+  },
+  "format_matrix": "compatibility/baseline/format-matrix.json",
+  "target_matrix": "compatibility/qualification/0.11-matrix.json",
+  "obligation_catalog": "compatibility/inventory/0.11-obligations.json",
+  "notes": "0.11 denominator freeze: public headers, exports, library identity, Raptor/Rasqal pins, and rdfproc workflows. Independent Raptor/Rasqal APIs remain out of scope."
+}

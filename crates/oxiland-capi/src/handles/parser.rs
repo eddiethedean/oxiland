@@ -3,19 +3,23 @@
 use crate::alloc::strdup_c;
 use crate::error::{abort_on_panic, clear_last_error, set_last_error};
 use crate::handles::TAG_STREAM;
-use crate::handles::io::FILE;
+use crate::handles::io::{FILE, read_iostream_bytes};
 use crate::handles::model::librdf_model;
-use crate::handles::node::librdf_node;
+use crate::handles::node::{NodeInner, librdf_node};
 use crate::handles::statement::StatementInner;
 use crate::handles::stream::{StreamInner, librdf_stream};
 use crate::handles::uri::librdf_uri;
-use crate::handles::world::librdf_world;
+use crate::handles::world::{
+    RegisteredFactory, invoke_factory, librdf_world,
+};
 use crate::handles::{
-    TAG_MODEL, TAG_PARSER, TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle,
+    TAG_MODEL, TAG_NODE, TAG_PARSER, TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle,
     cstr_optional, cstr_required, free_handle,
 };
+use oxigraph::model::Term;
 use oxiland::io::Parser as RdfParser;
 use oxiland::io::{Parser, Syntax};
+use std::collections::HashMap;
 use std::ffi::c_void;
 use std::io::Cursor;
 use std::os::raw::c_char;
@@ -25,6 +29,7 @@ pub type librdf_parser = TypedHandle<ParserInner>;
 
 pub struct ParserInner {
     pub syntax: Syntax,
+    pub features: HashMap<String, String>,
 }
 
 fn resolve_syntax(name: Option<&str>, mime: Option<&str>) -> Result<Syntax, String> {
@@ -48,9 +53,9 @@ pub extern "C" fn librdf_new_parser(
     abort_on_panic(|| {
         clear_last_error();
         // SAFETY: world is null or a live world handle.
-        if unsafe { borrow_handle(world, TAG_WORLD) }.is_none() {
+        let Some(world_handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
             return ptr::null_mut();
-        }
+        };
         // SAFETY: optional C strings.
         let name = match unsafe { cstr_optional(name, "name") } {
             Ok(v) => v,
@@ -61,8 +66,28 @@ pub extern "C" fn librdf_new_parser(
             Err(()) => return ptr::null_mut(),
         };
         match resolve_syntax(name, mime) {
-            Ok(syntax) => box_handle(TAG_PARSER, ParserInner { syntax }),
+            Ok(syntax) => box_handle(
+                TAG_PARSER,
+                ParserInner {
+                    syntax,
+                    features: HashMap::new(),
+                },
+            ),
             Err(error) => {
+                // Registered custom factories: invoke init callback and fall back to Turtle.
+                if let Some(name) = name {
+                    let key = name.to_ascii_lowercase();
+                    if let Some(entry) = world_handle.inner.parser_factories.get(&key) {
+                        invoke_factory(entry.factory);
+                        return box_handle(
+                            TAG_PARSER,
+                            ParserInner {
+                                syntax: Syntax::Turtle,
+                                features: HashMap::new(),
+                            },
+                        );
+                    }
+                }
                 set_last_error(error);
                 ptr::null_mut()
             }
@@ -195,16 +220,6 @@ pub extern "C" fn librdf_parser_parse_counted_string_into_model(
         }
     })
 }
-
-impl ParserInner {
-    #[allow(dead_code)]
-    fn namespaces(&self) -> &[(String, String)] {
-        &[]
-    }
-}
-
-// Expand ParserInner fields via associated side state would require struct change;
-// store feature map and filters on the handle by extending the struct.
 
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_new_parser_from_factory(
@@ -531,12 +546,23 @@ pub extern "C" fn librdf_parser_parse_file_handle_into_model(
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_parser_parse_iostream_as_stream(
     parser: *mut librdf_parser,
-    _iostream: *mut c_void,
+    iostream: *mut c_void,
     base_uri: *mut librdf_uri,
 ) -> *mut librdf_stream {
-    let _ = (parser, base_uri);
-    set_last_error("raptor iostream parsing is not available");
-    ptr::null_mut()
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(parser) = (unsafe { borrow_handle(parser, TAG_PARSER) }) else {
+            return ptr::null_mut();
+        };
+        let bytes = match read_iostream_bytes(iostream) {
+            Ok(b) => b,
+            Err(error) => {
+                set_last_error(error);
+                return ptr::null_mut();
+            }
+        };
+        parse_bytes_to_stream(&parser.inner, &bytes, base_uri)
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -546,9 +572,13 @@ pub extern "C" fn librdf_parser_parse_iostream_into_model(
     base_uri: *mut librdf_uri,
     model: *mut librdf_model,
 ) -> i32 {
-    let _ = (parser, iostream, base_uri, model);
-    set_last_error("raptor iostream parsing is not available");
-    -1
+    let stream = librdf_parser_parse_iostream_as_stream(parser, iostream, base_uri);
+    if stream.is_null() {
+        return -1;
+    }
+    let rc = crate::handles::model::librdf_model_add_statements(model, stream);
+    crate::handles::stream::librdf_free_stream(stream);
+    rc
 }
 
 #[unsafe(no_mangle)]
@@ -589,23 +619,55 @@ pub extern "C" fn librdf_parser_get_namespaces_seen_uri(
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_parser_get_feature(
     parser: *mut librdf_parser,
-    _feature: *mut librdf_uri,
+    feature: *mut librdf_uri,
 ) -> *mut librdf_node {
-    let _ = parser;
-    ptr::null_mut()
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(parser) = (unsafe { borrow_handle(parser, TAG_PARSER) }) else {
+            return ptr::null_mut();
+        };
+        let Some(feature) = (unsafe { borrow_handle(feature, TAG_URI) }) else {
+            return ptr::null_mut();
+        };
+        match parser.inner.features.get(feature.inner.node.as_str()) {
+            Some(v) => box_handle(
+                TAG_NODE,
+                NodeInner::from_term(Term::Literal(oxigraph::model::Literal::new_simple_literal(
+                    v,
+                ))),
+            ),
+            None => ptr::null_mut(),
+        }
+    })
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_parser_set_feature(
     parser: *mut librdf_parser,
-    _feature: *mut librdf_uri,
-    _value: *mut librdf_node,
+    feature: *mut librdf_uri,
+    value: *mut librdf_node,
 ) -> i32 {
-    if unsafe { borrow_handle(parser, TAG_PARSER) }.is_none() {
-        -1
-    } else {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(parser) = (unsafe { borrow_handle(parser, TAG_PARSER) }) else {
+            return -1;
+        };
+        let Some(feature) = (unsafe { borrow_handle(feature, TAG_URI) }) else {
+            return -1;
+        };
+        let Some(value) = (unsafe { borrow_handle(value, TAG_NODE) }) else {
+            return -1;
+        };
+        let text = match &value.inner.term {
+            Term::Literal(l) => l.value().to_owned(),
+            other => other.to_string(),
+        };
+        parser
+            .inner
+            .features
+            .insert(feature.inner.node.as_str().to_owned(), text);
         0
-    }
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -648,7 +710,7 @@ pub extern "C" fn librdf_parser_register_factory(
     _label: *const c_char,
     _mime_type: *const c_char,
     _uri_string: *const u8,
-    _factory: Option<unsafe extern "C" fn(*mut c_void)>,
+    factory: Option<unsafe extern "C" fn(*mut c_void)>,
 ) {
     abort_on_panic(|| {
         clear_last_error();
@@ -658,14 +720,16 @@ pub extern "C" fn librdf_parser_register_factory(
         let Some(name) = (unsafe { cstr_required(name, "name") }) else {
             return;
         };
-        if Syntax::from_name(name).is_ok()
-            || ["turtle", "ntriples", "nquads", "trig", "rdfxml", "raptor"]
-                .iter()
-                .any(|k| k.eq_ignore_ascii_case(name))
-        {
-            handle.inner.registered_parsers.push(name.to_owned());
-        } else {
-            set_last_error(format!("unknown parser factory '{name}'"));
-        }
+        let key = name.to_ascii_lowercase();
+        // Invoke init callback at registration time (Redland-shaped).
+        invoke_factory(factory);
+        handle.inner.registered_parsers.push(name.to_owned());
+        handle.inner.parser_factories.insert(
+            key,
+            RegisteredFactory {
+                name: name.to_owned(),
+                factory,
+            },
+        );
     });
 }

@@ -1,0 +1,11 @@
+{
+  "id": "digest-hash",
+  "description": "Digest of a fixed string",
+  "normalization_profile": "bytes",
+  "steps": [
+    {"op": "world_open"},
+    {"op": "digest_md5", "input": "oxiland"},
+    {"op": "world_close"}
+  ],
+  "expect": {"ok": true, "digest_hex_prefix": "dcd15e"}
+}

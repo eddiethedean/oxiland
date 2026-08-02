@@ -1,0 +1,12 @@
+{
+  "id": "files-heuristics",
+  "description": "File URI and blank-node heuristic helpers",
+  "normalization_profile": "lifecycle",
+  "steps": [
+    {"op": "world_open"},
+    {"op": "file_uri_to_filename", "uri": "file:///tmp/oxiland-0.11.txt"},
+    {"op": "heuristic_is_blank", "id": "_:b1"},
+    {"op": "world_close"}
+  ],
+  "expect": {"ok": true}
+}

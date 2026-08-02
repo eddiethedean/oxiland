@@ -1,0 +1,11 @@
+{
+  "id": "unicode",
+  "description": "UTF-8 / Unicode helper probe",
+  "normalization_profile": "bytes",
+  "steps": [
+    {"op": "world_open"},
+    {"op": "unicode_check", "text": "café"},
+    {"op": "world_close"}
+  ],
+  "expect": {"ok": true}
+}

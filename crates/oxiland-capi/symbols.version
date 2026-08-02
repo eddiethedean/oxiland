@@ -1,4 +1,4 @@
-OXILAND_0.10 {
+OXILAND_0.11 {
   global:
     librdf_alloc_memory;
     librdf_basename;
@@ -386,3 +386,7 @@ OXILAND_0.10 {
   local:
     *;
 };
+
+/* Redland-shaped ELF version alias for binary ABI interchange (WP-11-06). */
+LIBRDF_1.0.17 {
+} OXILAND_0.11;
