@@ -162,4 +162,4 @@ jobs:
           cargo build -p oxiland-capi --release --locked
           compatibility/downstream/corpus/run-corpus.sh
           scripts/package-librdf-compat.sh
-          compatibility/downstream/abi/run-abi-swap.sh || true
+          compatibility/downstream/abi/run-abi-swap.sh

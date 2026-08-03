@@ -34,6 +34,7 @@ Inventory revisions:
 - [`redland-1.0.17-oxiland-0.8.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.8.json)
 - [`redland-1.0.17-oxiland-0.9.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.9.json)
 - [`redland-1.0.17-oxiland-0.10.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.10.json)
+- [`redland-1.0.17-oxiland-0.11.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.11.json)
 
 0.6 compatibility report: [`docs/reports/0.6.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.6.md)
 · 0.7 report: [`docs/reports/0.7.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.7.md)
@@ -55,24 +56,24 @@ Inventory revisions:
 
 | Redland subsystem | Safe Rust | C ABI | Target | Current evidence / gap |
 |---|---|---|---:|---|
-| World / lifecycle | Verified (0.6 accounting) | Verified (preview) | 0.1/0.8 | RAII world; C allowlist world_open (ADR-014/023) |
-| URI | Verified (0.6 accounting) | Verified (preview) | 0.5/0.8 | join/relativize/file-URI helpers; C URI create/free |
-| Nodes | Verified (0.6 accounting) | Verified (preview) | 0.1/0.8 | Oxigraph term re-exports; C URI/literal nodes |
-| Statements | Verified (0.6 accounting) | Verified (preview) | 0.1/0.8 | triples and `StatementPattern`; C statement handles |
-| Model | Verified (0.6 accounting) | Verified (preview) | 0.1/0.8 | CRUD + find; C model allowlist |
-| Storage | Verified (0.6 accounting) | Verified (preview) | 0.4/0.9 | sealed DurableStore; C memory/fjall; optional backends 0.9 |
-| Streams / iterators | Verified (0.6 accounting) | Verified (preview) | 0.5/0.8 | find/parse/query streams; C stream allowlist |
-| Parser | Verified (0.6 accounting) | Verified (preview) | 0.2/0.8 | `Parser` facade; C parse-string allowlist |
-| Serializer | Verified (0.6 accounting) | Verified (preview) | 0.2/0.8 | `Serializer` facade; C serialize-to-string allowlist |
-| SPARQL query/results | Verified (0.6 accounting) | Verified (preview) | 0.3/0.8 | ASK/SELECT on C; CONSTRUCT/DESCRIBE C deferred |
-| Query update | Verified (0.6 accounting) | Unstarted | 0.3/0.9 | `Update` facade; C update not in 0.8 allowlist |
-| Digests | Verified (0.6 accounting) | Unstarted | 0.5/0.9 | MD5/SHA-1/SHA-256 (ADR-015); C deferred |
-| Hashes / lists | Dispositioned | Unstarted | 0.5/0.8 | `not-applicable` → `HashMap`/`Vec` (ADR-016) |
-| Heuristics / files / Unicode | Verified (0.6 accounting) | Unstarted | 0.5/0.9 | file URI + NFC/NFKC helpers; C deferred |
-| Logging | Verified (0.6 accounting) | Unstarted | 0.5/0.9 | World handlers + optional `tracing`; C log handlers deferred |
-| Storage plug-ins | Dispositioned | Unstarted | 0.4/0.9 | excluded / Unsupported |
-| `rdfproc` utility | Verified (0.6 CLI) | n/a | 0.6 | `oxiland-cli` workflows (ADR-019) |
-| Python / PyPI package | Verified (0.7 usability) | n/a | 0.7 | `pip install oxiland`; wheels + pytest + typing (ADR-017) |
+| World / lifecycle | Verified (0.11) | Verified (0.11) | 0.11 | RAII world; C world_open differentials |
+| URI | Verified (0.11) | Verified (0.11) | 0.11 | join/relativize/file-URI; C URI create/free |
+| Nodes | Verified (0.11) | Verified (0.11) | 0.11 | Oxigraph terms; C URI/literal nodes |
+| Statements | Verified (0.11) | Verified (0.11) | 0.11 | triples/`StatementPattern`; C statement handles |
+| Model | Verified (0.11) | Verified (0.11) | 0.11 | CRUD + find; C model differentials |
+| Storage | Verified (0.11) | Verified (0.11) | 0.11 | DurableStore; C memory/fjall + optional backends |
+| Streams / iterators | Verified (0.11) | Verified (0.11) | 0.11 | find/parse/query streams; C stream allowlist |
+| Parser | Verified (0.11) | Verified (0.11) | 0.11 | `Parser` facade; C parse differentials |
+| Serializer | Verified (0.11) | Verified (0.11) | 0.11 | `Serializer` facade; C serialize differentials |
+| SPARQL query/results | Verified (0.11) | Verified (0.11) | 0.11 | ASK/SELECT/CONSTRUCT/DESCRIBE C path |
+| Query update | Verified (0.11) | Verified (0.11) | 0.11 | `Update` facade; C update in 0.11 inventory |
+| Digests | Verified (0.11) | Verified (0.11) | 0.11 | MD5/SHA-1/SHA-256 (ADR-015) |
+| Hashes / lists | Dispositioned | Verified (0.11) | 0.11 | Rust N/A → `HashMap`/`Vec`; C list/hash surface |
+| Heuristics / files / Unicode | Verified (0.11) | Verified (0.11) | 0.11 | file URI + NFC/NFKC; C helpers |
+| Logging | Verified (0.11) | Verified (0.11) | 0.11 | World handlers + `librdf_log_simple` path |
+| Storage plug-ins | Dispositioned | Verified (0.11) | 0.11 | baseline factories; out-of-baseline plugins excluded |
+| `rdfproc` utility | Verified (0.11) | n/a | 0.11 | `oxiland-cli` + harness CLI fixtures |
+| Python / PyPI package | Verified (0.7 usability) | n/a | 0.7 | `pip install oxiland`; wheels + pytest + typing |
 
 ## Safe-API accounting (0.6)
 

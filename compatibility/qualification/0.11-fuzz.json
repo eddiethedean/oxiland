@@ -5,9 +5,18 @@
   "targets": [
     {
       "name": "rdf_parser",
-      "duration_seconds": 3600,
-      "duration_status": "planned",
+      "duration_seconds": 3601,
+      "duration_status": "executed",
       "planned_duration_seconds": 3600,
+      "command": "cargo +nightly fuzz run rdf_parser -- -max_total_time=3600",
+      "runs": 5680923,
+      "coverage": {
+        "cov": 4139,
+        "ft": 24827,
+        "corp": "6393/1325Kb",
+        "exec_per_s": 1577,
+        "rss_mb": 555
+      },
       "smoke_seconds": 15,
       "smoke_runs": 104510,
       "smoke_result": "pass",
@@ -16,9 +25,18 @@
     },
     {
       "name": "c_lifecycle",
-      "duration_seconds": 3600,
-      "duration_status": "planned",
+      "duration_seconds": 3601,
+      "duration_status": "executed",
       "planned_duration_seconds": 3600,
+      "command": "cargo +nightly fuzz run c_lifecycle -- -max_total_time=3600",
+      "runs": 150177647,
+      "coverage": {
+        "cov": 782,
+        "ft": 1673,
+        "corp": "657/18Kb",
+        "exec_per_s": 41704,
+        "rss_mb": 469
+      },
       "smoke_seconds": 15,
       "smoke_runs": 665262,
       "smoke_result": "pass",
@@ -26,9 +44,9 @@
       "findings": []
     }
   ],
-  "duration_seconds": 3600,
-  "duration_status": "planned",
+  "duration_seconds": 3601,
+  "duration_status": "executed",
   "smoke_seconds": 15,
   "findings": [],
-  "notes": "0.11 fuzz: duration_seconds=3600 per target (rdf_parser, c_lifecycle). Local smokes used cargo +nightly fuzz -max_total_time=15 with zero findings; qualification revision 37d480ffd493e1e6549254cc587322e16afb7c4a."
+  "notes": "0.11 fuzz: executed cargo +nightly fuzz -max_total_time=3600 for rdf_parser (5680923 runs / 3601s) and c_lifecycle (150177647 runs / 3601s) with zero findings. Bound to qualification revision 37d480ffd493e1e6549254cc587322e16afb7c4a."
 }

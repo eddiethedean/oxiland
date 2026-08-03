@@ -4,16 +4,16 @@
   "work_package": "WP-11-06",
   "test": "abi-swap",
   "target": "aarch64-apple-darwin",
-  "git_revision": "8897087e42029801e6b6360b0fceb19e13a4d402",
-  "clean_worktree": false,
-  "timestamp": "2026-08-02T03:49:12Z",
-  "elapsed_ms": 486,
+  "git_revision": "dcf36fbe86269c367ed8b51039cb8959221818d8",
+  "clean_worktree": true,
+  "timestamp": "2026-08-03T00:30:39Z",
+  "elapsed_ms": 478,
   "synthetic": false,
   "artifacts": {
     "probe": "/Volumes/T7/coding/oxiland/target/abi-swap/abi_probe",
     "system_redland_libdir": "/opt/homebrew/Cellar/redland/1.0.17_1/lib",
     "oxiland_compat_library": "/Volumes/T7/coding/oxiland/target/release/compat/librdf.0.dylib",
-    "oxiland_compat_library_sha256": "bdbbb11b8b879785e94be3dddb29b858578208e7d4ce3ce8cdbb7fe5951de8a6"
+    "oxiland_compat_library_sha256": "65de25ade6519854a01323ba45b245ec9b0a628607cbbdbb1fc9d72788fad855"
   },
   "baseline": {
     "engine": "system-redland",

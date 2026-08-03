@@ -229,13 +229,19 @@ def validate_soak_fuzz(soak: dict, fuzz: dict, revision: str | None) -> None:
     if names != {"rdf_parser", "c_lifecycle"}:
         fail("fuzz targets incomplete")
     for target in targets:
-        duration = target.get("duration_seconds") or target.get("planned_duration_seconds") or 0
+        name = target.get("name")
+        if target.get("duration_status") in {None, "planned", "queued", "smoke"}:
+            fail(
+                f"fuzz target {name}: duration_status must be executed "
+                "(planned/smoke-only evidence is forbidden)"
+            )
+        duration = target.get("duration_seconds") or 0
         if duration < 3600:
-            fail(f"fuzz target {target.get('name')}: duration < 3600s")
-        if target.get("result") not in {"pass", "clean"} and target.get("smoke_result") != "pass":
-            # Prefer full-run result; allow smoke_result only if result present and pass.
-            if target.get("result") != "pass":
-                fail(f"fuzz target {target.get('name')}: not passed")
+            fail(f"fuzz target {name}: duration_seconds < 3600")
+        if target.get("result") not in {"pass", "clean"}:
+            fail(f"fuzz target {name}: not passed")
+        if target.get("findings"):
+            fail(f"fuzz target {name}: retains findings")
 
 
 def validate_baseline() -> None:

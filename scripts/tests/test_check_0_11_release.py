@@ -121,6 +121,70 @@ class Check011Tests(unittest.TestCase):
             finally:
                 checker.RAW = original
 
+    def test_rejects_planned_fuzz_duration(self) -> None:
+        checker = load_checker()
+        soak = {
+            "milestone": "0.11",
+            "completed": True,
+            "abi_resets": 0,
+            "release_blockers": [],
+            "git_revision": "abc",
+        }
+        fuzz = {
+            "milestone": "0.11",
+            "findings": [],
+            "targets": [
+                {
+                    "name": "rdf_parser",
+                    "duration_seconds": 3600,
+                    "duration_status": "planned",
+                    "result": "pass",
+                    "findings": [],
+                },
+                {
+                    "name": "c_lifecycle",
+                    "duration_seconds": 3600,
+                    "duration_status": "executed",
+                    "result": "pass",
+                    "findings": [],
+                },
+            ],
+        }
+        with self.assertRaises(ValueError) as ctx:
+            checker.validate_soak_fuzz(soak, fuzz, "abc")
+        self.assertIn("duration_status", str(ctx.exception))
+
+    def test_accepts_executed_fuzz_duration(self) -> None:
+        checker = load_checker()
+        soak = {
+            "milestone": "0.11",
+            "completed": True,
+            "abi_resets": 0,
+            "release_blockers": [],
+            "git_revision": "abc",
+        }
+        fuzz = {
+            "milestone": "0.11",
+            "findings": [],
+            "targets": [
+                {
+                    "name": "rdf_parser",
+                    "duration_seconds": 3600,
+                    "duration_status": "executed",
+                    "result": "pass",
+                    "findings": [],
+                },
+                {
+                    "name": "c_lifecycle",
+                    "duration_seconds": 3600,
+                    "duration_status": "executed",
+                    "result": "pass",
+                    "findings": [],
+                },
+            ],
+        }
+        checker.validate_soak_fuzz(soak, fuzz, "abc")
+
 
 if __name__ == "__main__":
     unittest.main()
