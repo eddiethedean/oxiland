@@ -235,7 +235,11 @@ def measure_rss_mb(binary: Path, case_id: str) -> float:
             env=env,
         )
         peak = 0.0
+        deadline = time.monotonic() + 3600.0
         while proc.poll() is None:
+            if time.monotonic() > deadline:
+                proc.kill()
+                raise SystemExit(f"RSS probe timed out for {case_id}")
             sample = _windows_peak_working_set_mib(proc.pid)
             if sample is not None:
                 peak = max(peak, sample)
