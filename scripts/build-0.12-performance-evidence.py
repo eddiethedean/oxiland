@@ -199,12 +199,17 @@ def main() -> int:
         red_lib = red_bin
 
     cases_out = []
-    for case in suite["cases"]:
+    for index, case in enumerate(suite["cases"]):
         cid = case["id"]
         kind = case["kind"]
         print(f"measuring {cid}...", flush=True)
-        ox_sec = run_bench(ox_bin, cid)[:samples_needed]
-        red_sec = run_bench(red_bin, cid)[:samples_needed]
+        # Alternate AB/BA order across cases after warm-up.
+        if index % 2 == 0:
+            ox_sec = run_bench(ox_bin, cid)[:samples_needed]
+            red_sec = run_bench(red_bin, cid)[:samples_needed]
+        else:
+            red_sec = run_bench(red_bin, cid)[:samples_needed]
+            ox_sec = run_bench(ox_bin, cid)[:samples_needed]
         if kind == "throughput":
             size_hint = SIZE_HINTS[cid]
             ox_metric = [size_hint / t for t in ox_sec]
