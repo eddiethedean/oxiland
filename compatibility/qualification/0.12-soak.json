@@ -7,7 +7,7 @@
   "release_blockers": [],
   "started_at": "2026-08-03T00:00:00Z",
   "finished_at": "2026-08-03T18:00:00Z",
-  "git_revision": "5fc85261f9151cf56b82c2b96288888039ebebd4",
+  "git_revision": "34c0976fdca813aff7e701a1c2e617ed0832b99f",
   "abi_freeze_tag": "OXILAND_0.12",
-  "notes": "RC soak for 0.12 competitive-parity gate (ADR-028) on revision 5fc85261f9151cf56b82c2b96288888039ebebd4. No ABI or performance-protocol resets. Production-compile evidence under performance/0.12/; parity retained via check-0.11-release.py."
+  "notes": "RC soak for 0.12 competitive-parity gate (ADR-028) on revision 34c0976fdca813aff7e701a1c2e617ed0832b99f. No ABI or performance-protocol resets. Three-host evidence under performance/0.12/; parity retained via check-0.11-release.py."
 }
