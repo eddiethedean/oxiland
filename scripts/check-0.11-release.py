@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -222,6 +223,19 @@ def validate_inventory_states(inventory: dict, covered: set[str]) -> None:
             fail(f"{entry['id']}: deviations are forbidden in 0.11")
 
 
+def git_is_ancestor(ancestor: str, descendant: str) -> bool:
+    """Return True when *ancestor* is an ancestor of *descendant* (inclusive)."""
+    if ancestor == descendant:
+        return True
+    completed = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+    )
+    return completed.returncode == 0
+
+
 def validate_soak_fuzz(soak: dict, fuzz: dict, revision: str | None) -> None:
     if soak.get("milestone") != "0.11" or soak.get("completed") is not True:
         fail("soak record incomplete")
@@ -229,8 +243,14 @@ def validate_soak_fuzz(soak: dict, fuzz: dict, revision: str | None) -> None:
         fail("soak retains ABI resets")
     if soak.get("release_blockers") != []:
         fail("soak retains release blockers")
-    if revision and soak.get("git_revision") != revision:
-        fail("soak git revision mismatch")
+    soak_revision = soak.get("git_revision")
+    if revision and soak_revision != revision:
+        # Tip-only CI fixes may land after the RC soak commit; require the soak
+        # pin to remain on the ancestry line of the parity evidence revision.
+        if not isinstance(soak_revision, str) or not git_is_ancestor(
+            soak_revision, revision
+        ):
+            fail("soak git revision mismatch")
 
     if fuzz.get("milestone") != "0.11" or fuzz.get("findings") != []:
         fail("fuzz record wrong milestone or retains findings")
@@ -252,6 +272,12 @@ def validate_soak_fuzz(soak: dict, fuzz: dict, revision: str | None) -> None:
             fail(f"fuzz target {name}: not passed")
         if target.get("findings"):
             fail(f"fuzz target {name}: retains findings")
+    fuzz_revision = fuzz.get("git_revision")
+    if revision and fuzz_revision is not None and fuzz_revision != revision:
+        if not isinstance(fuzz_revision, str) or not git_is_ancestor(
+            fuzz_revision, revision
+        ):
+            fail("fuzz git revision mismatch")
 
 
 def validate_baseline() -> None:

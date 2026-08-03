@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -139,6 +140,7 @@ class Check011Tests(unittest.TestCase):
         fuzz = {
             "milestone": "0.11",
             "findings": [],
+            "git_revision": "abc",
             "targets": [
                 {
                     "name": "rdf_parser",
@@ -172,6 +174,7 @@ class Check011Tests(unittest.TestCase):
         fuzz = {
             "milestone": "0.11",
             "findings": [],
+            "git_revision": "abc",
             "targets": [
                 {
                     "name": "rdf_parser",
@@ -190,6 +193,44 @@ class Check011Tests(unittest.TestCase):
             ],
         }
         checker.validate_soak_fuzz(soak, fuzz, "abc")
+
+    def test_accepts_soak_on_ancestor_revision(self) -> None:
+        checker = load_checker()
+        head = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+        ).strip()
+        parent = subprocess.check_output(
+            ["git", "rev-parse", "HEAD^"], cwd=ROOT, text=True
+        ).strip()
+        soak = {
+            "milestone": "0.11",
+            "completed": True,
+            "abi_resets": 0,
+            "release_blockers": [],
+            "git_revision": parent,
+        }
+        fuzz = {
+            "milestone": "0.11",
+            "findings": [],
+            "git_revision": parent,
+            "targets": [
+                {
+                    "name": "rdf_parser",
+                    "duration_seconds": 3600,
+                    "duration_status": "executed",
+                    "result": "pass",
+                    "findings": [],
+                },
+                {
+                    "name": "c_lifecycle",
+                    "duration_seconds": 3600,
+                    "duration_status": "executed",
+                    "result": "pass",
+                    "findings": [],
+                },
+            ],
+        }
+        checker.validate_soak_fuzz(soak, fuzz, head)
 
 
 if __name__ == "__main__":
