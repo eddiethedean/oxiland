@@ -1,6 +1,7 @@
 //! Sealed durable-store adapter (ADR-022). Not part of the public API.
 
 use std::path::Path;
+use std::sync::Arc;
 
 use oxigraph::model::Quad;
 use oxigraph::store::Store;
@@ -9,7 +10,10 @@ use crate::{Error, Result};
 
 use super::{StorageBackend, StorageCapabilities};
 
-/// Sealed durable-store adapter (ADR-022). Not part of the public API.
+/// Minimal interface required by the model's durable persistence layer.
+///
+/// Backend implementations depend on this sealed interface; model code depends
+/// only on the interface and the type-erased handle below.
 pub(crate) trait DurableStoreOps: Send + Sync {
     fn backend_id(&self) -> StorageBackend;
     fn ensure_format_v1(&self, path: &Path, allow_init: bool) -> Result<()>;
@@ -23,38 +27,91 @@ pub(crate) trait DurableStoreOps: Send + Sync {
     fn capabilities(&self, read_only: bool) -> StorageCapabilities;
 }
 
-/// Sealed durable backend handle.
+#[cfg(any(
+    feature = "storage-fjall",
+    feature = "storage-redb",
+    feature = "storage-rocksdb",
+    feature = "storage-sqlite",
+    feature = "storage-lmdb"
+))]
+macro_rules! impl_durable_adapter {
+    ($adapter:path) => {
+        impl DurableStoreOps for $adapter {
+            fn backend_id(&self) -> StorageBackend {
+                <$adapter>::backend_id(self)
+            }
+
+            fn ensure_format_v1(&self, path: &Path, allow_init: bool) -> Result<()> {
+                <$adapter>::ensure_format_v1(self, path, allow_init)
+            }
+
+            fn migrate_legacy_to_v1(&self) -> Result<()> {
+                <$adapter>::migrate_legacy_to_v1(self)
+            }
+
+            fn load_into(&self, store: &Store) -> Result<()> {
+                <$adapter>::load_into(self, store)
+            }
+
+            fn sync(&self) -> Result<()> {
+                <$adapter>::sync(self)
+            }
+
+            fn insert_quad(&self, quad: &Quad) -> Result<()> {
+                <$adapter>::insert(self, quad)
+            }
+
+            fn remove_rdf_equal(&self, quad: &Quad) -> Result<()> {
+                <$adapter>::remove_rdf_equal(self, quad)
+            }
+
+            fn clear_quads(&self) -> Result<()> {
+                <$adapter>::clear_quads(self)
+            }
+
+            fn replace_all_from_store(&self, store: &Store) -> Result<()> {
+                <$adapter>::replace_all_from_store(self, store)
+            }
+
+            fn capabilities(&self, read_only: bool) -> StorageCapabilities {
+                <$adapter>::capabilities(self, read_only)
+            }
+        }
+    };
+}
+
+#[cfg(feature = "storage-fjall")]
+impl_durable_adapter!(super::fjall::FjallStore);
+#[cfg(feature = "storage-redb")]
+impl_durable_adapter!(super::redb::RedbStore);
+#[cfg(feature = "storage-rocksdb")]
+impl_durable_adapter!(super::rocksdb::RocksDbStore);
+#[cfg(feature = "storage-sqlite")]
+impl_durable_adapter!(super::sqlite::SqliteStore);
+#[cfg(feature = "storage-lmdb")]
+impl_durable_adapter!(super::lmdb::LmdbStore);
+
+/// Cloneable, type-erased durable backend handle.
+///
+/// Dynamic dispatch keeps backend-specific branching at construction time.
+/// Operations remain closed over the narrow DurableStoreOps interface, so a
+/// new adapter does not require another match arm in every model operation.
 #[derive(Clone)]
-pub(crate) enum DurableStore {
-    /// Uninhabited in practice; keeps no-default-feature builds well formed.
-    #[cfg(not(any(
+pub(crate) struct DurableStore(Arc<dyn DurableStoreOps>);
+
+impl DurableStore {
+    #[cfg(any(
         feature = "storage-fjall",
         feature = "storage-redb",
         feature = "storage-rocksdb",
         feature = "storage-sqlite",
         feature = "storage-lmdb"
-    )))]
-    #[allow(dead_code)]
-    Disabled,
-    /// Fjall-backed format-v1 store.
-    #[cfg(feature = "storage-fjall")]
-    Fjall(super::fjall::FjallStore),
-    /// redb-backed format-v1 store.
-    #[cfg(feature = "storage-redb")]
-    Redb(super::redb::RedbStore),
-    /// RocksDB-backed format-v1 store.
-    #[cfg(feature = "storage-rocksdb")]
-    RocksDb(super::rocksdb::RocksDbStore),
-    /// SQLite-backed format-v1 store.
-    #[cfg(feature = "storage-sqlite")]
-    Sqlite(super::sqlite::SqliteStore),
-    /// LMDB-backed format-v1 store.
-    #[cfg(feature = "storage-lmdb")]
-    Lmdb(super::lmdb::LmdbStore),
-}
+    ))]
+    fn from_adapter(adapter: impl DurableStoreOps + 'static) -> Self {
+        Self(Arc::new(adapter))
+    }
 
-impl DurableStore {
-    /// Opens a durable store for `backend` at `path`.
+    /// Opens a durable store for the backend at the given path.
     pub(crate) fn open(backend: StorageBackend, path: &Path, create: bool) -> Result<Self> {
         #[cfg(not(any(
             feature = "storage-fjall",
@@ -73,43 +130,42 @@ impl DurableStore {
             #[cfg(not(feature = "storage-fjall"))]
             StorageBackend::Fjall => Err(uncompiled("fjall")),
             #[cfg(feature = "storage-redb")]
-            StorageBackend::Redb => Ok(Self::Redb(super::redb::RedbStore::open_with_create(
-                path, create,
-            )?)),
+            StorageBackend::Redb => Ok(Self::from_adapter(
+                super::redb::RedbStore::open_with_create(path, create)?,
+            )),
             #[cfg(not(feature = "storage-redb"))]
             StorageBackend::Redb => Err(uncompiled("redb")),
             #[cfg(feature = "storage-rocksdb")]
-            StorageBackend::RocksDb => Ok(Self::RocksDb(
+            StorageBackend::RocksDb => Ok(Self::from_adapter(
                 super::rocksdb::RocksDbStore::open_with_create(path, create)?,
             )),
             #[cfg(not(feature = "storage-rocksdb"))]
             StorageBackend::RocksDb => Err(uncompiled("rocksdb")),
             #[cfg(feature = "storage-sqlite")]
-            StorageBackend::Sqlite => Ok(Self::Sqlite(
+            StorageBackend::Sqlite => Ok(Self::from_adapter(
                 super::sqlite::SqliteStore::open_with_create(path, create)?,
             )),
             #[cfg(not(feature = "storage-sqlite"))]
             StorageBackend::Sqlite => Err(uncompiled("sqlite")),
             #[cfg(feature = "storage-lmdb")]
-            StorageBackend::Lmdb => Ok(Self::Lmdb(super::lmdb::LmdbStore::open_with_create(
-                path, create,
-            )?)),
+            StorageBackend::Lmdb => Ok(Self::from_adapter(
+                super::lmdb::LmdbStore::open_with_create(path, create)?,
+            )),
             #[cfg(not(feature = "storage-lmdb"))]
             StorageBackend::Lmdb => Err(uncompiled("lmdb")),
         }
     }
 
-    /// Opens a Fjall durable store at `path`.
     #[cfg(feature = "storage-fjall")]
-    pub(crate) fn open_fjall(path: &Path, create: bool) -> Result<Self> {
+    fn open_fjall(path: &Path, create: bool) -> Result<Self> {
         use super::backend_marker::{reject_foreign_layout, write_backend_marker};
         reject_foreign_layout(path, StorageBackend::Fjall)?;
         let store = super::fjall::FjallStore::open_with_create(path, create)?;
         write_backend_marker(path, StorageBackend::Fjall)?;
-        Ok(Self::Fjall(store))
+        Ok(Self::from_adapter(store))
     }
 
-    /// Returns whether `path` looks like an existing store for `backend`.
+    /// Returns whether path looks like an existing store for backend.
     pub(crate) fn looks_like_store(backend: StorageBackend, path: &Path) -> bool {
         #[cfg(not(any(
             feature = "storage-fjall",
@@ -163,280 +219,42 @@ fn uncompiled(name: &str) -> Error {
 
 impl DurableStoreOps for DurableStore {
     fn backend_id(&self) -> StorageBackend {
-        match self {
-            #[cfg(not(any(
-                feature = "storage-fjall",
-                feature = "storage-redb",
-                feature = "storage-rocksdb",
-                feature = "storage-sqlite",
-                feature = "storage-lmdb"
-            )))]
-            Self::Disabled => unreachable!("durable backends are disabled"),
-            #[cfg(feature = "storage-fjall")]
-            Self::Fjall(store) => store.backend_id(),
-            #[cfg(feature = "storage-redb")]
-            Self::Redb(store) => store.backend_id(),
-            #[cfg(feature = "storage-rocksdb")]
-            Self::RocksDb(store) => store.backend_id(),
-            #[cfg(feature = "storage-sqlite")]
-            Self::Sqlite(store) => store.backend_id(),
-            #[cfg(feature = "storage-lmdb")]
-            Self::Lmdb(store) => store.backend_id(),
-        }
+        self.0.backend_id()
     }
 
     fn ensure_format_v1(&self, path: &Path, allow_init: bool) -> Result<()> {
-        #[cfg(not(any(
-            feature = "storage-fjall",
-            feature = "storage-redb",
-            feature = "storage-rocksdb",
-            feature = "storage-sqlite",
-            feature = "storage-lmdb"
-        )))]
-        let _ = (path, allow_init);
-        match self {
-            #[cfg(not(any(
-                feature = "storage-fjall",
-                feature = "storage-redb",
-                feature = "storage-rocksdb",
-                feature = "storage-sqlite",
-                feature = "storage-lmdb"
-            )))]
-            Self::Disabled => unreachable!("durable backends are disabled"),
-            #[cfg(feature = "storage-fjall")]
-            Self::Fjall(store) => store.ensure_format_v1(path, allow_init),
-            #[cfg(feature = "storage-redb")]
-            Self::Redb(store) => store.ensure_format_v1(path, allow_init),
-            #[cfg(feature = "storage-rocksdb")]
-            Self::RocksDb(store) => store.ensure_format_v1(path, allow_init),
-            #[cfg(feature = "storage-sqlite")]
-            Self::Sqlite(store) => store.ensure_format_v1(path, allow_init),
-            #[cfg(feature = "storage-lmdb")]
-            Self::Lmdb(store) => store.ensure_format_v1(path, allow_init),
-        }
+        self.0.ensure_format_v1(path, allow_init)
     }
 
     fn migrate_legacy_to_v1(&self) -> Result<()> {
-        match self {
-            #[cfg(not(any(
-                feature = "storage-fjall",
-                feature = "storage-redb",
-                feature = "storage-rocksdb",
-                feature = "storage-sqlite",
-                feature = "storage-lmdb"
-            )))]
-            Self::Disabled => unreachable!("durable backends are disabled"),
-            #[cfg(feature = "storage-fjall")]
-            Self::Fjall(store) => store.migrate_legacy_to_v1(),
-            #[cfg(feature = "storage-redb")]
-            Self::Redb(store) => store.migrate_legacy_to_v1(),
-            #[cfg(feature = "storage-rocksdb")]
-            Self::RocksDb(store) => store.migrate_legacy_to_v1(),
-            #[cfg(feature = "storage-sqlite")]
-            Self::Sqlite(store) => store.migrate_legacy_to_v1(),
-            #[cfg(feature = "storage-lmdb")]
-            Self::Lmdb(store) => store.migrate_legacy_to_v1(),
-        }
+        self.0.migrate_legacy_to_v1()
     }
 
     fn load_into(&self, store: &Store) -> Result<()> {
-        #[cfg(not(any(
-            feature = "storage-fjall",
-            feature = "storage-redb",
-            feature = "storage-rocksdb",
-            feature = "storage-sqlite",
-            feature = "storage-lmdb"
-        )))]
-        let _ = store;
-        match self {
-            #[cfg(not(any(
-                feature = "storage-fjall",
-                feature = "storage-redb",
-                feature = "storage-rocksdb",
-                feature = "storage-sqlite",
-                feature = "storage-lmdb"
-            )))]
-            Self::Disabled => unreachable!("durable backends are disabled"),
-            #[cfg(feature = "storage-fjall")]
-            Self::Fjall(disk) => disk.load_into(store),
-            #[cfg(feature = "storage-redb")]
-            Self::Redb(disk) => disk.load_into(store),
-            #[cfg(feature = "storage-rocksdb")]
-            Self::RocksDb(disk) => disk.load_into(store),
-            #[cfg(feature = "storage-sqlite")]
-            Self::Sqlite(disk) => disk.load_into(store),
-            #[cfg(feature = "storage-lmdb")]
-            Self::Lmdb(disk) => disk.load_into(store),
-        }
+        self.0.load_into(store)
     }
 
     fn sync(&self) -> Result<()> {
-        match self {
-            #[cfg(not(any(
-                feature = "storage-fjall",
-                feature = "storage-redb",
-                feature = "storage-rocksdb",
-                feature = "storage-sqlite",
-                feature = "storage-lmdb"
-            )))]
-            Self::Disabled => unreachable!("durable backends are disabled"),
-            #[cfg(feature = "storage-fjall")]
-            Self::Fjall(store) => store.sync(),
-            #[cfg(feature = "storage-redb")]
-            Self::Redb(store) => store.sync(),
-            #[cfg(feature = "storage-rocksdb")]
-            Self::RocksDb(store) => store.sync(),
-            #[cfg(feature = "storage-sqlite")]
-            Self::Sqlite(store) => store.sync(),
-            #[cfg(feature = "storage-lmdb")]
-            Self::Lmdb(store) => store.sync(),
-        }
+        self.0.sync()
     }
 
     fn insert_quad(&self, quad: &Quad) -> Result<()> {
-        #[cfg(not(any(
-            feature = "storage-fjall",
-            feature = "storage-redb",
-            feature = "storage-rocksdb",
-            feature = "storage-sqlite",
-            feature = "storage-lmdb"
-        )))]
-        let _ = quad;
-        match self {
-            #[cfg(not(any(
-                feature = "storage-fjall",
-                feature = "storage-redb",
-                feature = "storage-rocksdb",
-                feature = "storage-sqlite",
-                feature = "storage-lmdb"
-            )))]
-            Self::Disabled => unreachable!("durable backends are disabled"),
-            #[cfg(feature = "storage-fjall")]
-            Self::Fjall(store) => store.insert(quad),
-            #[cfg(feature = "storage-redb")]
-            Self::Redb(store) => store.insert(quad),
-            #[cfg(feature = "storage-rocksdb")]
-            Self::RocksDb(store) => store.insert(quad),
-            #[cfg(feature = "storage-sqlite")]
-            Self::Sqlite(store) => store.insert(quad),
-            #[cfg(feature = "storage-lmdb")]
-            Self::Lmdb(store) => store.insert(quad),
-        }
+        self.0.insert_quad(quad)
     }
 
     fn remove_rdf_equal(&self, quad: &Quad) -> Result<()> {
-        #[cfg(not(any(
-            feature = "storage-fjall",
-            feature = "storage-redb",
-            feature = "storage-rocksdb",
-            feature = "storage-sqlite",
-            feature = "storage-lmdb"
-        )))]
-        let _ = quad;
-        match self {
-            #[cfg(not(any(
-                feature = "storage-fjall",
-                feature = "storage-redb",
-                feature = "storage-rocksdb",
-                feature = "storage-sqlite",
-                feature = "storage-lmdb"
-            )))]
-            Self::Disabled => unreachable!("durable backends are disabled"),
-            #[cfg(feature = "storage-fjall")]
-            Self::Fjall(store) => store.remove_rdf_equal(quad),
-            #[cfg(feature = "storage-redb")]
-            Self::Redb(store) => store.remove_rdf_equal(quad),
-            #[cfg(feature = "storage-rocksdb")]
-            Self::RocksDb(store) => store.remove_rdf_equal(quad),
-            #[cfg(feature = "storage-sqlite")]
-            Self::Sqlite(store) => store.remove_rdf_equal(quad),
-            #[cfg(feature = "storage-lmdb")]
-            Self::Lmdb(store) => store.remove_rdf_equal(quad),
-        }
+        self.0.remove_rdf_equal(quad)
     }
 
     fn clear_quads(&self) -> Result<()> {
-        match self {
-            #[cfg(not(any(
-                feature = "storage-fjall",
-                feature = "storage-redb",
-                feature = "storage-rocksdb",
-                feature = "storage-sqlite",
-                feature = "storage-lmdb"
-            )))]
-            Self::Disabled => unreachable!("durable backends are disabled"),
-            #[cfg(feature = "storage-fjall")]
-            Self::Fjall(store) => store.clear_quads(),
-            #[cfg(feature = "storage-redb")]
-            Self::Redb(store) => store.clear_quads(),
-            #[cfg(feature = "storage-rocksdb")]
-            Self::RocksDb(store) => store.clear_quads(),
-            #[cfg(feature = "storage-sqlite")]
-            Self::Sqlite(store) => store.clear_quads(),
-            #[cfg(feature = "storage-lmdb")]
-            Self::Lmdb(store) => store.clear_quads(),
-        }
+        self.0.clear_quads()
     }
 
     fn replace_all_from_store(&self, store: &Store) -> Result<()> {
-        #[cfg(not(any(
-            feature = "storage-fjall",
-            feature = "storage-redb",
-            feature = "storage-rocksdb",
-            feature = "storage-sqlite",
-            feature = "storage-lmdb"
-        )))]
-        let _ = store;
-        match self {
-            #[cfg(not(any(
-                feature = "storage-fjall",
-                feature = "storage-redb",
-                feature = "storage-rocksdb",
-                feature = "storage-sqlite",
-                feature = "storage-lmdb"
-            )))]
-            Self::Disabled => unreachable!("durable backends are disabled"),
-            #[cfg(feature = "storage-fjall")]
-            Self::Fjall(disk) => disk.replace_all_from_store(store),
-            #[cfg(feature = "storage-redb")]
-            Self::Redb(disk) => disk.replace_all_from_store(store),
-            #[cfg(feature = "storage-rocksdb")]
-            Self::RocksDb(disk) => disk.replace_all_from_store(store),
-            #[cfg(feature = "storage-sqlite")]
-            Self::Sqlite(disk) => disk.replace_all_from_store(store),
-            #[cfg(feature = "storage-lmdb")]
-            Self::Lmdb(disk) => disk.replace_all_from_store(store),
-        }
+        self.0.replace_all_from_store(store)
     }
 
     fn capabilities(&self, read_only: bool) -> StorageCapabilities {
-        #[cfg(not(any(
-            feature = "storage-fjall",
-            feature = "storage-redb",
-            feature = "storage-rocksdb",
-            feature = "storage-sqlite",
-            feature = "storage-lmdb"
-        )))]
-        let _ = read_only;
-        match self {
-            #[cfg(not(any(
-                feature = "storage-fjall",
-                feature = "storage-redb",
-                feature = "storage-rocksdb",
-                feature = "storage-sqlite",
-                feature = "storage-lmdb"
-            )))]
-            Self::Disabled => unreachable!("durable backends are disabled"),
-            #[cfg(feature = "storage-fjall")]
-            Self::Fjall(store) => store.capabilities(read_only),
-            #[cfg(feature = "storage-redb")]
-            Self::Redb(store) => store.capabilities(read_only),
-            #[cfg(feature = "storage-rocksdb")]
-            Self::RocksDb(store) => store.capabilities(read_only),
-            #[cfg(feature = "storage-sqlite")]
-            Self::Sqlite(store) => store.capabilities(read_only),
-            #[cfg(feature = "storage-lmdb")]
-            Self::Lmdb(store) => store.capabilities(read_only),
-        }
+        self.0.capabilities(read_only)
     }
 }

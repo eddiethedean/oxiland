@@ -170,6 +170,7 @@ nav:
           - Storage backend plan: design/storage-backend-expansion.md
       - Engineering:
           - Architecture: ARCHITECTURE.md
+          - SOLID boundaries: design/solid-boundaries.md
           - Execution: EXECUTION.md
           - Verification: VERIFICATION.md
           - Decisions: DECISIONS.md

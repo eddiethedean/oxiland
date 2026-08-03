@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Durable-store operations now dispatch through a sealed, type-erased adapter
+  boundary, eliminating repeated backend matches while preserving the public
+  API and storage-format contracts
+- C model entry points are split into navigation, context, I/O, feature, and
+  transaction responsibilities, with centralized cardinality-cache and
+  transaction-state invariants
 - Roadmap, charter, execution, verification, parity ledger, and risk focus now
   sequence 0.12 as the faster-than-Redland gate before 1.0
 - `scripts/check-performance-gate.py` rejects debug/dev Rust compile provenance

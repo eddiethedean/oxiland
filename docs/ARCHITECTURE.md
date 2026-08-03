@@ -187,6 +187,10 @@ then decide whether a public user-supplied backend trait is supportable before
 0.10. This revisits ADR-006 without weakening its Fjall format-v1 promise or
 ADR-018's rejection of arbitrary native plug-in registration.
 
+The implemented internal dependency direction and the responsibility split in
+the C model adapter are recorded in the
+[SOLID boundaries note](design/solid-boundaries.md).
+
 ## Dependency policy
 
 Oxigraph is pinned intentionally within each Oxiland release. Upgrades require

@@ -91,6 +91,70 @@ fn model_context_operations_are_isolated_from_default_graph() {
 }
 
 #[test]
+fn model_navigation_projects_and_owns_results() {
+    let world = librdf_new_world();
+    let storage = librdf_new_storage(world, cstr("memory").as_ptr(), ptr::null(), ptr::null());
+    let model = librdf_new_model(world, storage, ptr::null());
+    let subject =
+        librdf_new_node_from_uri_string(world, cstr("http://example.org/subject").as_ptr());
+    let predicate =
+        librdf_new_node_from_uri_string(world, cstr("http://example.org/predicate").as_ptr());
+    let object = librdf_new_node_from_literal(world, cstr("object").as_ptr(), ptr::null(), 0);
+    let statement = librdf_new_statement_from_nodes(world, subject, predicate, object);
+    assert_eq!(librdf_model_add_statement(model, statement), 0);
+
+    let subject = librdf_statement_get_subject(statement);
+    let predicate = librdf_statement_get_predicate(statement);
+    let object = librdf_statement_get_object(statement);
+
+    let sources = librdf_model_get_sources(model, predicate, object);
+    assert_eq!(librdf_iterator_end(sources), 0);
+    assert_eq!(
+        librdf_node_equals(librdf_iterator_get_object(sources).cast(), subject),
+        1
+    );
+    librdf_free_iterator(sources);
+
+    let first_target = librdf_model_get_target(model, subject, predicate);
+    assert!(!first_target.is_null());
+    assert_eq!(librdf_node_equals(first_target, object), 1);
+    librdf_free_node(first_target);
+    assert_eq!(librdf_model_has_arc_out(model, subject, predicate), 1);
+    assert_eq!(librdf_model_has_arc_in(model, object, predicate), 1);
+
+    librdf_free_statement(statement);
+    librdf_free_model(model);
+    librdf_free_storage(storage);
+    librdf_free_world(world);
+}
+
+#[test]
+fn model_transaction_state_rejects_nested_starts_and_resets_handle() {
+    let world = librdf_new_world();
+    let storage = librdf_new_storage(world, cstr("memory").as_ptr(), ptr::null(), ptr::null());
+    let model = librdf_new_model(world, storage, ptr::null());
+    let transaction_handle = 0x1234usize as *mut c_void;
+
+    assert_eq!(
+        librdf_model_transaction_start_with_handle(model, transaction_handle),
+        0
+    );
+    assert_eq!(
+        librdf_model_transaction_get_handle(model),
+        transaction_handle
+    );
+    assert_eq!(librdf_model_transaction_start(model), -1);
+    assert_eq!(librdf_model_transaction_commit(model), 0);
+    assert!(librdf_model_transaction_get_handle(model).is_null());
+    assert_eq!(librdf_model_transaction_start(model), 0);
+    assert_eq!(librdf_model_transaction_rollback(model), 0);
+
+    librdf_free_model(model);
+    librdf_free_storage(storage);
+    librdf_free_world(world);
+}
+
+#[test]
 fn model_literal_convenience_operations() {
     let world = librdf_new_world();
     let storage = librdf_new_storage(world, cstr("memory").as_ptr(), ptr::null(), ptr::null());
