@@ -8,7 +8,7 @@
 #include <time.h>
 #include <librdf.h>
 
-#define SAMPLES 30
+#define SAMPLES 40
 
 static double now_s(void) {
   struct timespec ts;

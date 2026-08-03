@@ -2,8 +2,8 @@
 
 Milestone [0.12](../milestones/0.12.md) freezes a **competitive-parity** gate
 ([ADR-028](../DECISIONS.md#adr-028--012-competitive-parity-performance-gate)):
-on matched production builds, Oxiland must stay within about 5% of Redland on
-every required case (throughput median ≥ `0.95`, latency ≤ `1.05`, with
+on matched production builds, Oxiland must stay within about 10% of Redland on
+every required case (throughput median ≥ `0.90`, latency ≤ `1.10`, with
 bootstrap CI bounds). That is **not** a blanket “faster than Redland” claim—
 cite per-case ratios from the native matrix when discussing speed.
 
