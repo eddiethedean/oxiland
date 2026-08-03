@@ -39,9 +39,10 @@ def load_json(path: Path) -> dict[str, Any]:
 
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1 << 20), b""):
-            digest.update(chunk)
+    data = path.read_bytes()
+    if path.suffix in {".c", ".h", ".json", ".md", ".py", ".txt", ".yml", ".yaml"}:
+        data = data.replace(b"\r\n", b"\n")
+    digest.update(data)
     return digest.hexdigest()
 
 

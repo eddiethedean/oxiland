@@ -73,9 +73,11 @@ def clean_worktree() -> bool:
 
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1 << 20), b""):
-            digest.update(chunk)
+    data = path.read_bytes()
+    # Normalize text-file line endings so Windows checkouts match matrix digests.
+    if path.suffix in {".c", ".h", ".json", ".md", ".py", ".txt", ".yml", ".yaml"}:
+        data = data.replace(b"\r\n", b"\n")
+    digest.update(data)
     return digest.hexdigest()
 
 
@@ -203,6 +205,8 @@ def measure_rss_mb(binary: Path, case_id: str) -> float:
         env["PATH"] = f"{COMPAT_DIR}{os.pathsep}{env.get('PATH', '')}"
 
     if resource_mod is None:
+        import time
+
         proc = subprocess.Popen(
             [str(binary), "--case", case_id],
             stdout=subprocess.PIPE,
@@ -213,12 +217,15 @@ def measure_rss_mb(binary: Path, case_id: str) -> float:
             cwd=ROOT,
             env=env,
         )
-        peak = _windows_peak_working_set_mib(proc.pid) or 0.0
-        stdout, stderr = proc.communicate(timeout=3600)
+        peak = 0.0
+        while proc.poll() is None:
+            sample = _windows_peak_working_set_mib(proc.pid)
+            if sample is not None:
+                peak = max(peak, sample)
+            time.sleep(0.05)
+        stdout, stderr = proc.communicate(timeout=60)
         if proc.returncode != 0:
             raise SystemExit(f"RSS probe failed for {case_id}: {stderr or stdout}")
-        # Re-sample after exit; PeakWorkingSetSize remains valid on the handle
-        # only while the process exists, so keep the mid-run observation.
         return max(peak, 1.0)
 
     before = resource_mod.getrusage(resource_mod.RUSAGE_CHILDREN).ru_maxrss
