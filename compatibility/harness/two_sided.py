@@ -344,28 +344,45 @@ def rebuild_for_profile(build_profile: str) -> None:
         try:
             subprocess.check_call(["bash", str(package)], cwd=ROOT)
         except subprocess.CalledProcessError as error:
-            # Windows runners sometimes leave a locked prior DLL; fall back to a
-            # direct copy so the harness can still record a profile-specific hash.
             libdir = ROOT / "target" / "release"
             compat = libdir / "compat"
             compat.mkdir(parents=True, exist_ok=True)
             src = None
-            for name in ("oxiland_capi.dll", "liboxiland_capi.dll", "liboxiland_capi.so", "liboxiland_capi.dylib"):
+            for name in (
+                "oxiland_capi.dll",
+                "liboxiland_capi.dll",
+                "liboxiland_capi.so",
+                "liboxiland_capi.dylib",
+            ):
                 candidate = libdir / name
                 if candidate.is_file():
                     src = candidate
                     break
             if src is None:
                 raise error
-            for dest_name in ("librdf-0.dll", "librdf.so.0", "librdf.0.dylib"):
-                if src.suffix == ".dll" and dest_name.endswith(".dll"):
-                    (compat / dest_name).write_bytes(src.read_bytes())
-                elif src.suffix == ".so" and dest_name.endswith(".so.0"):
-                    (compat / dest_name).write_bytes(src.read_bytes())
-                elif src.suffix == ".dylib" and dest_name.endswith(".dylib"):
-                    (compat / dest_name).write_bytes(src.read_bytes())
-            print(f"warning: package-librdf-compat failed ({error}); copied {src.name} into compat/", file=sys.stderr)
-    # Rebuild oracles against the packaged compat lib without clobbering features.
+            mapping = {
+                ".dll": "librdf-0.dll",
+                ".so": "librdf.so.0",
+                ".dylib": "librdf.0.dylib",
+            }
+            dest = compat / mapping[src.suffix]
+            dest.write_bytes(src.read_bytes())
+            print(
+                f"warning: package-librdf-compat failed ({error}); "
+                f"copied {src.name} -> {dest.name}",
+                file=sys.stderr,
+            )
+
+    # On Windows, re-running the full oracle build.sh from Git Bash is fragile
+    # (MSYS toolchain + cargo packaging). The oracle binaries already dynamic-
+    # link librdf; updating the compat DLL on PATH is enough for profile swaps.
+    if os.name == "nt" or "MINGW" in platform.system().upper() or "MSYS" in platform.system().upper():
+        compat = ROOT / "target" / "release" / "compat"
+        path = str(compat)
+        os.environ["PATH"] = path + os.pathsep + os.environ.get("PATH", "")
+        print(f"windows profile rebuild: using compat DLL on PATH ({path})", file=sys.stderr)
+        return
+
     if BUILD_SH.is_file():
         env = dict(os.environ)
         env["OXILAND_CAPI_FEATURES"] = env_features
