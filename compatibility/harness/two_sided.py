@@ -107,6 +107,8 @@ def run_c_oracle(binary: Path, engine: str, fixture_path: Path) -> dict:
             [str(binary), "--engine", engine, "--fixture", str(fixture_path)],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=60,
             cwd=ROOT,
         )
