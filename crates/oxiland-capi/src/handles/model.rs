@@ -299,10 +299,10 @@ pub extern "C" fn librdf_model_size(model: *mut librdf_model) -> i32 {
     if !model.is_null() {
         // SAFETY: model handles remain allocated through owner-world lifetime.
         let handle = unsafe { &mut *model };
-        if handle.tag == TAG_MODEL
-            && let Some(n) = handle.inner.cardinality.get_i32()
-        {
-            return n;
+        if handle.tag == TAG_MODEL {
+            if let Some(n) = handle.inner.cardinality.get_i32() {
+                return n;
+            }
         }
     }
     abort_on_panic(|| {

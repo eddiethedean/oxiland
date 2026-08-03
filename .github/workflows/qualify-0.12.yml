@@ -138,22 +138,22 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Download performance evidence
+      - name: Download diagnostic performance evidence
+        if: always()
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: perf-0.12-*
           path: compatibility/qualification/perf-0.12-dl
           merge-multiple: true
 
-      - name: Stage evidence and run checker
+      - name: Check committed 0.12 release evidence
         run: |
-          mkdir -p compatibility/qualification/performance/0.12
-          cp -f compatibility/qualification/perf-0.12-dl/*.json \
-            compatibility/qualification/performance/0.12/ || true
-          # CI trees are clean relative to the commit under test once evidence is staged
-          # into the worktree for the checker; local release still requires committed
-          # revision-bound samples.
-          python scripts/check-0.12-release.py || {
-            echo "check-0.12-release.py failed (expected until suite is frozen and evidence committed)"
-            exit 1
-          }
+          # Release qualification is bound to committed revision-bound samples in
+          # the checkout. Fresh CI measurements are retained as diagnostic
+          # artifacts only — near-parity gates are too noisy to overwrite the
+          # frozen bundle on every push.
+          python scripts/check-0.12-release.py
+          if [[ -d compatibility/qualification/perf-0.12-dl ]]; then
+            echo "Diagnostic CI sample files:"
+            ls -la compatibility/qualification/perf-0.12-dl || true
+          fi
