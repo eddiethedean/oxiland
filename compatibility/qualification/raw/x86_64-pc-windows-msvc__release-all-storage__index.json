@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "milestone": "0.11",
+  "profile_id": "x86_64-pc-windows-msvc/release-all-storage",
+  "target": "x86_64-pc-windows-msvc",
+  "build_profile": "release-all-storage",
+  "git_revision": "dd6ce513ccbdf22af79dbba74efc785395b90429",
+  "clean_worktree": true,
+  "timestamp": "2026-08-03T04:39:27Z",
+  "fixture_results": [
+    "x86_64-pc-windows-msvc__release-all-storage__cli-parse-ask.json",
+    "x86_64-pc-windows-msvc__release-all-storage__concepts.json",
+    "x86_64-pc-windows-msvc__release-all-storage__digest-hash.json",
+    "x86_64-pc-windows-msvc__release-all-storage__files-heuristics.json",
+    "x86_64-pc-windows-msvc__release-all-storage__list-lifecycle.json",
+    "x86_64-pc-windows-msvc__release-all-storage__logging-callback.json",
+    "x86_64-pc-windows-msvc__release-all-storage__model-boundary-empty.json",
+    "x86_64-pc-windows-msvc__release-all-storage__parse-turtle-failure.json",
+    "x86_64-pc-windows-msvc__release-all-storage__parse-turtle.json",
+    "x86_64-pc-windows-msvc__release-all-storage__serialize-ntriples.json",
+    "x86_64-pc-windows-msvc__release-all-storage__sparql-ask-select.json",
+    "x86_64-pc-windows-msvc__release-all-storage__statement-model.json",
+    "x86_64-pc-windows-msvc__release-all-storage__storage-memory.json",
+    "x86_64-pc-windows-msvc__release-all-storage__stream-find.json",
+    "x86_64-pc-windows-msvc__release-all-storage__unicode.json",
+    "x86_64-pc-windows-msvc__release-all-storage__uri-node.json",
+    "x86_64-pc-windows-msvc__release-all-storage__world-lifecycle.json"
+  ],
+  "failed": 0,
+  "synthetic": false,
+  "execution_id": "10eb04493e01b26d08ab1f52fd15b1fc86111e0700f211f3362aca82b32d141e"
+}

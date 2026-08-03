@@ -3,17 +3,17 @@
   "milestone": "0.11",
   "work_package": "WP-11-06",
   "test": "abi-swap",
-  "target": "aarch64-apple-darwin",
-  "git_revision": "bbf3cf20a32a37214a286abd68349c335754cdb9",
-  "clean_worktree": false,
-  "timestamp": "2026-08-03T02:13:25Z",
-  "elapsed_ms": 653,
+  "target": "x86_64-unknown-linux-gnu",
+  "git_revision": "dd6ce513ccbdf22af79dbba74efc785395b90429",
+  "clean_worktree": true,
+  "timestamp": "2026-08-03T04:47:42Z",
+  "elapsed_ms": 24,
   "synthetic": false,
   "artifacts": {
-    "probe": "/Volumes/T7/coding/oxiland/target/abi-swap/abi_probe",
-    "system_redland_libdir": "/opt/homebrew/Cellar/redland/1.0.17_1/lib",
-    "oxiland_compat_library": "/Volumes/T7/coding/oxiland/target/release/compat/librdf.0.dylib",
-    "oxiland_compat_library_sha256": "0096a270920b8ffc521089e2f31ac0d6436ba8d9fcac9883319b7b21b433a7a3"
+    "probe": "/home/runner/work/oxiland/oxiland/target/abi-swap/abi_probe",
+    "system_redland_libdir": "/usr/lib/x86_64-linux-gnu",
+    "oxiland_compat_library": "/home/runner/work/oxiland/oxiland/target/release/compat/librdf.so.0",
+    "oxiland_compat_library_sha256": "f0a2f8bda87805ce33e0dbba9058ecac718c447a3140f99251d30a2fcec2deb6"
   },
   "baseline": {
     "engine": "system-redland",
@@ -24,8 +24,8 @@
     "engine": "oxiland-librdf-compat",
     "ok": true,
     "exit_code": 0,
-    "library_path_env": "DYLD_LIBRARY_PATH",
-    "library_path": "/Volumes/T7/coding/oxiland/target/release/compat"
+    "library_path_env": "LD_LIBRARY_PATH",
+    "library_path": "/home/runner/work/oxiland/oxiland/target/release/compat"
   },
   "comparison": {
     "passed": true,

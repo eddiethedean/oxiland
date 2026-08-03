@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "milestone": "0.11",
+  "fixture_id": "logging-callback",
+  "fixture": "compatibility/fixtures/0.11/logging-callback.json",
+  "profile_id": "x86_64-unknown-linux-gnu/release-default",
+  "target": "x86_64-unknown-linux-gnu",
+  "build_profile": "release-default",
+  "git_revision": "dd6ce513ccbdf22af79dbba74efc785395b90429",
+  "clean_worktree": true,
+  "timestamp": "2026-08-03T04:24:15Z",
+  "elapsed_ms": 8,
+  "synthetic": false,
+  "oracle": {
+    "redland": "compatibility/harness/c_oracle/bin/oracle-redland",
+    "oxiland": "compatibility/harness/c_oracle/bin/oracle-oxiland"
+  },
+  "execution_id": "5e6556e158141d0ec458f385ea17fb53893d7be69f947d1179d8d6050916c507",
+  "artifacts": {
+    "redland_library": "/usr/lib/x86_64-linux-gnu/librdf.so.0",
+    "redland_library_sha256": "64f65e946929b19d7516b9af09913041de1658c8a17a972eb979d6dd64cc9f8e",
+    "oxiland_library": "/home/runner/work/oxiland/oxiland/target/release/compat/librdf.so.0",
+    "oxiland_library_sha256": "f0a2f8bda87805ce33e0dbba9058ecac718c447a3140f99251d30a2fcec2deb6",
+    "fixture_sha256": "b8b8828f195c1527bcc731a67fc9aa46fba855fbc1a40c4f99e4eb99e78602a2"
+  },
+  "redland": {
+    "ok": true,
+    "engine": "redland-c",
+    "fixture_id": "logging-callback",
+    "size": 0,
+    "parsed": false,
+    "contains_ok": false,
+    "world": "open",
+    "logged": "oracle log"
+  },
+  "oxiland": {
+    "ok": true,
+    "engine": "oxiland-c",
+    "fixture_id": "logging-callback",
+    "size": 0,
+    "parsed": false,
+    "contains_ok": false,
+    "world": "open",
+    "logged": "oracle log"
+  },
+  "comparison": {
+    "passed": true,
+    "mismatches": []
+  },
+  "obligation_ids": [
+    "obl.librdf.log.positive",
+    "obl.librdf.log.message.code.positive",
+    "obl.librdf.log.message.facility.positive",
+    "obl.librdf.log.message.level.positive",
+    "obl.librdf.log.message.locator.positive",
+    "obl.librdf.log.message.message.positive",
+    "obl.librdf.log.simple.positive"
+  ],
+  "differential_passed": true,
+  "skips": [],
+  "quarantined": [],
+  "deviations": []
+}

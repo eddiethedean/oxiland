@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "milestone": "0.11",
+  "fixture_id": "stream-find",
+  "fixture": "compatibility/fixtures/0.11/stream-find.json",
+  "profile_id": "x86_64-unknown-linux-gnu/release-all-storage",
+  "target": "x86_64-unknown-linux-gnu",
+  "build_profile": "release-all-storage",
+  "git_revision": "dd6ce513ccbdf22af79dbba74efc785395b90429",
+  "clean_worktree": true,
+  "timestamp": "2026-08-03T04:30:33Z",
+  "elapsed_ms": 9,
+  "synthetic": false,
+  "oracle": {
+    "redland": "compatibility/harness/c_oracle/bin/oracle-redland",
+    "oxiland": "compatibility/harness/c_oracle/bin/oracle-oxiland"
+  },
+  "execution_id": "c15c5db491042f2f7763364cb0b0ec85285097cff1b3a1e650fd325cc7359ba3",
+  "artifacts": {
+    "redland_library": "/usr/lib/x86_64-linux-gnu/librdf.so.0",
+    "redland_library_sha256": "64f65e946929b19d7516b9af09913041de1658c8a17a972eb979d6dd64cc9f8e",
+    "oxiland_library": "/home/runner/work/oxiland/oxiland/target/release/compat/librdf.so.0",
+    "oxiland_library_sha256": "4019a6ecfd8a92dd0cc8350b0a25157e5dc7b73117c6044156d1869c9ad9767e",
+    "fixture_sha256": "d0a9f53c265815287e1c5e41bc858128fc885e943c9094164bc4c9bb41591027"
+  },
+  "redland": {
+    "ok": true,
+    "engine": "redland-c",
+    "fixture_id": "stream-find",
+    "size": 1,
+    "stream_count": 1,
+    "parsed": true,
+    "contains_ok": false,
+    "world": "open"
+  },
+  "oxiland": {
+    "ok": true,
+    "engine": "oxiland-c",
+    "fixture_id": "stream-find",
+    "size": 1,
+    "stream_count": 1,
+    "parsed": true,
+    "contains_ok": false,
+    "world": "open"
+  },
+  "comparison": {
+    "passed": true,
+    "mismatches": []
+  },
+  "obligation_ids": [
+    "obl.librdf.free.iterator.positive",
+    "obl.librdf.free.stream.positive",
+    "obl.librdf.iterator.add.map.positive",
+    "obl.librdf.iterator.end.positive",
+    "obl.librdf.iterator.get.context.positive",
+    "obl.librdf.iterator.get.key.positive",
+    "obl.librdf.iterator.get.object.positive",
+    "obl.librdf.iterator.get.value.positive",
+    "obl.librdf.iterator.have.elements.positive",
+    "obl.librdf.iterator.next.positive",
+    "obl.librdf.new.empty.iterator.positive",
+    "obl.librdf.new.empty.stream.positive",
+    "obl.librdf.new.iterator.positive",
+    "obl.librdf.new.stream.positive",
+    "obl.librdf.new.stream.from.node.iterator.positive",
+    "obl.librdf.stream.add.map.positive",
+    "obl.librdf.stream.end.positive",
+    "obl.librdf.stream.get.context.positive",
+    "obl.librdf.stream.get.context2.positive",
+    "obl.librdf.stream.get.object.positive",
+    "obl.librdf.stream.next.positive",
+    "obl.librdf.stream.print.positive",
+    "obl.librdf.stream.write.positive"
+  ],
+  "differential_passed": true,
+  "skips": [],
+  "quarantined": [],
+  "deviations": []
+}

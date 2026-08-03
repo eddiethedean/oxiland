@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "milestone": "0.11",
+  "fixture_id": "logging-callback",
+  "fixture": "compatibility/fixtures/0.11/logging-callback.json",
+  "profile_id": "x86_64-pc-windows-msvc/release-default",
+  "target": "x86_64-pc-windows-msvc",
+  "build_profile": "release-default",
+  "git_revision": "dd6ce513ccbdf22af79dbba74efc785395b90429",
+  "clean_worktree": true,
+  "timestamp": "2026-08-03T04:29:14Z",
+  "elapsed_ms": 13,
+  "synthetic": false,
+  "oracle": {
+    "redland": "compatibility\\harness\\c_oracle\\bin\\oracle-redland.exe",
+    "oxiland": "compatibility\\harness\\c_oracle\\bin\\oracle-oxiland.exe"
+  },
+  "execution_id": "2dccf05c5baf14920729c64e54a46ac7f3a9ede25e714708ff3bcfb5c9d00327",
+  "artifacts": {
+    "redland_library": "D:\\a\\_temp\\msys64\\ucrt64\\bin\\librdf-0.dll",
+    "redland_library_sha256": "7690738ef4e814bfa99380563401d957ae1bc6111b9b1b2f52f8bb5c920eec2b",
+    "oxiland_library": "D:\\a\\oxiland\\oxiland\\target\\release\\compat\\librdf-0.dll",
+    "oxiland_library_sha256": "7f3ac6314669da5618500e1d50894b4415768adb21000a27110a28ac3e3647b5",
+    "fixture_sha256": "c196b5218f5e7afb11f837ec0c48b8b98591daffbdd4f17341fc6eeaa4bc0569"
+  },
+  "redland": {
+    "ok": true,
+    "engine": "redland-c",
+    "fixture_id": "logging-callback",
+    "size": 0,
+    "parsed": false,
+    "contains_ok": false,
+    "world": "open",
+    "logged": "oracle log"
+  },
+  "oxiland": {
+    "ok": true,
+    "engine": "oxiland-c",
+    "fixture_id": "logging-callback",
+    "size": 0,
+    "parsed": false,
+    "contains_ok": false,
+    "world": "open",
+    "logged": "oracle log"
+  },
+  "comparison": {
+    "passed": true,
+    "mismatches": []
+  },
+  "obligation_ids": [
+    "obl.librdf.log.positive",
+    "obl.librdf.log.message.code.positive",
+    "obl.librdf.log.message.facility.positive",
+    "obl.librdf.log.message.level.positive",
+    "obl.librdf.log.message.locator.positive",
+    "obl.librdf.log.message.message.positive",
+    "obl.librdf.log.simple.positive"
+  ],
+  "differential_passed": true,
+  "skips": [],
+  "quarantined": [],
+  "deviations": []
+}

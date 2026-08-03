@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "milestone": "0.11",
+  "fixture_id": "serialize-ntriples",
+  "fixture": "compatibility/fixtures/0.11/serialize-ntriples.json",
+  "profile_id": "x86_64-unknown-linux-gnu/release-all-storage",
+  "target": "x86_64-unknown-linux-gnu",
+  "build_profile": "release-all-storage",
+  "git_revision": "dd6ce513ccbdf22af79dbba74efc785395b90429",
+  "clean_worktree": true,
+  "timestamp": "2026-08-03T04:30:33Z",
+  "elapsed_ms": 10,
+  "synthetic": false,
+  "oracle": {
+    "redland": "compatibility/harness/c_oracle/bin/oracle-redland",
+    "oxiland": "compatibility/harness/c_oracle/bin/oracle-oxiland"
+  },
+  "execution_id": "0dc2117e5f80d4d58d6b6d02a922c86d3f089594c5f8bcab176cacb766943f3c",
+  "artifacts": {
+    "redland_library": "/usr/lib/x86_64-linux-gnu/librdf.so.0",
+    "redland_library_sha256": "64f65e946929b19d7516b9af09913041de1658c8a17a972eb979d6dd64cc9f8e",
+    "oxiland_library": "/home/runner/work/oxiland/oxiland/target/release/compat/librdf.so.0",
+    "oxiland_library_sha256": "4019a6ecfd8a92dd0cc8350b0a25157e5dc7b73117c6044156d1869c9ad9767e",
+    "fixture_sha256": "d88c92b322526ef8c7c2f27d4ab8ece7ed67ab75e89767895de9299619d0296d"
+  },
+  "redland": {
+    "ok": true,
+    "engine": "redland-c",
+    "fixture_id": "serialize-ntriples",
+    "size": 1,
+    "stream_count": 1,
+    "parsed": true,
+    "contains_ok": true,
+    "bytes_len": 71,
+    "world": "open"
+  },
+  "oxiland": {
+    "ok": true,
+    "engine": "oxiland-c",
+    "fixture_id": "serialize-ntriples",
+    "size": 1,
+    "stream_count": 1,
+    "parsed": true,
+    "contains_ok": true,
+    "bytes_len": 71,
+    "world": "open"
+  },
+  "comparison": {
+    "passed": true,
+    "mismatches": []
+  },
+  "obligation_ids": [
+    "obl.librdf.free.serializer.positive",
+    "obl.librdf.new.serializer.positive",
+    "obl.librdf.new.serializer.from.factory.positive",
+    "obl.librdf.serializer.check.name.positive",
+    "obl.librdf.serializer.enumerate.positive",
+    "obl.librdf.serializer.get.description.positive",
+    "obl.librdf.serializer.get.feature.positive",
+    "obl.librdf.serializer.register.factory.positive",
+    "obl.librdf.serializer.serialize.model.positive",
+    "obl.librdf.serializer.serialize.model.to.counted.string.positive",
+    "obl.librdf.serializer.serialize.model.to.file.positive",
+    "obl.librdf.serializer.serialize.model.to.file.handle.positive",
+    "obl.librdf.serializer.serialize.model.to.iostream.positive",
+    "obl.librdf.serializer.serialize.model.to.string.positive",
+    "obl.librdf.serializer.serialize.stream.to.counted.string.positive",
+    "obl.librdf.serializer.serialize.stream.to.file.positive",
+    "obl.librdf.serializer.serialize.stream.to.file.handle.positive",
+    "obl.librdf.serializer.serialize.stream.to.iostream.positive",
+    "obl.librdf.serializer.serialize.stream.to.string.positive",
+    "obl.librdf.serializer.set.error.positive",
+    "obl.librdf.serializer.set.feature.positive",
+    "obl.librdf.serializer.set.namespace.positive",
+    "obl.librdf.serializer.set.warning.positive"
+  ],
+  "differential_passed": true,
+  "skips": [],
+  "quarantined": [],
+  "deviations": []
+}

@@ -6,21 +6,21 @@
   "profile_id": "aarch64-apple-darwin/release-default",
   "target": "aarch64-apple-darwin",
   "build_profile": "release-default",
-  "git_revision": "bbf3cf20a32a37214a286abd68349c335754cdb9",
+  "git_revision": "dd6ce513ccbdf22af79dbba74efc785395b90429",
   "clean_worktree": true,
-  "timestamp": "2026-08-03T02:11:53Z",
-  "elapsed_ms": 14,
+  "timestamp": "2026-08-03T04:24:12Z",
+  "elapsed_ms": 16,
   "synthetic": false,
   "oracle": {
     "redland": "compatibility/harness/c_oracle/bin/oracle-redland",
     "oxiland": "compatibility/harness/c_oracle/bin/oracle-oxiland"
   },
-  "execution_id": "48b4d3566e8af979df45f62e2dd140cbd1b75ee7a2e7fcce6754d4163fbd3a87",
+  "execution_id": "8ed214ec11bc695b1164a44900ead064daa642aaff0f9e9f525722beca1c84ef",
   "artifacts": {
     "redland_library": "/opt/homebrew/opt/redland/lib/librdf.dylib",
     "redland_library_sha256": "934d01aa41b8287303ccee269c46656166bb47f8aa585915035697e82202abfc",
-    "oxiland_library": "/Volumes/T7/coding/oxiland/target/release/compat/librdf.0.dylib",
-    "oxiland_library_sha256": "0096a270920b8ffc521089e2f31ac0d6436ba8d9fcac9883319b7b21b433a7a3",
+    "oxiland_library": "/Users/runner/work/oxiland/oxiland/target/release/compat/librdf.0.dylib",
+    "oxiland_library_sha256": "b44364549c539472833d525861c4f207cf549cb9e42f9af71c5654509c7f9ea4",
     "fixture_sha256": "0095bbf7885d10a1ccc52f639254a2225d77ae6093622beb090de667abd21466"
   },
   "redland": {

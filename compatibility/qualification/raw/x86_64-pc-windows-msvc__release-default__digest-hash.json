@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "milestone": "0.11",
+  "fixture_id": "digest-hash",
+  "fixture": "compatibility/fixtures/0.11/digest-hash.json",
+  "profile_id": "x86_64-pc-windows-msvc/release-default",
+  "target": "x86_64-pc-windows-msvc",
+  "build_profile": "release-default",
+  "git_revision": "dd6ce513ccbdf22af79dbba74efc785395b90429",
+  "clean_worktree": true,
+  "timestamp": "2026-08-03T04:29:14Z",
+  "elapsed_ms": 14,
+  "synthetic": false,
+  "oracle": {
+    "redland": "compatibility\\harness\\c_oracle\\bin\\oracle-redland.exe",
+    "oxiland": "compatibility\\harness\\c_oracle\\bin\\oracle-oxiland.exe"
+  },
+  "execution_id": "af1122c32918e4ead4447efb04bffa4586732d850cf45ac15e18544696b9ff96",
+  "artifacts": {
+    "redland_library": "D:\\a\\_temp\\msys64\\ucrt64\\bin\\librdf-0.dll",
+    "redland_library_sha256": "7690738ef4e814bfa99380563401d957ae1bc6111b9b1b2f52f8bb5c920eec2b",
+    "oxiland_library": "D:\\a\\oxiland\\oxiland\\target\\release\\compat\\librdf-0.dll",
+    "oxiland_library_sha256": "7f3ac6314669da5618500e1d50894b4415768adb21000a27110a28ac3e3647b5",
+    "fixture_sha256": "b4cb3216f2fcbe13df79a278c0ecce04919fd3b6bd3ca0cf1ad648e525d84b3d"
+  },
+  "redland": {
+    "ok": true,
+    "engine": "redland-c",
+    "fixture_id": "digest-hash",
+    "size": 0,
+    "parsed": false,
+    "contains_ok": false,
+    "digest_hex": "dcd15e847ed39d12195881a2fc0bf7b3",
+    "world": "open"
+  },
+  "oxiland": {
+    "ok": true,
+    "engine": "oxiland-c",
+    "fixture_id": "digest-hash",
+    "size": 0,
+    "parsed": false,
+    "contains_ok": false,
+    "digest_hex": "dcd15e847ed39d12195881a2fc0bf7b3",
+    "world": "open"
+  },
+  "comparison": {
+    "passed": true,
+    "mismatches": []
+  },
+  "obligation_ids": [
+    "obl.librdf.digest.final.positive",
+    "obl.librdf.digest.get.digest.positive",
+    "obl.librdf.digest.get.digest.length.positive",
+    "obl.librdf.digest.init.positive",
+    "obl.librdf.digest.print.positive",
+    "obl.librdf.digest.to.string.positive",
+    "obl.librdf.digest.update.positive",
+    "obl.librdf.digest.update.string.positive",
+    "obl.librdf.free.digest.positive",
+    "obl.librdf.free.hash.positive",
+    "obl.librdf.hash.from.string.positive",
+    "obl.librdf.hash.get.positive",
+    "obl.librdf.hash.get.as.boolean.positive",
+    "obl.librdf.hash.get.as.long.positive",
+    "obl.librdf.hash.get.del.positive",
+    "obl.librdf.hash.interpret.template.positive",
+    "obl.librdf.hash.print.positive",
+    "obl.librdf.hash.print.keys.positive",
+    "obl.librdf.hash.print.values.positive",
+    "obl.librdf.hash.put.strings.positive",
+    "obl.librdf.hash.to.string.positive",
+    "obl.librdf.new.digest.positive",
+    "obl.librdf.new.hash.positive",
+    "obl.librdf.new.hash.from.array.of.strings.positive",
+    "obl.librdf.new.hash.from.hash.positive",
+    "obl.librdf.new.hash.from.string.positive"
+  ],
+  "differential_passed": true,
+  "skips": [],
+  "quarantined": [],
+  "deviations": []
+}

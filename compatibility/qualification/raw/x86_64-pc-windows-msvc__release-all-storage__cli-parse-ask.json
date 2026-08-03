@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "milestone": "0.11",
+  "fixture_id": "cli-parse-ask",
+  "fixture": "compatibility/fixtures/0.11/cli-parse-ask.json",
+  "profile_id": "x86_64-pc-windows-msvc/release-all-storage",
+  "target": "x86_64-pc-windows-msvc",
+  "build_profile": "release-all-storage",
+  "git_revision": "dd6ce513ccbdf22af79dbba74efc785395b90429",
+  "clean_worktree": true,
+  "timestamp": "2026-08-03T04:39:26Z",
+  "elapsed_ms": 31,
+  "synthetic": false,
+  "oracle": {
+    "redland": "compatibility\\harness\\c_oracle\\bin\\oracle-redland.exe",
+    "oxiland": "compatibility\\harness\\c_oracle\\bin\\oracle-oxiland.exe"
+  },
+  "execution_id": "b90e221b47c41008d8820117eaf8c5d937b73658e1354c07a8ef823a1a75ca6c",
+  "artifacts": {
+    "redland_library": "D:\\a\\_temp\\msys64\\ucrt64\\bin\\librdf-0.dll",
+    "redland_library_sha256": "7690738ef4e814bfa99380563401d957ae1bc6111b9b1b2f52f8bb5c920eec2b",
+    "oxiland_library": "D:\\a\\oxiland\\oxiland\\target\\release\\compat\\librdf-0.dll",
+    "oxiland_library_sha256": "52eacdcd6787bb3134f545c77e0dafb38cf8eb45c9af8292b31f54b8be47071d",
+    "fixture_sha256": "18499b09536c4d5be3095467059b59e19a35d49b252add5fcef51f977986bdf2"
+  },
+  "redland": {
+    "ok": true,
+    "engine": "redland-c",
+    "fixture_id": "cli-parse-ask",
+    "size": 1,
+    "ask": true,
+    "stream_count": 1,
+    "parsed": true,
+    "contains_ok": false,
+    "world": "open"
+  },
+  "oxiland": {
+    "ok": true,
+    "engine": "oxiland-c",
+    "fixture_id": "cli-parse-ask",
+    "size": 1,
+    "ask": true,
+    "stream_count": 1,
+    "parsed": true,
+    "contains_ok": false,
+    "world": "open"
+  },
+  "comparison": {
+    "passed": true,
+    "mismatches": []
+  },
+  "obligation_ids": [],
+  "differential_passed": true,
+  "skips": [],
+  "quarantined": [],
+  "deviations": []
+}

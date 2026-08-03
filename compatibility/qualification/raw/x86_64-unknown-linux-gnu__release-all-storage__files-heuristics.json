@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "milestone": "0.11",
+  "fixture_id": "files-heuristics",
+  "fixture": "compatibility/fixtures/0.11/files-heuristics.json",
+  "profile_id": "x86_64-unknown-linux-gnu/release-all-storage",
+  "target": "x86_64-unknown-linux-gnu",
+  "build_profile": "release-all-storage",
+  "git_revision": "dd6ce513ccbdf22af79dbba74efc785395b90429",
+  "clean_worktree": true,
+  "timestamp": "2026-08-03T04:30:33Z",
+  "elapsed_ms": 9,
+  "synthetic": false,
+  "oracle": {
+    "redland": "compatibility/harness/c_oracle/bin/oracle-redland",
+    "oxiland": "compatibility/harness/c_oracle/bin/oracle-oxiland"
+  },
+  "execution_id": "f5d5faf5e8c15940f5a55d49bff677472e58b9b0b61ca8b70999d638991f10c2",
+  "artifacts": {
+    "redland_library": "/usr/lib/x86_64-linux-gnu/librdf.so.0",
+    "redland_library_sha256": "64f65e946929b19d7516b9af09913041de1658c8a17a972eb979d6dd64cc9f8e",
+    "oxiland_library": "/home/runner/work/oxiland/oxiland/target/release/compat/librdf.so.0",
+    "oxiland_library_sha256": "4019a6ecfd8a92dd0cc8350b0a25157e5dc7b73117c6044156d1869c9ad9767e",
+    "fixture_sha256": "81d2b276a8e00d85edd19cdeea0c9d43d2ccc1614d98d5ba0369065bc81a2f71"
+  },
+  "redland": {
+    "ok": true,
+    "engine": "redland-c",
+    "fixture_id": "files-heuristics",
+    "size": 0,
+    "parsed": false,
+    "contains_ok": false,
+    "world": "open",
+    "is_blank": true,
+    "filename": "/tmp/oxiland-0.11.txt"
+  },
+  "oxiland": {
+    "ok": true,
+    "engine": "oxiland-c",
+    "fixture_id": "files-heuristics",
+    "size": 0,
+    "parsed": false,
+    "contains_ok": false,
+    "world": "open",
+    "is_blank": true,
+    "filename": "/tmp/oxiland-0.11.txt"
+  },
+  "comparison": {
+    "passed": true,
+    "mismatches": []
+  },
+  "obligation_ids": [
+    "obl.librdf.files.temporary.file.name.positive",
+    "obl.librdf.heuristic.gen.name.positive",
+    "obl.librdf.heuristic.get.blank.node.positive",
+    "obl.librdf.heuristic.is.blank.node.positive",
+    "obl.librdf.heuristic.object.is.literal.positive"
+  ],
+  "differential_passed": true,
+  "skips": [],
+  "quarantined": [],
+  "deviations": []
+}
