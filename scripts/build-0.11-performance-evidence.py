@@ -70,6 +70,8 @@ def run_bench(binary: Path, case_id: str) -> list[float]:
         [str(binary), "--case", case_id],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         cwd=ROOT,
         timeout=3600,
     )

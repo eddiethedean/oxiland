@@ -104,27 +104,22 @@ jobs:
           cd python
           maturin develop --release
 
-      - name: Build C oracles
-        shell: bash
+      - name: Build C oracles (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
         run: |
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            for d in /d/a/_temp/msys64/ucrt64 /c/msys64/ucrt64 /ucrt64; do
-              if [[ -f "$d/bin/gcc.exe" || -f "$d/bin/gcc" ]]; then
-                export PATH="$d/bin:$PATH"
-                export PKG_CONFIG_PATH="$d/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
-                if [[ -f "$d/bin/gcc.exe" ]]; then
-                  export CC="$d/bin/gcc.exe"
-                else
-                  export CC="$d/bin/gcc"
-                fi
-                export REDLAND_PREFIX="$d"
-                break
-              fi
-            done
-            echo "CC=${CC:-unset} REDLAND_PREFIX=${REDLAND_PREFIX:-unset}"
-            ls "${REDLAND_PREFIX:-/missing}/lib"/lib*rdf* 2>/dev/null || ls "${REDLAND_PREFIX:-/missing}/lib"/*rdf* 2>/dev/null || true
-          fi
+          export PATH="/ucrt64/bin:$PATH"
+          export PKG_CONFIG_PATH="/ucrt64/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+          export CC=/ucrt64/bin/gcc
+          export REDLAND_PREFIX=/ucrt64
+          echo "CC=$CC"
+          ls /ucrt64/lib/lib*rdf* || ls /ucrt64/lib/*rdf* || true
           compatibility/harness/c_oracle/build.sh
+
+      - name: Build C oracles
+        if: runner.os != 'Windows'
+        shell: bash
+        run: compatibility/harness/c_oracle/build.sh
 
       - name: Run release-default harness
         shell: bash
