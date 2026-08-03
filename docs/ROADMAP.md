@@ -1,7 +1,7 @@
 # Oxiland 0.x roadmap
 
 Status: active  
-Applies to: Oxiland 0.1 through 0.11
+Applies to: Oxiland 0.1 through 0.12
 Companion plans: [architecture](ARCHITECTURE.md),
 [compatibility](COMPATIBILITY.md), [verification](VERIFICATION.md), and
 [execution](EXECUTION.md). Durable backend expansion is specified separately in
@@ -27,6 +27,7 @@ only when its evidence gates are satisfied.
 | 0.9 | Downstream C compatibility | 0.8 | `complete` |
 | 0.10 | Freeze 1.0 contracts and build qualification scaffolding | 0.9 | `complete` |
 | 0.11 | Demonstrated full Redland parity from native, revision-bound evidence | 0.10 | `complete` |
+| 0.12 | Performance optimization and faster-than-Redland gate | 0.11 | `planned` |
 
 States are `planned`, `in progress`, `blocked`, or `complete`. A state changes
 only after the evidence links are added to the root
@@ -497,13 +498,57 @@ Evidence gates:
 - User-facing documentation matches the verified matrix and no longer labels
   the C surface a preview once source and binary gates pass.
 
+## 0.12 — Performance optimization
+
+Outcome: close every required faster-than-Redland case on the frozen matrix by
+profiling and fixing real cliffs, filling resource budgets, and retaining 0.11
+parity on the optimized artifacts.
+
+State: planned
+
+Execution specification: [milestone 0.12](milestones/0.12.md)
+
+Progress report: [0.12 report](reports/0.12.md)
+
+Deliverables:
+
+- A frozen 0.12 performance suite revision with measured RSS and disk budgets.
+- Attribution for every required loss or tie against Redland on each host.
+- Optimizations for C-call/handle overhead, model scan/stream paths, and any
+  remaining mutation, parse, serialize, or query gaps below the gate.
+- Windows competitiveness at the same statistical threshold as Unix.
+- Fail-closed native performance qualification tooling bound to the candidate
+  revision and artifacts.
+- User and evaluator documentation that publishes per-case ratios with
+  confidence intervals—not a geometric-mean marketing claim.
+- Reconfirmed 0.11 parity, packaging, and soak evidence on the same candidate.
+
+Evidence gates:
+
+- Every required throughput case has Oxiland/Redland median ratio ≥ `1.05`
+  with a 95% bootstrap CI excluding parity on every required target/profile.
+- Every required latency case has Oxiland/Redland median ratio ≤ `0.95` with
+  the same CI rule.
+- Peak memory and disk amplification stay within the frozen budgets.
+- No required case is deleted, marked optional, or waived after a failure.
+- Samples are native (`synthetic: false`), revision-bound, built with Cargo
+  `--release` (production compile) and independently reproducible; synthetic,
+  debug/dev, or fabricated paired ratios are rejected.
+- `scripts/check-0.11-release.py` (parity retention) and the 0.12 performance
+  release checker are green on the same candidate.
+- Risk R-022 has no open trigger on the release candidate.
+
+0.11’s native samples remain the diagnostic baseline. They do not satisfy this
+milestone’s gate while any required case loses, ties, or lacks resource proof.
+
 ## 1.0 readiness
 
 Version 1.0 is eligible only after 0.11 has passed the demonstrated full
-Redland parity gate and the exact parity-qualified artifacts have retained the
-faster-than-Redland performance gate. The safe Rust mappings and the promised
-C source, binary ABI, and behavioral surfaces must meet their published
-definitions with no in-scope exclusion or deviation.
+Redland parity gate and 0.12 has closed the faster-than-Redland performance
+gate on the exact parity-qualified (and performance-optimized) artifacts. The
+safe Rust mappings and the promised C source, binary ABI, and behavioral
+surfaces must meet their published definitions with no in-scope exclusion or
+deviation.
 The Python package (if still in the 1.0 promise) must also meet its published
 PyPI contract. Independent Raptor/Rasqal APIs not exposed through `librdf`,
 third-party plug-ins outside the pinned baseline, and targets outside the

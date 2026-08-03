@@ -104,6 +104,8 @@ esac
   -o "$OUT/oracle-oxiland"
 
 # Performance benches
+# Link against the Cargo --release librdf-compat package; wrappers use -O2.
+# Debug/dev Rust libraries are not valid faster-than-Redland evidence (0.12).
 "$CC" "${CFLAGS[@]}" \
   "$ROOT/compatibility/harness/c_oracle/perf_bench.c" \
   "${LDFLAGS[@]}" \

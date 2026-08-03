@@ -39,6 +39,7 @@ than an aspiration.
 | C ABI compatibility | symbol, layout, calling, and lifecycle tests | 0.9 |
 | Downstream compatibility | selected real consumers pass unchanged | 0.9 |
 | Full Redland 1.0.17 parity | all in-scope safe mappings plus C source, binary ABI interchange, and observable behavior verified from native raw evidence | 0.11 |
+| Faster-than-Redland (frozen suite) | every required case/profile wins the published statistical gate with resource budgets and native samples | 0.12 |
 
 Claims are subsystem- and platform-scoped until 1.0. For example, “parser
 behavior verified on Linux” does not imply full storage ABI compatibility on

@@ -155,6 +155,8 @@ nav:
       - Redland symbol map: evaluators/redland-symbol-map.md
       - Compatibility contract: COMPATIBILITY.md
       - Parity ledger: parity.md
+      - Current performance work (0.12): reports/0.12.md
+      - Milestone 0.12: milestones/0.12.md
       - Current parity work (0.11): reports/0.11.md
       - 0.11.0 release checklist: reports/0.11.0-release.md
       - Milestone 0.11: milestones/0.11.md

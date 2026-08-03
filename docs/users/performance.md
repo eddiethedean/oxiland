@@ -1,7 +1,10 @@
 # Performance
 
-Oxiland does not yet publish a budgeted benchmark suite. Treat the following as
-operational guidance, not contractual numbers.
+Oxiland does not yet authorize a blanket faster-than-Redland claim. Milestone
+[0.12](../milestones/0.12.md) is the dedicated optimization phase that closes
+the frozen comparison gate; until it completes, treat the following as
+operational guidance and cite only per-case native ratios when discussing
+speed.
 
 ## Practical defaults
 
@@ -15,6 +18,20 @@ operational guidance, not contractual numbers.
   or latency-sensitive callers.
 - Parse and bulk-load iterators do not expose wall-clock cancellation; stop
   consuming them or isolate the work at the process/thread boundary.
+
+## Comparison status
+
+- Protocol and thresholds:
+  [VERIFICATION.md — 0.12 performance optimization](../VERIFICATION.md#012-performance-optimization).
+- Progress: [0.12 report](../reports/0.12.md).
+- **Always measure release builds.** Use
+  `cargo build -p oxiland-capi --release --locked` (and matching `--release`
+  Rust examples/benches). Debug/`dev` compiles are not comparable to Redland
+  production libraries and are rejected by the 0.12 performance gate.
+- Native 0.11 diagnostic samples live under
+  `compatibility/qualification/performance/` (`synthetic: false`). They show
+  strong Unix wins on mutation/parse/serialize and known cliffs on scan and
+  trivial C-call overhead; they are not a completed 0.12 gate.
 
 ## Related guides
 

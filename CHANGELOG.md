@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Milestone 0.12 plan: dedicated performance-optimization phase between 0.11
+  parity and 1.0 readiness (`docs/milestones/0.12.md`, `docs/reports/0.12.md`)
+- Draft `compatibility/performance/0.12-suite.json` with
+  `protocol.require_production_compile` (Cargo `--release` only)
+
+### Changed
+
+- Roadmap, charter, execution, verification, parity ledger, and risk focus now
+  sequence 0.12 as the faster-than-Redland gate before 1.0
+- `scripts/check-performance-gate.py` rejects debug/dev Rust compile provenance
+  when a suite requires production compile
+
 ## [0.11.0] - 2026-08-03
 
 Demonstrated Redland parity: frozen baseline and obligations, six-cell native

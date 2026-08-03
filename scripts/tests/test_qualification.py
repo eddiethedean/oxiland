@@ -91,6 +91,45 @@ class PerformanceGateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "exactly the frozen required cases"):
             performance.evaluate(data, suite)
 
+    def test_production_compile_required_rejects_debug_profile(self) -> None:
+        data = self.data()
+        suite = self.suite(data)
+        suite["protocol"] = {"require_production_compile": True}
+        data["build"] = {
+            "oxiland": {
+                "cargo_profile": "dev",
+                "cargo_flags": ["--locked"],
+                "debug_assertions": True,
+                "artifact_dir": "target/debug",
+            },
+            "redland": {"cflags": "-O2"},
+        }
+        with self.assertRaisesRegex(ValueError, "cargo_profile must be 'release'"):
+            performance.evaluate(data, suite)
+
+    def test_production_compile_required_accepts_release_provenance(self) -> None:
+        data = self.data()
+        suite = self.suite(data)
+        suite["protocol"] = {"require_production_compile": True}
+        data["build"] = {
+            "oxiland": {
+                "cargo_profile": "release",
+                "cargo_flags": ["--release", "--locked"],
+                "debug_assertions": False,
+                "artifact_dir": "target/release",
+            },
+            "redland": {"cflags": "-O2 -Wall"},
+        }
+        report = performance.evaluate(data, suite)
+        self.assertTrue(report["passed"])
+
+    def test_production_compile_required_rejects_missing_build(self) -> None:
+        data = self.data()
+        suite = self.suite(data)
+        suite["protocol"] = {"require_production_compile": True}
+        with self.assertRaisesRegex(ValueError, "build provenance"):
+            performance.evaluate(data, suite)
+
 
 class ParityGateTests(unittest.TestCase):
     def write_inputs(self, directory: Path, c_state: str = "verified") -> tuple[Path, Path]:

@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Evaluate the frozen Oxiland 0.10 performance protocol's statistical rules.
+"""Evaluate the frozen Oxiland-versus-Redland performance statistical rules.
 
 The input contains raw paired-host samples. This program intentionally does
 not run workloads: benchmark drivers may be platform-specific, while the
 qualification arithmetic and failure policy must be identical everywhere.
+When a suite sets ``protocol.require_production_compile``, samples must also
+prove Cargo ``--release`` / production compile provenance (Rust speed depends
+on the compile profile).
 Input provenance is enforced by the candidate-bound qualification layer, not
-by this arithmetic validator.
+by this arithmetic validator alone.
 """
 
 from __future__ import annotations
@@ -63,6 +66,63 @@ def bootstrap_interval(
     return lower, upper
 
 
+def _nonempty_str(value: Any) -> str | None:
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
+def validate_production_compile(data: dict[str, Any], suite: dict[str, Any] | None) -> None:
+    """Reject debug/dev Rust builds when the suite requires production compile.
+
+    Rust throughput is dominated by Cargo profile. Qualification evidence must
+    use ``cargo build --release`` (profile ``release``), not ``target/debug``.
+    """
+    protocol = {}
+    if suite is not None and isinstance(suite.get("protocol"), dict):
+        protocol = suite["protocol"]
+    require = protocol.get("require_production_compile") is True
+    build = data.get("build")
+    if not require and build is None:
+        return
+    if require and not isinstance(build, dict):
+        fail("production-compile suites require a build provenance object")
+
+    assert isinstance(build, dict)
+    profile_name = _nonempty_str(data.get("profile")) or ""
+    if "debug" in profile_name.lower() or profile_name.lower() in {"dev", "test"}:
+        fail(f"profile {profile_name!r} is not a production/release performance profile")
+
+    oxiland = build.get("oxiland")
+    if not isinstance(oxiland, dict):
+        fail("build.oxiland provenance is required for production-compile evidence")
+    cargo_profile = _nonempty_str(oxiland.get("cargo_profile"))
+    if cargo_profile != "release":
+        fail("build.oxiland.cargo_profile must be 'release' (production compile)")
+    if oxiland.get("debug_assertions") is True:
+        fail("build.oxiland.debug_assertions must be false for production compile")
+    artifact_dir = _nonempty_str(oxiland.get("artifact_dir"))
+    if artifact_dir is not None and "debug" in artifact_dir.replace("\\", "/").lower().split("/"):
+        fail("build.oxiland.artifact_dir must not point at a debug build")
+    flags = oxiland.get("cargo_flags")
+    if flags is not None:
+        if not isinstance(flags, list) or not all(isinstance(item, str) for item in flags):
+            fail("build.oxiland.cargo_flags must be a list of strings")
+        normalized = {item.strip() for item in flags}
+        if "--release" not in normalized:
+            fail("build.oxiland.cargo_flags must include --release")
+
+    redland = build.get("redland")
+    if require:
+        if not isinstance(redland, dict):
+            fail("build.redland provenance is required for production-compile evidence")
+        opt = _nonempty_str(redland.get("optimization")) or _nonempty_str(redland.get("cflags"))
+        if opt is None:
+            fail("build.redland must record optimization or cflags")
+        if any(token in opt.lower() for token in ("-o0", "opt-level=0", "opt_level=0")):
+            fail("build.redland optimization must not be -O0 / opt-level=0")
+
+
 def evaluate_case(case: dict[str, Any], index: int) -> dict[str, Any]:
     case_id = case.get("id")
     if not isinstance(case_id, str) or not case_id:
@@ -112,6 +172,7 @@ def evaluate(data: dict[str, Any], suite: dict[str, Any] | None = None) -> dict[
     for key in required_text:
         if not isinstance(data.get(key), str) or not data[key].strip():
             fail(f"missing non-empty {key}")
+    validate_production_compile(data, suite)
     cases = data.get("cases")
     if not isinstance(cases, list) or not cases:
         fail("cases must be a non-empty list")

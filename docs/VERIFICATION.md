@@ -205,6 +205,7 @@ Additional phase gates:
 | 0.9 | selected downstream C consumers |
 | 0.10 | frozen contracts, candidate inventory/C surface, qualification scaffolding, performance candidate, and soak |
 | 0.11 | **demonstrated full Redland 1.0.17 parity**, native cross-platform differentials, source compatibility, and binary ABI interchange |
+| 0.12 | **faster-than-Redland performance gate** on parity-qualified artifacts, with resource budgets and no required-case waiver |
 
 The 0.11 parity row is a hard gate, not a documentation claim or a waivable
 target. The machine-generated report must derive every state from raw native
@@ -263,9 +264,11 @@ The comparison protocol is part of the gate:
 - Oxiland's C compatibility surface and Redland's public C API run the same
   completed, behaviorally equivalent workload with identical inputs and result
   validation;
-- both use pinned release builds, equivalent compiler optimization, the same
-  machine, OS image, allocator policy, storage medium, cache state, and thread
-  limits;
+- both use pinned **production/release** builds, equivalent compiler
+  optimization, the same machine, OS image, allocator policy, storage medium,
+  cache state, and thread limits; Oxiland must be Cargo `--release` (not
+  debug/dev), and the C harness must not mix a release library with an
+  unoptimized wrapper;
 - cold and warm cases are separated, execution order alternates or is
   randomized, warm-up is recorded, and enough repetitions are retained to
   publish medians, dispersion, confidence intervals, and raw samples;
@@ -281,7 +284,50 @@ measurement method, and pass thresholds freeze before qualification begins.
 Required cases cannot be deleted, renamed optional, or waived after a failure.
 The 0.11 candidate-bound qualification runs the full matrix on controlled
 benchmark hosts and publishes signed machine-readable and human-readable
-results.
+results. Those 0.11 samples are diagnostic evidence; closing every required
+win is the 0.12 milestone.
+
+### 0.12 performance optimization
+
+Milestone [0.12](milestones/0.12.md) owns closing the faster-than-Redland gate.
+It starts from the 0.11 native sample set, freezes resource budgets, attributes
+every loss or tie, and lands optimizations until every required case on every
+required target/profile passes the statistical protocol above.
+
+#### Production compile contract
+
+Rust performance is a function of how the code is compiled. 0.12 evidence is
+valid only when Oxiland is measured from a **production / release** build:
+
+- Cargo profile `release` via `cargo build … --release` (qualification also
+  passes `--locked`);
+- artifacts from `target/release` (or the equivalent release output directory),
+  never `target/debug`;
+- `debug_assertions` disabled (Cargo release default);
+- no `RUSTFLAGS` / profile overrides that force `opt-level = 0` or a `dev`
+  profile for the measured library;
+- C `perf_bench` wrappers and Redland built with equivalent native optimization
+  (at least `-O2`), recorded alongside the Oxiland provenance;
+- flamegraphs and attribution runs use the same release binaries as the timed
+  samples.
+
+The frozen suite sets `protocol.require_production_compile: true`.
+`scripts/check-performance-gate.py` rejects missing build provenance, non-
+`release` Cargo profiles, debug artifact paths, and `-O0` Redland flags when
+that flag is set. A fast debug build cannot satisfy the gate.
+
+Additional 0.12 rules:
+
+- Optimizations must retain a green 0.11 parity checker on the same candidate
+  revision; behavioral shortcuts are out of scope.
+- Peak RSS and disk amplification must meet independently frozen budgets so
+  speed cannot be bought by unbounded resource growth.
+- Published claims are per-case median ratios with confidence intervals, host,
+  profile, suite revision, and compile provenance—not a geometric mean across
+  the suite.
+- The 0.12 release checker fails closed on synthetic samples, debug/dev
+  compiles, missing resource checks, stale revisions, and incomplete profile
+  coverage.
 
 ## Metrics
 

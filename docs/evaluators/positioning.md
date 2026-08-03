@@ -29,7 +29,7 @@ against the application's own requirements.
 | Role | Application-focused Rust/Python packages and CLI | RDF/SPARQL engine |
 | API style | Redland concepts (Model, contexts, Syntax facades) | Native store / SPARQL / I/O types |
 | Compatibility evidence | Inventories, parity ledger, milestone reports | Upstream standards tests |
-| C path | Source-compat preview; full ABI/parity is active 0.11 work | Not the product goal |
+| C path | Demonstrated 0.11 source/ABI matrix; see limitations for remaining gaps | Not the product goal |
 | Python path | Typed PyPI package with its own API and production guide | Use the upstream Python surface when direct engine access is preferred |
 | When to pick | The documented Oxiland facade, storage contract, CLI, or migration evidence adds value | Only the native engine API is required |
 
@@ -45,24 +45,24 @@ inventory-backed claims matter.
 
 ## Compared to Redland (`librdf`)
 
-| | Oxiland 0.10 development | Native Redland |
+| | Oxiland 0.11 tip | Native Redland |
 |---|---|---|
-| Language | Safe Rust + Python package + C preview | C (+ bindings) |
-| Memory | Rust ownership; opaque C handles in the preview | Manual / library conventions |
+| Language | Safe Rust + Python package + C ABI | C (+ bindings) |
+| Memory | Rust ownership; opaque C handles | Manual / library conventions |
 | I/O | Streaming facades for five syntaxes; transactional load | Raptor factories (broad) |
 | SPARQL | Query/Update, streaming results, ResultsFormat | Rasqal (broader) |
 | Storage | Memory/Fjall plus optional redb, RocksDB, SQLite, and LMDB; transactions | Storage plugins |
 | CLI | `oxiland-cli` rdfproc-shaped (not binary drop-in) | `rdfproc` |
 | Utilities / logging | Digests, URI helpers, vocab, World log handlers | librdf digests/logs/hashes |
 | Safe-API accounting | Header-derived inventory classified (0.6+) | N/A |
-| C consumers | Expanded source-compat preview (0.9 allowlist); not ABI drop-in | Yes |
-| Drop-in ABI | No | N/A |
+| C consumers | Source-compat corpus + librdf-compat packaging on the frozen matrix | Yes |
+| Drop-in ABI | Demonstrated on the verified 0.11 matrix; see C limitations | N/A |
+| Performance claim | Native samples exist; faster-than-Redland gate is planned 0.12 | Baseline |
 
-Oxiland targets measurable migration over time. Tip **0.10** offers an auditable
-expanded C source-compat preview; it does **not yet** claim to replace Redland
-in production C stacks as an ABI drop-in. Milestone **0.11** requires that
-drop-in claim to be proven with Redland-built binaries before full parity is
-declared.
+Oxiland targets measurable migration over time. Tip **0.11** demonstrates
+Redland parity on the frozen matrix. Milestone **0.12** is the planned
+performance-optimization phase that must close the faster-than-Redland gate
+before 1.0 readiness.
 
 ## What Oxiland optimizes for
 

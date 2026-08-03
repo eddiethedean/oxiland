@@ -1,13 +1,14 @@
 # Migration from Redland
 
 This page helps maintainers map Redland `librdf` workflows to **Oxiland tip
-0.10** (safe Rust facade + `oxiland-cli` + PyPI package + C source-compat
-preview). Milestone 0.11 is the active full-parity phase; tip 0.10 does not claim
-full behavioral, source, or binary parity. For **symbol-by-symbol** accounting see
+0.11** (safe Rust facade + `oxiland-cli` + PyPI package + C ABI on the verified
+matrix). Milestone 0.11 closed the demonstrated full-parity gate;
+[milestone 0.12](../milestones/0.12.md) is the planned performance-optimization
+phase before 1.0. For **symbol-by-symbol** accounting see
 [redland-symbol-map.md](redland-symbol-map.md), the header-derived safe-API
 inventory
 [`redland-1.0.17-oxiland-0.6.json`](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.6.json),
-and the [0.9 C inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.9.json)
+and the [0.11 inventory](https://github.com/eddiethedean/oxiland/blob/main/compatibility/inventory/redland-1.0.17-oxiland-0.11.json)
 (Python usability evidence is in the [0.7 report](../reports/0.7.md), not a
 second `librdf` inventory).
 
@@ -33,7 +34,7 @@ Inventory the application rather than translating headers wholesale:
 | Question | Why it matters |
 |---|---|
 | Which parsers, query forms, storage backends, and feature URIs are used? | Determines verified mappings and explicit exclusions |
-| Does the application require C source or ABI compatibility? | The C preview is not an ABI drop-in; full parity and ABI evidence remain open 0.11 gates |
+| Does the application require C source or ABI compatibility? | Tip 0.11 demonstrates the frozen matrix; check [C limitations](../users/c-abi-limitations.md) for remaining gaps |
 | Which data must survive an upgrade? | Requires N-Quads export, restore rehearsal, and format planning |
 | Are inputs or queries untrusted? | Requires application budgets and isolation beyond library semantics |
 | Which errors and callback orders affect control flow? | Must be covered by differential fixtures, not assumed from successful cases |

@@ -36,7 +36,7 @@ can never recur. `closed` requires the underlying exposure to be removed.
 | R-019 | Planning outruns implementation and evidence | M | H | `mitigated` | Documentation | separate charter/roadmap/milestone/parity authority; qualification validators | planned feature described as available | correct claim and add consistency check/review gate |
 | R-020 | Oxigraph 0.5.9 pins vulnerable `quick-xml` 0.37 in RDF/XML and SPARQL XML paths | M | H | `active` | Safe API | Tip/release CI share a narrow, self-expiring ignore for RUSTSEC-2026-0194/0195 verified by `scripts/check-security-exceptions.py` | Oxigraph releases a line that accepts `quick-xml` 0.41+ (main already uses 0.41) | upgrade Oxigraph under the full compatibility suite; remove the tip ignores |
 | R-021 | Optional storage engines weaken durability or strand backend-specific data | M | H | `mitigated` | Storage | ADR-022/024, sealed adapter, shared conformance/crash matrix (`backend_conformance`), versioned layout markers, RDF export path | first non-Fjall adapter, dependency removal, wrong-backend open, or divergent transaction result | do not promote/freeze the adapter; preserve its reader/export feature and migrate through standards RDF |
-| R-022 | “Faster than Redland” is produced by noise, cherry-picked workloads, or unequal builds | H | H | `active` | Performance | frozen representative workloads and matched-build protocol; 0.10 validator fixtures; native candidate-bound runs required by 0.11 | any synthetic, wrong-host, tie/loss, unstable result, deleted case, or environment mismatch | make no performance claim; repair measurement validity and rerun the full native matrix before 1.0 |
+| R-022 | “Faster than Redland” is produced by noise, cherry-picked workloads, unequal builds, or **debug/dev Rust compiles** | H | H | `active` | Performance | frozen workloads; matched-build protocol; `require_production_compile` in 0.12 suite; gate rejects non-`release` Cargo provenance | any synthetic, wrong-host, tie/loss, debug artifact, missing `--release`, unstable result, deleted case, or environment mismatch | make no performance claim; repair measurement validity and complete milestone 0.12 before 1.0 |
 | R-023 | Optional LMDB dependency `heed` retains unmaintained `bincode` 1.3.3 | M | M | `mitigated` | Storage | ADR-027: keep heed/bincode for 0.10 with LMDB optional; RustSec audit on lockfiles; track upstream | a vulnerability, format defect, or unsupported-toolchain issue lands in the inherited crate | update `heed` under the storage conformance suite or preserve the LMDB reader/export window while replacing the adapter dependency |
 | R-024 | Qualification metadata asserts target/profile passes that were not executed there | H | H | `active` | Compatibility | 0.11 raw two-sided execution bundles, host attestation, exact-revision/artifact hashes, and a checker that rejects profile fan-out | a profile lacks native Redland output or shares an execution identity with another target | invalidate inherited verification, run the profile on its declared host, and hold the full-parity claim |
 | R-025 | Function-name coverage is mistaken for C source or binary ABI compatibility | H | H | `active` | C ABI | complete header/declaration/layout inventory, unchanged-source builds, ABI tooling, and Redland-built no-rebuild loader tests | a downstream source fails to compile or a Redland-built binary fails to load/run | implement the missing contract or keep the C surface labeled preview; hold 0.11 |
@@ -69,31 +69,27 @@ Closing a risk requires evidence that the exposure is gone. Renaming it as a
 known limitation is not closure. A regression may move a mitigated or closed
 risk back to active.
 
-## Current 0.11 focus
+## Current 0.12 focus
 
 Immediate blockers and controls:
 
-- R-024: replace shared asserted profile results with native raw executions on
-  each declared target/profile.
-- R-025: expand the denominator beyond function names and prove unchanged
-  source plus no-rebuild binary interchange.
-- R-001 / R-002 / R-006 / R-012 / R-019: treat the 0.10 inventory and bundle
-  as candidate inputs until the 0.11 evidence gate independently re-verifies
-  them; controls include `compatibility/qualification/0.10-parity-evidence.json`
-  and the fail-closed validators.
-- R-004 / R-009 / R-013: full C ABI surface, lifecycle tests, and Linux
-  ASan/LSan on `oxiland-capi`.
-- R-005 / R-021: ADR-024 freeze plus `tests/backend_conformance.rs` crash and
-  durability matrix.
-- R-015: package/wheel/C smoke and clean-install CI paths.
-- R-022: frozen suite plus performance gate tooling; the checked-in 0.10 data
-  is synthetic, so native raw samples remain required before any
-  faster-than-Redland claim.
-- R-023: ADR-027 accepts optional `heed`/`bincode` for 0.10 while tracking
-  upstream.
+- R-022: close the faster-than-Redland gate under milestone 0.12 — freeze
+  resource budgets, require Cargo `--release` / production-compile provenance,
+  attribute Unix scan/C-call cliffs and Windows near-ties, and require native
+  revision-bound wins with no required-case waiver.
+- R-024 / R-025: 0.11 parity evidence remains a retention gate on every
+  performance candidate; do not trade behavioral proof for speed.
+- R-001 / R-002 / R-006 / R-012 / R-019: keep inventory, docs, and claims
+  aligned with verified matrices while 0.12 lands optimizations.
+- R-004 / R-009 / R-013: C ABI surface and sanitizers stay green on optimized
+  `oxiland-capi` artifacts.
+- R-005 / R-021: storage conformance/crash matrix remains green when durable
+  bulk/reopen cases are in the performance suite.
+- R-015: package/wheel/C smoke and clean-install CI paths on release candidates.
+- R-023: ADR-027 accepts optional `heed`/`bincode` while tracking upstream.
 
 Still active and release-relevant: R-007, R-008, R-010, R-016, and R-020
 (narrow `quick-xml` CI exception). No active high-impact risk is waived merely
-because its preventive validator exists. The 0.10 scaffold checker does not
-authorize a performance claim; native candidate-bound samples remain an
-0.11/1.0 gate.
+because its preventive validator exists. Native 0.11 samples diagnose the
+performance backlog; only a green 0.12 gate authorizes the 1.0 performance
+claim.

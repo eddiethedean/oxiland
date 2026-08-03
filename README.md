@@ -227,8 +227,10 @@ changes. Persistent format v1 is reopen-compatible across 0.4.x–0.11.x patch
 lines; export standards RDF before major upgrades. See the
 [support policy](SUPPORT.md) and [changelog](CHANGELOG.md).
 
-Milestone 0.11 demonstrated Redland parity on the frozen matrix; version 1.0
-still requires the readiness gates in [ROADMAP](docs/ROADMAP.md).
+Milestone 0.11 demonstrated Redland parity on the frozen matrix. Milestone
+[0.12](docs/milestones/0.12.md) is the planned performance-optimization phase
+that closes the faster-than-Redland gate before the readiness checks in
+[ROADMAP](docs/ROADMAP.md) for version 1.0.
 
 Report suspected vulnerabilities privately according to
 [SECURITY.md](SECURITY.md), not in a public issue.

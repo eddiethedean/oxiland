@@ -1,7 +1,7 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 0.11 (in progress)
+Current milestone: 0.12 (planned — performance optimization)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -9,7 +9,7 @@ true compatibility surface.
 
 The [project charter](CHARTER.md) constrains scope, the
 [roadmap](ROADMAP.md) defines release outcomes, and
-[milestone plans](milestones/0.11.md) define executable work packages. This document
+[milestone plans](milestones/0.12.md) define executable work packages. This document
 owns the operating model and current work order.
 
 ## Workstreams
@@ -113,15 +113,19 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Freeze the 0.11 baseline beyond public function names: headers, data
-   exports, types/layouts/constants/macros, ownership, callbacks, factories,
-   `rdfproc`, and behavioral obligations.
-2. Replace asserted profile passes with a two-sided native Redland/Oxiland
-   harness that retains raw observations from each real target/profile.
-3. Establish unchanged-source and no-rebuild binary-interchange corpora, then
-   work subsystem by subsystem until every obligation passes.
-4. Implement a fail-closed 0.11 checker that binds evidence to the exact clean
-   revision and artifacts and rejects copied, stale, skipped, or synthetic data.
+1. Freeze the 0.12 performance suite revision, host/profile matrix, measured
+   RSS/disk resource budgets, and the production-compile runbook
+   (`cargo build … --release --locked`) (WP-12-01).
+2. Profile and attribute every required loss or tie from the 0.11 native
+   samples on **release** binaries—especially `P-SCAN-*` and `P-CALL-*` on
+   Unix (WP-12-02).
+3. Land optimizations for C-call/handle overhead and model scan/stream paths,
+   then close remaining mutation, I/O, query, and Windows gaps until the
+   statistical gate passes on every required profile (WP-12-03–06).
+4. Wire fail-closed 0.12 performance qualification tooling (including
+   production-compile provenance checks), retain green 0.11 parity on the
+   same candidate, and publish per-case ratios with confidence intervals
+   (WP-12-07–11).
 
 ## Completed 0.8 backlog
 
