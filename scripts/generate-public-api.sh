@@ -51,6 +51,7 @@ items = [
     "oxiland::Model::find",
     "oxiland::Model::import_nquads_from_path",
     "oxiland::Model::insert_quad",
+    "oxiland::Model::insert_quad_unchecked",
     "oxiland::Model::is_empty",
     "oxiland::Model::len",
     "oxiland::Model::migrate_legacy_store",
