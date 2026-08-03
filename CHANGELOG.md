@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Document tip CI 0.12 diagnostic performance ratios (Linux/macOS) and mark the
+  0.12.0 release checklist ready to tag
+
 ## [0.12.0] - 2026-08-03
 
 Competitive-parity performance gate (ADR-028) on the three-host matrix:

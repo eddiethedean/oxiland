@@ -57,12 +57,12 @@ inventory-backed claims matter.
 | Safe-API accounting | Header-derived inventory classified (0.6+) | N/A |
 | C consumers | Source-compat corpus + librdf-compat packaging on the frozen matrix | Yes |
 | Drop-in ABI | Demonstrated on the verified 0.11 matrix; see C limitations | N/A |
-| Performance claim | Native samples exist; faster-than-Redland gate is in progress for 0.12 | Baseline |
+| Performance claim | 0.12 competitive-parity gate closed (ADR-028); host-scoped wins after isolation — no blanket faster-than-Redland claim yet | Baseline |
 
 Oxiland targets measurable migration over time. Tip **0.11** demonstrates
-Redland parity on the frozen matrix. Milestone **0.12** is the active
-performance-optimization phase that must close the faster-than-Redland gate
-before 1.0 readiness.
+Redland parity on the frozen matrix. Tip **0.12** closes the competitive-parity
+performance gate; a suite-wide faster-than-Redland claim still needs three
+independent corrected-runner passes per host.
 
 ## What Oxiland optimizes for
 
