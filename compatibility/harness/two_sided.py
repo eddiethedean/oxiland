@@ -65,10 +65,35 @@ def find_redland_lib() -> Path | None:
         Path("/usr/local/lib/librdf.dylib"),
         Path("/usr/lib/x86_64-linux-gnu/librdf.so.0"),
         Path("/usr/lib/librdf.so.0"),
+        # MSYS2 UCRT64 (GitHub Actions Windows)
+        Path("/ucrt64/bin/librdf-0.dll"),
+        Path("/ucrt64/bin/librdf.dll"),
+        Path("D:/a/_temp/msys64/ucrt64/bin/librdf-0.dll"),
+        Path("C:/msys64/ucrt64/bin/librdf-0.dll"),
     ]
+    env_prefix = os.environ.get("REDLAND_PREFIX")
+    if env_prefix:
+        candidates.extend(
+            [
+                Path(env_prefix) / "bin" / "librdf-0.dll",
+                Path(env_prefix) / "bin" / "librdf.dll",
+                Path(env_prefix) / "lib" / "librdf.dll.a",
+                Path(env_prefix) / "lib" / "librdf.so.0",
+                Path(env_prefix) / "lib" / "librdf.dylib",
+            ]
+        )
     for path in candidates:
         if path.is_file():
             return path
+    # Last resort: scan PATH for librdf*.dll
+    for entry in os.environ.get("PATH", "").split(os.pathsep):
+        if not entry:
+            continue
+        base = Path(entry)
+        for name in ("librdf-0.dll", "librdf.dll", "librdf.so.0", "librdf.dylib"):
+            candidate = base / name
+            if candidate.is_file():
+                return candidate
     return None
 
 

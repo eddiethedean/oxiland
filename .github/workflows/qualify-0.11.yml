@@ -127,12 +127,30 @@ jobs:
         shell: bash
         run: |
           if [[ -f .venv/Scripts/activate ]]; then source .venv/Scripts/activate; else source .venv/bin/activate; fi
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            for d in /ucrt64 /d/a/_temp/msys64/ucrt64 /c/msys64/ucrt64; do
+              if [[ -d "$d/bin" ]]; then
+                export PATH="$d/bin:$PATH"
+                export REDLAND_PREFIX="$d"
+                break
+              fi
+            done
+          fi
           python compatibility/harness/two_sided.py --profile "${{ matrix.target }}/release-default"
 
       - name: Run release-all-storage harness
         shell: bash
         run: |
           if [[ -f .venv/Scripts/activate ]]; then source .venv/Scripts/activate; else source .venv/bin/activate; fi
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            for d in /ucrt64 /d/a/_temp/msys64/ucrt64 /c/msys64/ucrt64; do
+              if [[ -d "$d/bin" ]]; then
+                export PATH="$d/bin:$PATH"
+                export REDLAND_PREFIX="$d"
+                break
+              fi
+            done
+          fi
           python compatibility/harness/two_sided.py --profile "${{ matrix.target }}/release-all-storage"
 
       - name: Upload raw differential evidence
