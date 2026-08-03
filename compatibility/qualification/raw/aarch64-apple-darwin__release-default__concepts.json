@@ -6,16 +6,16 @@
   "profile_id": "aarch64-apple-darwin/release-default",
   "target": "aarch64-apple-darwin",
   "build_profile": "release-default",
-  "git_revision": "0448e9962af0340ef1238e58b70b7e4cf5b5f24e",
-  "clean_worktree": false,
-  "timestamp": "2026-08-03T02:09:29Z",
-  "elapsed_ms": 15,
+  "git_revision": "bbf3cf20a32a37214a286abd68349c335754cdb9",
+  "clean_worktree": true,
+  "timestamp": "2026-08-03T02:11:53Z",
+  "elapsed_ms": 16,
   "synthetic": false,
   "oracle": {
     "redland": "compatibility/harness/c_oracle/bin/oracle-redland",
     "oxiland": "compatibility/harness/c_oracle/bin/oracle-oxiland"
   },
-  "execution_id": "ecc3eeb43f615e7ca76d882825f61a62a46c2e0d6045532c37ed2fc230f31433",
+  "execution_id": "0324a4444cd211443ac13ecaaf68b05899aa14de94e1b2994f1ca5b0ef1eff6a",
   "artifacts": {
     "redland_library": "/opt/homebrew/opt/redland/lib/librdf.dylib",
     "redland_library_sha256": "934d01aa41b8287303ccee269c46656166bb47f8aa585915035697e82202abfc",

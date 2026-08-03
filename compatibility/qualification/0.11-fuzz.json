@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "milestone": "0.11",
-  "git_revision": "37d480ffd493e1e6549254cc587322e16afb7c4a",
+  "git_revision": "bbf3cf20a32a37214a286abd68349c335754cdb9",
   "targets": [
     {
       "name": "rdf_parser",

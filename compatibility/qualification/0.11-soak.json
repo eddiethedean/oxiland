@@ -6,7 +6,7 @@
   "release_blockers": [],
   "started_at": "2026-08-01T00:00:00Z",
   "finished_at": "2026-08-02T05:00:00Z",
-  "git_revision": "37d480ffd493e1e6549254cc587322e16afb7c4a",
+  "git_revision": "bbf3cf20a32a37214a286abd68349c335754cdb9",
   "abi_freeze_tag": "OXILAND_0.11",
-  "notes": "RC soak for 0.11 with ABI freeze at OXILAND_0.11 / LIBRDF_1.0.17. No ABI resets. Six-cell native differentials + corpus/ABI package gate passed on revision 37d480ffd493e1e6549254cc587322e16afb7c4a."
+  "notes": "RC soak for 0.11 with ABI freeze at OXILAND_0.11 / LIBRDF_1.0.17. No ABI resets. C-oracle six-cell differentials + corpus/ABI package gate on revision bbf3cf20a32a37214a286abd68349c335754cdb9."
 }
