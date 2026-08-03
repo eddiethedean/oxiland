@@ -1,5 +1,19 @@
 # Qualification bundles
 
+## 0.12 performance qualification
+
+`0.12-matrix.json` checksums the draft suite and corrected native C benchmark
+and freezes the intended Linux, macOS, and Windows release-default evidence
+paths. Native 0.12 samples belong under `performance/0.12/`; they must not
+overwrite the retained 0.11 diagnostic bundle.
+
+Run `python3 scripts/check-0.12-release.py`. Until measured RSS/disk budgets
+are reviewed, both the matrix and suite remain `draft`, and this command fails
+closed. A release pass additionally requires exact native profile coverage,
+production-build provenance, unique executions, artifact hashes, a clean
+candidate revision, and refreshed green 0.11 parity evidence for that same
+revision.
+
 ## 0.11 release qualification
 
 Checked-in 0.11 evidence lives beside this README:

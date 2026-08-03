@@ -37,6 +37,12 @@ pub struct ModelInner {
     pub features: std::collections::HashMap<String, String>,
     pub in_transaction: bool,
     pub transaction_handle: *mut std::ffi::c_void,
+    /// Cached cardinality for hot C callers such as `librdf_model_size`.
+    ///
+    /// All mutations through this compatibility layer invalidate the cache.
+    /// Keeping the empty-model value hot avoids turning a constant-time C API
+    /// query into a storage scan on every call.
+    pub cached_size: Option<usize>,
 }
 
 /// Creates a model from storage (`memory` → [`Model::new`], `fjall` → open path).
@@ -54,6 +60,11 @@ pub extern "C" fn librdf_new_model(
         }
         let Some(storage) = (unsafe { borrow_handle(storage, TAG_STORAGE) }) else {
             return ptr::null_mut();
+        };
+        let cached_size = if storage.inner.backend == StorageBackend::Memory {
+            Some(0)
+        } else {
+            None
         };
         let model = if storage.inner.backend == StorageBackend::Memory {
             Model::new()
@@ -78,6 +89,7 @@ pub extern "C" fn librdf_new_model(
                         features: std::collections::HashMap::new(),
                         in_transaction: false,
                         transaction_handle: ptr::null_mut(),
+                        cached_size,
                     },
                 );
                 storage.inner.model = Some(handle);
@@ -150,16 +162,20 @@ fn stream_for_pattern(
         object: object_owned.as_ref().map(TermRef::from),
         graph_name: graph_name.as_ref().map(|name| name.as_ref()),
     };
-    let mut statements = Vec::new();
+    let mut triples = Vec::new();
     for item in model.find(pattern) {
         let quad = item.map_err(|error| error.to_string())?;
-        let triple = oxigraph::model::Triple::new(quad.subject, quad.predicate, quad.object);
-        statements.push(StatementInner::from_triple(triple));
+        triples.push(oxigraph::model::Triple::new(
+            quad.subject,
+            quad.predicate,
+            quad.object,
+        ));
     }
     Ok(box_handle(
         TAG_STREAM,
         StreamInner {
-            statements,
+            statements: Vec::new(),
+            triples,
             index: 0,
             current: None,
         },
@@ -188,6 +204,7 @@ pub extern "C" fn librdf_model_add_statement(
                 return -1;
             }
         };
+        model.inner.cached_size = None;
         match model.inner.model.add(triple) {
             Ok(_) => 0,
             Err(error) => {
@@ -220,6 +237,7 @@ pub extern "C" fn librdf_model_remove_statement(
                 return -1;
             }
         };
+        model.inner.cached_size = None;
         match model.inner.model.remove(triple) {
             Ok(_) => 0,
             Err(error) => {
@@ -272,8 +290,14 @@ pub extern "C" fn librdf_model_size(model: *mut librdf_model) -> i32 {
         let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
             return -1;
         };
+        if let Some(n) = model.inner.cached_size {
+            return i32::try_from(n).unwrap_or(i32::MAX);
+        }
         match model.inner.model.len() {
-            Ok(n) => i32::try_from(n).unwrap_or(i32::MAX),
+            Ok(n) => {
+                model.inner.cached_size = Some(n);
+                i32::try_from(n).unwrap_or(i32::MAX)
+            }
             Err(error) => {
                 set_last_error(error.to_string());
                 -1
@@ -317,13 +341,15 @@ pub extern "C" fn librdf_model_find_statements(
             graph_name: None,
         };
 
-        let mut statements = Vec::new();
+        let mut triples = Vec::new();
         for item in model.inner.model.find(pattern) {
             match item {
                 Ok(quad) => {
-                    let triple =
-                        oxigraph::model::Triple::new(quad.subject, quad.predicate, quad.object);
-                    statements.push(StatementInner::from_triple(triple));
+                    triples.push(oxigraph::model::Triple::new(
+                        quad.subject,
+                        quad.predicate,
+                        quad.object,
+                    ));
                 }
                 Err(error) => {
                     set_last_error(error.to_string());
@@ -335,7 +361,8 @@ pub extern "C" fn librdf_model_find_statements(
         box_handle(
             TAG_STREAM,
             StreamInner {
-                statements,
+                statements: Vec::new(),
+                triples,
                 index: 0,
                 current: None,
             },
@@ -369,13 +396,15 @@ pub extern "C" fn librdf_model_as_stream(model: *mut librdf_model) -> *mut librd
         let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
             return ptr::null_mut();
         };
-        let mut statements = Vec::new();
+        let mut triples = Vec::new();
         for item in model.inner.model.find(StatementPattern::default()) {
             match item {
                 Ok(quad) => {
-                    let triple =
-                        oxigraph::model::Triple::new(quad.subject, quad.predicate, quad.object);
-                    statements.push(StatementInner::from_triple(triple));
+                    triples.push(oxigraph::model::Triple::new(
+                        quad.subject,
+                        quad.predicate,
+                        quad.object,
+                    ));
                 }
                 Err(error) => {
                     set_last_error(error.to_string());
@@ -386,7 +415,8 @@ pub extern "C" fn librdf_model_as_stream(model: *mut librdf_model) -> *mut librd
         box_handle(
             TAG_STREAM,
             StreamInner {
-                statements,
+                statements: Vec::new(),
+                triples,
                 index: 0,
                 current: None,
             },
@@ -426,6 +456,7 @@ pub extern "C" fn librdf_model_add(
             return -1;
         };
         let triple = oxigraph::model::Triple::new(s, p, object.inner.term.clone());
+        model.inner.cached_size = None;
         match model.inner.model.add(triple) {
             Ok(_) => 0,
             Err(error) => {
@@ -487,6 +518,7 @@ pub extern "C" fn librdf_model_add_string_literal_statement(
             set_last_error("predicate must be IRI");
             return -1;
         };
+        model.inner.cached_size = None;
         match model
             .inner
             .model
@@ -550,6 +582,7 @@ pub extern "C" fn librdf_model_add_typed_literal_statement(
         };
         let object =
             oxigraph::model::Literal::new_typed_literal(literal, datatype.inner.node.clone());
+        model.inner.cached_size = None;
         match model
             .inner
             .model
@@ -596,6 +629,7 @@ pub extern "C" fn librdf_model_context_add_statement(
                 return -1;
             }
         };
+        model.inner.cached_size = None;
         match model.inner.model.add_to_graph(triple, graph) {
             Ok(_) => 0,
             Err(error) => {
@@ -638,6 +672,7 @@ pub extern "C" fn librdf_model_context_remove_statement(
                 return -1;
             }
         };
+        model.inner.cached_size = None;
         match model.inner.model.remove_from_graph(triple, graph) {
             Ok(_) => 0,
             Err(error) => {
@@ -799,6 +834,7 @@ pub extern "C" fn librdf_model_update(model: *mut librdf_model, update_string: *
         else {
             return -1;
         };
+        model.inner.cached_size = None;
         match oxiland::Update::new(update_string).execute(&model.inner.model) {
             Ok(()) => 0,
             Err(error) => {
@@ -991,6 +1027,7 @@ pub extern "C" fn librdf_model_context_remove_statements(
                 return -1;
             }
         };
+        model.inner.cached_size = None;
         match model.inner.model.clear_graph(graph) {
             Ok(()) => 0,
             Err(e) => {
@@ -1415,6 +1452,7 @@ pub extern "C" fn librdf_model_load(
                 return -1;
             }
         };
+        model.inner.cached_size = None;
         match Parser::for_syntax(syntax).load_into(&model.inner.model, Cursor::new(bytes)) {
             Ok(_) => 0,
             Err(e) => {

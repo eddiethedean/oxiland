@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "milestone": "0.12",
+  "status": "draft",
+  "targets": [
+    "x86_64-unknown-linux-gnu",
+    "aarch64-apple-darwin",
+    "x86_64-pc-windows-msvc"
+  ],
+  "performance": {
+    "suite": "compatibility/performance/0.12-suite.json",
+    "suite_sha256": "c35f433004bb4abf9502c52e02fd74ac14f053f4b7f6236443c636a4b64ec5c8",
+    "harness": "compatibility/harness/c_oracle/perf_bench.c",
+    "harness_sha256": "e38186b62fe43df22771cfcdf97cb755503279f1721ffe4737b078eee624fc8d",
+    "evidence_dir": "compatibility/qualification/performance/0.12",
+    "profiles": [
+      "x86_64-unknown-linux-gnu/release-default",
+      "aarch64-apple-darwin/release-default",
+      "x86_64-pc-windows-msvc/release-default"
+    ]
+  },
+  "parity": {
+    "checker": "scripts/check-0.11-release.py",
+    "evidence": "compatibility/qualification/0.11-parity-evidence.json",
+    "required_profiles": [
+      "x86_64-unknown-linux-gnu/release-default",
+      "x86_64-unknown-linux-gnu/release-all-storage",
+      "aarch64-apple-darwin/release-default",
+      "aarch64-apple-darwin/release-all-storage",
+      "x86_64-pc-windows-msvc/release-default",
+      "x86_64-pc-windows-msvc/release-all-storage"
+    ]
+  },
+  "notes": "Draft until measured resource budgets are reviewed and frozen. The release checker rejects draft matrices and suites."
+}

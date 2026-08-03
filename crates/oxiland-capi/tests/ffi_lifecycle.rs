@@ -81,6 +81,7 @@ fn model_context_operations_are_isolated_from_default_graph() {
         librdf_model_context_remove_statement(model, context, statement),
         0
     );
+    assert_eq!(librdf_model_size(model), 0);
     assert_eq!(librdf_model_contains_context(model, context), 0);
     librdf_free_statement(statement);
     librdf_free_node(context);

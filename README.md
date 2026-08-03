@@ -228,7 +228,7 @@ lines; export standards RDF before major upgrades. See the
 [support policy](SUPPORT.md) and [changelog](CHANGELOG.md).
 
 Milestone 0.11 demonstrated Redland parity on the frozen matrix. Milestone
-[0.12](docs/milestones/0.12.md) is the planned performance-optimization phase
+[0.12](docs/milestones/0.12.md) is the active performance-optimization phase
 that closes the faster-than-Redland gate before the readiness checks in
 [ROADMAP](docs/ROADMAP.md) for version 1.0.
 

@@ -1,7 +1,7 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 0.12 (planned — performance optimization)
+Current milestone: 0.12 (in progress — performance optimization)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -113,19 +113,16 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Freeze the 0.12 performance suite revision, host/profile matrix, measured
-   RSS/disk resource budgets, and the production-compile runbook
-   (`cargo build … --release --locked`) (WP-12-01).
-2. Profile and attribute every required loss or tie from the 0.11 native
-   samples on **release** binaries—especially `P-SCAN-*` and `P-CALL-*` on
-   Unix (WP-12-02).
-3. Land optimizations for C-call/handle overhead and model scan/stream paths,
-   then close remaining mutation, I/O, query, and Windows gaps until the
-   statistical gate passes on every required profile (WP-12-03–06).
-4. Wire fail-closed 0.12 performance qualification tooling (including
-   production-compile provenance checks), retain green 0.11 parity on the
-   same candidate, and publish per-case ratios with confidence intervals
-   (WP-12-07–11).
+1. Measure and review RSS/disk maxima, then freeze the draft checksummed 0.12
+   suite and target/profile matrix (WP-12-01 and WP-12-07).
+2. Continue release-binary attribution for `P-SCAN-*` and `P-CALL-*`; the first
+   landing caches model cardinality and avoids eager stream objects, but local
+   diagnostics remain below the gate (WP-12-02–04).
+3. Close remaining mutation, I/O, query, and Windows gaps until the statistical
+   gate passes on every required profile (WP-12-05–06).
+4. Exercise the new fail-closed 0.12 release checker with native CI bundles,
+   retain green 0.11 parity on the same candidate, and publish qualification
+   ratios with confidence intervals (WP-12-08–11).
 
 ## Completed 0.8 backlog
 

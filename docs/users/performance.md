@@ -1,7 +1,7 @@
 # Performance
 
 Oxiland does not yet authorize a blanket faster-than-Redland claim. Milestone
-[0.12](../milestones/0.12.md) is the dedicated optimization phase that closes
+[0.12](../milestones/0.12.md) is the active optimization phase that closes
 the frozen comparison gate; until it completes, treat the following as
 operational guidance and cite only per-case native ratios when discussing
 speed.

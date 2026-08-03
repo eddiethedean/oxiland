@@ -1,7 +1,10 @@
 //! Opaque tagged handles and live-pointer registry.
 
+use std::cell::Cell;
 use std::collections::HashMap;
+use std::hash::{BuildHasherDefault, Hasher};
 use std::os::raw::c_char;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{LazyLock, Mutex};
 
 use crate::error::set_last_error;
@@ -46,7 +49,43 @@ pub const TAG_QUERY_RESULTS_FORMATTER: u32 = 0x4F58_5710;
 pub const TAG_IOSTREAM: u32 = 0x4F58_5711;
 pub const TAG_FREED: u32 = 0xDEAD_F00D;
 
-static LIVE: LazyLock<Mutex<HashMap<usize, u32>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+/// Identity hasher for the live-handle registry's already-uniform pointer keys.
+///
+/// The default SipHash is useful for attacker-controlled strings, but every
+/// key here is an aligned address allocated by this process. Hashing the
+/// pointer directly keeps validation cheap on hot C getters while the mutex
+/// and registry continue to defend against stale or wrongly typed handles.
+#[derive(Default)]
+struct PointerHasher(u64);
+
+impl Hasher for PointerHasher {
+    fn finish(&self) -> u64 {
+        self.0
+    }
+
+    fn write(&mut self, bytes: &[u8]) {
+        let mut value = 0_u64;
+        for (shift, byte) in bytes.iter().take(8).enumerate() {
+            value |= u64::from(*byte) << (shift * 8);
+        }
+        self.0 = value;
+    }
+
+    fn write_usize(&mut self, value: usize) {
+        self.0 = value as u64;
+    }
+}
+
+type LiveHandles = HashMap<usize, u32, BuildHasherDefault<PointerHasher>>;
+
+static LIVE: LazyLock<Mutex<LiveHandles>> = LazyLock::new(|| Mutex::new(LiveHandles::default()));
+static LIVE_GENERATION: AtomicU64 = AtomicU64::new(1);
+
+thread_local! {
+    /// Last successfully validated handle for hot repeated calls. Any registry
+    /// mutation advances `LIVE_GENERATION` and invalidates this entry.
+    static LAST_VALIDATED: Cell<(usize, u32, u64)> = const { Cell::new((0, 0, 0)) };
+}
 
 /// Heap object shared by every opaque C handle.
 #[repr(C)]
@@ -59,10 +98,15 @@ fn register(ptr: usize, tag: u32) {
     LIVE.lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .insert(ptr, tag);
+    LIVE_GENERATION.fetch_add(1, Ordering::Release);
 }
 
 fn validate_live(ptr: usize, expected_tag: u32) -> bool {
-    match LIVE
+    let generation = LIVE_GENERATION.load(Ordering::Acquire);
+    if LAST_VALIDATED.with(|last| last.get() == (ptr, expected_tag, generation)) {
+        return true;
+    }
+    let result = match LIVE
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .get(&ptr)
@@ -79,7 +123,12 @@ fn validate_live(ptr: usize, expected_tag: u32) -> bool {
             set_last_error("freed or invalid handle");
             false
         }
+    };
+    if result {
+        let generation = LIVE_GENERATION.load(Ordering::Acquire);
+        LAST_VALIDATED.with(|last| last.set((ptr, expected_tag, generation)));
     }
+    result
 }
 
 fn unregister(ptr: usize, expected_tag: u32) -> bool {
@@ -89,6 +138,7 @@ fn unregister(ptr: usize, expected_tag: u32) -> bool {
     match live.get(&ptr).copied() {
         Some(tag) if tag == expected_tag => {
             live.remove(&ptr);
+            LIVE_GENERATION.fetch_add(1, Ordering::Release);
             true
         }
         Some(tag) => {

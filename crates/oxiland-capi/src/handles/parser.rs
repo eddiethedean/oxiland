@@ -148,6 +148,7 @@ pub extern "C" fn librdf_parser_parse_string_into_model(
                 }
             };
         }
+        model.inner.cached_size = None;
         match rdf_parser.load_into(&model.inner.model, Cursor::new(string.as_bytes())) {
             Ok(_) => 0,
             Err(error) => {
@@ -200,6 +201,7 @@ pub extern "C" fn librdf_parser_parse_counted_string_into_model(
                 }
             };
         }
+        model.inner.cached_size = None;
         match rdf_parser.load_into(&model.inner.model, Cursor::new(text.as_bytes())) {
             Ok(_) => 0,
             Err(error) => {
@@ -391,6 +393,7 @@ fn parse_bytes_to_stream(
         TAG_STREAM,
         StreamInner {
             statements,
+            triples: Vec::new(),
             index: 0,
             current: None,
         },

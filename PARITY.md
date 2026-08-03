@@ -1,7 +1,7 @@
 # Redland parity ledger
 
 Last completed milestone: 0.11
-Current development milestone: 0.12 performance optimization (`planned` — after
+Current development milestone: 0.12 performance optimization (`in progress` — after
 0.11 full-parity gate; see `docs/ROADMAP.md` and `docs/milestones/0.12.md`)
 Ledger maturity: header-derived full public `librdf` 1.0.17 function inventory
 (0.6); Python package usability evidence (0.7); C ABI source-compat preview

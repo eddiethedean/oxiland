@@ -10,6 +10,7 @@ use crate::handles::{TAG_ITERATOR, TAG_NODE, TAG_WORLD};
 use crate::handles::{
     TAG_STATEMENT, TAG_STREAM, TypedHandle, borrow_handle, box_handle, free_handle,
 };
+use oxigraph::model::Triple;
 use std::ffi::c_void;
 use std::ptr;
 
@@ -17,6 +18,9 @@ pub type librdf_stream = TypedHandle<StreamInner>;
 
 pub struct StreamInner {
     pub statements: Vec<StatementInner>,
+    /// Raw triples for model-backed streams. `StatementInner` conversion is
+    /// deferred until `librdf_stream_get_object` actually observes an item.
+    pub triples: Vec<Triple>,
     pub index: usize,
     /// Borrowed-by-C current object; owned by the stream.
     pub current: Option<*mut librdf_statement>,
@@ -40,10 +44,21 @@ fn refresh_current(stream: &mut StreamInner) {
             unsafe { free_handle(ptr, TAG_STATEMENT) };
         }
     }
-    if stream.index < stream.statements.len() {
-        let stmt = stream.statements[stream.index].clone();
+    let statement = stream.statements.get(stream.index).cloned().or_else(|| {
+        stream
+            .triples
+            .get(stream.index)
+            .cloned()
+            .map(StatementInner::from_triple)
+    });
+    if let Some(stmt) = statement {
         stream.current = Some(box_handle(TAG_STATEMENT, stmt));
     }
+}
+
+fn stream_len(stream: &StreamInner) -> usize {
+    debug_assert!(stream.statements.is_empty() || stream.triples.is_empty());
+    stream.statements.len() + stream.triples.len()
 }
 
 /// Returns nonzero if the stream is finished.
@@ -55,14 +70,7 @@ pub extern "C" fn librdf_stream_end(stream: *mut librdf_stream) -> i32 {
         let Some(stream) = (unsafe { borrow_handle(stream, TAG_STREAM) }) else {
             return 1;
         };
-        if stream.inner.index >= stream.inner.statements.len() {
-            1
-        } else {
-            if stream.inner.current.is_none() {
-                refresh_current(&mut stream.inner);
-            }
-            0
-        }
+        i32::from(stream.inner.index >= stream_len(&stream.inner))
     })
 }
 
@@ -75,12 +83,17 @@ pub extern "C" fn librdf_stream_next(stream: *mut librdf_stream) -> i32 {
         let Some(stream) = (unsafe { borrow_handle(stream, TAG_STREAM) }) else {
             return -1;
         };
-        if stream.inner.index >= stream.inner.statements.len() {
+        if stream.inner.index >= stream_len(&stream.inner) {
             return 1;
         }
+        if let Some(ptr) = stream.inner.current.take() {
+            if !ptr.is_null() {
+                // SAFETY: the current statement is owned exclusively by this stream.
+                unsafe { free_handle(ptr, TAG_STATEMENT) };
+            }
+        }
         stream.inner.index += 1;
-        refresh_current(&mut stream.inner);
-        if stream.inner.index >= stream.inner.statements.len() {
+        if stream.inner.index >= stream_len(&stream.inner) {
             1
         } else {
             0
@@ -97,7 +110,7 @@ pub extern "C" fn librdf_stream_get_object(stream: *mut librdf_stream) -> *mut l
         let Some(stream) = (unsafe { borrow_handle(stream, TAG_STREAM) }) else {
             return ptr::null_mut();
         };
-        if stream.inner.index >= stream.inner.statements.len() {
+        if stream.inner.index >= stream_len(&stream.inner) {
             return ptr::null_mut();
         }
         if stream.inner.current.is_none() {
@@ -128,6 +141,7 @@ pub extern "C" fn librdf_new_empty_stream(world: *mut librdf_world) -> *mut libr
             TAG_STREAM,
             StreamInner {
                 statements: Vec::new(),
+                triples: Vec::new(),
                 index: 0,
                 current: None,
             },
@@ -183,6 +197,7 @@ pub extern "C" fn librdf_new_stream_from_node_iterator(
             TAG_STREAM,
             StreamInner {
                 statements,
+                triples: Vec::new(),
                 index: 0,
                 current: None,
             },

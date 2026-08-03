@@ -67,8 +67,11 @@ class PerformanceGateTests(unittest.TestCase):
                 "bootstrap_rounds": 10000,
                 "minimum_samples": 30,
             },
-            "cases": [{"id": item["id"], "required": True} for item in data["cases"]],
-            "resource_budgets": [{"id": "rss", "maximum": 20}],
+            "cases": [
+                {"id": item["id"], "kind": item["kind"], "required": True}
+                for item in data["cases"]
+            ],
+            "resource_budgets": [{"id": "rss", "unit": "MiB", "maximum": 20}],
         }
 
     def test_passing_matrix_requires_each_case_and_resource_to_win(self) -> None:
@@ -89,6 +92,20 @@ class PerformanceGateTests(unittest.TestCase):
         suite = self.suite(data)
         data["cases"].pop()
         with self.assertRaisesRegex(ValueError, "exactly the frozen required cases"):
+            performance.evaluate(data, suite)
+
+    def test_case_metric_kind_cannot_change(self) -> None:
+        data = self.data()
+        suite = self.suite(data)
+        data["cases"][0]["kind"] = "latency"
+        with self.assertRaisesRegex(ValueError, "metric kind differs"):
+            performance.evaluate(data, suite)
+
+    def test_resource_unit_cannot_change(self) -> None:
+        data = self.data()
+        suite = self.suite(data)
+        data["resource_checks"][0]["unit"] = "bytes"
+        with self.assertRaisesRegex(ValueError, "resource unit differs"):
             performance.evaluate(data, suite)
 
     def test_production_compile_required_rejects_debug_profile(self) -> None:
@@ -123,11 +140,41 @@ class PerformanceGateTests(unittest.TestCase):
         report = performance.evaluate(data, suite)
         self.assertTrue(report["passed"])
 
+    def test_production_compile_requires_every_frozen_cargo_flag(self) -> None:
+        data = self.data()
+        suite = self.suite(data)
+        suite["protocol"] = {
+            "require_production_compile": True,
+            "cargo": {"required_flags": ["--release", "--locked"]},
+        }
+        data["build"] = {
+            "oxiland": {
+                "cargo_profile": "release",
+                "cargo_flags": ["--release"],
+                "debug_assertions": False,
+                "artifact_dir": "target/release",
+            },
+            "redland": {"cflags": "-O2"},
+        }
+        with self.assertRaisesRegex(ValueError, "--locked"):
+            performance.evaluate(data, suite)
+
     def test_production_compile_required_rejects_missing_build(self) -> None:
         data = self.data()
         suite = self.suite(data)
         suite["protocol"] = {"require_production_compile": True}
         with self.assertRaisesRegex(ValueError, "build provenance"):
+            performance.evaluate(data, suite)
+
+    def test_production_compile_required_rejects_incomplete_oxiland_build(self) -> None:
+        data = self.data()
+        suite = self.suite(data)
+        suite["protocol"] = {"require_production_compile": True}
+        data["build"] = {
+            "oxiland": {"cargo_profile": "release"},
+            "redland": {"cflags": "-O2"},
+        }
+        with self.assertRaisesRegex(ValueError, "debug_assertions"):
             performance.evaluate(data, suite)
 
 

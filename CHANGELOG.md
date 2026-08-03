@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   parity and 1.0 readiness (`docs/milestones/0.12.md`, `docs/reports/0.12.md`)
 - Draft `compatibility/performance/0.12-suite.json` with
   `protocol.require_production_compile` (Cargo `--release` only)
+- Draft checksummed 0.12 target/profile matrix and fail-closed
+  `scripts/check-0.12-release.py`, with regression tests for draft protocols,
+  missing budgets, synthetic/stale evidence, and artifact provenance
 
 ### Changed
 
@@ -20,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sequence 0.12 as the faster-than-Redland gate before 1.0
 - `scripts/check-performance-gate.py` rejects debug/dev Rust compile provenance
   when a suite requires production compile
+- C model cardinality is cached between mutations, repeated handle validation
+  uses a generation-bound fast path, and stream objects are materialized only
+  when requested rather than on every `end`/`next` call
+- The native performance harness validates every completed workload and runs a
+  real CONSTRUCT for `P-GRAPH-10K` instead of reusing its SELECT implementation
 
 ## [0.11.0] - 2026-08-03
 

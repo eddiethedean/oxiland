@@ -99,18 +99,32 @@ def validate_production_compile(data: dict[str, Any], suite: dict[str, Any] | No
     cargo_profile = _nonempty_str(oxiland.get("cargo_profile"))
     if cargo_profile != "release":
         fail("build.oxiland.cargo_profile must be 'release' (production compile)")
-    if oxiland.get("debug_assertions") is True:
-        fail("build.oxiland.debug_assertions must be false for production compile")
+    if require and oxiland.get("debug_assertions") is not False:
+        fail("build.oxiland.debug_assertions must explicitly be false")
     artifact_dir = _nonempty_str(oxiland.get("artifact_dir"))
+    if require and artifact_dir is None:
+        fail("build.oxiland.artifact_dir is required for production compile")
     if artifact_dir is not None and "debug" in artifact_dir.replace("\\", "/").lower().split("/"):
         fail("build.oxiland.artifact_dir must not point at a debug build")
     flags = oxiland.get("cargo_flags")
+    if require and flags is None:
+        fail("build.oxiland.cargo_flags are required for production compile")
     if flags is not None:
         if not isinstance(flags, list) or not all(isinstance(item, str) for item in flags):
             fail("build.oxiland.cargo_flags must be a list of strings")
         normalized = {item.strip() for item in flags}
-        if "--release" not in normalized:
-            fail("build.oxiland.cargo_flags must include --release")
+        cargo_protocol = protocol.get("cargo")
+        required_flags = ["--release"]
+        if isinstance(cargo_protocol, dict) and isinstance(
+            cargo_protocol.get("required_flags"), list
+        ):
+            required_flags = cargo_protocol["required_flags"]
+        missing_flags = [flag for flag in required_flags if flag not in normalized]
+        if missing_flags:
+            fail(
+                "build.oxiland.cargo_flags missing required production flags: "
+                f"{missing_flags}"
+            )
 
     redland = build.get("redland")
     if require:
@@ -198,9 +212,18 @@ def evaluate(data: dict[str, Any], suite: dict[str, Any] | None = None) -> dict[
     if suite is not None:
         if suite.get("schema_version") != 1 or data["suite_revision"] != suite.get("id"):
             fail("raw samples do not match the frozen suite revision")
-        expected_cases = {item["id"] for item in suite.get("cases", []) if item.get("required") is True}
+        expected_case_items = {
+            item["id"]: item
+            for item in suite.get("cases", [])
+            if item.get("required") is True
+        }
+        expected_cases = set(expected_case_items)
         if set(ids) != expected_cases:
             fail("raw samples do not contain exactly the frozen required cases")
+        for case in cases:
+            frozen = expected_case_items[case["id"]]
+            if frozen.get("kind") is not None and case.get("kind") != frozen["kind"]:
+                fail(f"{case['id']}: metric kind differs from the frozen suite")
         expected_resources = {item["id"] for item in suite.get("resource_budgets", [])}
         actual_resources = {item["id"] for item in normalized_resources}
         if actual_resources != expected_resources:
@@ -212,6 +235,13 @@ def evaluate(data: dict[str, Any], suite: dict[str, Any] | None = None) -> dict[
             item["maximum"] != frozen_maximums[item["id"]] for item in normalized_resources
         ):
             fail("raw samples changed a frozen resource budget")
+        frozen_resources = {
+            item["id"]: item for item in suite.get("resource_budgets", [])
+        }
+        for item in normalized_resources:
+            frozen = frozen_resources[item["id"]]
+            if frozen.get("unit") is not None and item.get("unit") != frozen["unit"]:
+                fail(f"{item['id']}: resource unit differs from the frozen suite")
         thresholds = suite.get("thresholds", {})
         if (
             thresholds.get("throughput_oxiland_over_redland_min") != THROUGHPUT_THRESHOLD

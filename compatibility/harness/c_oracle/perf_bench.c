@@ -31,9 +31,10 @@ static double time_mut(librdf_world *world, int n) {
     snprintf(uri, sizeof(uri), "%d", i);
     librdf_node *o = librdf_new_node_from_literal(world, (unsigned char *)uri, NULL, 0);
     librdf_statement *st = librdf_new_statement_from_nodes(world, s, p, o);
-    librdf_model_add_statement(model, st);
+    if (!st || librdf_model_add_statement(model, st) != 0) die("mutation add");
     librdf_free_statement(st);
   }
+  if (librdf_model_size(model) != n) die("mutation validation");
   librdf_free_model(model);
   librdf_free_storage(storage);
   return now_s() - t0;
@@ -50,7 +51,7 @@ static double time_scan(librdf_world *world, int n) {
     snprintf(uri, sizeof(uri), "%d", i);
     librdf_node *o = librdf_new_node_from_literal(world, (unsigned char *)uri, NULL, 0);
     librdf_statement *st = librdf_new_statement_from_nodes(world, s, p, o);
-    librdf_model_add_statement(model, st);
+    if (!st || librdf_model_add_statement(model, st) != 0) die("scan setup");
     librdf_free_statement(st);
   }
   double t0 = now_s();
@@ -60,7 +61,8 @@ static double time_scan(librdf_world *world, int n) {
     count++;
     librdf_stream_next(stream);
   }
-  if (stream) librdf_free_stream(stream);
+  if (!stream || count != n) die("scan validation");
+  librdf_free_stream(stream);
   double elapsed = now_s() - t0;
   (void)count;
   librdf_free_model(model);
@@ -87,6 +89,7 @@ static double time_parse(librdf_world *world, int n) {
   if (!storage || !model || !parser || !base) die("alloc");
   if (librdf_parser_parse_string_into_model(parser, (unsigned char *)buf, base, model) != 0)
     die("parse");
+  if (librdf_model_size(model) != n) die("parse validation");
   double elapsed = now_s() - t0;
   librdf_free_uri(base);
   librdf_free_parser(parser);
@@ -107,17 +110,18 @@ static double time_ask(librdf_world *world, int n) {
     snprintf(uri, sizeof(uri), "%d", i);
     librdf_node *o = librdf_new_node_from_literal(world, (unsigned char *)uri, NULL, 0);
     librdf_statement *st = librdf_new_statement_from_nodes(world, s, p, o);
-    librdf_model_add_statement(model, st);
+    if (!st || librdf_model_add_statement(model, st) != 0) die("ask setup");
     librdf_free_statement(st);
   }
   double t0 = now_s();
   librdf_query *q = librdf_new_query(
       world, "sparql", NULL, (const unsigned char *)"ASK { ?s ?p ?o }", NULL);
-  if (q) {
-    librdf_query_results *r = librdf_model_query_execute(model, q);
-    if (r) librdf_free_query_results(r);
-    librdf_free_query(q);
-  }
+  if (!q) die("ask query");
+  librdf_query_results *r = librdf_model_query_execute(model, q);
+  if (!r || !librdf_query_results_is_boolean(r) ||
+      librdf_query_results_get_boolean(r) != 1) die("ask validation");
+  librdf_free_query_results(r);
+  librdf_free_query(q);
   double elapsed = now_s() - t0;
   librdf_free_model(model);
   librdf_free_storage(storage);
@@ -135,22 +139,21 @@ static double time_serialize(librdf_world *world, int n) {
     snprintf(uri, sizeof(uri), "%d", i);
     librdf_node *o = librdf_new_node_from_literal(world, (unsigned char *)uri, NULL, 0);
     librdf_statement *st = librdf_new_statement_from_nodes(world, s, p, o);
-    librdf_model_add_statement(model, st);
+    if (!st || librdf_model_add_statement(model, st) != 0) die("serialize setup");
     librdf_free_statement(st);
   }
   double t0 = now_s();
   librdf_serializer *ser = librdf_new_serializer(world, "ntriples", NULL, NULL);
-  if (ser) {
-    unsigned char *out = librdf_serializer_serialize_model_to_string(ser, NULL, model);
-    if (out) {
+  if (!ser) die("serializer");
+  unsigned char *out = librdf_serializer_serialize_model_to_string(ser, NULL, model);
+  if (out && strlen((const char *)out) > 0) {
 #ifdef LIBRDF_VERSION
-      librdf_free_memory(out);
+    librdf_free_memory(out);
 #else
-      free(out);
+    free(out);
 #endif
-    }
-    librdf_free_serializer(ser);
-  }
+  } else die("serialize validation");
+  librdf_free_serializer(ser);
   double elapsed = now_s() - t0;
   librdf_free_model(model);
   librdf_free_storage(storage);
@@ -163,7 +166,7 @@ static double time_calls(librdf_world *world, int n_calls) {
   double t0 = now_s();
   volatile int sink = 0;
   for (int i = 0; i < n_calls; i++) sink += librdf_model_size(model);
-  (void)sink;
+  if (sink != 0) die("call validation");
   double elapsed = now_s() - t0;
   librdf_free_model(model);
   librdf_free_storage(storage);
@@ -181,7 +184,7 @@ static double time_select(librdf_world *world, int n) {
     snprintf(uri, sizeof(uri), "%d", i);
     librdf_node *o = librdf_new_node_from_literal(world, (unsigned char *)uri, NULL, 0);
     librdf_statement *st = librdf_new_statement_from_nodes(world, s, p, o);
-    librdf_model_add_statement(model, st);
+    if (!st || librdf_model_add_statement(model, st) != 0) die("select setup");
     librdf_free_statement(st);
   }
   double t0 = now_s();
@@ -189,18 +192,16 @@ static double time_select(librdf_world *world, int n) {
       world, "sparql", NULL,
       (const unsigned char *)"SELECT ?s WHERE { ?s ?p ?o } LIMIT 1000", NULL);
   int count = 0;
-  if (q) {
-    librdf_query_results *r = librdf_model_query_execute(model, q);
-    if (r) {
-      while (!librdf_query_results_finished(r)) {
-        count++;
-        librdf_query_results_next(r);
-      }
-      librdf_free_query_results(r);
-    }
-    librdf_free_query(q);
+  if (!q) die("select query");
+  librdf_query_results *r = librdf_model_query_execute(model, q);
+  if (!r || !librdf_query_results_is_bindings(r)) die("select results");
+  while (!librdf_query_results_finished(r)) {
+    count++;
+    librdf_query_results_next(r);
   }
-  (void)count;
+  if (count != 1000) die("select validation");
+  librdf_free_query_results(r);
+  librdf_free_query(q);
   double elapsed = now_s() - t0;
   librdf_free_model(model);
   librdf_free_storage(storage);
@@ -208,7 +209,42 @@ static double time_select(librdf_world *world, int n) {
 }
 
 static double time_construct(librdf_world *world, int n) {
-  return time_select(world, n); /* same LIMIT 1000 consume cost class */
+  librdf_storage *storage = librdf_new_storage(world, "memory", NULL, NULL);
+  librdf_model *model = librdf_new_model(world, storage, NULL);
+  char uri[128];
+  for (int i = 0; i < n; i++) {
+    snprintf(uri, sizeof(uri), "http://ex/%d", i);
+    librdf_node *s = librdf_new_node_from_uri_string(world, (unsigned char *)uri);
+    librdf_node *p = librdf_new_node_from_uri_string(world, (unsigned char *)"http://ex/p");
+    snprintf(uri, sizeof(uri), "%d", i);
+    librdf_node *o = librdf_new_node_from_literal(world, (unsigned char *)uri, NULL, 0);
+    librdf_statement *st = librdf_new_statement_from_nodes(world, s, p, o);
+    if (!st || librdf_model_add_statement(model, st) != 0) die("construct setup");
+    librdf_free_statement(st);
+  }
+  double t0 = now_s();
+  librdf_query *q = librdf_new_query(
+      world, "sparql", NULL,
+      (const unsigned char *)
+          "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o } LIMIT 1000",
+      NULL);
+  if (!q) die("construct query");
+  librdf_query_results *r = librdf_model_query_execute(model, q);
+  if (!r || !librdf_query_results_is_graph(r)) die("construct results");
+  librdf_stream *stream = librdf_query_results_as_stream(r);
+  int count = 0;
+  while (stream && !librdf_stream_end(stream)) {
+    count++;
+    librdf_stream_next(stream);
+  }
+  if (!stream || count != 1000) die("construct validation");
+  librdf_free_stream(stream);
+  librdf_free_query_results(r);
+  librdf_free_query(q);
+  double elapsed = now_s() - t0;
+  librdf_free_model(model);
+  librdf_free_storage(storage);
+  return elapsed;
 }
 
 typedef double (*bench_fn)(librdf_world *, int);

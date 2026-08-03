@@ -3,7 +3,7 @@
 This page helps maintainers map Redland `librdf` workflows to **Oxiland tip
 0.11** (safe Rust facade + `oxiland-cli` + PyPI package + C ABI on the verified
 matrix). Milestone 0.11 closed the demonstrated full-parity gate;
-[milestone 0.12](../milestones/0.12.md) is the planned performance-optimization
+[milestone 0.12](../milestones/0.12.md) is the active performance-optimization
 phase before 1.0. For **symbol-by-symbol** accounting see
 [redland-symbol-map.md](redland-symbol-map.md), the header-derived safe-API
 inventory

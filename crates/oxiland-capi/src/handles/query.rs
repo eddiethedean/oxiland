@@ -263,6 +263,7 @@ pub extern "C" fn librdf_query_results_as_stream(
                 crate::handles::TAG_STREAM,
                 crate::handles::stream::StreamInner {
                     statements: statements.clone(),
+                    triples: Vec::new(),
                     index: 0,
                     current: None,
                 },
