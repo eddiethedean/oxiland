@@ -102,6 +102,13 @@ def ensure_benches() -> tuple[Path, Path]:
     return red, ox
 
 
+def warm_up(red_bin: Path, ox_bin: Path) -> None:
+    """Throwaway runs so the first timed case is not a cold-start cliff."""
+    print("warming up benches...", flush=True)
+    for binary in (ox_bin, red_bin):
+        run_bench(binary, "P-MUT-1K")
+
+
 def run_bench(binary: Path, case_id: str) -> list[float]:
     env = os.environ.copy()
     if COMPAT_DIR.is_dir():
