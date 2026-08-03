@@ -108,9 +108,20 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            export PATH="/ucrt64/bin:/d/a/_temp/msys64/ucrt64/bin:/c/msys64/ucrt64/bin:$PATH"
-            export PKG_CONFIG_PATH="/ucrt64/lib/pkgconfig:/d/a/_temp/msys64/ucrt64/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
-            export CC=gcc
+            for d in /d/a/_temp/msys64/ucrt64 /c/msys64/ucrt64 /ucrt64; do
+              if [[ -x "$d/bin/gcc.exe" || -x "$d/bin/gcc" ]]; then
+                export PATH="$d/bin:$PATH"
+                export PKG_CONFIG_PATH="$d/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+                export CC="$d/bin/gcc"
+                export REDLAND_PREFIX="$d"
+                break
+              fi
+            done
+            echo "CC=${CC:-unset}"
+            echo "PATH=$PATH"
+            command -v gcc
+            command -v pkg-config || true
+            ls "${REDLAND_PREFIX:-/missing}/lib"/lib*rdf* 2>/dev/null || true
           fi
           compatibility/harness/c_oracle/build.sh
 

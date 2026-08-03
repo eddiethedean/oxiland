@@ -19,7 +19,16 @@ detect_prefix() {
 # Prefer pkg-config on Linux/MSYS; fall back to Homebrew prefixes on macOS.
 CFLAGS=(-O2 -Wall -Werror)
 LDFLAGS=()
-if command -v pkg-config >/dev/null 2>&1 && pkg-config --exists redland 2>/dev/null; then
+if [[ -n "${REDLAND_PREFIX:-}" && -d "$REDLAND_PREFIX" ]]; then
+  CFLAGS+=("-I${REDLAND_PREFIX}/include")
+  if [[ -d "${REDLAND_PREFIX}/include/raptor2" ]]; then
+    CFLAGS+=("-I${REDLAND_PREFIX}/include/raptor2")
+  fi
+  if [[ -d "${REDLAND_PREFIX}/include/rasqal" ]]; then
+    CFLAGS+=("-I${REDLAND_PREFIX}/include/rasqal")
+  fi
+  LDFLAGS+=("-L${REDLAND_PREFIX}/lib" -lrdf -lraptor2 -lrasqal)
+elif command -v pkg-config >/dev/null 2>&1 && pkg-config --exists redland 2>/dev/null; then
   # shellcheck disable=SC2207
   CFLAGS+=($(pkg-config --cflags redland raptor2 rasqal 2>/dev/null || pkg-config --cflags redland))
   # shellcheck disable=SC2207

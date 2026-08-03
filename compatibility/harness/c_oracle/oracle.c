@@ -6,10 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <librdf.h>
-/* System Redland keeps list decls in a separate header; Oxiland folds them in. */
-#if __has_include(<rdf_list.h>)
-#include <rdf_list.h>
-#endif
+
+/* librdf.h typedefs librdf_list but system builds may omit the list API
+ * prototypes. Declare the two symbols we need without pulling rdf_list.h
+ * (which can fail when included outside Redland's umbrella header). */
+librdf_list *librdf_new_list(librdf_world *world);
+void librdf_free_list(librdf_list *list);
 
 static void die(const char *msg) {
   fprintf(stderr, "oracle error: %s\n", msg);
