@@ -9,9 +9,7 @@ use crate::handles::node::{NodeInner, librdf_node};
 use crate::handles::statement::StatementInner;
 use crate::handles::stream::{StreamInner, librdf_stream};
 use crate::handles::uri::librdf_uri;
-use crate::handles::world::{
-    register_baseline_parser, reject_factory_callback, librdf_world,
-};
+use crate::handles::world::{librdf_world, register_baseline_parser, reject_factory_callback};
 use crate::handles::{
     TAG_MODEL, TAG_NODE, TAG_PARSER, TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle,
     cstr_optional, cstr_required, free_handle,

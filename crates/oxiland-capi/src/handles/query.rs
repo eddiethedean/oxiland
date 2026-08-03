@@ -6,9 +6,7 @@ use crate::handles::io::{FILE, write_file};
 use crate::handles::model::librdf_model;
 use crate::handles::node::{NodeInner, librdf_node};
 use crate::handles::uri::librdf_uri;
-use crate::handles::world::{
-    register_baseline_query, reject_factory_callback, librdf_world,
-};
+use crate::handles::world::{librdf_world, register_baseline_query, reject_factory_callback};
 use crate::handles::{
     TAG_MODEL, TAG_NODE, TAG_QUERY, TAG_QUERY_RESULTS, TAG_QUERY_RESULTS_FORMATTER, TAG_STATEMENT,
     TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle, cstr_optional, cstr_required,
@@ -595,9 +593,7 @@ pub extern "C" fn librdf_query_register_factory(
             return;
         };
         if reject_factory_callback(factory) {
-            set_last_error(
-                "query factory callbacks are unsupported; register baseline names only",
-            );
+            set_last_error("query factory callbacks are unsupported; register baseline names only");
             return;
         }
         if let Err(error) = register_baseline_query(&mut handle.inner, name) {

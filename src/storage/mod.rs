@@ -379,7 +379,15 @@ impl StorageCapabilities {
     #[must_use]
     pub const fn for_backend(backend: StorageBackend, read_only: bool) -> Self {
         match backend {
-            StorageBackend::Memory => Self::memory(read_only),
+            StorageBackend::Memory => Self {
+                backend: StorageBackend::Memory,
+                durable: false,
+                transactions: !read_only,
+                sync: true,
+                clear: !read_only,
+                read_only,
+                bulk_load: !read_only,
+            },
             StorageBackend::Fjall => Self::fjall(read_only),
             StorageBackend::Redb => Self::redb(read_only),
             StorageBackend::RocksDb => Self::rocksdb(read_only),
@@ -388,18 +396,13 @@ impl StorageCapabilities {
         }
     }
 
-    /// Capabilities for an in-memory model.
+    /// Capabilities for a writable in-memory model.
+    ///
+    /// For read-only memory, use [`Self::for_backend`] with
+    /// [`StorageBackend::Memory`].
     #[must_use]
-    pub const fn memory(read_only: bool) -> Self {
-        Self {
-            backend: StorageBackend::Memory,
-            durable: false,
-            transactions: !read_only,
-            sync: true,
-            clear: !read_only,
-            read_only,
-            bulk_load: !read_only,
-        }
+    pub const fn memory() -> Self {
+        Self::for_backend(StorageBackend::Memory, false)
     }
 
     /// Capabilities for a Fjall-backed model.

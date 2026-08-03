@@ -4,10 +4,8 @@ use oxiland::{Model, OpenOptions, StatementPattern, StorageBackend};
 
 #[test]
 fn memory_read_only_rejects_writes() {
-    let model = Model::open_with(
-        OpenOptions::new(StorageBackend::Memory, ".").read_only(true),
-    )
-    .expect("open memory read-only");
+    let model = Model::open_with(OpenOptions::new(StorageBackend::Memory, ".").read_only(true))
+        .expect("open memory read-only");
     assert!(model.capabilities().read_only);
     let err = model
         .add(Triple::new(

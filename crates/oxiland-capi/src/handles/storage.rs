@@ -23,9 +23,7 @@ use crate::handles::query::{librdf_model_query_execute, librdf_query, librdf_que
 use crate::handles::statement::librdf_statement;
 use crate::handles::stream::librdf_stream;
 use crate::handles::uri::librdf_uri;
-use crate::handles::world::{
-    register_baseline_storage, reject_factory_callback, librdf_world,
-};
+use crate::handles::world::{librdf_world, register_baseline_storage, reject_factory_callback};
 use crate::handles::{
     TAG_STORAGE, TAG_WORLD, TypedHandle, borrow_handle, box_handle, cstr_optional, cstr_required,
     free_handle,

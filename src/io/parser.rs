@@ -189,10 +189,10 @@ impl Parser {
                 Err(error) => {
                     let mut rollback_error: Option<Error> = None;
                     for inserted in newly_inserted.into_iter().rev() {
-                        if let Err(remove_error) = model.remove_quad(&inserted)
-                            && rollback_error.is_none()
-                        {
-                            rollback_error = Some(remove_error);
+                        if let Err(remove_error) = model.remove_quad(&inserted) {
+                            if rollback_error.is_none() {
+                                rollback_error = Some(remove_error);
+                            }
                         }
                     }
                     return Err(match rollback_error {

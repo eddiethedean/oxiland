@@ -221,6 +221,7 @@ pub use handles::world::{
 // Opaque handle type aliases
 pub use handles::digest::librdf_digest;
 pub use handles::hash::librdf_hash;
+pub use handles::io::librdf_iostream;
 pub use handles::iterator::librdf_iterator;
 pub use handles::list::librdf_list;
 pub use handles::log_msg::librdf_log_message;
@@ -235,5 +236,4 @@ pub use handles::statement::librdf_statement;
 pub use handles::storage::librdf_storage;
 pub use handles::stream::librdf_stream;
 pub use handles::uri::librdf_uri;
-pub use handles::io::librdf_iostream;
 pub use handles::world::librdf_world;

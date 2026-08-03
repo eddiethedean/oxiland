@@ -9,10 +9,10 @@ use crate::handles::stream::{
     librdf_stream, librdf_stream_end, librdf_stream_get_object, librdf_stream_next,
 };
 use crate::handles::uri::librdf_uri;
-use crate::handles::world::{register_baseline_serializer, reject_factory_callback, librdf_world};
+use crate::handles::world::{librdf_world, register_baseline_serializer, reject_factory_callback};
 use crate::handles::{
-    TAG_MODEL, TAG_NODE, TAG_SERIALIZER, TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle,
-    cstr_optional, cstr_required, free_handle,
+    TAG_MODEL, TAG_NODE, TAG_SERIALIZER, TAG_URI, TAG_WORLD, TypedHandle, borrow_handle,
+    box_handle, cstr_optional, cstr_required, free_handle,
 };
 use oxigraph::model::Term;
 use oxiland::io::{Serializer, Syntax};

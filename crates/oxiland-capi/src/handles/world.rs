@@ -12,8 +12,8 @@ use oxiland::{LogFacility, LogLevel, World};
 use std::ffi::c_void;
 use std::os::raw::c_char;
 use std::ptr;
-use std::sync::atomic::{AtomicPtr, Ordering};
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicPtr, Ordering};
 
 pub type librdf_world = TypedHandle<WorldInner>;
 
@@ -109,16 +109,16 @@ pub(crate) fn reject_factory_callback(factory: FactoryInitFn) -> bool {
 }
 
 /// Records a baseline factory name on the world after validating via oxiland::factory.
-pub(crate) fn register_baseline_parser(
-    handle: &mut WorldInner,
-    name: &str,
-) -> Result<(), String> {
+pub(crate) fn register_baseline_parser(handle: &mut WorldInner, name: &str) -> Result<(), String> {
     oxiland::factory::register_parser_factory(name).map_err(|e| e.to_string())?;
     let key = name.to_ascii_lowercase();
     handle.registered_parsers.push(name.to_owned());
-    handle
-        .parser_factories
-        .insert(key, RegisteredFactory { name: name.to_owned() });
+    handle.parser_factories.insert(
+        key,
+        RegisteredFactory {
+            name: name.to_owned(),
+        },
+    );
     Ok(())
 }
 
@@ -129,35 +129,38 @@ pub(crate) fn register_baseline_serializer(
     oxiland::factory::register_serializer_factory(name).map_err(|e| e.to_string())?;
     let key = name.to_ascii_lowercase();
     handle.registered_serializers.push(name.to_owned());
-    handle
-        .serializer_factories
-        .insert(key, RegisteredFactory { name: name.to_owned() });
+    handle.serializer_factories.insert(
+        key,
+        RegisteredFactory {
+            name: name.to_owned(),
+        },
+    );
     Ok(())
 }
 
-pub(crate) fn register_baseline_storage(
-    handle: &mut WorldInner,
-    name: &str,
-) -> Result<(), String> {
+pub(crate) fn register_baseline_storage(handle: &mut WorldInner, name: &str) -> Result<(), String> {
     oxiland::factory::register_storage_factory(name).map_err(|e| e.to_string())?;
     let key = name.to_ascii_lowercase();
     handle.registered_storages.push(name.to_owned());
-    handle
-        .storage_factories
-        .insert(key, RegisteredFactory { name: name.to_owned() });
+    handle.storage_factories.insert(
+        key,
+        RegisteredFactory {
+            name: name.to_owned(),
+        },
+    );
     Ok(())
 }
 
-pub(crate) fn register_baseline_query(
-    handle: &mut WorldInner,
-    name: &str,
-) -> Result<(), String> {
+pub(crate) fn register_baseline_query(handle: &mut WorldInner, name: &str) -> Result<(), String> {
     oxiland::factory::register_query_factory(name).map_err(|e| e.to_string())?;
     let key = name.to_ascii_lowercase();
     handle.registered_queries.push(name.to_owned());
-    handle
-        .query_factories
-        .insert(key, RegisteredFactory { name: name.to_owned() });
+    handle.query_factories.insert(
+        key,
+        RegisteredFactory {
+            name: name.to_owned(),
+        },
+    );
     Ok(())
 }
 

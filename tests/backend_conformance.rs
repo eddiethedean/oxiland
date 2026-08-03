@@ -64,16 +64,11 @@ fn frozen_backend_registry_is_feature_independent_and_complete() {
 fn read_only_capabilities_are_frozen_consistently() {
     for descriptor in supported_backends() {
         let capabilities = StorageCapabilities::for_backend(descriptor.backend, true);
-        if descriptor.backend == StorageBackend::Memory {
-            assert!(!capabilities.read_only);
-            assert!(!capabilities.durable);
-        } else {
-            assert!(capabilities.read_only);
-            assert!(capabilities.durable);
-            assert!(!capabilities.transactions);
-            assert!(!capabilities.clear);
-            assert!(!capabilities.bulk_load);
-        }
+        assert!(capabilities.read_only);
+        assert_eq!(capabilities.durable, descriptor.durable);
+        assert!(!capabilities.transactions);
+        assert!(!capabilities.clear);
+        assert!(!capabilities.bulk_load);
     }
 }
 

@@ -442,8 +442,12 @@ fn parser_iostream_parse_and_serialize_roundtrip() {
     );
     assert_eq!(librdf_model_size(model), 1);
 
-    let serializer =
-        librdf_new_serializer(world, cstr("ntriples").as_ptr(), ptr::null(), ptr::null_mut());
+    let serializer = librdf_new_serializer(
+        world,
+        cstr("ntriples").as_ptr(),
+        ptr::null(),
+        ptr::null_mut(),
+    );
     let out = oxiland_new_iostream();
     assert_eq!(
         librdf_serializer_serialize_model_to_iostream(
@@ -455,20 +459,21 @@ fn parser_iostream_parse_and_serialize_roundtrip() {
         0
     );
     let bytes = oxiland_iostream_data(out).expect("iostream bytes");
-    assert!(std::str::from_utf8(&bytes).unwrap().contains("example.org/s"));
+    assert!(
+        std::str::from_utf8(&bytes)
+            .unwrap()
+            .contains("example.org/s")
+    );
 
     // Unknown non-null iostream must fail (not silent success).
-    let garbage = 0x1usize as *mut c_void;
+    let garbage = std::ptr::dangling_mut::<c_void>();
     assert_eq!(
-        librdf_serializer_serialize_model_to_iostream(
-            serializer,
-            ptr::null_mut(),
-            model,
-            garbage
-        ),
+        librdf_serializer_serialize_model_to_iostream(serializer, ptr::null_mut(), model, garbage),
         -1
     );
-    assert!(librdf_parser_parse_iostream_as_stream(parser, ptr::null_mut(), ptr::null_mut()).is_null());
+    assert!(
+        librdf_parser_parse_iostream_as_stream(parser, ptr::null_mut(), ptr::null_mut()).is_null()
+    );
 
     oxiland_free_iostream(iostream);
     oxiland_free_iostream(out);
@@ -511,12 +516,7 @@ fn parser_factory_rejects_callback_and_unknown_name() {
         ptr::null(),
         None,
     );
-    let parser = librdf_new_parser(
-        world,
-        cstr("turtle").as_ptr(),
-        ptr::null(),
-        ptr::null_mut(),
-    );
+    let parser = librdf_new_parser(world, cstr("turtle").as_ptr(), ptr::null(), ptr::null_mut());
     assert!(!parser.is_null());
     let feature_uri = librdf_new_uri(world, cstr("http://example.org/feature").as_ptr());
     let value = librdf_new_node_from_literal(world, cstr("on").as_ptr(), ptr::null(), 0);
