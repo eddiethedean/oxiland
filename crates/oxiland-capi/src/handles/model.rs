@@ -23,7 +23,7 @@ use crate::handles::stream::{librdf_stream_end, librdf_stream_get_object, librdf
 use crate::handles::world::librdf_world;
 use crate::handles::{
     TAG_MODEL, TAG_STATEMENT, TAG_STORAGE, TAG_STREAM, TAG_WORLD, TypedHandle, borrow_handle,
-    borrow_handle_hot, box_handle, free_handle,
+    box_handle, deallocate_retired_handle, retire_handle,
 };
 use oxigraph::model::{GraphName, NamedNodeRef, NamedOrBlankNodeRef, TermRef, TripleRef};
 use oxiland::{Model, OpenOptions, StatementPattern, StorageBackend};
@@ -34,6 +34,7 @@ pub type librdf_model = TypedHandle<ModelInner>;
 
 pub struct ModelInner {
     pub model: Model,
+    pub world: *mut librdf_world,
     pub storage: *mut librdf_storage,
     pub features: std::collections::HashMap<String, String>,
     transaction: TransactionState,
@@ -80,6 +81,7 @@ pub extern "C" fn librdf_new_model(
                     TAG_MODEL,
                     ModelInner {
                         model,
+                        world,
                         storage,
                         features: std::collections::HashMap::new(),
                         transaction: TransactionState::idle(),
@@ -102,8 +104,25 @@ pub extern "C" fn librdf_new_model(
 pub extern "C" fn librdf_free_model(model: *mut librdf_model) {
     abort_on_panic(|| {
         clear_last_error();
-        // SAFETY: model is null or a live model handle.
-        unsafe { free_handle(model, TAG_MODEL) };
+        if model.is_null() {
+            return;
+        }
+        // Capture the owner before retiring and dropping ModelInner.
+        let Some(owner) =
+            (unsafe { borrow_handle(model, TAG_MODEL) }).map(|handle| handle.inner.world)
+        else {
+            return;
+        };
+        // SAFETY: model was validated live above.
+        if unsafe { retire_handle(model, TAG_MODEL) } {
+            if let Some(world) = unsafe { borrow_handle(owner, TAG_WORLD) } {
+                world.inner.retired_models.push(model as usize);
+            } else {
+                // The owner is already gone, so no valid caller may use this
+                // model pointer again; release the tombstone immediately.
+                unsafe { deallocate_retired_handle(model) };
+            }
+        }
     });
 }
 
@@ -274,13 +293,17 @@ pub extern "C" fn librdf_model_contains_statement(
 /// Returns the number of statements, or negative on error.
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_model_size(model: *mut librdf_model) -> i32 {
-    // Hot path: repeated size probes after the first validation must not pay
-    // catch_unwind / TLS error clears on every call (P-CALL-100K).
-    // SAFETY: null or a live model handle from this crate.
-    if let Some(model) = unsafe { borrow_handle_hot(model, TAG_MODEL) }
-        && let Some(n) = model.inner.cardinality.get_i32()
-    {
-        return n;
+    // Models retain their small tagged allocation as a tombstone until the
+    // owner world is freed. This makes the direct tag/cache read safe for live
+    // and retired model pointers without a registry/TLS lookup (P-CALL-100K).
+    if !model.is_null() {
+        // SAFETY: model handles remain allocated through owner-world lifetime.
+        let handle = unsafe { &mut *model };
+        if handle.tag == TAG_MODEL
+            && let Some(n) = handle.inner.cardinality.get_i32()
+        {
+            return n;
+        }
     }
     abort_on_panic(|| {
         clear_last_error_if_set();
@@ -356,23 +379,24 @@ pub extern "C" fn librdf_model_as_stream(model: *mut librdf_model) -> *mut librd
         let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
             return ptr::null_mut();
         };
-        // Full-model scans (P-SCAN) time both setup and iteration. Materializing
-        // owned triples once keeps end/next as index arithmetic on the hot path.
-        let mut triples = Vec::new();
-        for item in model.inner.model.find(StatementPattern::default()) {
-            match item {
-                Ok(quad) => triples.push(oxigraph::model::Triple::new(
-                    quad.subject,
-                    quad.predicate,
-                    quad.object,
-                )),
+        let known_len = match model.inner.cardinality.get() {
+            Some(len) => len,
+            None => match model.inner.model.len() {
+                Ok(len) => {
+                    model.inner.cardinality.store(len);
+                    len
+                }
                 Err(error) => {
                     set_last_error(error.to_string());
                     return ptr::null_mut();
                 }
-            }
-        }
-        box_handle(TAG_STREAM, StreamInner::from_triples(triples))
+            },
+        };
+        let matches = model.inner.model.find(StatementPattern::default());
+        box_handle(
+            TAG_STREAM,
+            StreamInner::from_matches_with_len(matches, known_len),
+        )
     })
 }
 

@@ -128,12 +128,20 @@ def warm_up(red_bin: Path, ox_bin: Path) -> None:
         run_bench(binary, "P-MUT-1K")
 
 
-def run_bench(binary: Path, case_id: str) -> list[float]:
+def runtime_environment(binary: Path) -> dict[str, str]:
+    """Keep Oxiland's compatibility library out of Redland oracle processes."""
     env = os.environ.copy()
-    if COMPAT_DIR.is_dir():
-        env["DYLD_LIBRARY_PATH"] = f"{COMPAT_DIR}{os.pathsep}{env.get('DYLD_LIBRARY_PATH', '')}"
-        env["LD_LIBRARY_PATH"] = f"{COMPAT_DIR}{os.pathsep}{env.get('LD_LIBRARY_PATH', '')}"
-        env["PATH"] = f"{COMPAT_DIR}{os.pathsep}{env.get('PATH', '')}"
+    compat = str(COMPAT_DIR)
+    for name in ("DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH", "PATH"):
+        entries = [entry for entry in env.get(name, "").split(os.pathsep) if entry and entry != compat]
+        if "oxiland" in binary.name.lower() and COMPAT_DIR.is_dir():
+            entries.insert(0, compat)
+        env[name] = os.pathsep.join(entries)
+    return env
+
+
+def run_bench(binary: Path, case_id: str) -> list[float]:
+    env = runtime_environment(binary)
     proc = subprocess.run(
         [str(binary), "--case", case_id],
         capture_output=True,
@@ -207,11 +215,7 @@ def _windows_peak_working_set_mib(pid: int) -> float | None:
 
 def measure_rss_mb(binary: Path, case_id: str) -> float:
     """Run one case in a child and return max RSS in MiB (best-effort)."""
-    env = os.environ.copy()
-    if COMPAT_DIR.is_dir():
-        env["DYLD_LIBRARY_PATH"] = f"{COMPAT_DIR}{os.pathsep}{env.get('DYLD_LIBRARY_PATH', '')}"
-        env["LD_LIBRARY_PATH"] = f"{COMPAT_DIR}{os.pathsep}{env.get('LD_LIBRARY_PATH', '')}"
-        env["PATH"] = f"{COMPAT_DIR}{os.pathsep}{env.get('PATH', '')}"
+    env = runtime_environment(binary)
 
     if resource_mod is None:
         import time
@@ -237,9 +241,25 @@ def measure_rss_mb(binary: Path, case_id: str) -> float:
             raise SystemExit(f"RSS probe failed for {case_id}: {stderr or stdout}")
         return max(peak, 1.0)
 
-    before = resource_mod.getrusage(resource_mod.RUSAGE_CHILDREN).ru_maxrss
+    # RUSAGE_CHILDREN.ru_maxrss is a cumulative high-water mark for all
+    # children reaped by the current process, so reading it before/after can
+    # accidentally attribute an earlier, larger child to every later probe.
+    # Measure the benchmark as the only child of a fresh Python process.
+    probe = """
+import resource
+import subprocess
+import sys
+
+child = subprocess.run(
+    sys.argv[1:], capture_output=True, text=True, encoding="utf-8", errors="replace"
+)
+if child.returncode != 0:
+    sys.stderr.write(child.stderr or child.stdout)
+    raise SystemExit(child.returncode)
+print(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
+"""
     proc = subprocess.run(
-        [str(binary), "--case", case_id],
+        [sys.executable, "-c", probe, str(binary), "--case", case_id],
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -250,12 +270,11 @@ def measure_rss_mb(binary: Path, case_id: str) -> float:
     )
     if proc.returncode != 0:
         raise SystemExit(f"RSS probe failed for {case_id}: {proc.stderr or proc.stdout}")
-    after = resource_mod.getrusage(resource_mod.RUSAGE_CHILDREN).ru_maxrss
+    peak = float(proc.stdout.strip())
     # Linux reports KB; macOS reports bytes.
-    delta = max(after - before, after)
     if platform.system() == "Darwin":
-        return delta / (1024.0 * 1024.0)
-    return delta / 1024.0
+        return peak / (1024.0 * 1024.0)
+    return peak / 1024.0
 
 
 def main() -> int:

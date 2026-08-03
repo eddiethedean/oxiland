@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import unittest
 from pathlib import Path
 
@@ -40,6 +41,23 @@ class Build012EvidenceTests(unittest.TestCase):
 
     def test_suite_path_points_at_0_12_suite(self) -> None:
         self.assertEqual(self.builder.SUITE.name, "0.12-suite.json")
+
+    def test_redland_environment_cannot_load_oxiland_compat_library(self) -> None:
+        name = "DYLD_LIBRARY_PATH"
+        previous = os.environ.get(name)
+        os.environ[name] = os.pathsep.join(
+            [str(self.builder.COMPAT_DIR), "/system/redland/lib"]
+        )
+        try:
+            redland = self.builder.runtime_environment(Path("perf-redland"))
+            oxiland = self.builder.runtime_environment(Path("perf-oxiland"))
+        finally:
+            if previous is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = previous
+        self.assertNotIn(str(self.builder.COMPAT_DIR), redland[name].split(os.pathsep))
+        self.assertEqual(oxiland[name].split(os.pathsep)[0], str(self.builder.COMPAT_DIR))
 
 
 if __name__ == "__main__":

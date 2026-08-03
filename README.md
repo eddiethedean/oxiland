@@ -9,19 +9,25 @@
 [![License](https://img.shields.io/crates/l/oxiland)](LICENSE-APACHE)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/eddiethedean/oxiland)
 
-> **Release status:** tip **0.11.0** demonstrates Redland parity on the frozen
-> matrix (six native differential cells, C corpus, librdf-compat packaging).
-> Reproduce with `scripts/check-0.11-release.py` against
-> `compatibility/qualification/`.
+> **Release status:** repository tip **0.12.0** retains demonstrated Redland
+> parity and carries the performance-optimized C compatibility paths.
+>
+> **Performance highlight:** on the corrected strict macOS/arm64 benchmark,
+> Oxiland beat genuine Redland 1.0.17 in **all 10 required cases**. Throughput
+> was **1.60×–29.35×** Redland; ASK latency was **0.106×** Redland. Every paired
+> 95% confidence interval cleared parity. Linux, Windows, and three independent
+> runs per platform remain pending, so this is a host-scoped result rather than
+> a blanket cross-platform claim. See [Performance](docs/users/performance.md).
 
 Oxiland is an embedded RDF toolkit for Rust and Python. It provides validated
 RDF terms, in-memory and persistent datasets, named graphs, SPARQL 1.1, and
 streaming RDF input and output through a compact, typed API—without running a
 database server.
 
-Tip **0.11.0** closes the demonstrated Redland-parity gate defined in the
-[0.11 milestone](docs/milestones/0.11.md). See the
-[parity report](docs/reports/0.11.md) and [parity ledger](PARITY.md).
+Tip **0.12.0** retains the demonstrated Redland-parity gate defined in the
+[0.11 milestone](docs/milestones/0.11.md) and adds the optimized strict
+performance candidate. See the [parity report](docs/reports/0.11.md),
+[performance report](docs/reports/0.12.md), and [parity ledger](PARITY.md).
 
 | Surface | Install | Best for |
 |---|---|---|
@@ -208,7 +214,7 @@ Published guides are available at
 
 ## Compatibility and scope
 
-Oxiland supports Redland-shaped concepts and migration workflows. Tip **0.11.0**
+Oxiland supports Redland-shaped concepts and migration workflows. Tip **0.12.0**
 ships `oxiland-capi` with demonstrated source and librdf-compat binary evidence
 on the frozen matrix—see [limitations](docs/users/c-abi-limitations.md) for
 remaining behavioral gaps. The Python package is not an rdflib adapter. Every
@@ -227,11 +233,12 @@ changes. Persistent format v1 is reopen-compatible across 0.4.x–0.11.x patch
 lines; export standards RDF before major upgrades. See the
 [support policy](SUPPORT.md) and [changelog](CHANGELOG.md).
 
-Milestone 0.11 demonstrated Redland parity on the frozen matrix. Milestone
-[0.12](docs/milestones/0.12.md) closed the ADR-028 competitive-parity
-performance gate on production-compile evidence (not a blanket faster-than-
-Redland claim). See [performance](docs/users/performance.md) and the
-[ROADMAP](docs/ROADMAP.md) for version 1.0 readiness.
+Milestone 0.11 demonstrated Redland parity on the frozen matrix. The optimized
+0.12 tip now wins all ten strict cases in the corrected macOS/arm64 run. The
+cross-platform faster-than-Redland gate remains open until Linux, macOS, and
+Windows each pass three independent runs. See
+[performance](docs/users/performance.md) and the [ROADMAP](docs/ROADMAP.md) for
+version 1.0 readiness.
 
 Report suspected vulnerabilities privately according to
 [SECURITY.md](SECURITY.md), not in a public issue.

@@ -23,22 +23,43 @@ pub type librdf_query = TypedHandle<QueryInner>;
 pub type librdf_query_results = TypedHandle<QueryResultsInner>;
 
 pub struct QueryInner {
-    pub text: String,
+    pub query: Query,
     pub language: String,
     pub limit: i32,
     pub offset: i32,
+}
+
+fn rebuild_query(inner: &QueryInner, limit: i32, offset: i32) -> Result<Query, String> {
+    let mut query = Query::new(inner.query.as_str());
+    if offset > 0 {
+        query = query
+            .offset(offset as usize)
+            .map_err(|error| error.to_string())?;
+    }
+    if limit >= 0 {
+        query = query
+            .limit(limit as usize)
+            .map_err(|error| error.to_string())?;
+    }
+    Ok(query)
 }
 
 pub enum QueryResultsInner {
     Boolean(bool),
     Bindings {
         names: Vec<String>,
-        rows: Vec<Vec<Option<Term>>>,
+        /// Row-major binding cells. Keeping one flat allocation avoids a
+        /// heap allocation and Vec header for every result row.
+        cells: Vec<Option<Term>>,
+        row_count: usize,
         index: usize,
         /// Nodes for the current row (owned by results; do not free from C).
         current_nodes: Vec<Option<*mut librdf_node>>,
         /// Contiguous current-row node pointers for get_bindings.
         value_cptrs: Vec<*mut librdf_node>,
+        /// Row whose values have been converted to C node handles. Advancing
+        /// results invalidates this cache; getters rematerialize it on demand.
+        materialized_index: Option<usize>,
         /// Cached binding name C strings for the lifetime of results.
         name_cptrs: Vec<*mut std::os::raw::c_char>,
     },
@@ -78,18 +99,24 @@ fn clear_current_nodes(nodes: &mut Vec<Option<*mut librdf_node>>) {
 
 fn materialize_current(results: &mut QueryResultsInner) {
     let QueryResultsInner::Bindings {
-        rows,
+        names,
+        cells,
+        row_count,
         index,
         current_nodes,
         value_cptrs,
+        materialized_index,
         ..
     } = results
     else {
         return;
     };
+    if *materialized_index == Some(*index) {
+        return;
+    }
     clear_current_nodes(current_nodes);
     value_cptrs.clear();
-    if let Some(row) = rows.get(*index) {
+    if let Some(row) = binding_row(cells, names.len(), *row_count, *index) {
         for cell in row {
             match cell {
                 Some(term) => {
@@ -104,6 +131,35 @@ fn materialize_current(results: &mut QueryResultsInner) {
             }
         }
     }
+    *materialized_index = Some(*index);
+}
+
+fn binding_row(
+    cells: &[Option<Term>],
+    width: usize,
+    row_count: usize,
+    index: usize,
+) -> Option<&[Option<Term>]> {
+    if index >= row_count {
+        return None;
+    }
+    let start = index.checked_mul(width)?;
+    cells.get(start..start.checked_add(width)?)
+}
+
+fn invalidate_materialized_current(results: &mut QueryResultsInner) {
+    let QueryResultsInner::Bindings {
+        current_nodes,
+        value_cptrs,
+        materialized_index,
+        ..
+    } = results
+    else {
+        return;
+    };
+    clear_current_nodes(current_nodes);
+    value_cptrs.clear();
+    *materialized_index = None;
 }
 
 /// Creates a SPARQL query (`name` must be `"sparql"` for the preview).
@@ -139,7 +195,7 @@ pub extern "C" fn librdf_new_query(
         box_handle(
             TAG_QUERY,
             QueryInner {
-                text: query_string.to_owned(),
+                query: Query::new(query_string),
                 language,
                 limit: -1,
                 offset: 0,
@@ -173,7 +229,7 @@ pub extern "C" fn librdf_model_query_execute(
         let Some(query) = (unsafe { borrow_handle(query, TAG_QUERY) }) else {
             return ptr::null_mut();
         };
-        let results = match Query::new(query.inner.text.clone()).execute(&model.inner.model) {
+        let results = match query.inner.query.execute(&model.inner.model) {
             Ok(r) => r,
             Err(error) => {
                 set_last_error(error.to_string());
@@ -188,7 +244,8 @@ pub extern "C" fn librdf_model_query_execute(
                     .iter()
                     .map(|v| v.as_str().to_owned())
                     .collect();
-                let mut rows = Vec::new();
+                let mut cells = Vec::new();
+                let mut row_count = 0usize;
                 for solution in solutions.by_ref() {
                     let solution = match solution {
                         Ok(s) => s,
@@ -197,23 +254,22 @@ pub extern "C" fn librdf_model_query_execute(
                             return ptr::null_mut();
                         }
                     };
-                    let mut row = Vec::with_capacity(names.len());
                     for idx in 0..names.len() {
-                        row.push(solution.get(idx).cloned());
+                        cells.push(solution.get(idx).cloned());
                     }
-                    rows.push(row);
+                    row_count += 1;
                 }
                 let name_cptrs = names.iter().map(|n| strdup_c(n)).collect();
-                let mut inner = QueryResultsInner::Bindings {
+                QueryResultsInner::Bindings {
                     names,
-                    rows,
+                    cells,
+                    row_count,
                     index: 0,
                     current_nodes: Vec::new(),
                     value_cptrs: Vec::new(),
+                    materialized_index: None,
                     name_cptrs,
-                };
-                materialize_current(&mut inner);
-                inner
+                }
             }
             QueryResults::Graph(mut graph) => {
                 let mut triples = Vec::new();
@@ -325,7 +381,9 @@ pub extern "C" fn librdf_query_results_finished(results: *mut librdf_query_resul
         };
         match &results.inner {
             QueryResultsInner::Boolean(_) | QueryResultsInner::Graph { .. } => 1,
-            QueryResultsInner::Bindings { rows, index, .. } => i32::from(*index >= rows.len()),
+            QueryResultsInner::Bindings {
+                row_count, index, ..
+            } => i32::from(*index >= *row_count),
         }
     })
 }
@@ -344,13 +402,15 @@ pub extern "C" fn librdf_query_results_next(results: *mut librdf_query_results) 
                 set_last_error("query results are not bindings");
                 -1
             }
-            QueryResultsInner::Bindings { rows, index, .. } => {
-                if *index >= rows.len() {
+            QueryResultsInner::Bindings {
+                row_count, index, ..
+            } => {
+                if *index >= *row_count {
                     return 1;
                 }
                 *index += 1;
-                let finished = *index >= rows.len();
-                materialize_current(&mut results.inner);
+                let finished = *index >= *row_count;
+                invalidate_materialized_current(&mut results.inner);
                 i32::from(finished)
             }
         }
@@ -396,14 +456,15 @@ pub extern "C" fn librdf_query_results_get_binding_value(
         let Ok(offset) = usize::try_from(offset) else {
             return ptr::null_mut();
         };
+        materialize_current(&mut results.inner);
         match &results.inner {
             QueryResultsInner::Bindings {
                 current_nodes,
-                rows,
+                row_count,
                 index,
                 ..
             } => {
-                if *index >= rows.len() {
+                if *index >= *row_count {
                     return ptr::null_mut();
                 }
                 current_nodes
@@ -463,7 +524,7 @@ pub extern "C" fn librdf_new_query_from_query(old_query: *mut librdf_query) -> *
         box_handle(
             TAG_QUERY,
             QueryInner {
-                text: old.inner.text.clone(),
+                query: old.inner.query.clone(),
                 language: old.inner.language.clone(),
                 limit: old.inner.limit,
                 offset: old.inner.offset,
@@ -510,6 +571,14 @@ pub extern "C" fn librdf_query_set_limit(query: *mut librdf_query, limit: i32) -
         let Some(q) = (unsafe { borrow_handle(query, TAG_QUERY) }) else {
             return -1;
         };
+        let rebuilt = match rebuild_query(&q.inner, limit, q.inner.offset) {
+            Ok(rebuilt) => rebuilt,
+            Err(error) => {
+                set_last_error(error);
+                return -1;
+            }
+        };
+        q.inner.query = rebuilt;
         q.inner.limit = limit;
         0
     })
@@ -532,6 +601,14 @@ pub extern "C" fn librdf_query_set_offset(query: *mut librdf_query, offset: i32)
         let Some(q) = (unsafe { borrow_handle(query, TAG_QUERY) }) else {
             return -1;
         };
+        let rebuilt = match rebuild_query(&q.inner, q.inner.limit, offset) {
+            Ok(rebuilt) => rebuilt,
+            Err(error) => {
+                set_last_error(error);
+                return -1;
+            }
+        };
+        q.inner.query = rebuilt;
         q.inner.offset = offset;
         0
     })
@@ -634,6 +711,7 @@ pub extern "C" fn librdf_query_results_get_bindings(
         let Some(results) = (unsafe { borrow_handle(results, TAG_QUERY_RESULTS) }) else {
             return -1;
         };
+        materialize_current(&mut results.inner);
         match &results.inner {
             QueryResultsInner::Bindings {
                 name_cptrs,
@@ -682,7 +760,12 @@ fn results_to_text(
     };
     match &results.inner {
         QueryResultsInner::Boolean(v) => Ok(if *v { "true".into() } else { "false".into() }),
-        QueryResultsInner::Bindings { names, rows, .. } => {
+        QueryResultsInner::Bindings {
+            names,
+            cells,
+            row_count,
+            ..
+        } => {
             let mut out = String::new();
             match format {
                 ResultsFormat::Csv | ResultsFormat::Tsv => {
@@ -693,7 +776,9 @@ fn results_to_text(
                     };
                     out.push_str(&names.join(&sep.to_string()));
                     out.push('\n');
-                    for row in rows {
+                    for row_index in 0..*row_count {
+                        let row = binding_row(cells, names.len(), *row_count, row_index)
+                            .expect("validated flat binding row");
                         let cells: Vec<String> = row
                             .iter()
                             .map(|c| c.as_ref().map(|t| t.to_string()).unwrap_or_default())
@@ -713,7 +798,9 @@ fn results_to_text(
                     );
                     out.push_str("]},\"results\":{\"bindings\":[");
                     let mut first = true;
-                    for row in rows {
+                    for row_index in 0..*row_count {
+                        let row = binding_row(cells, names.len(), *row_count, row_index)
+                            .expect("validated flat binding row");
                         if !first {
                             out.push(',');
                         }
@@ -741,7 +828,9 @@ fn results_to_text(
                         out.push_str(&format!("<variable name=\"{n}\"/>"));
                     }
                     out.push_str("</head><results>");
-                    for row in rows {
+                    for row_index in 0..*row_count {
+                        let row = binding_row(cells, names.len(), *row_count, row_index)
+                            .expect("validated flat binding row");
                         out.push_str("<result>");
                         for (name, cell) in names.iter().zip(row.iter()) {
                             if let Some(term) = cell {

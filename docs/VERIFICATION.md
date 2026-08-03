@@ -290,7 +290,7 @@ win is the 0.12 milestone.
 ### 0.12 performance optimization
 
 Milestone [0.12](milestones/0.12.md) owns the performance gate on
-parity-qualified artifacts. Under [ADR-028](DECISIONS.md#adr-028--012-competitive-parity-performance-gate),
+parity-qualified artifacts. Under [ADR-028](DECISIONS.md#adr-028-012-competitive-parity-performance-gate),
 matched production builds freeze a **competitive-parity** rule:
 
 - throughput: Oxiland/Redland median ≥ `0.90`, and 95% bootstrap CI lower bound

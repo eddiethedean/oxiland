@@ -26,6 +26,11 @@ pub struct StreamInner {
     /// Lazy store cursor. When set, `lookahead` holds the current triple.
     pub matches: Option<StatementMatches>,
     pub lookahead: Option<Triple>,
+    /// Exact length for full-model snapshots. When present, end/next can use
+    /// index arithmetic and defer decoding store rows until get_object.
+    pub known_len: Option<usize>,
+    /// Number of rows already pulled from `matches`.
+    pub matches_consumed: usize,
     pub index: usize,
     /// Borrowed-by-C current object; owned by the stream.
     pub current: Option<*mut librdf_statement>,
@@ -49,14 +54,30 @@ impl StreamInner {
             Some(Ok(quad)) => Some(Triple::new(quad.subject, quad.predicate, quad.object)),
             Some(Err(error)) => return Err(error.to_string()),
         };
+        let matches_consumed = usize::from(lookahead.is_some());
         Ok(Self {
             statements: Vec::new(),
             triples: Vec::new(),
             matches: Some(matches),
             lookahead,
+            known_len: None,
+            matches_consumed,
             index: 0,
             current: None,
         })
+    }
+
+    pub fn from_matches_with_len(matches: StatementMatches, known_len: usize) -> Self {
+        Self {
+            statements: Vec::new(),
+            triples: Vec::new(),
+            matches: Some(matches),
+            lookahead: None,
+            known_len: Some(known_len),
+            matches_consumed: 0,
+            index: 0,
+            current: None,
+        }
     }
 
     pub fn from_triples(triples: Vec<Triple>) -> Self {
@@ -65,6 +86,8 @@ impl StreamInner {
             triples,
             matches: None,
             lookahead: None,
+            known_len: None,
+            matches_consumed: 0,
             index: 0,
             current: None,
         }
@@ -76,6 +99,8 @@ impl StreamInner {
             triples: Vec::new(),
             matches: None,
             lookahead: None,
+            known_len: None,
+            matches_consumed: 0,
             index: 0,
             current: None,
         }
@@ -91,6 +116,9 @@ impl StreamInner {
     }
 
     fn at_end(&self) -> bool {
+        if let Some(known_len) = self.known_len {
+            return self.index >= known_len;
+        }
         if self.is_lazy() {
             self.lookahead.is_none() && self.matches.is_none()
         } else {
@@ -100,6 +128,11 @@ impl StreamInner {
 
     fn advance_lazy(&mut self) -> Result<bool, String> {
         self.drop_current();
+        self.index = self.index.saturating_add(1);
+        self.lookahead = None;
+        if self.known_len.is_some() {
+            return Ok(self.at_end());
+        }
         let next = match self.matches.as_mut() {
             Some(matches) => matches.next(),
             None => None,
@@ -111,6 +144,7 @@ impl StreamInner {
                 Ok(true)
             }
             Some(Ok(quad)) => {
+                self.matches_consumed += 1;
                 self.lookahead = Some(Triple::new(quad.subject, quad.predicate, quad.object));
                 Ok(false)
             }
@@ -127,26 +161,42 @@ impl StreamInner {
         }
     }
 
-    fn ensure_current(&mut self) {
+    fn ensure_current(&mut self) -> Result<(), String> {
         if self.current.is_some() || self.at_end() {
-            return;
+            return Ok(());
+        }
+        if self.lookahead.is_none() && self.matches.is_some() {
+            while self.matches_consumed <= self.index {
+                let next = self.matches.as_mut().and_then(Iterator::next);
+                match next {
+                    Some(Ok(quad)) => {
+                        self.matches_consumed += 1;
+                        self.lookahead =
+                            Some(Triple::new(quad.subject, quad.predicate, quad.object));
+                    }
+                    Some(Err(error)) => return Err(error.to_string()),
+                    None => {
+                        self.matches = None;
+                        self.lookahead = None;
+                        return Ok(());
+                    }
+                }
+            }
         }
         let statement = if let Some(triple) = self.lookahead.as_ref() {
             Some(StatementInner::from_triple(triple.clone()))
         } else {
-            self.statements
-                .get(self.index)
-                .cloned()
-                .or_else(|| {
-                    self.triples
-                        .get(self.index)
-                        .cloned()
-                        .map(StatementInner::from_triple)
-                })
+            self.statements.get(self.index).cloned().or_else(|| {
+                self.triples
+                    .get(self.index)
+                    .cloned()
+                    .map(StatementInner::from_triple)
+            })
         };
         if let Some(stmt) = statement {
             self.current = Some(box_handle(TAG_STATEMENT, stmt));
         }
+        Ok(())
     }
 }
 
@@ -223,7 +273,10 @@ pub extern "C" fn librdf_stream_get_object(stream: *mut librdf_stream) -> *mut l
         if stream.inner.at_end() {
             return ptr::null_mut();
         }
-        stream.inner.ensure_current();
+        if let Err(error) = stream.inner.ensure_current() {
+            set_last_error(error);
+            return ptr::null_mut();
+        }
         stream.inner.current.unwrap_or(ptr::null_mut())
     })
 }

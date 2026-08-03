@@ -64,13 +64,25 @@ def ratio(kind: str, oxiland: list[float], redland: list[float]) -> float:
 
 
 def bootstrap_interval(
-    kind: str, oxiland: list[float], redland: list[float], seed: int
+    kind: str,
+    oxiland: list[float],
+    redland: list[float],
+    seed: int,
+    *,
+    paired: bool = False,
 ) -> tuple[float, float]:
     rng = random.Random(seed)
     values: list[float] = []
+    if paired and len(oxiland) != len(redland):
+        fail("paired bootstrap requires equal Oxiland and Redland sample counts")
     for _ in range(BOOTSTRAP_ROUNDS):
-        oxiland_resample = [rng.choice(oxiland) for _ in oxiland]
-        redland_resample = [rng.choice(redland) for _ in redland]
+        if paired:
+            indices = [rng.randrange(len(oxiland)) for _ in oxiland]
+            oxiland_resample = [oxiland[index] for index in indices]
+            redland_resample = [redland[index] for index in indices]
+        else:
+            oxiland_resample = [rng.choice(oxiland) for _ in oxiland]
+            redland_resample = [rng.choice(redland) for _ in redland]
         values.append(ratio(kind, oxiland_resample, redland_resample))
     values.sort()
     lower = values[math.floor(0.025 * (len(values) - 1))]
@@ -157,6 +169,7 @@ def evaluate_case(
     throughput_ci_lower_min: float,
     latency_ci_upper_max: float,
     minimum_samples: int,
+    paired_samples: bool,
 ) -> dict[str, Any]:
     case_id = case.get("id")
     if not isinstance(case_id, str) or not case_id:
@@ -170,7 +183,9 @@ def evaluate_case(
     oxiland = positive_samples(case_id, "oxiland", case.get("oxiland"), minimum_samples)
     redland = positive_samples(case_id, "redland", case.get("redland"), minimum_samples)
     observed = ratio(kind, oxiland, redland)
-    lower, upper = bootstrap_interval(kind, oxiland, redland, index)
+    lower, upper = bootstrap_interval(
+        kind, oxiland, redland, index, paired=paired_samples
+    )
     if kind == "throughput":
         passed = observed >= throughput_threshold and lower > throughput_ci_lower_min
         threshold = throughput_threshold
@@ -218,6 +233,10 @@ def evaluate(data: dict[str, Any], suite: dict[str, Any] | None = None) -> dict[
         thresholds = suite.get("thresholds", {})
         if isinstance(thresholds, dict) and thresholds.get("minimum_samples") is not None:
             minimum_samples = max(MINIMUM_SAMPLES, int(thresholds["minimum_samples"]))
+    protocol = suite.get("protocol", {}) if isinstance(suite, dict) else {}
+    paired_samples = isinstance(protocol, dict) and str(protocol.get("order", "")).startswith(
+        "paired per-sample"
+    )
     cases = data.get("cases")
     if not isinstance(cases, list) or not cases:
         fail("cases must be a non-empty list")
@@ -230,6 +249,7 @@ def evaluate(data: dict[str, Any], suite: dict[str, Any] | None = None) -> dict[
             throughput_ci_lower_min,
             latency_ci_upper_max,
             minimum_samples,
+            paired_samples,
         )
         for index, case in enumerate(cases)
     ]
@@ -306,6 +326,7 @@ def evaluate(data: dict[str, Any], suite: dict[str, Any] | None = None) -> dict[
         "oracle": data["oracle"],
         "host": data["host"],
         "bootstrap_rounds": BOOTSTRAP_ROUNDS,
+        "paired_samples": paired_samples,
         "cases": results,
         "resource_checks": normalized_resources,
         "passed": all(result["passed"] for result in results) and resources_pass,

@@ -17,6 +17,7 @@ use crate::handles::{
 use oxigraph::model::Term;
 use oxiland::io::{Serializer, Syntax};
 use std::ffi::c_void;
+use std::io::{self, Write};
 use std::os::raw::c_char;
 use std::ptr;
 
@@ -26,6 +27,90 @@ pub struct SerializerInner {
     pub syntax: Syntax,
     pub features: std::collections::HashMap<String, String>,
     pub namespaces: std::collections::HashMap<String, String>,
+}
+
+/// Growable `malloc` buffer that can be returned directly to C without a
+/// `Vec<u8> -> String -> strdup` copy chain.
+struct MallocWriter {
+    ptr: *mut u8,
+    len: usize,
+    capacity: usize,
+}
+
+impl MallocWriter {
+    fn new(capacity: usize) -> io::Result<Self> {
+        let capacity = capacity.max(1);
+        // SAFETY: malloc returns an allocation of `capacity` bytes or null.
+        let ptr = unsafe { libc::malloc(capacity) }.cast::<u8>();
+        if ptr.is_null() {
+            return Err(io::Error::other("out of memory"));
+        }
+        Ok(Self {
+            ptr,
+            len: 0,
+            capacity,
+        })
+    }
+
+    fn reserve(&mut self, additional: usize) -> io::Result<()> {
+        let required = self
+            .len
+            .checked_add(additional)
+            .ok_or_else(|| io::Error::other("serialization buffer size overflow"))?;
+        if required <= self.capacity {
+            return Ok(());
+        }
+        let doubled = self.capacity.saturating_mul(2);
+        let new_capacity = required.max(doubled);
+        if new_capacity < required {
+            return Err(io::Error::other("serialization buffer size overflow"));
+        }
+        // SAFETY: `self.ptr` is owned malloc memory. A failed realloc leaves it
+        // untouched, while success transfers ownership to `new_ptr`.
+        let new_ptr = unsafe { libc::realloc(self.ptr.cast(), new_capacity) }.cast::<u8>();
+        if new_ptr.is_null() {
+            return Err(io::Error::other("out of memory"));
+        }
+        self.ptr = new_ptr;
+        self.capacity = new_capacity;
+        Ok(())
+    }
+
+    fn into_c_string(mut self) -> io::Result<(*mut c_char, usize)> {
+        self.reserve(1)?;
+        // SAFETY: one byte was reserved above.
+        unsafe { *self.ptr.add(self.len) = 0 };
+        let ptr = self.ptr.cast::<c_char>();
+        let len = self.len;
+        self.ptr = ptr::null_mut();
+        Ok((ptr, len))
+    }
+}
+
+impl Write for MallocWriter {
+    fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+        self.reserve(bytes.len())?;
+        // SAFETY: reserve guaranteed enough writable capacity and the source
+        // slice cannot overlap this private allocation.
+        unsafe {
+            ptr::copy_nonoverlapping(bytes.as_ptr(), self.ptr.add(self.len), bytes.len());
+        }
+        self.len += bytes.len();
+        Ok(bytes.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+impl Drop for MallocWriter {
+    fn drop(&mut self) {
+        if !self.ptr.is_null() {
+            // SAFETY: the pointer is still owned by this writer.
+            unsafe { libc::free(self.ptr.cast()) };
+        }
+    }
 }
 
 fn resolve_syntax(name: Option<&str>, mime: Option<&str>) -> Result<Syntax, String> {
@@ -137,8 +222,28 @@ pub extern "C" fn librdf_serializer_serialize_model_to_string(
                 }
             };
         }
-        match ser.serialize_model_to_string(&model.inner.model) {
-            Ok(text) => strdup_c(&text),
+        let initial_capacity = model
+            .inner
+            .cardinality
+            .get()
+            .and_then(|count| count.checked_mul(64))
+            .unwrap_or(4_096)
+            .max(4_096);
+        let writer = match MallocWriter::new(initial_capacity) {
+            Ok(writer) => writer,
+            Err(error) => {
+                set_last_error(error.to_string());
+                return ptr::null_mut();
+            }
+        };
+        match ser.serialize_model_to_writer(writer, &model.inner.model) {
+            Ok(writer) => match writer.into_c_string() {
+                Ok((ptr, _)) => ptr,
+                Err(error) => {
+                    set_last_error(error.to_string());
+                    ptr::null_mut()
+                }
+            },
             Err(error) => {
                 set_last_error(error.to_string());
                 ptr::null_mut()

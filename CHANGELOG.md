@@ -19,23 +19,57 @@ retained 0.11 parity. Does not authorize a blanket faster-than-Redland claim.
   `compatibility/qualification/0.12-matrix.json` with RSS budgets and ADR-028
   thresholds
 - `scripts/build-0.12-performance-evidence.py` and `.github/workflows/qualify-0.12.yml`
+- Draft strict `compatibility/performance/0.13-suite.json`, calibrated C driver,
+  and genuinely paired per-sample AB/BA evidence runner covering ten public C
+  API workloads with 100 samples per implementation
+- Paired bootstrap confidence intervals and isolated five-sample median
+  peak-RSS probes in the performance qualification tooling
 - ADR-028 competitive-parity performance decision
 - `docs/reports/0.12.0-release.md`
+- C lifecycle regression coverage for progressive partial parses, configured
+  query limit/offset, lazy SELECT values, deferred stream materialization, and
+  stale model-size/double-free rejection
 
 ### Changed
 
 - C hot paths: cardinality cache, hot handle borrow, fast `librdf_model_size`,
   deferred stream statement materialization, query CONSTRUCT stream handoff
+- In-memory C parsing uses direct string parsing and bounded 4,096-quad bulk
+  transactions while preserving Redland's progressive partial-load behavior
+- Query handles retain their configured safe query instead of cloning query
+  text on execution; SELECT rows use one flat allocation and C binding nodes
+  materialize only when a binding getter observes them
+- Full-model streams use known cardinality for constant-time unobserved
+  traversal and defer store-row decoding until `librdf_stream_get_object`
+- C model serialization writes directly into the growable `malloc` buffer
+  returned to callers instead of copying through a `Vec`, `String`, and
+  duplicated C string
+- Model-size calls use world-owned tagged tombstones for safe stale-pointer
+  rejection and a direct cardinality fast path; handle registration no longer
+  invalidates unrelated hot handles, with a generation-bound process cache on
+  Windows
 - Memory model inserts coalesce into a single Oxigraph transaction on flush
-- Release profile uses thin LTO and single codegen unit; C perf harness builds
+- Pending in-memory insertion buffers reserve an initial 1,024 entries to avoid
+  repeated growth on common bulk workloads
+- Release profile uses fat LTO and a single codegen unit; C perf harness builds
   at `-O3 -march=native`
 - `scripts/check-performance-gate.py` reads suite thresholds (legacy 1.05/0.95
-  suites keep CI-above-parity; 0.12 uses competitive-parity bounds)
+  suites keep CI-above-parity; 0.12 uses competitive-parity bounds) and
+  resamples matched observations for paired protocols
+- Performance evidence isolates Oxiland and Redland runtime library paths,
+  records independently calibrated workload samples, and measures each RSS
+  probe as the sole child of a fresh process
 - Milestone 0.12 docs, user performance guide, and R-022 closed for this gate
 
 ### Fixed
 
 - Performance harness validates workloads; `P-GRAPH-10K` runs a real CONSTRUCT
+- `P-SER-NQ-10K` now exercises actual N-Quads serialization
+- C query limit and offset setters now affect the executed query
+- Redland-linked benchmark processes can no longer preload Oxiland's
+  compatibility library through `DYLD_LIBRARY_PATH` or `LD_LIBRARY_PATH`
+- Unix RSS evidence no longer reuses the cumulative high-water mark from an
+  earlier child process
 
 ## [0.11.0] - 2026-08-03
 

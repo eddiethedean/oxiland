@@ -122,7 +122,21 @@ esac
   "${OX_LDFLAGS[@]}" \
   -o "$OUT/perf-oxiland"
 
+# Strict 0.13 driver: one calibrated sample per invocation so the controller
+# can alternate Oxiland and Redland for every individual measurement.
+"$CC" "${CFLAGS[@]}" \
+  "$ROOT/compatibility/harness/c_oracle/perf_bench_0_13.c" \
+  "${LDFLAGS[@]}" \
+  -o "$OUT/perf-redland-0.13"
+"$CC" "${CFLAGS[@]}" \
+  -I"$INC" \
+  "$ROOT/compatibility/harness/c_oracle/perf_bench_0_13.c" \
+  "${OX_LDFLAGS[@]}" \
+  -o "$OUT/perf-oxiland-0.13"
+
 echo "built $OUT/oracle-redland"
 echo "built $OUT/oracle-oxiland"
 echo "built $OUT/perf-redland"
 echo "built $OUT/perf-oxiland"
+echo "built $OUT/perf-redland-0.13"
+echo "built $OUT/perf-oxiland-0.13"

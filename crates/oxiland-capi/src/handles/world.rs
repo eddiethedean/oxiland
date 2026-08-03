@@ -1,11 +1,13 @@
 //! `librdf_world` handle.
 
 use crate::error::{abort_on_panic, clear_last_error};
+use crate::handles::model::librdf_model;
 use crate::handles::node::{NodeInner, librdf_node};
 use crate::handles::uri::librdf_uri;
 use crate::handles::{TAG_NODE, TAG_URI};
 use crate::handles::{
-    TAG_WORLD, TypedHandle, borrow_handle, box_handle, cstr_optional, free_handle,
+    TAG_WORLD, TypedHandle, borrow_handle, box_handle, cstr_optional, deallocate_retired_handle,
+    free_handle,
 };
 use oxigraph::model::Term;
 use oxiland::{LogFacility, LogLevel, World};
@@ -69,6 +71,9 @@ pub struct WorldInner {
     pub serializer_factories: std::collections::HashMap<String, RegisteredFactory>,
     pub storage_factories: std::collections::HashMap<String, RegisteredFactory>,
     pub query_factories: std::collections::HashMap<String, RegisteredFactory>,
+    /// Tag-only model allocations retained so hot model getters can reject a
+    /// stale pointer without a registry lookup or use-after-free.
+    pub retired_models: Vec<usize>,
 }
 
 /// Creates a new world handle.
@@ -98,6 +103,7 @@ pub extern "C" fn librdf_new_world() -> *mut librdf_world {
                 serializer_factories: std::collections::HashMap::new(),
                 storage_factories: std::collections::HashMap::new(),
                 query_factories: std::collections::HashMap::new(),
+                retired_models: Vec::new(),
             },
         )
     })
@@ -169,6 +175,13 @@ pub(crate) fn register_baseline_query(handle: &mut WorldInner, name: &str) -> Re
 pub extern "C" fn librdf_free_world(world: *mut librdf_world) {
     abort_on_panic(|| {
         clear_last_error();
+        let retired = unsafe { borrow_handle(world, TAG_WORLD) }
+            .map(|handle| std::mem::take(&mut handle.inner.retired_models))
+            .unwrap_or_default();
+        for address in retired {
+            // SAFETY: entries are model tombstones retired exactly once.
+            unsafe { deallocate_retired_handle(address as *mut librdf_model) };
+        }
         unsafe { free_handle(world, TAG_WORLD) };
     });
 }

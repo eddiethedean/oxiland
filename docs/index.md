@@ -8,7 +8,7 @@ description: Build typed, local RDF applications with SPARQL, persistent dataset
 
 !!! info "Release status"
 
-    This documentation tip describes **0.11.0**. Use registry pins for published
+    This documentation tip describes **0.12.0**. Use registry pins for published
     installs, or a git/path checkout for tip APIs.
 
 <section class="hero" aria-labelledby="hero-title">
@@ -55,6 +55,15 @@ assert query(graph, "ASK { ?s ?p ?o }")</code></pre>
   <span role="listitem"><b aria-hidden="true">✓</b> SPARQL 1.1</span>
   <span role="listitem"><b aria-hidden="true">✓</b> Streaming RDF I/O</span>
 </div>
+
+!!! success "10/10 strict benchmark wins on macOS/arm64"
+
+    The optimized tip beat genuine Redland 1.0.17 in every required strict
+    benchmark case on the corrected local macOS/arm64 run. Throughput was
+    **1.60×–29.35×** Redland and ASK latency was **0.106×** Redland, with every
+    paired 95% confidence interval beyond parity. Linux/Windows and three-run
+    platform qualification are still pending. See the
+    [performance guide](users/performance.md) for the complete, scoped result.
 
 ## Choose your path
 
@@ -149,9 +158,9 @@ model.
 
 !!! info "Compatibility claims are evidence-scoped"
 
-    Oxiland provides Redland-shaped workflows. Tip **0.9** ships an expanded C
-    **source-compat preview**—not an ABI drop-in for existing `librdf`
-    binaries, and not an rdflib adapter. Start with the
+    Oxiland provides Redland-shaped workflows. Tip **0.12** retains the frozen
+    0.11 source/binary compatibility evidence and adds a strict host-scoped
+    performance win; it is not an rdflib adapter. Start with the
     [positioning guide](evaluators/positioning.md) and verify each claim in the
     [parity ledger](parity.md).
 

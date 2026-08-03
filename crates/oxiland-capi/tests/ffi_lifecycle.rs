@@ -284,6 +284,67 @@ fn parse_turtle_and_ask_query() {
 }
 
 #[test]
+fn parse_string_retains_successful_prefix_on_error() {
+    let world = librdf_new_world();
+    let storage = librdf_new_storage(world, cstr("memory").as_ptr(), ptr::null(), ptr::null());
+    let model = librdf_new_model(world, storage, ptr::null());
+    let parser = librdf_new_parser(world, cstr("turtle").as_ptr(), ptr::null(), ptr::null_mut());
+    let malformed = cstr(
+        "<http://example.org/a> <http://example.org/p> \"ok\" .\n<http://example.org/b> broken",
+    );
+
+    assert_ne!(
+        librdf_parser_parse_string_into_model(parser, malformed.as_ptr(), ptr::null_mut(), model),
+        0
+    );
+    assert_eq!(librdf_model_size(model), 1);
+
+    librdf_free_parser(parser);
+    librdf_free_model(model);
+    librdf_free_storage(storage);
+    librdf_free_world(world);
+}
+
+#[test]
+fn query_limit_offset_and_lazy_row_values_advance_together() {
+    let world = librdf_new_world();
+    let storage = librdf_new_storage(world, cstr("memory").as_ptr(), ptr::null(), ptr::null());
+    let model = librdf_new_model(world, storage, ptr::null());
+    for index in 0..3 {
+        let subject = cstr(&format!("http://example.org/q{index}"));
+        let s = librdf_new_node_from_uri_string(world, subject.as_ptr());
+        let p = librdf_new_node_from_uri_string(world, cstr("http://example.org/p").as_ptr());
+        let o = librdf_new_node_from_literal(world, cstr("value").as_ptr(), ptr::null(), 0);
+        let statement = librdf_new_statement_from_nodes(world, s, p, o);
+        assert_eq!(librdf_model_add_statement(model, statement), 0);
+        librdf_free_statement(statement);
+    }
+
+    let query = librdf_new_query(
+        world,
+        cstr("sparql").as_ptr(),
+        ptr::null_mut(),
+        cstr("SELECT ?s WHERE { ?s ?p ?o } ORDER BY ?s").as_ptr(),
+        ptr::null_mut(),
+    );
+    assert_eq!(librdf_query_set_limit(query, 1), 0);
+    assert_eq!(librdf_query_set_offset(query, 1), 0);
+    assert_eq!(librdf_query_get_limit(query), 1);
+    assert_eq!(librdf_query_get_offset(query), 1);
+    let results = librdf_model_query_execute(model, query);
+    assert!(!results.is_null());
+    assert!(!librdf_query_results_get_binding_value(results, 0).is_null());
+    assert_eq!(librdf_query_results_next(results), 1);
+    assert_eq!(librdf_query_results_finished(results), 1);
+
+    librdf_free_query_results(results);
+    librdf_free_query(query);
+    librdf_free_model(model);
+    librdf_free_storage(storage);
+    librdf_free_world(world);
+}
+
+#[test]
 fn serialize_and_select() {
     let world = librdf_new_world();
     let storage = librdf_new_storage(world, cstr("memory").as_ptr(), ptr::null(), ptr::null());
@@ -399,11 +460,58 @@ fn model_as_stream_end_next_without_get_object() {
 }
 
 #[test]
+fn model_stream_materializes_after_deferred_advances() {
+    let world = librdf_new_world();
+    let storage = librdf_new_storage(world, cstr("memory").as_ptr(), ptr::null(), ptr::null());
+    let model = librdf_new_model(world, storage, ptr::null());
+
+    for index in 0..3 {
+        let subject = cstr(&format!("http://example.org/s{index}"));
+        let s = librdf_new_node_from_uri_string(world, subject.as_ptr());
+        let p = librdf_new_node_from_uri_string(world, cstr("http://example.org/p").as_ptr());
+        let o = librdf_new_node_from_literal(world, cstr("value").as_ptr(), ptr::null(), 0);
+        let statement = librdf_new_statement_from_nodes(world, s, p, o);
+        assert_eq!(librdf_model_add_statement(model, statement), 0);
+        librdf_free_statement(statement);
+    }
+    assert_eq!(librdf_model_size(model), 3);
+
+    let stream = librdf_model_as_stream(model);
+    assert_eq!(librdf_stream_next(stream), 0);
+    assert_eq!(librdf_stream_next(stream), 0);
+    let statement = librdf_stream_get_object(stream);
+    assert!(!statement.is_null());
+    assert!(!librdf_statement_get_subject(statement).is_null());
+    assert_eq!(librdf_stream_next(stream), 1);
+    assert_eq!(librdf_stream_end(stream), 1);
+
+    librdf_free_stream(stream);
+    librdf_free_model(model);
+    librdf_free_storage(storage);
+    librdf_free_world(world);
+}
+
+#[test]
 fn double_free_is_defended() {
     let world = librdf_new_world();
     assert!(!world.is_null());
     librdf_free_world(world);
     // Second free of the same address: registry rejects without double-drop.
+    librdf_free_world(world);
+}
+
+#[test]
+fn retired_model_rejects_stale_size_and_double_free_until_world_teardown() {
+    let world = librdf_new_world();
+    let storage = librdf_new_storage(world, cstr("memory").as_ptr(), ptr::null(), ptr::null());
+    let model = librdf_new_model(world, storage, ptr::null());
+    assert_eq!(librdf_model_size(model), 0);
+
+    librdf_free_model(model);
+    assert_eq!(librdf_model_size(model), -1);
+    librdf_free_model(model);
+
+    librdf_free_storage(storage);
     librdf_free_world(world);
 }
 

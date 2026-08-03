@@ -25,6 +25,8 @@ use std::ptr;
 
 pub type librdf_parser = TypedHandle<ParserInner>;
 
+const PARSE_INSERT_BATCH_SIZE: usize = 4_096;
+
 pub struct ParserInner {
     pub syntax: Syntax,
     pub features: HashMap<String, String>,
@@ -40,6 +42,50 @@ fn resolve_syntax(name: Option<&str>, mime: Option<&str>) -> Result<Syntax, Stri
         return Syntax::from_media_type(mime).map_err(|e| e.to_string());
     }
     Ok(Syntax::Turtle)
+}
+
+/// Parses an in-memory document and commits successfully parsed quads in
+/// bounded transactions. If parsing fails, the final partial batch is still
+/// committed so Redland's progressive "parse into model" behavior is kept.
+fn load_slice_progressive(
+    parser: &Parser,
+    model: &oxiland::Model,
+    input: &str,
+) -> Result<usize, String> {
+    let mut batch = Vec::with_capacity(PARSE_INSERT_BATCH_SIZE);
+    let mut processed = 0usize;
+    let stream = parser.parse_str(input).map_err(|error| error.to_string())?;
+    for item in stream {
+        let quad = match item {
+            Ok(quad) => quad,
+            Err(error) => {
+                if !batch.is_empty() {
+                    model.bulk_insert_quads(std::mem::take(&mut batch)).map_err(|insert_error| {
+                        format!(
+                            "{error}; committing {processed} successfully parsed statement(s) also failed: {insert_error}"
+                        )
+                    })?;
+                }
+                return Err(format!(
+                    "{error}; partial load retained {processed} successfully parsed statement(s)"
+                ));
+            }
+        };
+        batch.push(quad);
+        processed += 1;
+        if batch.len() == PARSE_INSERT_BATCH_SIZE {
+            model
+                .bulk_insert_quads(std::mem::take(&mut batch))
+                .map_err(|error| error.to_string())?;
+            batch = Vec::with_capacity(PARSE_INSERT_BATCH_SIZE);
+        }
+    }
+    if !batch.is_empty() {
+        model
+            .bulk_insert_quads(batch)
+            .map_err(|error| error.to_string())?;
+    }
+    Ok(processed)
 }
 
 /// Creates a parser (`name` e.g. `"turtle"`).
@@ -149,10 +195,10 @@ pub extern "C" fn librdf_parser_parse_string_into_model(
             };
         }
         model.inner.cardinality.invalidate();
-        match rdf_parser.load_into(&model.inner.model, Cursor::new(string.as_bytes())) {
+        match load_slice_progressive(&rdf_parser, &model.inner.model, string) {
             Ok(_) => 0,
             Err(error) => {
-                set_last_error(error.to_string());
+                set_last_error(error);
                 -1
             }
         }
@@ -202,10 +248,10 @@ pub extern "C" fn librdf_parser_parse_counted_string_into_model(
             };
         }
         model.inner.cardinality.invalidate();
-        match rdf_parser.load_into(&model.inner.model, Cursor::new(text.as_bytes())) {
+        match load_slice_progressive(&rdf_parser, &model.inner.model, text) {
             Ok(_) => 0,
             Err(error) => {
-                set_last_error(error.to_string());
+                set_last_error(error);
                 -1
             }
         }
@@ -389,10 +435,7 @@ fn parse_bytes_to_stream(
             }
         }
     }
-    box_handle(
-        TAG_STREAM,
-        StreamInner::from_statements(statements),
-    )
+    box_handle(TAG_STREAM, StreamInner::from_statements(statements))
 }
 
 #[unsafe(no_mangle)]

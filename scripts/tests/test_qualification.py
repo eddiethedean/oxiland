@@ -93,6 +93,15 @@ class PerformanceGateTests(unittest.TestCase):
         report = performance.evaluate(data, suite)
         self.assertTrue(report["passed"])
 
+    def test_paired_bootstrap_resamples_matching_host_observations(self) -> None:
+        redland = [100.0 + index * 7 for index in range(30)]
+        oxiland = [sample * 1.10 for sample in redland]
+        lower, upper = performance.bootstrap_interval(
+            "throughput", oxiland, redland, 7, paired=True
+        )
+        self.assertAlmostEqual(lower, 1.10)
+        self.assertAlmostEqual(upper, 1.10)
+
     def test_legacy_faster_than_redland_suite_still_requires_ci_above_parity(self) -> None:
         data = self.data()
         data["cases"][0]["oxiland"] = [102 + index % 2 for index in range(30)]

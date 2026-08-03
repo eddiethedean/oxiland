@@ -59,9 +59,10 @@ impl Iterator for StatementMatches {
         if let Some(error) = self.prelude_error.take() {
             return Some(Err(error));
         }
-        self.inner.as_mut()?.next().map(|item| {
-            item.map_err(|error| Error::Storage(error.to_string()))
-        })
+        self.inner
+            .as_mut()?
+            .next()
+            .map(|item| item.map_err(|error| Error::Storage(error.to_string())))
     }
 }
 
@@ -755,10 +756,15 @@ impl Model {
     pub fn insert_quad_unchecked(&self, quad: Quad) -> Result<()> {
         self.ensure_writable()?;
         if self.disk.is_none() {
-            self.pending_inserts
+            let mut pending = self
+                .pending_inserts
                 .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .push(quad);
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            if pending.capacity() == 0 {
+                pending.reserve(1_024);
+            }
+            pending.push(quad);
+            drop(pending);
             return Ok(());
         }
         self.flush_pending_inserts()?;

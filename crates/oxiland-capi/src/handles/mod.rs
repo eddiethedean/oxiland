@@ -4,6 +4,8 @@ use std::cell::Cell;
 use std::collections::HashMap;
 use std::hash::{BuildHasherDefault, Hasher};
 use std::os::raw::c_char;
+#[cfg(windows)]
+use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{LazyLock, Mutex};
 
@@ -81,6 +83,29 @@ type LiveHandles = HashMap<usize, u32, BuildHasherDefault<PointerHasher>>;
 static LIVE: LazyLock<Mutex<LiveHandles>> = LazyLock::new(|| Mutex::new(LiveHandles::default()));
 static LIVE_GENERATION: AtomicU64 = AtomicU64::new(1);
 
+#[cfg(windows)]
+struct ProcessHotHandle {
+    address: AtomicUsize,
+    generation: AtomicU64,
+}
+
+#[cfg(windows)]
+impl ProcessHotHandle {
+    const fn new() -> Self {
+        Self {
+            address: AtomicUsize::new(0),
+            generation: AtomicU64::new(0),
+        }
+    }
+}
+
+/// Windows TLS access is noticeably more expensive across a DLL boundary.
+/// Keep the most recently validated address for each fixed handle tag in a
+/// process-wide lock-free cache, with the registry generation as its lifetime
+/// proof. Thread-local validation remains the fallback for contention.
+#[cfg(windows)]
+static PROCESS_HOT: [ProcessHotHandle; 18] = [const { ProcessHotHandle::new() }; 18];
+
 thread_local! {
     /// Last successfully validated handle for hot repeated calls. Any registry
     /// mutation advances `LIVE_GENERATION` and invalidates this entry.
@@ -98,7 +123,34 @@ fn register(ptr: usize, tag: u32) {
     LIVE.lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .insert(ptr, tag);
-    LIVE_GENERATION.fetch_add(1, Ordering::Release);
+    // Registering a new address cannot invalidate any previously validated
+    // live handle. Address reuse is preceded by unregister(), which advances
+    // the generation before the old allocation is released.
+}
+
+#[cfg(windows)]
+fn process_hot_index(tag: u32) -> Option<usize> {
+    let index = usize::try_from(tag & 0xff).ok()?;
+    (index < PROCESS_HOT.len()).then_some(index)
+}
+
+#[cfg(windows)]
+fn process_hot_hit(ptr: usize, tag: u32, generation: u64) -> bool {
+    let Some(index) = process_hot_index(tag) else {
+        return false;
+    };
+    let entry = &PROCESS_HOT[index];
+    entry.generation.load(Ordering::Acquire) == generation
+        && entry.address.load(Ordering::Relaxed) == ptr
+}
+
+#[cfg(windows)]
+fn update_process_hot(ptr: usize, tag: u32, generation: u64) {
+    if let Some(index) = process_hot_index(tag) {
+        let entry = &PROCESS_HOT[index];
+        entry.address.store(ptr, Ordering::Relaxed);
+        entry.generation.store(generation, Ordering::Release);
+    }
 }
 
 fn validate_live(ptr: usize, expected_tag: u32) -> bool {
@@ -128,6 +180,8 @@ fn validate_live(ptr: usize, expected_tag: u32) -> bool {
     if result {
         let generation = LIVE_GENERATION.load(Ordering::Acquire);
         LAST_VALIDATED.with(|last| last.set((ptr, expected_tag, generation)));
+        #[cfg(windows)]
+        update_process_hot(ptr, expected_tag, generation);
     }
     result
 }
@@ -210,6 +264,13 @@ pub unsafe fn borrow_handle_hot<'a, T>(
     }
     let addr = ptr as usize;
     let generation = LIVE_GENERATION.load(Ordering::Acquire);
+    #[cfg(windows)]
+    if process_hot_hit(addr, expected_tag, generation) {
+        // SAFETY: the generation-bound process cache was populated only after
+        // registry validation for this fixed tag.
+        let handle = unsafe { &mut *ptr };
+        return (handle.tag == expected_tag).then_some(handle);
+    }
     let tls_hit = LAST_VALIDATED.with(|last| last.get() == (addr, expected_tag, generation));
     if !tls_hit && !validate_live(addr, expected_tag) {
         return None;
@@ -246,6 +307,47 @@ pub unsafe fn free_handle<T>(ptr: *mut TypedHandle<T>, expected_tag: u32) {
     handle.tag = TAG_FREED;
     // SAFETY: unique ownership; memory came from Box::into_raw.
     drop(unsafe { Box::from_raw(ptr) });
+}
+
+/// Marks a handle freed and drops its inner value while retaining the tagged
+/// allocation as a tombstone. Used for the model-size direct fast path; the
+/// owner world later deallocates the tombstone.
+///
+/// # Safety
+/// `ptr` follows the same contract as [`free_handle`].
+pub unsafe fn retire_handle<T>(ptr: *mut TypedHandle<T>, expected_tag: u32) -> bool {
+    if ptr.is_null() {
+        return false;
+    }
+    if !unregister(ptr as usize, expected_tag) {
+        return false;
+    }
+    // SAFETY: unregister restored exclusive ownership of this live handle.
+    let handle = unsafe { &mut *ptr };
+    handle.tag = TAG_FREED;
+    // SAFETY: inner is initialized and is dropped exactly once here. The outer
+    // allocation remains as a tag-only tombstone until its world is freed.
+    unsafe { std::ptr::drop_in_place(std::ptr::addr_of_mut!((*ptr).inner)) };
+    true
+}
+
+/// Deallocates a previously retired tag-only handle without dropping its
+/// already-dropped inner value again.
+///
+/// # Safety
+/// `ptr` must have been successfully retired by [`retire_handle`].
+pub unsafe fn deallocate_retired_handle<T>(ptr: *mut TypedHandle<T>) {
+    if ptr.is_null() {
+        return;
+    }
+    // SAFETY: box_handle allocates this exact layout with the global allocator;
+    // retire_handle has already run the inner destructor.
+    unsafe {
+        std::alloc::dealloc(
+            ptr.cast::<u8>(),
+            std::alloc::Layout::new::<TypedHandle<T>>(),
+        );
+    }
 }
 
 /// Reads a required NUL-terminated UTF-8 C string.
