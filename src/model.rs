@@ -213,6 +213,13 @@ impl Drop for InTransactionGuard<'_> {
     }
 }
 
+impl Drop for Model {
+    fn drop(&mut self) {
+        // Best-effort flush so C free_model does not discard coalesced inserts.
+        let _ = self.flush_pending_inserts();
+    }
+}
+
 impl Model {
     /// Creates an empty in-memory model with a fresh [`World`].
     pub fn new() -> Result<Self> {

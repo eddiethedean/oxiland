@@ -191,12 +191,9 @@ pub extern "C" fn librdf_model_add_statement(
         );
         match model.inner.model.insert_quad_unchecked(quad) {
             Ok(()) => {
-                if let Some(n) = model.inner.cardinality.get_i32() {
-                    model
-                        .inner
-                        .cardinality
-                        .store((n as usize).saturating_add(1));
-                }
+                // Pending memory inserts are not yet in the store; force the next
+                // size()/len() to flush so validation and Drop stay honest.
+                model.inner.cardinality.invalidate();
                 0
             }
             Err(error) => {

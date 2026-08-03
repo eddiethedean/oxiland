@@ -179,6 +179,7 @@ def main() -> int:
     revision = git_revision()
     is_clean = clean_worktree()
     red_bin, ox_bin = ensure_benches()
+    warm_up(red_bin, ox_bin)
 
     ox_lib = find_library(
         COMPAT_DIR,
