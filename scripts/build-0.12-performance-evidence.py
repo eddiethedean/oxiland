@@ -133,8 +133,12 @@ def runtime_environment(binary: Path) -> dict[str, str]:
     env = os.environ.copy()
     compat = str(COMPAT_DIR)
     for name in ("DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH", "PATH"):
-        entries = [entry for entry in env.get(name, "").split(os.pathsep) if entry and entry != compat]
-        if "oxiland" in binary.name.lower() and COMPAT_DIR.is_dir():
+        entries = [
+            entry
+            for entry in env.get(name, "").split(os.pathsep)
+            if entry and entry != compat
+        ]
+        if "oxiland" in binary.name.lower():
             entries.insert(0, compat)
         env[name] = os.pathsep.join(entries)
     return env
