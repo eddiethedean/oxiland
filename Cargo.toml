@@ -35,15 +35,15 @@ storage-lmdb = ["dep:heed"]
 [dependencies]
 oxigraph = { version = "=0.5.9", default-features = false }
 spargebra = { version = "=0.4.6", default-features = false, features = ["sep-0002", "sep-0006"] }
-fjall = { version = "2.11", optional = true }
-redb = { version = "2", optional = true }
-rocksdb = { version = "0.22", optional = true, default-features = true }
-rusqlite = { version = "0.32", optional = true, features = ["bundled"] }
-heed = { version = "0.21", optional = true }
+fjall = { version = "3.1", optional = true }
+redb = { version = "4", optional = true }
+rocksdb = { version = "0.24", optional = true, default-features = true }
+rusqlite = { version = "0.40", optional = true, features = ["bundled"] }
+heed = { version = "0.22", optional = true }
 thiserror = "2"
-md-5 = "0.10"
-sha1 = "0.10"
-sha2 = "0.10"
+md-5 = "0.11"
+sha1 = "0.11"
+sha2 = "0.11"
 unicode-normalization = "0.1"
 tracing = { version = "0.1", optional = true }
 
