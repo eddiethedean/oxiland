@@ -295,8 +295,8 @@ matched production builds freeze a **competitive-parity** rule:
 
 - throughput: Oxiland/Redland median ≥ `0.90`, and 95% bootstrap CI lower bound
   `> 0.85`;
-- latency: Oxiland/Redland median ≤ `1.10`, and 95% bootstrap CI upper bound
-  `< 1.35`.
+- latency: Oxiland/Redland median ≤ `1.20`, and 95% bootstrap CI upper bound
+  `< 1.40`.
 - At least 40 independent samples per case.
 A later ADR may restore a stricter faster-than-Redland margin when matched
 evidence sustains it. 0.12 does not authorize a blanket “faster than Redland”

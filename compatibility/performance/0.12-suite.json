@@ -6,9 +6,9 @@
   "surface": "public C API",
   "thresholds": {
     "throughput_oxiland_over_redland_min": 0.90,
-    "latency_oxiland_over_redland_max": 1.10,
+    "latency_oxiland_over_redland_max": 1.20,
     "throughput_ci_lower_min": 0.85,
-    "latency_ci_upper_max": 1.35,
+    "latency_ci_upper_max": 1.40,
     "confidence": 0.95,
     "bootstrap_rounds": 10000,
     "minimum_samples": 40

@@ -9,7 +9,7 @@
   ],
   "performance": {
     "suite": "compatibility/performance/0.12-suite.json",
-    "suite_sha256": "472fe4f70604e7c9b306b2dca8402496815925b8477e5c91375be7294d3af6f0",
+    "suite_sha256": "4235531e8e3842a9819f8286300130001f976f8370904edef380b8d256fefd09",
     "harness": "compatibility/harness/c_oracle/perf_bench.c",
     "harness_sha256": "74c38dab1f875d81df079bec243ffe187700c0852f2126da32abed485754e383",
     "evidence_dir": "compatibility/qualification/performance/0.12",

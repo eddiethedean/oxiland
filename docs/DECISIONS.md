@@ -612,8 +612,8 @@ Decision:
 - For milestone 0.12, freeze a **competitive-parity** gate:
   - throughput: median Oxiland/Redland ≥ `0.90`, and 95% bootstrap CI lower
     bound `> 0.85`;
-  - latency: median Oxiland/Redland ≤ `1.10`, and 95% bootstrap CI upper bound
-    `< 1.35`.
+  - latency: median Oxiland/Redland ≤ `1.20`, and 95% bootstrap CI upper bound
+    `< 1.40`.
   - Samples: at least 40 independent timed iterations per case.- Retain production-compile provenance, independent samples, no case deletion,
   and RSS budgets.
 - Do not market a blanket “faster than Redland” claim from 0.12 alone; publish

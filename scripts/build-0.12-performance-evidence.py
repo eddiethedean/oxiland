@@ -98,6 +98,10 @@ def find_library(directory: Path, patterns: tuple[str, ...]) -> Path | None:
 
 
 def ensure_benches() -> tuple[Path, Path]:
+    red = resolve_binary("perf-redland")
+    ox = resolve_binary("perf-oxiland")
+    if red.is_file() and ox.is_file():
+        return red, ox
     subprocess.check_call(["bash", str(BUILD_SH)], cwd=ROOT)
     red = resolve_binary("perf-redland")
     ox = resolve_binary("perf-oxiland")
