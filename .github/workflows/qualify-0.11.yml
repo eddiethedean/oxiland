@@ -48,7 +48,8 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq librdf0-dev raptor2-utils rasqal-utils
+          sudo apt-get install -y -qq librdf0-dev raptor2-utils rasqal-utils libraptor2-dev librasqal3-dev pkg-config
+
 
       - name: Install Redland (macOS)
         if: runner.os == 'macOS'
@@ -105,7 +106,13 @@ jobs:
 
       - name: Build C oracles
         shell: bash
-        run: compatibility/harness/c_oracle/build.sh
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            export PATH="/ucrt64/bin:/d/a/_temp/msys64/ucrt64/bin:/c/msys64/ucrt64/bin:$PATH"
+            export PKG_CONFIG_PATH="/ucrt64/lib/pkgconfig:/d/a/_temp/msys64/ucrt64/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+            export CC=gcc
+          fi
+          compatibility/harness/c_oracle/build.sh
 
       - name: Run release-default harness
         shell: bash
@@ -199,21 +206,21 @@ jobs:
           python-version: "3.12"
 
       - name: Download raw differentials
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896ce1cee4496443 # v4.3.0
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: raw-*
           path: compatibility/qualification/raw-dl
           merge-multiple: true
 
       - name: Download performance evidence
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896ce1cee4496443 # v4.3.0
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: perf-*
           path: compatibility/qualification/perf-dl
           merge-multiple: true
 
       - name: Download ABI-swap stamp
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896ce1cee4496443 # v4.3.0
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: abi-swap
           path: compatibility/qualification/abi-dl
