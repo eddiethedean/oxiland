@@ -68,7 +68,16 @@ def clean_worktree() -> bool:
         cwd=ROOT,
         text=True,
     )
-    return not status.strip()
+    # Ignore the evidence output directory itself so collecting samples does not
+    # self-invalidate clean_worktree provenance.
+    out_prefix = str(OUT_DIR.relative_to(ROOT)).replace("\\", "/")
+    for line in status.splitlines():
+        path = line[3:].strip().replace("\\", "/")
+        if path.startswith(out_prefix + "/") or path == out_prefix:
+            continue
+        if path:
+            return False
+    return True
 
 
 def sha256_file(path: Path) -> str:
