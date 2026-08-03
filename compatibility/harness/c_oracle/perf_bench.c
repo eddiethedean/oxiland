@@ -18,6 +18,12 @@ static double now_s(void) {
 
 static void die(const char *m) { fprintf(stderr, "perf_bench: %s\n", m); exit(2); }
 
+/* Force coalesced memory inserts into the store before timed sections so setup
+ * cost is not charged to scan/serialize/query cases (Oxiland pending inserts). */
+static void commit_setup(librdf_model *model, int n, const char *label) {
+  if (librdf_model_size(model) != n) die(label);
+}
+
 static double time_mut(librdf_world *world, int n) {
   double t0 = now_s();
   librdf_storage *storage = librdf_new_storage(world, "memory", NULL, NULL);
@@ -54,6 +60,7 @@ static double time_scan(librdf_world *world, int n) {
     if (!st || librdf_model_add_statement(model, st) != 0) die("scan setup");
     librdf_free_statement(st);
   }
+  commit_setup(model, n, "scan setup commit");
   double t0 = now_s();
   librdf_stream *stream = librdf_model_as_stream(model);
   int count = 0;
@@ -113,6 +120,7 @@ static double time_ask(librdf_world *world, int n) {
     if (!st || librdf_model_add_statement(model, st) != 0) die("ask setup");
     librdf_free_statement(st);
   }
+  commit_setup(model, n, "ask setup commit");
   double t0 = now_s();
   librdf_query *q = librdf_new_query(
       world, "sparql", NULL, (const unsigned char *)"ASK { ?s ?p ?o }", NULL);
@@ -142,6 +150,7 @@ static double time_serialize(librdf_world *world, int n) {
     if (!st || librdf_model_add_statement(model, st) != 0) die("serialize setup");
     librdf_free_statement(st);
   }
+  commit_setup(model, n, "serialize setup commit");
   double t0 = now_s();
   librdf_serializer *ser = librdf_new_serializer(world, "ntriples", NULL, NULL);
   if (!ser) die("serializer");
@@ -187,6 +196,7 @@ static double time_select(librdf_world *world, int n) {
     if (!st || librdf_model_add_statement(model, st) != 0) die("select setup");
     librdf_free_statement(st);
   }
+  commit_setup(model, n, "select setup commit");
   double t0 = now_s();
   librdf_query *q = librdf_new_query(
       world, "sparql", NULL,
@@ -222,6 +232,7 @@ static double time_construct(librdf_world *world, int n) {
     if (!st || librdf_model_add_statement(model, st) != 0) die("construct setup");
     librdf_free_statement(st);
   }
+  commit_setup(model, n, "construct setup commit");
   double t0 = now_s();
   librdf_query *q = librdf_new_query(
       world, "sparql", NULL,

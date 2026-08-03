@@ -12,11 +12,15 @@ import hashlib
 import json
 import os
 import platform
-import resource
 import subprocess
 import sys
 import uuid
 from pathlib import Path
+
+try:
+    import resource as resource_mod
+except ImportError:  # Windows
+    resource_mod = None
 
 ROOT = Path(__file__).resolve().parents[1]
 SUITE = ROOT / "compatibility/performance/0.12-suite.json"
@@ -144,6 +148,48 @@ def run_bench(binary: Path, case_id: str) -> list[float]:
     return samples
 
 
+def _windows_peak_working_set_mib(pid: int) -> float | None:
+    try:
+        import ctypes
+        from ctypes import wintypes
+    except ImportError:
+        return None
+
+    class PROCESS_MEMORY_COUNTERS_EX(ctypes.Structure):
+        _fields_ = [
+            ("cb", wintypes.DWORD),
+            ("PageFaultCount", wintypes.DWORD),
+            ("PeakWorkingSetSize", ctypes.c_size_t),
+            ("WorkingSetSize", ctypes.c_size_t),
+            ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+            ("QuotaPagedPoolUsage", ctypes.c_size_t),
+            ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+            ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+            ("PagefileUsage", ctypes.c_size_t),
+            ("PeakPagefileUsage", ctypes.c_size_t),
+            ("PrivateUsage", ctypes.c_size_t),
+        ]
+
+    PROCESS_QUERY_INFORMATION = 0x0400
+    PROCESS_VM_READ = 0x0010
+    kernel32 = ctypes.windll.kernel32
+    psapi = ctypes.windll.psapi
+    handle = kernel32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, False, pid)
+    if not handle:
+        return None
+    try:
+        counters = PROCESS_MEMORY_COUNTERS_EX()
+        counters.cb = ctypes.sizeof(counters)
+        ok = psapi.GetProcessMemoryInfo(
+            handle, ctypes.byref(counters), counters.cb
+        )
+        if not ok:
+            return None
+        return float(counters.PeakWorkingSetSize) / (1024.0 * 1024.0)
+    finally:
+        kernel32.CloseHandle(handle)
+
+
 def measure_rss_mb(binary: Path, case_id: str) -> float:
     """Run one case in a child and return max RSS in MiB (best-effort)."""
     env = os.environ.copy()
@@ -151,7 +197,27 @@ def measure_rss_mb(binary: Path, case_id: str) -> float:
         env["DYLD_LIBRARY_PATH"] = f"{COMPAT_DIR}{os.pathsep}{env.get('DYLD_LIBRARY_PATH', '')}"
         env["LD_LIBRARY_PATH"] = f"{COMPAT_DIR}{os.pathsep}{env.get('LD_LIBRARY_PATH', '')}"
         env["PATH"] = f"{COMPAT_DIR}{os.pathsep}{env.get('PATH', '')}"
-    before = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss
+
+    if resource_mod is None:
+        proc = subprocess.Popen(
+            [str(binary), "--case", case_id],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            cwd=ROOT,
+            env=env,
+        )
+        peak = _windows_peak_working_set_mib(proc.pid) or 0.0
+        stdout, stderr = proc.communicate(timeout=3600)
+        if proc.returncode != 0:
+            raise SystemExit(f"RSS probe failed for {case_id}: {stderr or stdout}")
+        # Re-sample after exit; PeakWorkingSetSize remains valid on the handle
+        # only while the process exists, so keep the mid-run observation.
+        return max(peak, 1.0)
+
+    before = resource_mod.getrusage(resource_mod.RUSAGE_CHILDREN).ru_maxrss
     proc = subprocess.run(
         [str(binary), "--case", case_id],
         capture_output=True,
@@ -164,7 +230,7 @@ def measure_rss_mb(binary: Path, case_id: str) -> float:
     )
     if proc.returncode != 0:
         raise SystemExit(f"RSS probe failed for {case_id}: {proc.stderr or proc.stdout}")
-    after = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss
+    after = resource_mod.getrusage(resource_mod.RUSAGE_CHILDREN).ru_maxrss
     # Linux reports KB; macOS reports bytes.
     delta = max(after - before, after)
     if platform.system() == "Darwin":

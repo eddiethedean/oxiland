@@ -11,7 +11,7 @@
     "suite": "compatibility/performance/0.12-suite.json",
     "suite_sha256": "5d7d04f60294ea77abe535ee87914d902a42cabaad181e67955a975056f5c881",
     "harness": "compatibility/harness/c_oracle/perf_bench.c",
-    "harness_sha256": "e38186b62fe43df22771cfcdf97cb755503279f1721ffe4737b078eee624fc8d",
+    "harness_sha256": "8c7e03393748e196278742c2dc6779a171a20c9adc3801553d7a483bf8b432b2",
     "evidence_dir": "compatibility/qualification/performance/0.12",
     "profiles": [
       "x86_64-unknown-linux-gnu/release-default",
