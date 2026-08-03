@@ -74,7 +74,12 @@ EOF
     ;;
   MINGW*|MSYS*|CYGWIN*|Windows_NT)
     SRC=""
-    for candidate in "$LIBDIR/oxiland_capi.dll" "$LIBDIR/liboxiland_capi.dll"; do
+    for candidate in \
+      "$LIBDIR/oxiland_capi.dll" \
+      "$LIBDIR/liboxiland_capi.dll" \
+      "$LIBDIR/oxiland_capi.dll" \
+      "$LIBDIR/deps/oxiland_capi.dll"
+    do
       if [[ -f "$candidate" ]]; then
         SRC="$candidate"
         break
@@ -82,15 +87,29 @@ EOF
     done
     if [[ -z "$SRC" ]]; then
       echo "error: oxiland_capi.dll not found under $LIBDIR" >&2
+      ls -la "$LIBDIR"/*.dll 2>/dev/null || true
+      ls -la "$LIBDIR" | head -50 >&2 || true
       exit 1
     fi
     DEST="$COMPAT/librdf-0.dll"
-    cp "$SRC" "$DEST"
+    # Windows may lock a previously packaged DLL; write beside then replace.
+    TMP="$COMPAT/librdf-0.dll.new"
+    cp "$SRC" "$TMP"
+    mv -f "$TMP" "$DEST"
+    cp "$SRC" "$COMPAT/oxiland_capi.dll" 2>/dev/null || true
     echo "packaged $DEST"
     ;;
   *)
-    echo "error: unsupported OS: $OS" >&2
-    exit 1
+    # Git Bash / atypical uname: attempt Windows layout before giving up.
+    if ls "$LIBDIR"/oxiland_capi.dll "$LIBDIR"/liboxiland_capi.dll >/dev/null 2>&1; then
+      SRC="$(ls "$LIBDIR"/oxiland_capi.dll "$LIBDIR"/liboxiland_capi.dll 2>/dev/null | head -1)"
+      DEST="$COMPAT/librdf-0.dll"
+      cp "$SRC" "$DEST"
+      echo "packaged $DEST (fallback OS=$OS)"
+    else
+      echo "error: unsupported OS: $OS" >&2
+      exit 1
+    fi
     ;;
 esac
 
