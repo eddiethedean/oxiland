@@ -56,10 +56,19 @@ def git_revision() -> str:
 
 
 def ensure_benches() -> tuple[Path, Path]:
-    red = ORACLE_BIN / "perf-redland"
-    ox = ORACLE_BIN / "perf-oxiland"
+    def resolve(name: str) -> Path:
+        base = ORACLE_BIN / name
+        if base.is_file():
+            return base
+        exe = ORACLE_BIN / f"{name}.exe"
+        return exe if exe.is_file() else base
+
+    red = resolve("perf-redland")
+    ox = resolve("perf-oxiland")
     if not red.is_file() or not ox.is_file():
         subprocess.check_call(["bash", str(BUILD_SH)], cwd=ROOT)
+        red = resolve("perf-redland")
+        ox = resolve("perf-oxiland")
     if not red.is_file() or not ox.is_file():
         raise SystemExit("perf benches missing after build")
     return red, ox
