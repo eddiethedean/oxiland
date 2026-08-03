@@ -62,9 +62,9 @@ rocksdb = { version = "0.22", optional = true, default-features = true }
 rusqlite = { version = "0.32", optional = true, features = ["bundled"] }
 heed = { version = "0.21", optional = true }
 thiserror = "2"
-md-5 = "0.10"
-sha1 = "0.10"
-sha2 = "0.10"
+md-5 = "0.11"
+sha1 = "0.11"
+sha2 = "0.11"
 unicode-normalization = "0.1"
 tracing = { version = "0.1", optional = true }
 
