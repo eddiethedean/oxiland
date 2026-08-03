@@ -126,4 +126,4 @@ Complete. Six target/profile cells use **C-oracle** differentials (system
 librdf ↔ Oxiland librdf-compat), with failure/boundary/lifecycle fixtures,
 independent native performance benches (`synthetic: false`), ABI-swap
 evidence, and `scripts/check-0.11-release.py` green on the revision-bound tip.
-See [`docs/reports/0.11.md`](docs/reports/0.11.md).
+See [`docs/reports/0.11.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.11.md).

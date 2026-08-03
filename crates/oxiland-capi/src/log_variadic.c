@@ -8,9 +8,13 @@ typedef struct librdf_world_s librdf_world;
 void librdf_log_simple(librdf_world *world, int code, int level, int facility,
                        void *locator, const char *message);
 
-__attribute__((visibility("default"))) void librdf_log(
-    librdf_world *world, int code, int level, int facility, void *locator,
-    const char *message, ...) {
+#if defined(_MSC_VER)
+__declspec(dllexport)
+#elif defined(__GNUC__)
+__attribute__((visibility("default")))
+#endif
+void librdf_log(librdf_world *world, int code, int level, int facility,
+                void *locator, const char *message, ...) {
   char buffer[4096];
   va_list args;
   va_start(args, message);

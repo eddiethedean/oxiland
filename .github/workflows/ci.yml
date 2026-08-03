@@ -556,8 +556,17 @@ jobs:
         with:
           shared-key: msrv
 
+      # rustc 1.87 emits its own anonymous ELF version script for cdylibs; GNU ld
+      # cannot combine that with crates/oxiland-capi/symbols.version. rust-lld can.
+      - name: Install lld
+        run: sudo apt-get update && sudo apt-get install -y lld
+
       - name: Clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
+        env:
+          RUSTFLAGS: "-C link-arg=-fuse-ld=lld"
 
       - name: Test
         run: cargo test --workspace --locked
+        env:
+          RUSTFLAGS: "-C link-arg=-fuse-ld=lld"
