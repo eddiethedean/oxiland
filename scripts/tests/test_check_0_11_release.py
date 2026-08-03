@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -196,23 +195,21 @@ class Check011Tests(unittest.TestCase):
 
     def test_accepts_soak_on_ancestor_revision(self) -> None:
         checker = load_checker()
-        head = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
-        ).strip()
-        parent = subprocess.check_output(
-            ["git", "rev-parse", "HEAD^"], cwd=ROOT, text=True
-        ).strip()
+        original = checker.git_is_ancestor
+        checker.git_is_ancestor = (
+            lambda ancestor, descendant: ancestor == "old" and descendant == "new"
+        )
         soak = {
             "milestone": "0.11",
             "completed": True,
             "abi_resets": 0,
             "release_blockers": [],
-            "git_revision": parent,
+            "git_revision": "old",
         }
         fuzz = {
             "milestone": "0.11",
             "findings": [],
-            "git_revision": parent,
+            "git_revision": "old",
             "targets": [
                 {
                     "name": "rdf_parser",
@@ -230,7 +227,10 @@ class Check011Tests(unittest.TestCase):
                 },
             ],
         }
-        checker.validate_soak_fuzz(soak, fuzz, head)
+        try:
+            checker.validate_soak_fuzz(soak, fuzz, "new")
+        finally:
+            checker.git_is_ancestor = original
 
 
 if __name__ == "__main__":
