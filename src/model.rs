@@ -283,7 +283,11 @@ impl Model {
     /// Opens a persistent model with typed options (ADR-006 / ADR-022).
     pub fn open_with(options: OpenOptions) -> Result<Self> {
         if options.backend() == StorageBackend::Memory {
-            return Self::new();
+            return Store::new()
+                .map(|store| {
+                    Self::from_parts(store, None, options.is_read_only(), World::new())
+                })
+                .map_err(|error| Error::Storage(error.to_string()));
         }
 
         let path = options.path();
@@ -372,7 +376,7 @@ impl Model {
     #[must_use]
     pub fn capabilities(&self) -> StorageCapabilities {
         match &self.disk {
-            None => StorageCapabilities::memory(),
+            None => StorageCapabilities::memory(self.read_only),
             Some(disk) => disk.capabilities(self.read_only),
         }
     }

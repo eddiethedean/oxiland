@@ -23,7 +23,9 @@ use crate::handles::query::{librdf_model_query_execute, librdf_query, librdf_que
 use crate::handles::statement::librdf_statement;
 use crate::handles::stream::librdf_stream;
 use crate::handles::uri::librdf_uri;
-use crate::handles::world::{RegisteredFactory, invoke_factory, librdf_world};
+use crate::handles::world::{
+    register_baseline_storage, reject_factory_callback, librdf_world,
+};
 use crate::handles::{
     TAG_STORAGE, TAG_WORLD, TypedHandle, borrow_handle, box_handle, cstr_optional, cstr_required,
     free_handle,
@@ -57,7 +59,7 @@ pub extern "C" fn librdf_new_storage(
     abort_on_panic(|| {
         clear_last_error();
         // SAFETY: world is null or a live world handle.
-        let Some(world_handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
+        let Some(_world_handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
             return ptr::null_mut();
         };
         // SAFETY: storage_name is a C string when non-null.
@@ -67,14 +69,8 @@ pub extern "C" fn librdf_new_storage(
         let backend = match StorageBackend::from_name(storage_name) {
             Ok(b) => b,
             Err(error) => {
-                let key = storage_name.to_ascii_lowercase();
-                if let Some(entry) = world_handle.inner.storage_factories.get(&key) {
-                    invoke_factory(entry.factory);
-                    StorageBackend::Memory
-                } else {
-                    set_last_error(error.to_string());
-                    return ptr::null_mut();
-                }
+                set_last_error(error.to_string());
+                return ptr::null_mut();
             }
         };
         // SAFETY: name is optional C string.
@@ -620,16 +616,18 @@ pub extern "C" fn librdf_storage_register_factory(
         let Some(name) = (unsafe { cstr_required(name, "name") }) else {
             return -1;
         };
-        let key = name.to_ascii_lowercase();
-        invoke_factory(factory);
-        handle.inner.registered_storages.push(name.to_owned());
-        handle.inner.storage_factories.insert(
-            key,
-            RegisteredFactory {
-                name: name.to_owned(),
-                factory,
-            },
-        );
-        0
+        if reject_factory_callback(factory) {
+            set_last_error(
+                "storage factory callbacks are unsupported; register baseline names only",
+            );
+            return -1;
+        }
+        match register_baseline_storage(&mut handle.inner, name) {
+            Ok(()) => 0,
+            Err(error) => {
+                set_last_error(error);
+                -1
+            }
+        }
     })
 }

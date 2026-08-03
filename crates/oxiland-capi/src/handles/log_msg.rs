@@ -19,7 +19,7 @@ pub struct librdf_log_message {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn librdf_log(
+pub extern "C" fn oxiland_librdf_log_fixed(
     world: *mut librdf_world,
     code: i32,
     level: i32,

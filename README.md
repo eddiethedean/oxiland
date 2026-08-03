@@ -58,10 +58,10 @@ Oxiland requires Rust **1.87 or newer**.
 
 ```toml
 [dependencies]
-oxiland = "0.10.0"
+oxiland = "0.11.0"
 ```
 
-**This repository tip (0.10.0 APIs and qualification tooling):**
+**This repository tip (0.11.0 APIs and qualification tooling):**
 
 ```toml
 [dependencies]
@@ -73,7 +73,7 @@ Enable `tracing` only when `World` log records should also be emitted as
 
 ```toml
 [dependencies]
-oxiland = { version = "0.9.0", features = ["tracing"] }
+oxiland = { version = "0.11.0", features = ["tracing"] }
 ```
 
 ### Python

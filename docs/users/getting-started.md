@@ -25,14 +25,13 @@ cargo new hello-oxiland
 cd hello-oxiland
 ```
 
-The latest project release tag is **0.9.0**; this tip is **0.10.0**
-(unreleased) until its release-candidate gates pass.
+Tip **0.11.0** is the current package version.
 
-**Published release:**
+**Published / tip pin:**
 
 ```toml
 [dependencies]
-oxiland = "0.9.0"
+oxiland = "0.11.0"
 ```
 
 **Tip (git or path):**

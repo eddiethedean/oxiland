@@ -158,7 +158,7 @@ fn legacy_backends_are_unsupported() {
 fn capabilities_memory_vs_fjall() {
     assert_eq!(
         Model::new().unwrap().capabilities(),
-        StorageCapabilities::memory()
+        StorageCapabilities::memory(false)
     );
     let dir = tempfile::tempdir().unwrap();
     let model = Model::open(dir.path()).unwrap();

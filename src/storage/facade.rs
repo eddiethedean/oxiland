@@ -292,10 +292,13 @@ impl<'a> StorageFacade<'a> {
         None
     }
 
-    /// Explicit commit outside [`Self::transaction`] is a documented no-op:
-    /// commits happen when the transaction callback returns successfully.
+    /// Explicit commit outside [`Self::transaction`] is unsupported: commits
+    /// happen when the transaction callback returns successfully.
     pub fn transaction_commit(&self) -> Result<()> {
-        Ok(())
+        Err(Error::Unsupported(
+            "storage transaction commit outside Model::transaction is unsupported; return Ok from the transaction callback to commit"
+                .into(),
+        ))
     }
 
     /// Explicit rollback outside a callback is unsupported.

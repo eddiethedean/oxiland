@@ -95,6 +95,16 @@ def validate_raw(results: list[dict], matrix: dict, expected_revision: str | Non
         comparison = result.get("comparison") or {}
         if comparison.get("passed") is not True or comparison.get("mismatches"):
             fail(f"{result['_path']}: comparison did not pass")
+        ox_engine = str((result.get("oxiland") or {}).get("engine") or "")
+        red_engine = str((result.get("redland") or {}).get("engine") or "")
+        if not ox_engine.endswith("-c") or not red_engine.endswith("-c"):
+            fail(
+                f"{result['_path']}: C oracle engines required "
+                f"(oxiland={ox_engine!r}, redland={red_engine!r})"
+            )
+        arts = result.get("artifacts") or {}
+        if not arts.get("oxiland_library") or not arts.get("redland_library"):
+            fail(f"{result['_path']}: missing native library artifact provenance")
         exec_id = result.get("execution_id")
         if not isinstance(exec_id, str) or len(exec_id) < 16:
             fail(f"{result['_path']}: missing execution_id")
@@ -303,6 +313,40 @@ def evaluate() -> dict:
         data = json.loads(path.read_text(encoding="utf-8"))
         if data.get("synthetic") is True:
             fail(f"performance evidence is synthetic: {filename}")
+
+    # Dual-profile artifact integrity: when both release-default and
+    # release-all-storage are evidenced for a target, oxiland library hashes
+    # must differ if the profiles advertise different Cargo features.
+    by_target_profile: dict[str, dict[str, dict]] = defaultdict(dict)
+    for result in results:
+        target = result.get("target")
+        profile = result.get("profile_id")
+        if isinstance(target, str) and isinstance(profile, str):
+            by_target_profile[target][profile] = result
+    for target, profiles in by_target_profile.items():
+        default_id = f"{target}/release-default"
+        all_id = f"{target}/release-all-storage"
+        if default_id in profiles and all_id in profiles:
+            h1 = (profiles[default_id].get("artifacts") or {}).get("oxiland_library_sha256")
+            h2 = (profiles[all_id].get("artifacts") or {}).get("oxiland_library_sha256")
+            if h1 and h2 and h1 == h2:
+                # Same hash is only acceptable when the build did not actually
+                # change features; matrix profiles differ by design.
+                fail(
+                    f"{target}: release-default and release-all-storage share "
+                    "identical oxiland_library_sha256 (profile rebuild required)"
+                )
+
+    # ABI-swap evidence required when the six-cell matrix is complete.
+    if set(matrix["required_profile_ids"]).issubset(
+        {r.get("profile_id") for r in results}
+    ):
+        abi_stamp = QUAL / "0.11-abi-swap.json"
+        if not abi_stamp.is_file():
+            fail("missing ABI-swap evidence: compatibility/qualification/0.11-abi-swap.json")
+        abi = json.loads(abi_stamp.read_text(encoding="utf-8"))
+        if abi.get("passed") is not True:
+            fail("ABI-swap evidence did not pass")
 
     return {
         "passed": True,

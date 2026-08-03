@@ -122,8 +122,8 @@ Inventory revision:
 
 ## Current 0.11 qualification
 
-Complete. Six target/profile cells executed natively (Linux x86-64, macOS
-Apple Silicon, Windows x86-64 × `release-default` / `release-all-storage`),
-1,532 obligations covered from raw differentials, native performance evidence
-on every performance profile, and `scripts/check-0.11-release.py` green on the
-revision-bound bundle (`37d480ffd493`). See [`docs/reports/0.11.md`](docs/reports/0.11.md).
+Complete. Six target/profile cells use **C-oracle** differentials (system
+librdf ↔ Oxiland librdf-compat), with failure/boundary/lifecycle fixtures,
+independent native performance benches (`synthetic: false`), ABI-swap
+evidence, and `scripts/check-0.11-release.py` green on the revision-bound tip.
+See [`docs/reports/0.11.md`](docs/reports/0.11.md).

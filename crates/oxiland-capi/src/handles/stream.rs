@@ -1,6 +1,6 @@
 //! `librdf_stream` handle.
 
-use crate::error::{abort_on_panic, clear_last_error};
+use crate::error::{abort_on_panic, clear_last_error, set_last_error};
 use crate::handles::io::FILE;
 use crate::handles::iterator::librdf_iterator;
 use crate::handles::node::librdf_node;
@@ -209,11 +209,14 @@ pub extern "C" fn librdf_stream_add_map(
     _free_context: *mut c_void,
     _map_context: *mut c_void,
 ) -> i32 {
-    if unsafe { borrow_handle(stream, TAG_STREAM) }.is_none() {
+    abort_on_panic(|| {
+        clear_last_error();
+        if unsafe { borrow_handle(stream, TAG_STREAM) }.is_none() {
+            return -1;
+        }
+        set_last_error("librdf_stream_add_map is unsupported");
         -1
-    } else {
-        0
-    }
+    })
 }
 
 #[unsafe(no_mangle)]

@@ -187,10 +187,20 @@ impl Parser {
                 Ok(true) => newly_inserted.push(quad),
                 Ok(false) => {}
                 Err(error) => {
+                    let mut rollback_error: Option<Error> = None;
                     for inserted in newly_inserted.into_iter().rev() {
-                        let _ = model.remove_quad(&inserted);
+                        if let Err(remove_error) = model.remove_quad(&inserted)
+                            && rollback_error.is_none()
+                        {
+                            rollback_error = Some(remove_error);
+                        }
                     }
-                    return Err(error);
+                    return Err(match rollback_error {
+                        Some(remove_error) => Error::Storage(format!(
+                            "insert failed ({error}); rollback also failed ({remove_error})"
+                        )),
+                        None => error,
+                    });
                 }
             }
         }

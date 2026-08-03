@@ -103,6 +103,10 @@ jobs:
           cd python
           maturin develop --release
 
+      - name: Build C oracles
+        shell: bash
+        run: compatibility/harness/c_oracle/build.sh
+
       - name: Run release-default harness
         shell: bash
         run: |
@@ -127,6 +131,10 @@ jobs:
         shell: bash
         run: |
           if [[ -f .venv/Scripts/activate ]]; then source .venv/Scripts/activate; else source .venv/bin/activate; fi
+          # Rebuild default-profile artifacts before perf measurement.
+          cargo build -p oxiland-capi --release --locked --features storage-fjall
+          scripts/package-librdf-compat.sh
+          compatibility/harness/c_oracle/build.sh
           python scripts/build-0.11-performance-evidence.py
 
       - name: Upload performance evidence
@@ -163,3 +171,65 @@ jobs:
           compatibility/downstream/corpus/run-corpus.sh
           scripts/package-librdf-compat.sh
           compatibility/downstream/abi/run-abi-swap.sh
+          test -f compatibility/qualification/0.11-abi-swap.json
+
+      - name: Upload ABI-swap stamp
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: abi-swap
+          path: |
+            compatibility/qualification/0.11-abi-swap.json
+            compatibility/downstream/abi/abi-swap-result.json
+          if-no-files-found: ignore
+
+  release-gate:
+    name: Derive parity and check 0.11 release
+    runs-on: ubuntu-latest
+    needs: [differential, package-gate]
+    if: ${{ always() && !cancelled() }}
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Download raw differentials
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896ce1cee4496443 # v4.3.0
+        with:
+          pattern: raw-*
+          path: compatibility/qualification/raw-dl
+          merge-multiple: true
+
+      - name: Download performance evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896ce1cee4496443 # v4.3.0
+        with:
+          pattern: perf-*
+          path: compatibility/qualification/perf-dl
+          merge-multiple: true
+
+      - name: Download ABI-swap stamp
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896ce1cee4496443 # v4.3.0
+        with:
+          name: abi-swap
+          path: compatibility/qualification/abi-dl
+
+      - name: Stage evidence and run checker
+        run: |
+          mkdir -p compatibility/qualification/raw compatibility/qualification/performance
+          cp -f compatibility/qualification/raw-dl/*.json compatibility/qualification/raw/ || true
+          cp -f compatibility/qualification/perf-dl/*.json compatibility/qualification/performance/ || true
+          if [[ -f compatibility/qualification/abi-dl/0.11-abi-swap.json ]]; then
+            cp -f compatibility/qualification/abi-dl/0.11-abi-swap.json compatibility/qualification/0.11-abi-swap.json
+          elif [[ -f compatibility/qualification/abi-dl/compatibility/qualification/0.11-abi-swap.json ]]; then
+            cp -f compatibility/qualification/abi-dl/compatibility/qualification/0.11-abi-swap.json \
+              compatibility/qualification/0.11-abi-swap.json
+          fi
+          python scripts/build-0.11-obligations.py
+          python scripts/build-0.11-inventory.py
+          python scripts/derive-0.11-parity.py --require-all-profiles
+          python scripts/check-0.11-release.py

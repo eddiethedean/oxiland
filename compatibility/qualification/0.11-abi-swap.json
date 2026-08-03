@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "milestone": "0.11",
+  "work_package": "WP-11-06",
+  "test": "abi-swap",
+  "target": "aarch64-apple-darwin",
+  "git_revision": "0448e9962af0340ef1238e58b70b7e4cf5b5f24e",
+  "clean_worktree": false,
+  "timestamp": "2026-08-03T02:08:08Z",
+  "elapsed_ms": 499,
+  "synthetic": false,
+  "artifacts": {
+    "probe": "/Volumes/T7/coding/oxiland/target/abi-swap/abi_probe",
+    "system_redland_libdir": "/opt/homebrew/Cellar/redland/1.0.17_1/lib",
+    "oxiland_compat_library": "/Volumes/T7/coding/oxiland/target/release/compat/librdf.0.dylib",
+    "oxiland_compat_library_sha256": "0096a270920b8ffc521089e2f31ac0d6436ba8d9fcac9883319b7b21b433a7a3"
+  },
+  "baseline": {
+    "engine": "system-redland",
+    "ok": true,
+    "exit_code": 0
+  },
+  "oxiland_swap": {
+    "engine": "oxiland-librdf-compat",
+    "ok": true,
+    "exit_code": 0,
+    "library_path_env": "DYLD_LIBRARY_PATH",
+    "library_path": "/Volumes/T7/coding/oxiland/target/release/compat"
+  },
+  "comparison": {
+    "passed": true,
+    "note": "Binary linked against system Redland headers/libs; Oxiland loaded at runtime via library path (macOS may rewrite absolute LC_LOAD_DYLIB to bare soname)."
+  },
+  "passed": true
+}

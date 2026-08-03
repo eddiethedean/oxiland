@@ -60,6 +60,24 @@ def main() -> int:
             return 1
         if result.get("differential_passed") is not True:
             continue
+        # C-state verified only from C-oracle evidence (never Python-only).
+        ox_engine = str((result.get("oxiland") or {}).get("engine") or "")
+        red_engine = str((result.get("redland") or {}).get("engine") or "")
+        c_oracle = ox_engine.endswith("-c") and red_engine.endswith("-c")
+        if not c_oracle:
+            print(
+                f"skip non-C oracle result for c_state derivation: {result['_path']}",
+                file=sys.stderr,
+            )
+            continue
+        # Both libraries must be recorded for C verification.
+        arts = result.get("artifacts") or {}
+        if not arts.get("oxiland_library") or not arts.get("redland_library"):
+            print(
+                f"skip result missing native libraries: {result['_path']}",
+                file=sys.stderr,
+            )
+            continue
         by_profile[result["profile_id"]].append(result)
         for obl in result.get("obligation_ids") or []:
             covered.add(obl)

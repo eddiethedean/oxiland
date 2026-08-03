@@ -4,17 +4,18 @@
   "profile_id": "aarch64-apple-darwin/release-all-storage",
   "target": "aarch64-apple-darwin",
   "build_profile": "release-all-storage",
-  "git_revision": "37d480ffd493e1e6549254cc587322e16afb7c4a",
-  "clean_worktree": true,
-  "timestamp": "2026-08-02T04:54:42Z",
+  "git_revision": "0448e9962af0340ef1238e58b70b7e4cf5b5f24e",
+  "clean_worktree": false,
+  "timestamp": "2026-08-03T02:09:31Z",
   "fixture_results": [
     "aarch64-apple-darwin__release-all-storage__cli-parse-ask.json",
     "aarch64-apple-darwin__release-all-storage__concepts.json",
     "aarch64-apple-darwin__release-all-storage__digest-hash.json",
     "aarch64-apple-darwin__release-all-storage__files-heuristics.json",
-    "aarch64-apple-darwin__release-all-storage__index.json",
     "aarch64-apple-darwin__release-all-storage__list-lifecycle.json",
     "aarch64-apple-darwin__release-all-storage__logging-callback.json",
+    "aarch64-apple-darwin__release-all-storage__model-boundary-empty.json",
+    "aarch64-apple-darwin__release-all-storage__parse-turtle-failure.json",
     "aarch64-apple-darwin__release-all-storage__parse-turtle.json",
     "aarch64-apple-darwin__release-all-storage__serialize-ntriples.json",
     "aarch64-apple-darwin__release-all-storage__sparql-ask-select.json",
@@ -27,5 +28,5 @@
   ],
   "failed": 0,
   "synthetic": false,
-  "execution_id": "f8237c73cd5e9cd211c28d247bc7e9eabce7b36fc9031aeeb74eb3ef6cc1e0b6"
+  "execution_id": "b32c96f632cda82a591b7c14838c613e4f167e944f83f259ae29daff7ea15676"
 }

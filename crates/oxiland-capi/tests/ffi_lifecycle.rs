@@ -414,7 +414,7 @@ fn alloc_and_raptor_bridge_lifecycle() {
     );
     assert_eq!(
         librdf_storage_register_factory(world, cstr("nope").as_ptr(), ptr::null(), None),
-        0
+        -1
     );
     librdf_free_world(world);
 }
@@ -480,7 +480,7 @@ fn parser_iostream_parse_and_serialize_roundtrip() {
 }
 
 #[test]
-fn parser_factory_register_invokes_callback_and_creates_parser() {
+fn parser_factory_rejects_callback_and_unknown_name() {
     unsafe { FACTORY_HITS = 0 };
     let world = librdf_new_world();
     librdf_parser_register_factory(
@@ -491,7 +491,8 @@ fn parser_factory_register_invokes_callback_and_creates_parser() {
         ptr::null(),
         Some(count_factory),
     );
-    assert_eq!(unsafe { FACTORY_HITS }, 1);
+    // ADR-025: callbacks are not executed.
+    assert_eq!(unsafe { FACTORY_HITS }, 0);
 
     let parser = librdf_new_parser(
         world,
@@ -499,9 +500,24 @@ fn parser_factory_register_invokes_callback_and_creates_parser() {
         ptr::null(),
         ptr::null_mut(),
     );
-    assert!(!parser.is_null());
-    assert_eq!(unsafe { FACTORY_HITS }, 2);
+    assert!(parser.is_null());
 
+    // Baseline name without callback succeeds; features still round-trip.
+    librdf_parser_register_factory(
+        world,
+        cstr("turtle").as_ptr(),
+        ptr::null(),
+        ptr::null(),
+        ptr::null(),
+        None,
+    );
+    let parser = librdf_new_parser(
+        world,
+        cstr("turtle").as_ptr(),
+        ptr::null(),
+        ptr::null_mut(),
+    );
+    assert!(!parser.is_null());
     let feature_uri = librdf_new_uri(world, cstr("http://example.org/feature").as_ptr());
     let value = librdf_new_node_from_literal(world, cstr("on").as_ptr(), ptr::null(), 0);
     assert_eq!(librdf_parser_set_feature(parser, feature_uri, value), 0);

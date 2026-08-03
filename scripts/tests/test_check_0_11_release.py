@@ -81,6 +81,12 @@ class Check011Tests(unittest.TestCase):
                     "execution_id": shared,
                     "git_revision": "abc",
                     "obligation_ids": [],
+                    "oxiland": {"engine": "oxiland-c", "ok": True},
+                    "redland": {"engine": "redland-c", "ok": True},
+                    "artifacts": {
+                        "oxiland_library": "/tmp/liboxiland.dylib",
+                        "redland_library": "/tmp/librdf.dylib",
+                    },
                     "_path": f"{target}.json",
                 }
             )

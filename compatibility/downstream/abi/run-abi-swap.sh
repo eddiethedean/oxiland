@@ -171,6 +171,12 @@ payload = {
 }
 path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 print(f"wrote {path}")
+# Also stamp the qualification evidence the release checker expects.
+qual = Path("$ROOT/compatibility/qualification/0.11-abi-swap.json")
+qual_payload = dict(payload)
+qual_payload["passed"] = bool($PASSED_PY)
+qual.write_text(json.dumps(qual_payload, indent=2) + "\n", encoding="utf-8")
+print(f"wrote {qual}")
 PY
 
 if [[ "$PASSED" -ne 1 ]]; then

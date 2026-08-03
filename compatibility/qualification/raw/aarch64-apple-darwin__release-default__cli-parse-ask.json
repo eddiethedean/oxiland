@@ -6,35 +6,44 @@
   "profile_id": "aarch64-apple-darwin/release-default",
   "target": "aarch64-apple-darwin",
   "build_profile": "release-default",
-  "git_revision": "37d480ffd493e1e6549254cc587322e16afb7c4a",
-  "clean_worktree": true,
-  "timestamp": "2026-08-02T04:54:41Z",
-  "elapsed_ms": 35,
+  "git_revision": "0448e9962af0340ef1238e58b70b7e4cf5b5f24e",
+  "clean_worktree": false,
+  "timestamp": "2026-08-03T02:09:29Z",
+  "elapsed_ms": 48,
   "synthetic": false,
-  "execution_id": "798fdc4f0a2074fb06562fc391631624d553ace11cb3da86bdebc56efdfd22ae",
+  "oracle": {
+    "redland": "compatibility/harness/c_oracle/bin/oracle-redland",
+    "oxiland": "compatibility/harness/c_oracle/bin/oracle-oxiland"
+  },
+  "execution_id": "fce6d7ab1ee833cd84348fe39cf6adab5d0e90f32737e41e6fd42a24365e7597",
   "artifacts": {
     "redland_library": "/opt/homebrew/opt/redland/lib/librdf.dylib",
     "redland_library_sha256": "934d01aa41b8287303ccee269c46656166bb47f8aa585915035697e82202abfc",
-    "oxiland_library": null,
-    "oxiland_library_sha256": null,
+    "oxiland_library": "/Volumes/T7/coding/oxiland/target/release/compat/librdf.0.dylib",
+    "oxiland_library_sha256": "0096a270920b8ffc521089e2f31ac0d6436ba8d9fcac9883319b7b21b433a7a3",
     "fixture_sha256": "26b7f14f548e36e17e23a5ec62bb81d0f09124f11bfffa829cc7b7e285a86c01"
   },
   "redland": {
-    "engine": "redland-rdfproc",
     "ok": true,
-    "bytes": "<http://example.org/s> <http://example.org/p> <http://example.org/o> .",
+    "engine": "redland-c",
+    "fixture_id": "cli-parse-ask",
     "size": 1,
+    "ask": true,
     "stream_count": 1,
     "parsed": true,
-    "ask": true,
-    "select_count": 1,
-    "contains_ok": true,
-    "nodes": 2
+    "contains_ok": false,
+    "world": "open"
   },
   "oxiland": {
-    "engine": "oxiland-python",
     "ok": true,
-    "ask": true
+    "engine": "oxiland-c",
+    "fixture_id": "cli-parse-ask",
+    "size": 1,
+    "ask": true,
+    "stream_count": 1,
+    "parsed": true,
+    "contains_ok": false,
+    "world": "open"
   },
   "comparison": {
     "passed": true,

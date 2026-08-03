@@ -1,0 +1,14 @@
+{
+  "id": "model-boundary-empty",
+  "description": "Empty memory model reports size zero",
+  "normalization_profile": "rdf-dataset",
+  "category": "boundary",
+  "steps": [
+    {"op": "world_open"},
+    {"op": "storage_memory"},
+    {"op": "model_from_storage"},
+    {"op": "model_size"},
+    {"op": "world_close"}
+  ],
+  "expect": {"ok": true, "size": 0}
+}

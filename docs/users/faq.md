@@ -12,8 +12,7 @@ for your platform/Python, it may attempt a source build and fail. Use CPython
 3.10–3.14 on a platform with published wheels, or build from a git checkout with
 maturin ([Python installation guide](python-installation.md)).
 
-The latest project release tag is **0.9.0**; tip **0.10.0** remains unreleased
-until its qualification gates pass.
+Tip **0.11.0** is the current package version.
 
 ## Why not use Oxigraph directly?
 

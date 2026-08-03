@@ -2,9 +2,8 @@
 
 !!! info "Release status"
 
-    The latest project release tag is **0.9.0**. This tip is **0.10.0**
-    (unreleased) until its release-candidate gates pass. Pin published wheels
-    as shown below; build from a git checkout for tip APIs.
+    Tip **0.11.0** is the current package version. Pin as shown below, or build
+    from a git checkout for unreleased tip APIs.
 
 ## Supported runtime
 
@@ -31,7 +30,7 @@ Create an isolated environment and upgrade `pip` before installing:
     python3 -m venv .venv
     source .venv/bin/activate
     python -m pip install --upgrade pip
-    python -m pip install oxiland==0.9.0
+    python -m pip install oxiland==0.11.0
     ```
 
 === "Windows PowerShell"
@@ -40,7 +39,7 @@ Create an isolated environment and upgrade `pip` before installing:
     py -m venv .venv
     .venv\Scripts\Activate.ps1
     python -m pip install --upgrade pip
-    python -m pip install oxiland==0.9.0
+    python -m pip install oxiland==0.11.0
     ```
 
 Confirm the installed runtime before deployment:
@@ -52,7 +51,7 @@ python -c "import oxiland; print(oxiland.__version__)"
 ```python
 import oxiland
 
-assert tuple(map(int, oxiland.__version__.split("."))) >= (0, 9, 0)
+assert tuple(map(int, oxiland.__version__.split("."))) >= (0, 11, 0)
 assert oxiland.Model().backend == "memory"
 ```
 
@@ -63,7 +62,7 @@ application:
 
 ```text
 # requirements.in
-oxiland==0.9.0
+oxiland==0.11.0
 ```
 
 For environments that require artifact integrity, download the wheel and

@@ -4,16 +4,17 @@ use crate::alloc::strdup_c;
 use crate::error::{abort_on_panic, clear_last_error, set_last_error};
 use crate::handles::io::{FILE, write_file};
 use crate::handles::model::librdf_model;
-use crate::handles::node::librdf_node;
+use crate::handles::node::{NodeInner, librdf_node};
 use crate::handles::stream::{
     librdf_stream, librdf_stream_end, librdf_stream_get_object, librdf_stream_next,
 };
 use crate::handles::uri::librdf_uri;
-use crate::handles::world::{RegisteredFactory, invoke_factory, librdf_world};
+use crate::handles::world::{register_baseline_serializer, reject_factory_callback, librdf_world};
 use crate::handles::{
-    TAG_MODEL, TAG_SERIALIZER, TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle,
+    TAG_MODEL, TAG_NODE, TAG_SERIALIZER, TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle,
     cstr_optional, cstr_required, free_handle,
 };
+use oxigraph::model::Term;
 use oxiland::io::{Serializer, Syntax};
 use std::ffi::c_void;
 use std::os::raw::c_char;
@@ -23,6 +24,8 @@ pub type librdf_serializer = TypedHandle<SerializerInner>;
 
 pub struct SerializerInner {
     pub syntax: Syntax,
+    pub features: std::collections::HashMap<String, String>,
+    pub namespaces: std::collections::HashMap<String, String>,
 }
 
 fn resolve_syntax(name: Option<&str>, mime: Option<&str>) -> Result<Syntax, String> {
@@ -46,7 +49,7 @@ pub extern "C" fn librdf_new_serializer(
     abort_on_panic(|| {
         clear_last_error();
         // SAFETY: world is null or a live world handle.
-        let Some(world_handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
+        let Some(_world_handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
             return ptr::null_mut();
         };
         // SAFETY: optional C strings.
@@ -59,20 +62,15 @@ pub extern "C" fn librdf_new_serializer(
             Err(()) => return ptr::null_mut(),
         };
         match resolve_syntax(name, mime) {
-            Ok(syntax) => box_handle(TAG_SERIALIZER, SerializerInner { syntax }),
+            Ok(syntax) => box_handle(
+                TAG_SERIALIZER,
+                SerializerInner {
+                    syntax,
+                    features: std::collections::HashMap::new(),
+                    namespaces: std::collections::HashMap::new(),
+                },
+            ),
             Err(error) => {
-                if let Some(name) = name {
-                    let key = name.to_ascii_lowercase();
-                    if let Some(entry) = world_handle.inner.serializer_factories.get(&key) {
-                        invoke_factory(entry.factory);
-                        return box_handle(
-                            TAG_SERIALIZER,
-                            SerializerInner {
-                                syntax: Syntax::Turtle,
-                            },
-                        );
-                    }
-                }
                 set_last_error(error);
                 ptr::null_mut()
             }
@@ -452,36 +450,80 @@ pub extern "C" fn librdf_serializer_serialize_stream_to_iostream(
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_serializer_get_feature(
     serializer: *mut librdf_serializer,
-    _feature: *mut librdf_uri,
+    feature: *mut librdf_uri,
 ) -> *mut librdf_node {
-    let _ = serializer;
-    ptr::null_mut()
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(serializer) = (unsafe { borrow_handle(serializer, TAG_SERIALIZER) }) else {
+            return ptr::null_mut();
+        };
+        let Some(feature) = (unsafe { borrow_handle(feature, TAG_URI) }) else {
+            return ptr::null_mut();
+        };
+        match serializer.inner.features.get(feature.inner.node.as_str()) {
+            Some(v) => box_handle(
+                TAG_NODE,
+                NodeInner::from_term(Term::Literal(oxigraph::model::Literal::new_simple_literal(
+                    v,
+                ))),
+            ),
+            None => ptr::null_mut(),
+        }
+    })
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_serializer_set_feature(
     serializer: *mut librdf_serializer,
-    _feature: *mut librdf_uri,
-    _value: *mut librdf_node,
+    feature: *mut librdf_uri,
+    value: *mut librdf_node,
 ) -> i32 {
-    if unsafe { borrow_handle(serializer, TAG_SERIALIZER) }.is_none() {
-        -1
-    } else {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(serializer) = (unsafe { borrow_handle(serializer, TAG_SERIALIZER) }) else {
+            return -1;
+        };
+        let Some(feature) = (unsafe { borrow_handle(feature, TAG_URI) }) else {
+            return -1;
+        };
+        let Some(value) = (unsafe { borrow_handle(value, TAG_NODE) }) else {
+            return -1;
+        };
+        let text = match &value.inner.term {
+            Term::Literal(l) => l.value().to_owned(),
+            other => other.to_string(),
+        };
+        serializer
+            .inner
+            .features
+            .insert(feature.inner.node.as_str().to_owned(), text);
         0
-    }
+    })
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_serializer_set_namespace(
     serializer: *mut librdf_serializer,
-    _uri: *mut librdf_uri,
-    _prefix: *const c_char,
+    uri: *mut librdf_uri,
+    prefix: *const c_char,
 ) -> i32 {
-    if unsafe { borrow_handle(serializer, TAG_SERIALIZER) }.is_none() {
-        -1
-    } else {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(serializer) = (unsafe { borrow_handle(serializer, TAG_SERIALIZER) }) else {
+            return -1;
+        };
+        let Some(uri) = (unsafe { borrow_handle(uri, TAG_URI) }) else {
+            return -1;
+        };
+        let Some(prefix) = (unsafe { cstr_required(prefix, "prefix") }) else {
+            return -1;
+        };
+        serializer
+            .inner
+            .namespaces
+            .insert(prefix.to_owned(), uri.inner.node.as_str().to_owned());
         0
-    }
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -490,7 +532,13 @@ pub extern "C" fn librdf_serializer_set_error(
     _user_data: *mut c_void,
     _error_fn: *mut c_void,
 ) {
-    let _ = serializer;
+    abort_on_panic(|| {
+        clear_last_error();
+        if unsafe { borrow_handle(serializer, TAG_SERIALIZER) }.is_none() {
+            return;
+        }
+        set_last_error("librdf_serializer_set_error is unsupported");
+    });
 }
 
 #[unsafe(no_mangle)]
@@ -499,7 +547,13 @@ pub extern "C" fn librdf_serializer_set_warning(
     _user_data: *mut c_void,
     _warning_fn: *mut c_void,
 ) {
-    let _ = serializer;
+    abort_on_panic(|| {
+        clear_last_error();
+        if unsafe { borrow_handle(serializer, TAG_SERIALIZER) }.is_none() {
+            return;
+        }
+        set_last_error("librdf_serializer_set_warning is unsupported");
+    });
 }
 
 #[unsafe(no_mangle)]
@@ -519,15 +573,14 @@ pub extern "C" fn librdf_serializer_register_factory(
         let Some(name) = (unsafe { cstr_required(name, "name") }) else {
             return;
         };
-        let key = name.to_ascii_lowercase();
-        invoke_factory(factory);
-        handle.inner.registered_serializers.push(name.to_owned());
-        handle.inner.serializer_factories.insert(
-            key,
-            RegisteredFactory {
-                name: name.to_owned(),
-                factory,
-            },
-        );
+        if reject_factory_callback(factory) {
+            set_last_error(
+                "serializer factory callbacks are unsupported; register baseline names only",
+            );
+            return;
+        }
+        if let Err(error) = register_baseline_serializer(&mut handle.inner, name) {
+            set_last_error(error);
+        }
     });
 }

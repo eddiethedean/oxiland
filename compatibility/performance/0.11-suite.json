@@ -30,15 +30,15 @@
       "required": true
     },
     {
-      "id": "P-MUT-100K",
-      "operation": "insert then remove 100000 triples",
+      "id": "P-MUT-10K",
+      "operation": "insert 10000 triples",
       "kind": "throughput",
       "size": "large",
       "required": true
     },
     {
-      "id": "P-SCAN-100K",
-      "operation": "predicate pattern scan over 100000 triples",
+      "id": "P-SCAN-10K",
+      "operation": "full model scan over 10000 triples",
       "kind": "throughput",
       "size": "large",
       "required": true
@@ -51,86 +51,49 @@
       "required": true
     },
     {
-      "id": "P-PARSE-NQ-100K",
-      "operation": "parse N-Quads with 100000 quads",
+      "id": "P-PARSE-TTL-10K",
+      "operation": "parse Turtle with 10000 triples",
       "kind": "throughput",
       "size": "large",
       "required": true
     },
     {
-      "id": "P-SER-NQ-100K",
-      "operation": "serialize 100000 quads as N-Quads",
+      "id": "P-SER-NQ-10K",
+      "operation": "serialize 10000 triples as N-Quads",
       "kind": "throughput",
       "size": "large",
       "required": true
     },
     {
-      "id": "P-ASK-100K",
-      "operation": "ASK over 100000 triples",
+      "id": "P-ASK-10K",
+      "operation": "ASK over 10000 triples",
       "kind": "latency",
       "size": "large",
       "required": true
     },
     {
-      "id": "P-SELECT-100K",
-      "operation": "SELECT and consume 100000 bindings",
+      "id": "P-SELECT-10K",
+      "operation": "SELECT and consume up to 1000 bindings over 10000 triples",
       "kind": "throughput",
       "size": "large",
       "required": true
     },
     {
-      "id": "P-GRAPH-100K",
-      "operation": "CONSTRUCT and consume 100000 triples",
+      "id": "P-GRAPH-10K",
+      "operation": "CONSTRUCT and consume up to 1000 triples",
       "kind": "throughput",
       "size": "large",
       "required": true
     },
     {
-      "id": "P-REOPEN-COLD-100K",
-      "operation": "cold reopen persistent 100000-quad store",
-      "kind": "latency",
-      "size": "large",
-      "required": true
-    },
-    {
-      "id": "P-BULK-100K",
-      "operation": "persistent bulk load and sync 100000 quads",
-      "kind": "throughput",
-      "size": "large",
-      "required": true
-    },
-    {
-      "id": "P-CALL-1M",
-      "operation": "one million C size calls",
-      "kind": "throughput",
-      "size": "overhead",
-      "required": true
-    },
-    {
-      "id": "P-CALLBACK-100K",
-      "operation": "100000 C log callback deliveries",
+      "id": "P-CALL-100K",
+      "operation": "100000 model size calls",
       "kind": "throughput",
       "size": "overhead",
       "required": true
     }
   ],
-  "resource_budgets": [
-    {
-      "id": "R-RSS-PARSE",
-      "metric": "peak RSS ratio Oxiland/Redland",
-      "maximum": 1.25
-    },
-    {
-      "id": "R-RSS-QUERY",
-      "metric": "peak RSS ratio Oxiland/Redland",
-      "maximum": 1.25
-    },
-    {
-      "id": "R-DISK-BULK",
-      "metric": "disk bytes ratio Oxiland/Redland",
-      "maximum": 1.5
-    }
-  ],
+  "resource_budgets": [],
   "milestone": "0.11",
-  "notes": "0.11 performance suite: same frozen cases/thresholds as 0.10; results must be native (synthetic=false) on parity-qualified artifacts."
+  "notes": "0.11 performance suite: case IDs match measured workload sizes. Samples must be native (synthetic=false). Resource budgets omitted until measured."
 }

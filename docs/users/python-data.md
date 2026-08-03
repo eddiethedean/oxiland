@@ -59,7 +59,8 @@ from oxiland import Model, load, load_path
 model = Model()
 
 count = load(model, turtle_text, "turtle")
-count += load_path(model, "catalog.trig", transactional=True)
+# Named-graph TriG/N-Quads need an explicit graph= target in Python today.
+count += load_path(model, "catalog.ttl", transactional=True)
 ```
 
 Choose failure behavior explicitly:

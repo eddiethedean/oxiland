@@ -65,8 +65,8 @@ pub use handles::list::{
 };
 
 pub use handles::log_msg::{
-    librdf_log, librdf_log_message_code, librdf_log_message_facility, librdf_log_message_level,
-    librdf_log_message_locator, librdf_log_message_message,
+    librdf_log_message_code, librdf_log_message_facility, librdf_log_message_level,
+    librdf_log_message_locator, librdf_log_message_message, oxiland_librdf_log_fixed,
 };
 
 pub use handles::model::{

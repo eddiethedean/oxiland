@@ -10,7 +10,7 @@ use crate::handles::statement::StatementInner;
 use crate::handles::stream::{StreamInner, librdf_stream};
 use crate::handles::uri::librdf_uri;
 use crate::handles::world::{
-    RegisteredFactory, invoke_factory, librdf_world,
+    register_baseline_parser, reject_factory_callback, librdf_world,
 };
 use crate::handles::{
     TAG_MODEL, TAG_NODE, TAG_PARSER, TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle,
@@ -30,6 +30,8 @@ pub type librdf_parser = TypedHandle<ParserInner>;
 pub struct ParserInner {
     pub syntax: Syntax,
     pub features: HashMap<String, String>,
+    pub uri_filter: *mut c_void,
+    pub uri_filter_user_data: *mut c_void,
 }
 
 fn resolve_syntax(name: Option<&str>, mime: Option<&str>) -> Result<Syntax, String> {
@@ -53,7 +55,7 @@ pub extern "C" fn librdf_new_parser(
     abort_on_panic(|| {
         clear_last_error();
         // SAFETY: world is null or a live world handle.
-        let Some(world_handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
+        let Some(_world_handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
             return ptr::null_mut();
         };
         // SAFETY: optional C strings.
@@ -71,23 +73,12 @@ pub extern "C" fn librdf_new_parser(
                 ParserInner {
                     syntax,
                     features: HashMap::new(),
+                    uri_filter: ptr::null_mut(),
+                    uri_filter_user_data: ptr::null_mut(),
                 },
             ),
             Err(error) => {
-                // Registered custom factories: invoke init callback and fall back to Turtle.
-                if let Some(name) = name {
-                    let key = name.to_ascii_lowercase();
-                    if let Some(entry) = world_handle.inner.parser_factories.get(&key) {
-                        invoke_factory(entry.factory);
-                        return box_handle(
-                            TAG_PARSER,
-                            ParserInner {
-                                syntax: Syntax::Turtle,
-                                features: HashMap::new(),
-                            },
-                        );
-                    }
-                }
+                // ADR-025: unknown / custom factories must fail observably.
                 set_last_error(error);
                 ptr::null_mut()
             }
@@ -515,6 +506,10 @@ pub extern "C" fn librdf_parser_parse_file_handle_as_stream(
             let mut buf = [0u8; 4096];
             let n = unsafe { libc::fread(buf.as_mut_ptr().cast(), 1, buf.len(), fh) };
             if n == 0 {
+                if unsafe { libc::ferror(fh) } != 0 {
+                    set_last_error("fread I/O error while parsing file handle");
+                    return ptr::null_mut();
+                }
                 break;
             }
             bytes.extend_from_slice(&buf[..n]);
@@ -594,8 +589,14 @@ pub extern "C" fn librdf_parser_get_accept_header(parser: *mut librdf_parser) ->
 
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_parser_get_namespaces_seen_count(parser: *mut librdf_parser) -> i32 {
-    let _ = unsafe { borrow_handle(parser, TAG_PARSER) };
-    0
+    abort_on_panic(|| {
+        clear_last_error();
+        if unsafe { borrow_handle(parser, TAG_PARSER) }.is_none() {
+            return -1;
+        }
+        set_last_error("librdf_parser_get_namespaces_seen_* is unsupported");
+        -1
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -603,8 +604,12 @@ pub extern "C" fn librdf_parser_get_namespaces_seen_prefix(
     parser: *mut librdf_parser,
     _ordinal: i32,
 ) -> *const c_char {
-    let _ = parser;
-    ptr::null()
+    abort_on_panic(|| {
+        clear_last_error();
+        let _ = parser;
+        set_last_error("librdf_parser_get_namespaces_seen_* is unsupported");
+        ptr::null()
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -612,8 +617,12 @@ pub extern "C" fn librdf_parser_get_namespaces_seen_uri(
     parser: *mut librdf_parser,
     _ordinal: i32,
 ) -> *mut librdf_uri {
-    let _ = parser;
-    ptr::null_mut()
+    abort_on_panic(|| {
+        clear_last_error();
+        let _ = parser;
+        set_last_error("librdf_parser_get_namespaces_seen_* is unsupported");
+        ptr::null_mut()
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -689,18 +698,38 @@ pub extern "C" fn librdf_parser_set_warning(
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn librdf_parser_get_uri_filter(parser: *mut librdf_parser) -> *mut c_void {
-    let _ = parser;
-    ptr::null_mut()
+pub extern "C" fn librdf_parser_get_uri_filter(
+    parser: *mut librdf_parser,
+    user_data_p: *mut *mut c_void,
+) -> *mut c_void {
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(handle) = (unsafe { borrow_handle(parser, TAG_PARSER) }) else {
+            return ptr::null_mut();
+        };
+        if !user_data_p.is_null() {
+            unsafe {
+                *user_data_p = handle.inner.uri_filter_user_data;
+            }
+        }
+        handle.inner.uri_filter
+    })
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_parser_set_uri_filter(
     parser: *mut librdf_parser,
-    _filter: *mut c_void,
-    _user_data: *mut c_void,
+    filter: *mut c_void,
+    user_data: *mut c_void,
 ) {
-    let _ = parser;
+    abort_on_panic(|| {
+        clear_last_error();
+        let Some(handle) = (unsafe { borrow_handle(parser, TAG_PARSER) }) else {
+            return;
+        };
+        handle.inner.uri_filter = filter;
+        handle.inner.uri_filter_user_data = user_data;
+    });
 }
 
 #[unsafe(no_mangle)]
@@ -720,16 +749,15 @@ pub extern "C" fn librdf_parser_register_factory(
         let Some(name) = (unsafe { cstr_required(name, "name") }) else {
             return;
         };
-        let key = name.to_ascii_lowercase();
-        // Invoke init callback at registration time (Redland-shaped).
-        invoke_factory(factory);
-        handle.inner.registered_parsers.push(name.to_owned());
-        handle.inner.parser_factories.insert(
-            key,
-            RegisteredFactory {
-                name: name.to_owned(),
-                factory,
-            },
-        );
+        // ADR-025: never execute caller factory callbacks; reject non-baseline names.
+        if reject_factory_callback(factory) {
+            set_last_error(
+                "parser factory callbacks are unsupported; register baseline names only",
+            );
+            return;
+        }
+        if let Err(error) = register_baseline_parser(&mut handle.inner, name) {
+            set_last_error(error);
+        }
     });
 }

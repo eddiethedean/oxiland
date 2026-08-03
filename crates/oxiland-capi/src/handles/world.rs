@@ -12,6 +12,7 @@ use oxiland::{LogFacility, LogLevel, World};
 use std::ffi::c_void;
 use std::os::raw::c_char;
 use std::ptr;
+use std::sync::atomic::{AtomicPtr, Ordering};
 use std::sync::Mutex;
 
 pub type librdf_world = TypedHandle<WorldInner>;
@@ -38,12 +39,14 @@ pub type librdf_rasqal_init_handler = Option<
 >;
 
 /// Redland-shaped factory init callback (`void (*)(librdf_*_factory*)`).
+///
+/// ADR-025: Oxiland does **not** execute caller-supplied factory callbacks. The
+/// type is retained for signature compatibility with Redland registration APIs.
 pub type FactoryInitFn = Option<unsafe extern "C" fn(*mut c_void)>;
 
-/// Stored `librdf_*_register_factory` entry.
+/// Stored `librdf_*_register_factory` entry (name only; callbacks are never run).
 pub struct RegisteredFactory {
     pub name: String,
-    pub factory: FactoryInitFn,
 }
 
 pub struct WorldInner {
@@ -100,15 +103,62 @@ pub extern "C" fn librdf_new_world() -> *mut librdf_world {
     })
 }
 
-/// Invokes a stored factory init callback with an opaque cookie, if present.
-pub(crate) fn invoke_factory(factory: FactoryInitFn) {
-    if let Some(cb) = factory {
-        let mut cookie: usize = 0;
-        // SAFETY: caller-registered C callback; cookie is a valid stack address for the call.
-        unsafe {
-            cb((&mut cookie as *mut usize).cast());
-        }
-    }
+/// ADR-025: do not execute caller-supplied factory callbacks (fake cookies are UB).
+pub(crate) fn reject_factory_callback(factory: FactoryInitFn) -> bool {
+    factory.is_some()
+}
+
+/// Records a baseline factory name on the world after validating via oxiland::factory.
+pub(crate) fn register_baseline_parser(
+    handle: &mut WorldInner,
+    name: &str,
+) -> Result<(), String> {
+    oxiland::factory::register_parser_factory(name).map_err(|e| e.to_string())?;
+    let key = name.to_ascii_lowercase();
+    handle.registered_parsers.push(name.to_owned());
+    handle
+        .parser_factories
+        .insert(key, RegisteredFactory { name: name.to_owned() });
+    Ok(())
+}
+
+pub(crate) fn register_baseline_serializer(
+    handle: &mut WorldInner,
+    name: &str,
+) -> Result<(), String> {
+    oxiland::factory::register_serializer_factory(name).map_err(|e| e.to_string())?;
+    let key = name.to_ascii_lowercase();
+    handle.registered_serializers.push(name.to_owned());
+    handle
+        .serializer_factories
+        .insert(key, RegisteredFactory { name: name.to_owned() });
+    Ok(())
+}
+
+pub(crate) fn register_baseline_storage(
+    handle: &mut WorldInner,
+    name: &str,
+) -> Result<(), String> {
+    oxiland::factory::register_storage_factory(name).map_err(|e| e.to_string())?;
+    let key = name.to_ascii_lowercase();
+    handle.registered_storages.push(name.to_owned());
+    handle
+        .storage_factories
+        .insert(key, RegisteredFactory { name: name.to_owned() });
+    Ok(())
+}
+
+pub(crate) fn register_baseline_query(
+    handle: &mut WorldInner,
+    name: &str,
+) -> Result<(), String> {
+    oxiland::factory::register_query_factory(name).map_err(|e| e.to_string())?;
+    let key = name.to_ascii_lowercase();
+    handle.registered_queries.push(name.to_owned());
+    handle
+        .query_factories
+        .insert(key, RegisteredFactory { name: name.to_owned() });
+    Ok(())
 }
 
 /// Frees a world. Null is a no-op.
@@ -169,35 +219,34 @@ pub extern "C" fn librdf_log_simple(
 ) {
     abort_on_panic(|| {
         clear_last_error();
-        let logger = {
-            let Some(handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
-                return;
-            };
-            let msg = match unsafe { cstr_optional(message, "message") } {
-                Ok(Some(m)) => m.to_owned(),
-                Ok(None) => String::new(),
-                Err(()) => return,
-            };
-            let ox_level = match level {
-                0 => LogLevel::Debug,
-                1 => LogLevel::Info,
-                2 => LogLevel::Warn,
-                _ => LogLevel::Error,
-            };
-            handle
-                .inner
-                .world
-                .log(ox_level, LogFacility::General, msg.clone());
-            let logger = *handle
-                .inner
-                .logger
-                .lock()
-                .unwrap_or_else(|e| e.into_inner());
-            (logger, msg)
+        let Some(handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
+            return;
         };
-        if let (Some((Some(cb), user_data)), msg) = logger {
-            let cmsg = std::ffi::CString::new(msg).unwrap_or_default();
-            // SAFETY: callback registered by librdf_world_set_logger; message is live CString.
+        let msg = match unsafe { cstr_optional(message, "message") } {
+            Ok(Some(m)) => m.to_owned(),
+            Ok(None) => String::new(),
+            Err(()) => return,
+        };
+        let ox_level = match level {
+            0 => LogLevel::Debug,
+            1 => LogLevel::Info,
+            2 => LogLevel::Warn,
+            _ => LogLevel::Error,
+        };
+        handle
+            .inner
+            .world
+            .log(ox_level, LogFacility::General, msg.clone());
+        let logger = *handle
+            .inner
+            .logger
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        let error_handler = handle.inner.error_handler;
+        let warning_handler = handle.inner.warning_handler;
+        let cmsg = std::ffi::CString::new(msg).unwrap_or_default();
+        if let Some((Some(cb), user_data)) = logger {
+            // SAFETY: callback registered by librdf_world_set_logger.
             unsafe {
                 cb(
                     user_data,
@@ -209,10 +258,19 @@ pub extern "C" fn librdf_log_simple(
                 );
             }
         }
+        if level >= 3 {
+            if let Some((Some(cb), user_data)) = error_handler {
+                unsafe { cb(user_data, cmsg.as_ptr()) };
+            }
+        } else if level == 2 {
+            if let Some((Some(cb), user_data)) = warning_handler {
+                unsafe { cb(user_data, cmsg.as_ptr()) };
+            }
+        }
     });
 }
 
-static mut GLOBAL_WORLD: *mut librdf_world = std::ptr::null_mut();
+static GLOBAL_WORLD: AtomicPtr<librdf_world> = AtomicPtr::new(std::ptr::null_mut());
 
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_world_init_mutex(world: *mut librdf_world) {
@@ -385,7 +443,11 @@ pub extern "C" fn librdf_world_set_feature(
         handle
             .inner
             .features
-            .insert(feature.inner.node.as_str().to_owned(), text);
+            .insert(feature.inner.node.as_str().to_owned(), text.clone());
+        handle.inner.world.set_feature(
+            feature.inner.node.as_str(),
+            oxiland::FeatureValue::String(text),
+        );
         0
     })
 }
@@ -394,17 +456,15 @@ pub extern "C" fn librdf_world_set_feature(
 pub extern "C" fn librdf_init_world(digest_factory_name: *mut c_char, _not_used2: *mut c_void) {
     abort_on_panic(|| {
         clear_last_error();
-        unsafe {
-            if !GLOBAL_WORLD.is_null() {
-                return;
-            }
+        if !GLOBAL_WORLD.load(Ordering::SeqCst).is_null() {
+            return;
         }
         let world = librdf_new_world();
         if !digest_factory_name.is_null() {
             librdf_world_set_digest(world, digest_factory_name);
         }
         librdf_world_open(world);
-        unsafe { GLOBAL_WORLD = world };
+        GLOBAL_WORLD.store(world, Ordering::SeqCst);
     });
 }
 
@@ -412,8 +472,7 @@ pub extern "C" fn librdf_init_world(digest_factory_name: *mut c_char, _not_used2
 pub extern "C" fn librdf_destroy_world() {
     abort_on_panic(|| {
         clear_last_error();
-        let world = unsafe { GLOBAL_WORLD };
-        unsafe { GLOBAL_WORLD = ptr::null_mut() };
+        let world = GLOBAL_WORLD.swap(ptr::null_mut(), Ordering::SeqCst);
         librdf_free_world(world);
     });
 }

@@ -2,8 +2,8 @@
 """Generate the 0.11 behavior-obligation catalog from the candidate inventory.
 
 Every public inventory row receives positive, boundary, failure, and lifecycle
-obligations. Shared subsystem fixtures cover families of symbols; the harness
-and release checker derive pass/fail from raw two-sided executions.
+obligations. Categories map only to fixtures that exercise that category;
+shallow positive fixtures no longer auto-cover failure/boundary.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ BASELINE = ROOT / "compatibility/baseline/0.11-baseline-manifest.json"
 CATEGORIES = ("positive", "boundary", "failure", "lifecycle")
 
 # Subsystem → shared fixture covering the family (path relative to repo root).
-SUBSYSTEM_FIXTURES = {
+POSITIVE_FIXTURES = {
     "init": "compatibility/fixtures/0.11/world-lifecycle.json",
     "world": "compatibility/fixtures/0.11/world-lifecycle.json",
     "uri": "compatibility/fixtures/0.11/uri-node.json",
@@ -47,13 +47,19 @@ SUBSYSTEM_FIXTURES = {
     "utility": "compatibility/fixtures/0.11/cli-parse-ask.json",
 }
 
+BOUNDARY_FIXTURE = "compatibility/fixtures/0.11/model-boundary-empty.json"
+FAILURE_FIXTURE = "compatibility/fixtures/0.11/parse-turtle-failure.json"
+LIFECYCLE_FIXTURE = "compatibility/fixtures/0.11/world-lifecycle.json"
 
-def fixture_for(subsystem: str, symbol: str) -> str:
-    if symbol.startswith("librdf_free_") or symbol.startswith("librdf_new_"):
-        return SUBSYSTEM_FIXTURES.get(subsystem, "compatibility/fixtures/0.11/world-lifecycle.json")
-    return SUBSYSTEM_FIXTURES.get(
-        subsystem, "compatibility/fixtures/0.11/world-lifecycle.json"
-    )
+
+def fixture_for(subsystem: str, category: str) -> str:
+    if category == "failure":
+        return FAILURE_FIXTURE
+    if category == "boundary":
+        return BOUNDARY_FIXTURE
+    if category == "lifecycle":
+        return LIFECYCLE_FIXTURE
+    return POSITIVE_FIXTURES.get(subsystem, LIFECYCLE_FIXTURE)
 
 
 def observations_for(category: str) -> list[str]:
@@ -78,7 +84,6 @@ def main() -> int:
         inv_id = entry["id"]
         symbol = entry["symbol"]
         subsystem = entry.get("subsystem") or "utility"
-        fixture = fixture_for(subsystem, symbol)
         for category in CATEGORIES:
             obl_id = f"obl.{inv_id}.{category}"
             obligations.append(
@@ -87,7 +92,7 @@ def main() -> int:
                     "inventory_ids": [inv_id],
                     "symbol": symbol,
                     "category": category,
-                    "fixture": fixture,
+                    "fixture": fixture_for(subsystem, category),
                     "normalization_profile": (
                         "diagnostics"
                         if category == "failure"
@@ -109,9 +114,11 @@ def main() -> int:
         "obligation_count": len(obligations),
         "categories": list(CATEGORIES),
         "notes": (
-            "Every public inventory row links four obligations. States start as "
-            "unreviewed and may only become verified from raw two-sided harness "
-            "results (never from symbol presence)."
+            "Every public inventory row links four obligations. Failure and "
+            "boundary map to dedicated fixtures; positive maps to subsystem "
+            "fixtures; lifecycle maps to world open/close. States start as "
+            "unreviewed and may only become verified from raw two-sided C "
+            "oracle harness results."
         ),
         "obligations": obligations,
     }

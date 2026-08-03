@@ -6,17 +6,16 @@ supported persistent-store contract behind one error model.
 
 ## Install
 
-Oxiland requires Rust 1.87+. The latest project release tag is **0.9.0**; this
-tip is **0.10.0** (unreleased) until every release-candidate gate passes.
+Oxiland requires Rust 1.87+. Tip **0.11.0** is the current package version.
 
-**Published release (crates.io):**
+**Published / tip pin:**
 
 ```toml
 [dependencies]
-oxiland = "0.9.0"
+oxiland = "0.11.0"
 ```
 
-**This repository tip (0.10.0 APIs):**
+**This repository tip (git checkout):**
 
 ```toml
 [dependencies]

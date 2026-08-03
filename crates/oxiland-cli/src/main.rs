@@ -238,8 +238,14 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             let mut names = std::collections::BTreeSet::new();
             for item in model.find(StatementPattern::default()) {
                 let quad = item?;
-                if let GraphName::NamedNode(node) = quad.graph_name {
-                    names.insert(node.as_str().to_owned());
+                match quad.graph_name {
+                    GraphName::NamedNode(node) => {
+                        names.insert(node.as_str().to_owned());
+                    }
+                    GraphName::BlankNode(node) => {
+                        names.insert(format!("_:{}", node.as_str()));
+                    }
+                    GraphName::DefaultGraph => {}
                 }
             }
             for name in names {
@@ -328,7 +334,20 @@ fn parse_named_or_blank(raw: &str) -> Result<NamedOrBlankNode, Box<dyn std::erro
 }
 
 fn parse_term(raw: &str) -> Result<Term, Box<dyn std::error::Error>> {
-    if raw.contains("^^") || raw.contains('@') && raw.starts_with('"') {
+    // Typed (`"…"^^…`) or language-tagged (`"…"@…`) literals are unsupported as
+    // CLI node arguments. A bare `@` inside a simple quoted literal (e.g.
+    // `"user@example.com"`) must still parse as a simple literal.
+    let is_typed_or_lang = if let Some(inner) = raw.strip_prefix('"') {
+        if let Some(end) = inner.rfind('"') {
+            let suffix = &inner[end + 1..];
+            suffix.starts_with("^^") || suffix.starts_with('@')
+        } else {
+            false
+        }
+    } else {
+        raw.contains("^^")
+    };
+    if is_typed_or_lang {
         return Err(
             "typed/language-tagged literals are not supported as CLI node arguments; use SPARQL Update or parse RDF"
                 .into(),

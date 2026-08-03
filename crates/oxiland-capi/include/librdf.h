@@ -49,9 +49,9 @@ typedef int (*librdf_log_func)(void *user_data, int code, int level, int facilit
 typedef void (*librdf_log_level_func)(void *user_data, const char *message);
 typedef void (*librdf_raptor_init_handler)(void *user_data, void *raptor_world_ptr);
 typedef void (*librdf_rasqal_init_handler)(void *user_data, void *rasqal_world_ptr);
-typedef void* (*librdf_iterator_map_handler)(void *item, void *context);
+typedef void* (*librdf_iterator_map_handler)(librdf_iterator *iterator, void *map_context, void *item);
 typedef void (*librdf_iterator_map_free_context_handler)(void *context);
-typedef void* (*librdf_stream_map_handler)(void *item, void *context);
+typedef void* (*librdf_stream_map_handler)(librdf_stream *stream, void *map_context, void *item);
 typedef void (*librdf_stream_map_free_context_handler)(void *context);
 
 void* librdf_alloc_memory(size_t size);
@@ -85,7 +85,7 @@ void librdf_free_stream(librdf_stream* stream);
 void librdf_free_uri(librdf_uri *uri);
 void librdf_free_world(librdf_world *world);
 librdf_uri* librdf_get_concept_ms_namespace(librdf_world *world);
-int librdf_get_concept_resource_by_index(void);
+librdf_node* librdf_get_concept_resource_by_index(librdf_world *world, unsigned int idx);
 librdf_uri* librdf_get_concept_schema_namespace(librdf_world *world);
 librdf_uri* librdf_get_concept_uri_by_index(librdf_world *world, unsigned int idx);
 int librdf_hash_from_string(librdf_hash* hash, const char *string);

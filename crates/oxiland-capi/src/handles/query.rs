@@ -6,7 +6,9 @@ use crate::handles::io::{FILE, write_file};
 use crate::handles::model::librdf_model;
 use crate::handles::node::{NodeInner, librdf_node};
 use crate::handles::uri::librdf_uri;
-use crate::handles::world::{RegisteredFactory, invoke_factory, librdf_world};
+use crate::handles::world::{
+    register_baseline_query, reject_factory_callback, librdf_world,
+};
 use crate::handles::{
     TAG_MODEL, TAG_NODE, TAG_QUERY, TAG_QUERY_RESULTS, TAG_QUERY_RESULTS_FORMATTER, TAG_STATEMENT,
     TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle, cstr_optional, cstr_required,
@@ -37,6 +39,8 @@ pub enum QueryResultsInner {
         index: usize,
         /// Nodes for the current row (owned by results; do not free from C).
         current_nodes: Vec<Option<*mut librdf_node>>,
+        /// Contiguous current-row node pointers for get_bindings.
+        value_cptrs: Vec<*mut librdf_node>,
         /// Cached binding name C strings for the lifetime of results.
         name_cptrs: Vec<*mut std::os::raw::c_char>,
     },
@@ -79,20 +83,26 @@ fn materialize_current(results: &mut QueryResultsInner) {
         rows,
         index,
         current_nodes,
+        value_cptrs,
         ..
     } = results
     else {
         return;
     };
     clear_current_nodes(current_nodes);
+    value_cptrs.clear();
     if let Some(row) = rows.get(*index) {
         for cell in row {
             match cell {
                 Some(term) => {
                     let ptr = box_handle(TAG_NODE, NodeInner::from_term(term.clone()));
                     current_nodes.push(Some(ptr));
+                    value_cptrs.push(ptr);
                 }
-                None => current_nodes.push(None),
+                None => {
+                    current_nodes.push(None);
+                    value_cptrs.push(ptr::null_mut());
+                }
             }
         }
     }
@@ -110,7 +120,7 @@ pub extern "C" fn librdf_new_query(
     abort_on_panic(|| {
         clear_last_error();
         // SAFETY: world is null or a live world handle.
-        let Some(world_handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
+        let Some(_world_handle) = (unsafe { borrow_handle(world, TAG_WORLD) }) else {
             return ptr::null_mut();
         };
         // SAFETY: C strings.
@@ -120,10 +130,6 @@ pub extern "C" fn librdf_new_query(
             Err(()) => return ptr::null_mut(),
         };
         let language = if language == "sparql" || language == "sparql11" {
-            "sparql".to_string()
-        } else if let Some(entry) = world_handle.inner.query_factories.get(&language) {
-            invoke_factory(entry.factory);
-            // Custom factories are accepted for registration lifecycle; execute via SPARQL.
             "sparql".to_string()
         } else {
             set_last_error(format!("unsupported query language '{language}'"));
@@ -205,6 +211,7 @@ pub extern "C" fn librdf_model_query_execute(
                     rows,
                     index: 0,
                     current_nodes: Vec::new(),
+                    value_cptrs: Vec::new(),
                     name_cptrs,
                 };
                 materialize_current(&mut inner);
@@ -478,11 +485,12 @@ pub extern "C" fn librdf_new_query_from_factory(
     world: *mut librdf_world,
     factory: *mut c_void,
     name: *const c_char,
+    uri: *mut librdf_uri,
     query_string: *const u8,
-    query_uri: *mut librdf_uri,
+    base_uri: *mut librdf_uri,
 ) -> *mut librdf_query {
     let _ = factory;
-    librdf_new_query(world, name, ptr::null_mut(), query_string.cast(), query_uri)
+    librdf_new_query(world, name, uri, query_string.cast(), base_uri)
 }
 
 #[unsafe(no_mangle)]
@@ -567,11 +575,8 @@ pub extern "C" fn librdf_query_language_get_description(
     _world: *mut librdf_world,
     counter: u32,
 ) -> *const c_void {
-    if counter == 0 {
-        std::ptr::dangling::<c_void>()
-    } else {
-        ptr::null()
-    }
+    let _ = counter;
+    ptr::null()
 }
 
 #[unsafe(no_mangle)]
@@ -589,16 +594,15 @@ pub extern "C" fn librdf_query_register_factory(
         let Some(name) = (unsafe { cstr_required(name, "name") }) else {
             return;
         };
-        let key = name.to_ascii_lowercase();
-        invoke_factory(factory);
-        handle.inner.registered_queries.push(name.to_owned());
-        handle.inner.query_factories.insert(
-            key,
-            RegisteredFactory {
-                name: name.to_owned(),
-                factory,
-            },
-        );
+        if reject_factory_callback(factory) {
+            set_last_error(
+                "query factory callbacks are unsupported; register baseline names only",
+            );
+            return;
+        }
+        if let Err(error) = register_baseline_query(&mut handle.inner, name) {
+            set_last_error(error);
+        }
     });
 }
 
@@ -643,18 +647,14 @@ pub extern "C" fn librdf_query_results_get_bindings(
         match &results.inner {
             QueryResultsInner::Bindings {
                 name_cptrs,
-                current_nodes,
+                value_cptrs,
                 ..
             } => {
                 if !names.is_null() {
                     unsafe { *names = name_cptrs.as_ptr() as *mut *const c_char };
                 }
                 if !values.is_null() {
-                    // Expose current_nodes as array of node pointers (Option flattened to null).
-                    // Store temporary contiguous vector on stack is insufficient; return error-free no-op layout.
-                    static mut EMPTY: *mut librdf_node = ptr::null_mut();
-                    let _ = current_nodes;
-                    unsafe { *values = &raw mut EMPTY };
+                    unsafe { *values = value_cptrs.as_ptr() as *mut *mut librdf_node };
                 }
                 0
             }

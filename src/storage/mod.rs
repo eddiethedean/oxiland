@@ -379,7 +379,7 @@ impl StorageCapabilities {
     #[must_use]
     pub const fn for_backend(backend: StorageBackend, read_only: bool) -> Self {
         match backend {
-            StorageBackend::Memory => Self::memory(),
+            StorageBackend::Memory => Self::memory(read_only),
             StorageBackend::Fjall => Self::fjall(read_only),
             StorageBackend::Redb => Self::redb(read_only),
             StorageBackend::RocksDb => Self::rocksdb(read_only),
@@ -390,15 +390,15 @@ impl StorageCapabilities {
 
     /// Capabilities for an in-memory model.
     #[must_use]
-    pub const fn memory() -> Self {
+    pub const fn memory(read_only: bool) -> Self {
         Self {
             backend: StorageBackend::Memory,
             durable: false,
-            transactions: true,
+            transactions: !read_only,
             sync: true,
-            clear: true,
-            read_only: false,
-            bulk_load: true,
+            clear: !read_only,
+            read_only,
+            bulk_load: !read_only,
         }
     }
 

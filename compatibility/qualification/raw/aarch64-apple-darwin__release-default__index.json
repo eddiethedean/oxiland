@@ -4,17 +4,18 @@
   "profile_id": "aarch64-apple-darwin/release-default",
   "target": "aarch64-apple-darwin",
   "build_profile": "release-default",
-  "git_revision": "37d480ffd493e1e6549254cc587322e16afb7c4a",
-  "clean_worktree": true,
-  "timestamp": "2026-08-02T04:54:41Z",
+  "git_revision": "0448e9962af0340ef1238e58b70b7e4cf5b5f24e",
+  "clean_worktree": false,
+  "timestamp": "2026-08-03T02:09:30Z",
   "fixture_results": [
     "aarch64-apple-darwin__release-default__cli-parse-ask.json",
     "aarch64-apple-darwin__release-default__concepts.json",
     "aarch64-apple-darwin__release-default__digest-hash.json",
     "aarch64-apple-darwin__release-default__files-heuristics.json",
-    "aarch64-apple-darwin__release-default__index.json",
     "aarch64-apple-darwin__release-default__list-lifecycle.json",
     "aarch64-apple-darwin__release-default__logging-callback.json",
+    "aarch64-apple-darwin__release-default__model-boundary-empty.json",
+    "aarch64-apple-darwin__release-default__parse-turtle-failure.json",
     "aarch64-apple-darwin__release-default__parse-turtle.json",
     "aarch64-apple-darwin__release-default__serialize-ntriples.json",
     "aarch64-apple-darwin__release-default__sparql-ask-select.json",
@@ -27,5 +28,5 @@
   ],
   "failed": 0,
   "synthetic": false,
-  "execution_id": "6d36b04a0cfab335d0cc35d3bc6a4f662c25e11dc492c794ded24d3d53765221"
+  "execution_id": "7ecab28a8085caec354b920405b41633066571b89e02a7e25164628a0fc5bef3"
 }
