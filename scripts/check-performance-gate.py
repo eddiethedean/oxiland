@@ -24,7 +24,7 @@ from typing import Any
 
 
 BOOTSTRAP_ROUNDS = 10_000
-MINIMUM_SAMPLES = 30
+MINIMUM_SAMPLES = 30  # absolute floor; suites may require more via thresholds.minimum_samples
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SUITE = ROOT / "compatibility" / "performance" / "0.10-suite.json"
 
@@ -47,9 +47,9 @@ def fail(message: str) -> None:
     raise ValueError(message)
 
 
-def positive_samples(case_id: str, owner: str, value: Any) -> list[float]:
-    if not isinstance(value, list) or len(value) < MINIMUM_SAMPLES:
-        fail(f"{case_id}: {owner} requires at least {MINIMUM_SAMPLES} raw samples")
+def positive_samples(case_id: str, owner: str, value: Any, minimum: int) -> list[float]:
+    if not isinstance(value, list) or len(value) < minimum:
+        fail(f"{case_id}: {owner} requires at least {minimum} raw samples")
     samples = [float(item) for item in value]
     if any(not math.isfinite(item) or item <= 0 for item in samples):
         fail(f"{case_id}: {owner} samples must be finite and positive")
@@ -156,6 +156,7 @@ def evaluate_case(
     latency_threshold: float,
     throughput_ci_lower_min: float,
     latency_ci_upper_max: float,
+    minimum_samples: int,
 ) -> dict[str, Any]:
     case_id = case.get("id")
     if not isinstance(case_id, str) or not case_id:
@@ -166,8 +167,8 @@ def evaluate_case(
     if case.get("required") is not True:
         fail(f"{case_id}: all frozen cases must be required")
 
-    oxiland = positive_samples(case_id, "oxiland", case.get("oxiland"))
-    redland = positive_samples(case_id, "redland", case.get("redland"))
+    oxiland = positive_samples(case_id, "oxiland", case.get("oxiland"), minimum_samples)
+    redland = positive_samples(case_id, "redland", case.get("redland"), minimum_samples)
     observed = ratio(kind, oxiland, redland)
     lower, upper = bootstrap_interval(kind, oxiland, redland, index)
     if kind == "throughput":
@@ -212,6 +213,11 @@ def evaluate(data: dict[str, Any], suite: dict[str, Any] | None = None) -> dict[
         throughput_ci_lower_min,
         latency_ci_upper_max,
     ) = suite_thresholds(suite)
+    minimum_samples = MINIMUM_SAMPLES
+    if isinstance(suite, dict):
+        thresholds = suite.get("thresholds", {})
+        if isinstance(thresholds, dict) and thresholds.get("minimum_samples") is not None:
+            minimum_samples = max(MINIMUM_SAMPLES, int(thresholds["minimum_samples"]))
     cases = data.get("cases")
     if not isinstance(cases, list) or not cases:
         fail("cases must be a non-empty list")
@@ -223,6 +229,7 @@ def evaluate(data: dict[str, Any], suite: dict[str, Any] | None = None) -> dict[
             latency_threshold,
             throughput_ci_lower_min,
             latency_ci_upper_max,
+            minimum_samples,
         )
         for index, case in enumerate(cases)
     ]
@@ -278,11 +285,10 @@ def evaluate(data: dict[str, Any], suite: dict[str, Any] | None = None) -> dict[
             if frozen.get("unit") is not None and item.get("unit") != frozen["unit"]:
                 fail(f"{item['id']}: resource unit differs from the frozen suite")
         thresholds = suite.get("thresholds", {})
-        if (
-            thresholds.get("bootstrap_rounds") != BOOTSTRAP_ROUNDS
-            or thresholds.get("minimum_samples") != MINIMUM_SAMPLES
-        ):
+        if thresholds.get("bootstrap_rounds") != BOOTSTRAP_ROUNDS:
             fail("frozen suite thresholds disagree with the qualification implementation")
+        if int(thresholds.get("minimum_samples", MINIMUM_SAMPLES)) < MINIMUM_SAMPLES:
+            fail("frozen suite minimum_samples is below the implementation floor")
         if (
             float(thresholds.get("throughput_oxiland_over_redland_min", 1.05))
             != throughput_threshold
