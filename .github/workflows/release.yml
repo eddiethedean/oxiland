@@ -55,6 +55,12 @@ jobs:
         if: startsWith(github.ref_name, 'v0.11.')
         run: python scripts/check-0.11-release.py
 
+      - name: Enforce 0.12 release qualification
+        if: startsWith(github.ref_name, 'v0.12.')
+        run: |
+          python scripts/check-0.11-release.py
+          python scripts/check-0.12-release.py
+
       - name: Publish to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
