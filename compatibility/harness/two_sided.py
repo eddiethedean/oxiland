@@ -101,7 +101,8 @@ def find_oxiland_lib() -> Path | None:
     candidates = [
         ROOT / "target/release/compat/librdf.0.dylib",
         ROOT / "target/release/compat/librdf.so.0",
-        ROOT / "target/release/compat/librdf.dll",
+        ROOT / "target/release/compat/librdf-0.dll",
+        ROOT / "target/release/compat/oxiland_capi.dll",
         ROOT / "target/release/liboxiland_capi.dylib",
         ROOT / "target/release/liboxiland_capi.so",
         ROOT / "target/release/oxiland_capi.dll",
@@ -112,14 +113,33 @@ def find_oxiland_lib() -> Path | None:
     return None
 
 
+def oracle_binary(name: str) -> Path:
+    """Resolve an oracle binary, including the Windows .exe suffix."""
+    base = ORACLE_BIN / name
+    if base.is_file():
+        return base
+    exe = ORACLE_BIN / f"{name}.exe"
+    if exe.is_file():
+        return exe
+    return base
+
+
 def ensure_oracles() -> tuple[Path, Path]:
-    redland = ORACLE_BIN / "oracle-redland"
-    oxiland = ORACLE_BIN / "oracle-oxiland"
+    redland = oracle_binary("oracle-redland")
+    oxiland = oracle_binary("oracle-oxiland")
     if redland.is_file() and oxiland.is_file():
         return redland, oxiland
     if not BUILD_SH.is_file():
         raise FileNotFoundError(f"missing oracle build script: {BUILD_SH}")
+    # On Windows Git Bash, prefer skipping rebuild when MSYS2 already built *.exe.
+    if os.name == "nt":
+        raise FileNotFoundError(
+            f"C oracle binaries missing ({redland}, {oxiland}); "
+            "run compatibility/harness/c_oracle/build.sh under MSYS2 first"
+        )
     subprocess.check_call(["bash", str(BUILD_SH)], cwd=ROOT)
+    redland = oracle_binary("oracle-redland")
+    oxiland = oracle_binary("oracle-oxiland")
     if not redland.is_file() or not oxiland.is_file():
         raise FileNotFoundError("C oracle binaries missing after build")
     return redland, oxiland
