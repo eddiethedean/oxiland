@@ -16,17 +16,26 @@ fn main() {
     println!("cargo:rerun-if-changed=symbols.version");
     println!("cargo:rerun-if-changed=src/log_variadic.c");
 
+    // Qualify/Windows oracle jobs set CC to MinGW gcc while rustc targets
+    // *-windows-msvc. Clear those overrides so cc-rs discovers MSVC via vswhere
+    // (forcing `.compiler("cl")` fails when cl is not on PATH).
+    if target_env == "msvc" {
+        for key in ["CC", "CXX", "CFLAGS", "CXXFLAGS", "HOST_CC", "HOST_CXX"] {
+            // SAFETY: build scripts are single-threaded; this only clears
+            // process-local compiler overrides for the cc invocation below.
+            unsafe {
+                std::env::remove_var(key);
+            }
+        }
+    }
+
     // Disable automatic `rustc-link-lib` so we can force-load the whole archive:
     // nothing in Rust references `librdf_log` by name, so the default archive
     // link would GC the object and the cdylib would not export the symbol.
-    let mut build = cc::Build::new();
-    build.file("src/log_variadic.c").cargo_metadata(false);
-    // Qualify/Windows oracle jobs set CC to MinGW gcc while rustc targets
-    // *-windows-msvc. Force cl so the object links with link.exe.
-    if target_env == "msvc" {
-        build.compiler("cl");
-    }
-    build.compile("oxiland_log_variadic");
+    cc::Build::new()
+        .file("src/log_variadic.c")
+        .cargo_metadata(false)
+        .compile("oxiland_log_variadic");
 
     println!("cargo:rustc-link-search=native={out_dir}");
     match target_os.as_str() {
