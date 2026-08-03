@@ -156,6 +156,7 @@ nav:
       - Compatibility contract: COMPATIBILITY.md
       - Parity ledger: parity.md
       - Current parity work (0.11): reports/0.11.md
+      - 0.11.0 release checklist: reports/0.11.0-release.md
       - Milestone 0.11: milestones/0.11.md
   - Project:
       - Community:

@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.11.0] - 2026-08-02
+## [0.11.0] - 2026-08-03
 
 Demonstrated Redland parity: frozen baseline and obligations, six-cell native
 two-sided differentials, fail-closed release checker, C source corpus,
