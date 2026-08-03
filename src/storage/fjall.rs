@@ -44,7 +44,13 @@ impl FjallStore {
         StorageCapabilities::fjall(read_only)
     }
 
-    #[cfg_attr(not(test), allow(dead_code))]
+    #[cfg_attr(
+        not(test),
+        allow(
+            dead_code,
+            reason = "the convenience opener is used by fault-injection tests"
+        )
+    )]
     pub(crate) fn open(path: &Path) -> Result<Self> {
         Self::open_with_create(path, true)
     }

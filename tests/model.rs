@@ -73,6 +73,7 @@ fn world_features_are_shared_across_clones() {
         clone.feature("http://example.com/feature"),
         Some(oxiland::FeatureValue::Boolean(true))
     );
+    drop(clone);
 }
 
 #[test]
@@ -104,6 +105,7 @@ fn model_clone_shares_dataset() {
     let clone = model.clone();
     assert!(model.add(example_statement()).unwrap());
     assert_eq!(clone.len().unwrap(), 1);
+    drop(clone);
 }
 
 #[test]
@@ -111,7 +113,7 @@ fn named_graph_crud_is_isolated_from_default_graph() {
     let model = Model::new().unwrap();
     let statement = example_statement();
     let graph = NamedNode::new("https://example.com/graph").unwrap();
-    let graph_name = GraphName::NamedNode(graph.clone());
+    let graph_name = GraphName::NamedNode(graph);
 
     assert!(
         model

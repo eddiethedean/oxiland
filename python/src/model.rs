@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 
 use oxigraph::model::{GraphName as OxGraphName, NamedNodeRef, NamedOrBlankNodeRef, Quad, TermRef};
-use oxiland::storage::{compiled_backends, OpenOptions};
+use oxiland::storage::{OpenOptions, compiled_backends};
 use oxiland::{Model, StatementMatches, StatementPattern, StorageBackend};
 use pyo3::prelude::*;
 

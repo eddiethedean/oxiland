@@ -23,7 +23,10 @@ pub fn clear_last_error() {
 }
 
 /// Returns the last error message, if any.
-#[allow(dead_code)]
+#[allow(
+    dead_code,
+    reason = "retained for diagnostics and tests even when no current ABI symbol reads it"
+)]
 #[must_use]
 pub fn last_error() -> Option<String> {
     LAST_ERROR.with(|slot| slot.borrow().clone())

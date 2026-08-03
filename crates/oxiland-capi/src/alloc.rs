@@ -9,7 +9,10 @@ use crate::error::{abort_on_panic, clear_last_error, set_last_error};
 /// Allocates a NUL-terminated C string with `libc::malloc` (pair with
 /// [`librdf_free_memory`]).
 pub fn strdup_c(value: &str) -> *mut c_char {
-    let len = value.len().checked_add(1).expect("string too large");
+    let Some(len) = value.len().checked_add(1) else {
+        set_last_error("string allocation size overflow");
+        return ptr::null_mut();
+    };
     // SAFETY: malloc returns either null or a block of `len` bytes.
     let ptr = unsafe { libc::malloc(len) }.cast::<c_char>();
     if ptr.is_null() {
@@ -32,6 +35,8 @@ pub extern "C" fn librdf_alloc_memory(size: usize) -> *mut c_void {
         if size == 0 {
             return ptr::null_mut();
         }
+        // SAFETY: `malloc` accepts any nonzero size and returns either null or
+        // an allocation owned by the caller.
         let p = unsafe { libc::malloc(size) };
         if p.is_null() {
             set_last_error("out of memory");
@@ -52,6 +57,8 @@ pub extern "C" fn librdf_calloc_memory(nmemb: usize, size: usize) -> *mut c_void
         if bytes == 0 {
             return ptr::null_mut();
         }
+        // SAFETY: multiplication was checked above; `calloc` returns either
+        // null or a zeroed allocation owned by the caller.
         let p = unsafe { libc::calloc(nmemb, size) };
         if p.is_null() {
             set_last_error("out of memory");

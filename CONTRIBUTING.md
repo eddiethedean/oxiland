@@ -72,7 +72,11 @@ Run:
 
 ```console
 cargo fmt --all --check
+cargo fmt --manifest-path python/Cargo.toml --check
+cargo fmt --manifest-path fuzz/Cargo.toml --check
 cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo clippy --manifest-path python/Cargo.toml --all-targets --locked -- -D warnings
+cargo clippy --manifest-path fuzz/Cargo.toml --all-targets --locked -- -D warnings
 cargo test --workspace --all-features --locked
 cargo doc --workspace --all-features --no-deps --locked
 python3 scripts/check-inventory.py
@@ -116,10 +120,11 @@ scripts/check-capi-symbols.sh
 ```
 
 CI additionally exercises the Rust workspace on Linux, macOS, and Windows;
-Rust 1.87; both Rust lockfiles with `cargo audit`; crate packaging and semver;
-and all 15 supported Python wheel/runtime combinations. External GitHub
-Actions are pinned to full commit SHAs. Dependabot proposes reviewed updates
-for Actions, Cargo, Python tooling, and documentation dependencies.
+Rust 1.87; Clippy for the main, Python, and fuzz workspaces; all Rust lockfiles
+with `cargo audit`; crate packaging and semver; and all 15 supported Python
+wheel/runtime combinations. External GitHub Actions are pinned to full commit
+SHAs. Dependabot proposes reviewed updates for Actions, Cargo, Python tooling,
+and documentation dependencies.
 
 `Cargo.lock` and `python/Cargo.lock` are committed release inputs. Dependency
 changes must update the appropriate lockfile and pass its security audit; do
@@ -203,11 +208,23 @@ artifact and inspect its packaged metadata.
 - [ ] Local checks pass.
 - [ ] No unrelated generated or local files are included.
 
-## Safety and data integrity
+## Rust and safety policy
 
-The main crate has `#![forbid(unsafe_code)]`. Do not weaken it. C ABI work
-belongs in `crates/oxiland-capi`, which may contain narrowly scoped `unsafe`
-under the architecture and design contracts.
+The workspace uses Rust 2024 with Rust 1.87 as its MSRV and Cargo resolver v3
+for Rust-version-aware dependency selection. Shared Cargo lints reject
+future-incompatible code, implicit unsafe operations inside `unsafe fn`,
+unexplained lint suppressions, development placeholders, redundant clones, and
+mutex guards whose lifetime extends beyond their last use. Do not enable whole
+Clippy `pedantic`, `nursery`, or `restriction` groups; adopt individual
+high-signal lints only after fixing them on stable and MSRV.
+
+The main crate denies unsafe code by default. The LMDB adapter contains the one
+safe-crate exception required by `heed`; it must retain a local safety argument
+and an immediately adjacent `SAFETY` comment. Other FFI work belongs in
+`crates/oxiland-capi`, which may contain narrowly scoped `unsafe` under the
+architecture and design contracts. Python lifetime erasure must keep borrowed
+iterators before their owning guards so Rust's field drop order releases the
+borrow before its owner.
 
 Storage changes need reopen and failure-path tests. Changes that could alter or
 lose persistent data require a migration/recovery story and a decision record

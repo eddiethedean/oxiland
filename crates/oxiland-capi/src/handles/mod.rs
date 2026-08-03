@@ -106,12 +106,13 @@ fn validate_live(ptr: usize, expected_tag: u32) -> bool {
     if LAST_VALIDATED.with(|last| last.get() == (ptr, expected_tag, generation)) {
         return true;
     }
-    let result = match LIVE
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .get(&ptr)
-        .copied()
-    {
+    let registered_tag = {
+        let live = LIVE
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        live.get(&ptr).copied()
+    };
+    let result = match registered_tag {
         Some(tag) if tag == expected_tag => true,
         Some(tag) => {
             set_last_error(format!(
@@ -139,6 +140,7 @@ fn unregister(ptr: usize, expected_tag: u32) -> bool {
         Some(tag) if tag == expected_tag => {
             live.remove(&ptr);
             LIVE_GENERATION.fetch_add(1, Ordering::Release);
+            drop(live);
             true
         }
         Some(tag) => {

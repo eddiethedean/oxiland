@@ -3,6 +3,7 @@
 use std::ffi::{CStr, CString, c_void};
 use std::os::raw::c_char;
 use std::ptr;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 use oxiland_capi::*;
 
@@ -484,10 +485,10 @@ fn alloc_and_raptor_bridge_lifecycle() {
     librdf_free_world(world);
 }
 
-static mut FACTORY_HITS: u32 = 0;
+static FACTORY_HITS: AtomicU32 = AtomicU32::new(0);
 
 unsafe extern "C" fn count_factory(_factory: *mut c_void) {
-    unsafe { FACTORY_HITS += 1 };
+    FACTORY_HITS.fetch_add(1, Ordering::Relaxed);
 }
 
 #[test]
@@ -551,7 +552,7 @@ fn parser_iostream_parse_and_serialize_roundtrip() {
 
 #[test]
 fn parser_factory_rejects_callback_and_unknown_name() {
-    unsafe { FACTORY_HITS = 0 };
+    FACTORY_HITS.store(0, Ordering::Relaxed);
     let world = librdf_new_world();
     librdf_parser_register_factory(
         world,
@@ -562,7 +563,7 @@ fn parser_factory_rejects_callback_and_unknown_name() {
         Some(count_factory),
     );
     // ADR-025: callbacks are not executed.
-    assert_eq!(unsafe { FACTORY_HITS }, 0);
+    assert_eq!(FACTORY_HITS.load(Ordering::Relaxed), 0);
 
     let parser = librdf_new_parser(
         world,

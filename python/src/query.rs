@@ -16,7 +16,9 @@ use crate::terms::{PyTriple, extract_graph_name, term_to_py, triple_to_py};
 /// # Safety
 /// The Oxigraph store handle inside [`Model`] is reference-counted. The boxed
 /// model is allocated before `execute` and kept alive for the iterator
-/// lifetime; the `'static` transmute is only sound while `_model` lives.
+/// lifetime; the `'static` transmute is only sound while `_model` lives. The
+/// iterator field must be declared before this guard so Rust drops the iterator
+/// before its borrowed model.
 struct ModelGuard {
     _model: Box<Model>,
 }
@@ -72,8 +74,8 @@ impl PySolution {
 
 enum SolutionsState {
     Live {
-        _guard: ModelGuard,
         iter: QuerySolutionIter<'static>,
+        _guard: ModelGuard,
     },
     Done,
 }
@@ -117,8 +119,8 @@ impl PySolutionsIter {
 
 enum TriplesState {
     Live {
-        _guard: ModelGuard,
         iter: QueryTripleIter<'static>,
+        _guard: ModelGuard,
     },
     Done,
 }
@@ -174,7 +176,10 @@ fn extract_graphs(graphs: &Bound<'_, PyAny>) -> PyResult<Vec<OxGraphName>> {
 
 #[pyfunction]
 #[pyo3(signature = (model, sparql, *, base_iri=None, limit=None, offset=None, default_graph=None, default_graph_as_union=false))]
-#[allow(clippy::too_many_arguments)]
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the arguments intentionally mirror the public Python query signature"
+)]
 fn query(
     py: Python<'_>,
     model: &PyModel,
@@ -208,27 +213,33 @@ fn query(
     let guard = Box::new(model.inner.clone());
     let results = {
         let model_ptr: *const Model = guard.as_ref();
+        // SAFETY: `model_ptr` comes from the live box above and is only
+        // borrowed for query execution; ownership stays in `guard`.
         unsafe { q.execute(&*model_ptr) }.map_err(map_error)?
     };
 
     match results {
         QueryResults::Boolean(value) => Ok(value.into_py_any(py)?),
         QueryResults::Solutions(iter) => {
+            // SAFETY: the iterator is stored before `ModelGuard`, so it is
+            // dropped first; the guard owns the stable boxed borrow target.
             let iter: QuerySolutionIter<'static> = unsafe { std::mem::transmute(iter) };
             let obj = PySolutionsIter {
                 state: SolutionsState::Live {
-                    _guard: ModelGuard { _model: guard },
                     iter,
+                    _guard: ModelGuard { _model: guard },
                 },
             };
             Ok(obj.into_pyobject(py)?.into_any().unbind())
         }
         QueryResults::Graph(iter) => {
+            // SAFETY: the iterator is stored before `ModelGuard`, so it is
+            // dropped first; the guard owns the stable boxed borrow target.
             let iter: QueryTripleIter<'static> = unsafe { std::mem::transmute(iter) };
             let obj = PyTriplesIter {
                 state: TriplesState::Live {
-                    _guard: ModelGuard { _model: guard },
                     iter,
+                    _guard: ModelGuard { _model: guard },
                 },
             };
             Ok(obj.into_pyobject(py)?.into_any().unbind())

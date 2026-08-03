@@ -440,7 +440,10 @@ pub extern "C" fn librdf_world_set_feature(
             Term::Literal(lit) => lit.value().to_owned(),
             Term::NamedNode(n) => n.as_str().to_owned(),
             Term::BlankNode(b) => b.as_str().to_owned(),
-            #[allow(unreachable_patterns)]
+            #[allow(
+                unreachable_patterns,
+                reason = "keep the adapter forward-compatible with non-exhaustive engine terms"
+            )]
             _ => value.inner.term.to_string(),
         };
         handle

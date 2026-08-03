@@ -4,7 +4,10 @@
 //! guarantee a single `Env` configuration per path. Oxiland opens one Env per
 //! store directory and never shares the path with another Env in-process.
 
-#![allow(unsafe_code)]
+#![allow(
+    unsafe_code,
+    reason = "heed requires an audited unsafe environment open; the safe crate forbids unsafe elsewhere"
+)]
 
 use std::fs::OpenOptions as FsOpenOptions;
 use std::path::Path;
@@ -73,6 +76,9 @@ impl LmdbStore {
             });
         }
 
+        // SAFETY: Oxiland creates one heed environment per store path with a
+        // fixed map size/database count and does not open the path concurrently
+        // through another LMDB configuration in this process.
         let env = unsafe {
             EnvOpenOptions::new()
                 .map_size(MAP_SIZE)

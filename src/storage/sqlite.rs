@@ -127,6 +127,7 @@ impl SqliteStore {
             params![META_KEY, meta.as_bytes()],
         )
         .map_err(|error| Error::Storage(error.to_string()))?;
+        drop(conn);
         Ok(())
     }
 
@@ -143,6 +144,7 @@ impl SqliteStore {
             )
             .optional()
             .map_err(|error| Error::Storage(error.to_string()))?;
+        drop(conn);
         match value {
             None => Ok(None),
             Some(bytes) => {
@@ -166,22 +168,29 @@ impl SqliteStore {
                 |row| row.get(0),
             )
             .map_err(|error| Error::Storage(error.to_string()))?;
+        drop(conn);
         Ok(count > 0)
     }
 
     pub(crate) fn load_into(&self, store: &Store) -> Result<()> {
-        let conn = self
-            .conn
-            .lock()
-            .map_err(|_| Error::Storage("sqlite lock poisoned".into()))?;
-        let mut stmt = conn
-            .prepare("SELECT key FROM oxiland_quads WHERE key != ?1")
-            .map_err(|error| Error::Storage(error.to_string()))?;
-        let keys = stmt
-            .query_map(params![META_KEY], |row| row.get::<_, String>(0))
-            .map_err(|error| Error::Storage(error.to_string()))?;
+        let keys = {
+            let conn = self
+                .conn
+                .lock()
+                .map_err(|_| Error::Storage("sqlite lock poisoned".into()))?;
+            let mut stmt = conn
+                .prepare("SELECT key FROM oxiland_quads WHERE key != ?1")
+                .map_err(|error| Error::Storage(error.to_string()))?;
+            let keys = stmt
+                .query_map(params![META_KEY], |row| row.get::<_, String>(0))
+                .map_err(|error| Error::Storage(error.to_string()))?
+                .collect::<std::result::Result<Vec<_>, _>>()
+                .map_err(|error| Error::Storage(error.to_string()))?;
+            drop(stmt);
+            drop(conn);
+            keys
+        };
         for key in keys {
-            let key = key.map_err(|error| Error::Storage(error.to_string()))?;
             let quad = parse_quad(&key)?;
             store
                 .insert(&quad)
@@ -210,6 +219,7 @@ impl SqliteStore {
             params![key],
         )
         .map_err(|error| Error::Storage(error.to_string()))?;
+        drop(conn);
         Ok(())
     }
 
@@ -243,6 +253,7 @@ impl SqliteStore {
         }
         tx.commit()
             .map_err(|error| Error::Storage(error.to_string()))?;
+        drop(conn);
         Ok(())
     }
 
@@ -256,6 +267,7 @@ impl SqliteStore {
             params![META_KEY],
         )
         .map_err(|error| Error::Storage(error.to_string()))?;
+        drop(conn);
         Ok(())
     }
 
@@ -282,7 +294,9 @@ impl SqliteStore {
             .map_err(|error| Error::Storage(error.to_string()))?;
         }
         tx.commit()
-            .map_err(|error| Error::Storage(error.to_string()))
+            .map_err(|error| Error::Storage(error.to_string()))?;
+        drop(conn);
+        Ok(())
     }
 }
 

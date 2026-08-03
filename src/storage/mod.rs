@@ -13,7 +13,10 @@
         feature = "storage-sqlite",
         feature = "storage-lmdb"
     )),
-    allow(dead_code)
+    allow(
+        dead_code,
+        reason = "backend marker helpers are dormant when every durable backend feature is disabled"
+    )
 )]
 mod backend_marker;
 mod durable;
@@ -28,7 +31,10 @@ mod fjall;
         feature = "storage-sqlite",
         feature = "storage-lmdb"
     )),
-    allow(dead_code)
+    allow(
+        dead_code,
+        reason = "format helpers are dormant when every durable backend feature is disabled"
+    )
 )]
 mod format_v1;
 #[cfg(feature = "storage-lmdb")]

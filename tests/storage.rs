@@ -112,9 +112,7 @@ fn clear_and_clear_graph() {
     model
         .add_to_graph(statement("named"), GraphName::NamedNode(named.clone()))
         .unwrap();
-    model
-        .clear_graph(GraphName::NamedNode(named.clone()))
-        .unwrap();
+    model.clear_graph(GraphName::NamedNode(named)).unwrap();
     assert_eq!(model.len().unwrap(), 1);
     model.clear().unwrap();
     assert!(model.is_empty().unwrap());

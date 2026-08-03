@@ -65,7 +65,7 @@ fn collect_matching_nodes(
 }
 
 fn projected_iterator(
-    model: &mut ModelInner,
+    model: &ModelInner,
     subject: Option<&Term>,
     predicate: Option<&Term>,
     object: Option<&Term>,
@@ -131,7 +131,7 @@ pub extern "C" fn librdf_model_get_sources(
         let predicate = node_term(arc);
         let object = node_term(target);
         projected_iterator(
-            &mut model.inner,
+            &model.inner,
             None,
             predicate.as_ref(),
             object.as_ref(),
@@ -154,7 +154,7 @@ pub extern "C" fn librdf_model_get_arcs(
         let subject = node_term(source);
         let object = node_term(target);
         projected_iterator(
-            &mut model.inner,
+            &model.inner,
             subject.as_ref(),
             None,
             object.as_ref(),
@@ -177,7 +177,7 @@ pub extern "C" fn librdf_model_get_targets(
         let subject = node_term(source);
         let predicate = node_term(arc);
         projected_iterator(
-            &mut model.inner,
+            &model.inner,
             subject.as_ref(),
             predicate.as_ref(),
             None,
@@ -225,7 +225,7 @@ pub extern "C" fn librdf_model_get_arcs_in(
         };
         let object = node_term(node);
         projected_iterator(
-            &mut model.inner,
+            &model.inner,
             None,
             None,
             object.as_ref(),
@@ -246,7 +246,7 @@ pub extern "C" fn librdf_model_get_arcs_out(
         };
         let subject = node_term(node);
         projected_iterator(
-            &mut model.inner,
+            &model.inner,
             subject.as_ref(),
             None,
             None,

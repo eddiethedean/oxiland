@@ -35,6 +35,7 @@
 //! ```
 
 #![deny(unsafe_code)]
+#![deny(clippy::undocumented_unsafe_blocks)]
 #![warn(missing_docs)]
 
 mod error;

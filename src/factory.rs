@@ -70,9 +70,11 @@ pub fn register_parser_factory(name: &str) -> Result<()> {
         )),
         other => other,
     })?;
-    let mut reg = lock_registry();
-    reg.parsers.insert(syntax.name().to_owned());
-    reg.parsers.insert(normalize(name));
+    {
+        let mut reg = lock_registry();
+        reg.parsers.insert(syntax.name().to_owned());
+        reg.parsers.insert(normalize(name));
+    }
     Ok(())
 }
 
@@ -84,9 +86,11 @@ pub fn register_serializer_factory(name: &str) -> Result<()> {
         )),
         other => other,
     })?;
-    let mut reg = lock_registry();
-    reg.serializers.insert(syntax.name().to_owned());
-    reg.serializers.insert(normalize(name));
+    {
+        let mut reg = lock_registry();
+        reg.serializers.insert(syntax.name().to_owned());
+        reg.serializers.insert(normalize(name));
+    }
     Ok(())
 }
 
@@ -101,10 +105,12 @@ pub fn register_storage_factory(name: &str) -> Result<()> {
         other => other,
     };
     if supported_backends().any(|descriptor| descriptor.name == canonical) {
-        let mut reg = lock_registry();
-        reg.storages.insert(canonical.to_owned());
-        if normalized != canonical {
-            reg.storages.insert(normalized);
+        {
+            let mut reg = lock_registry();
+            reg.storages.insert(canonical.to_owned());
+            if normalized != canonical {
+                reg.storages.insert(normalized);
+            }
         }
         return Ok(());
     }
@@ -131,9 +137,7 @@ pub fn parser_factory_registered(name: &str) -> bool {
     let reg = lock_registry();
     let normalized = normalize(name);
     reg.parsers.contains(&normalized)
-        || Syntax::from_name(name)
-            .map(|syntax| reg.parsers.contains(syntax.name()))
-            .unwrap_or(false)
+        || Syntax::from_name(name).is_ok_and(|syntax| reg.parsers.contains(syntax.name()))
 }
 
 /// Returns whether a serializer factory name is registered.
@@ -142,9 +146,7 @@ pub fn serializer_factory_registered(name: &str) -> bool {
     let reg = lock_registry();
     let normalized = normalize(name);
     reg.serializers.contains(&normalized)
-        || Syntax::from_name(name)
-            .map(|syntax| reg.serializers.contains(syntax.name()))
-            .unwrap_or(false)
+        || Syntax::from_name(name).is_ok_and(|syntax| reg.serializers.contains(syntax.name()))
 }
 
 /// Returns whether a storage factory name is registered.

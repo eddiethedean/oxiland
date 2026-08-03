@@ -238,10 +238,14 @@ Report suspected vulnerabilities privately according to
 ## Development
 
 ```console
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
-cargo test
-cargo doc --no-deps
+cargo fmt --all --check
+cargo fmt --manifest-path python/Cargo.toml --check
+cargo fmt --manifest-path fuzz/Cargo.toml --check
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo clippy --manifest-path python/Cargo.toml --all-targets --locked -- -D warnings
+cargo clippy --manifest-path fuzz/Cargo.toml --all-targets --locked -- -D warnings
+cargo test --workspace --all-features --locked
+cargo doc --workspace --all-features --no-deps --locked
 python3 scripts/check-inventory.py
 python3 scripts/check-docs.py
 scripts/generate-public-api.sh check

@@ -209,7 +209,10 @@ impl DurableStore {
         feature = "storage-sqlite",
         feature = "storage-lmdb"
     ),
-    allow(dead_code)
+    allow(
+        dead_code,
+        reason = "all known backend variants are compiled, so the unsupported-backend helper is unreachable"
+    )
 )]
 fn uncompiled(name: &str) -> Error {
     Error::Unsupported(format!(

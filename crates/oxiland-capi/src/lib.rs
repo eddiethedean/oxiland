@@ -2,11 +2,26 @@
 //!
 //! All `unsafe` lives here; the safe `oxiland` crate forbids it (ADR-002).
 
-#![allow(non_camel_case_types)]
-#![allow(missing_docs)]
-#![allow(clippy::not_unsafe_ptr_arg_deref)]
-#![allow(clippy::too_many_arguments)]
-#![allow(clippy::redundant_closure)]
+#![allow(
+    non_camel_case_types,
+    reason = "exported type names intentionally match the librdf C ABI"
+)]
+#![allow(
+    missing_docs,
+    reason = "the generated C header is the authoritative documentation for ABI symbols"
+)]
+#![allow(
+    clippy::not_unsafe_ptr_arg_deref,
+    reason = "C entry points validate raw handles and contain dereferences inside the FFI adapter"
+)]
+#![allow(
+    clippy::too_many_arguments,
+    reason = "function signatures are fixed by the librdf C ABI"
+)]
+#![allow(
+    clippy::redundant_closure,
+    reason = "explicit closures keep panic-containment return types inferable across C entry points"
+)]
 
 mod alloc;
 mod error;

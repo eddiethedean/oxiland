@@ -11,7 +11,10 @@ use std::slice;
 use crate::error::set_last_error;
 use crate::handles::{TAG_IOSTREAM, TypedHandle, borrow_handle, box_handle, free_handle};
 
-#[allow(clippy::upper_case_acronyms)]
+#[allow(
+    clippy::upper_case_acronyms,
+    reason = "FILE is the spelling of the platform C type"
+)]
 pub type FILE = libc::FILE;
 
 /// In-memory byte buffer used wherever Redland would pass a `raptor_iostream*`.
@@ -98,7 +101,16 @@ pub fn write_iostream(iostr: *mut c_void, bytes: &[u8]) -> i32 {
     }
 }
 
-#[allow(dead_code)]
+#[allow(
+    dead_code,
+    reason = "shared checked slice helper is retained for C ABI extensions"
+)]
+/// Returns a borrowed slice over a C buffer.
+///
+/// # Safety
+///
+/// For non-null `ptr`, the caller must provide a readable allocation of at
+/// least `len` bytes that remains live for the returned lifetime.
 pub unsafe fn c_slice<'a>(ptr: *const u8, len: usize) -> Option<&'a [u8]> {
     if ptr.is_null() {
         set_last_error("null buffer");
@@ -108,7 +120,16 @@ pub unsafe fn c_slice<'a>(ptr: *const u8, len: usize) -> Option<&'a [u8]> {
     }
 }
 
-#[allow(dead_code)]
+#[allow(
+    dead_code,
+    reason = "shared checked C-string byte helper is retained for C ABI extensions"
+)]
+/// Returns the bytes of a borrowed NUL-terminated C string.
+///
+/// # Safety
+///
+/// For non-null `ptr`, the caller must provide a valid NUL-terminated string
+/// that remains live for the returned lifetime.
 pub unsafe fn cstr_bytes<'a>(ptr: *const c_char) -> Option<&'a [u8]> {
     if ptr.is_null() {
         None

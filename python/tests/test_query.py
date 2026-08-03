@@ -54,6 +54,17 @@ def test_select_early_stop() -> None:
     del it
 
 
+def test_construct_early_stop() -> None:
+    model = _seed()
+    it = query(
+        model,
+        "CONSTRUCT { ?s <https://example.com/label> ?name } "
+        "WHERE { ?s <https://example.com/name> ?name }",
+    )
+    assert next(it) is not None
+    del it
+
+
 def test_update_insert() -> None:
     model = Model()
     update(

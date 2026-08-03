@@ -95,7 +95,10 @@ impl NodeInner {
             Term::NamedNode(n) => Some(NamedOrBlankNode::NamedNode(n.clone())),
             Term::BlankNode(b) => Some(NamedOrBlankNode::BlankNode(b.clone())),
             Term::Literal(_) => None,
-            #[allow(unreachable_patterns)]
+            #[allow(
+                unreachable_patterns,
+                reason = "keep the adapter forward-compatible with non-exhaustive engine terms"
+            )]
             _ => None,
         }
     }
@@ -105,7 +108,10 @@ impl NodeInner {
             Term::NamedNode(n) => Some(NamedOrBlankNodeRef::NamedNode(n.as_ref())),
             Term::BlankNode(b) => Some(NamedOrBlankNodeRef::BlankNode(b.as_ref())),
             Term::Literal(_) => None,
-            #[allow(unreachable_patterns)]
+            #[allow(
+                unreachable_patterns,
+                reason = "keep the adapter forward-compatible with non-exhaustive engine terms"
+            )]
             _ => None,
         }
     }
@@ -220,7 +226,10 @@ pub extern "C" fn librdf_node_get_type(node: *mut librdf_node) -> i32 {
             Term::NamedNode(_) => 1,
             Term::Literal(_) => 2,
             Term::BlankNode(_) => 4,
-            #[allow(unreachable_patterns)]
+            #[allow(
+                unreachable_patterns,
+                reason = "keep the adapter forward-compatible with non-exhaustive engine terms"
+            )]
             _ => 0,
         }
     })

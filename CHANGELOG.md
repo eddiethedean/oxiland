@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Rust 2024 practices are enforced consistently across the main, Python, and
+  fuzz workspaces with Cargo resolver v3, an MSRV-aware lint policy, justified
+  suppressions, tighter mutex-guard lifetimes, and CI coverage for excluded
+  workspaces
+- Python query iterators now declare borrowed iterators before their owning
+  guards, guaranteeing the iterator is dropped before its lifetime-erased
+  model borrow target
 - Durable-store operations now dispatch through a sealed, type-erased adapter
   boundary, eliminating repeated backend matches while preserving the public
   API and storage-format contracts

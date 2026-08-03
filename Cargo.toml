@@ -1,8 +1,26 @@
 [workspace]
 members = [".", "crates/oxiland-cli", "crates/oxiland-capi"]
 exclude = ["python"]
-resolver = "2"
+resolver = "3"
 default-members = [".", "crates/oxiland-cli", "crates/oxiland-capi"]
+
+[workspace.lints.rust]
+future_incompatible = { level = "deny", priority = -1 }
+unsafe_op_in_unsafe_fn = "deny"
+unused_lifetimes = "deny"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+correctness = "deny"
+allow_attributes_without_reason = "deny"
+dbg_macro = "deny"
+fallible_impl_from = "deny"
+needless_pass_by_ref_mut = "deny"
+redundant_clone = "deny"
+significant_drop_in_scrutinee = "deny"
+significant_drop_tightening = "deny"
+todo = "deny"
+unimplemented = "deny"
 
 [package]
 name = "oxiland"
@@ -19,6 +37,9 @@ authors = ["Odo Matthews <odosmatthews@gmail.com>"]
 keywords = ["rdf", "sparql", "redland", "oxigraph", "semantic-web"]
 categories = ["parsing", "data-structures", "encoding"]
 exclude = [".github/", "compatibility/harness/*-result.json"]
+
+[lints]
+workspace = true
 
 [package.metadata.docs.rs]
 features = ["storage-fjall"]

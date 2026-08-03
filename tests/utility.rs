@@ -95,6 +95,7 @@ fn world_clones_share_log_level() {
     assert_eq!(clone.log_level(), LogLevel::Error);
     clone.set_log_level(LogLevel::Debug);
     assert_eq!(world.log_level(), LogLevel::Debug);
+    drop(clone);
 }
 
 #[test]
@@ -188,6 +189,7 @@ fn world_clones_share_log_handler() {
         *sink.lock().unwrap() += 1;
     });
     let clone = world.clone();
+    drop(world);
     clone.log(LogLevel::Info, LogFacility::General, "shared");
     assert_eq!(*seen.lock().unwrap(), 1);
 }
