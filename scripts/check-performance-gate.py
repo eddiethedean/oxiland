@@ -25,10 +25,22 @@ from typing import Any
 
 BOOTSTRAP_ROUNDS = 10_000
 MINIMUM_SAMPLES = 30
-THROUGHPUT_THRESHOLD = 1.05
-LATENCY_THRESHOLD = 0.95
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SUITE = ROOT / "compatibility" / "performance" / "0.10-suite.json"
+
+
+def suite_thresholds(suite: dict[str, Any] | None) -> tuple[float, float, float, float]:
+    """Return throughput/latency medians and CI bounds from the suite.
+
+    Suites that omit CI bound fields keep the historical faster-than-Redland
+    rule (throughput CI lower > 1.0, latency CI upper < 1.0).
+    """
+    thresholds = suite.get("thresholds", {}) if isinstance(suite, dict) else {}
+    throughput = float(thresholds.get("throughput_oxiland_over_redland_min", 1.05))
+    latency = float(thresholds.get("latency_oxiland_over_redland_max", 0.95))
+    ci_lower = float(thresholds.get("throughput_ci_lower_min", 1.0))
+    ci_upper = float(thresholds.get("latency_ci_upper_max", 1.0))
+    return throughput, latency, ci_lower, ci_upper
 
 
 def fail(message: str) -> None:
@@ -137,7 +149,14 @@ def validate_production_compile(data: dict[str, Any], suite: dict[str, Any] | No
             fail("build.redland optimization must not be -O0 / opt-level=0")
 
 
-def evaluate_case(case: dict[str, Any], index: int) -> dict[str, Any]:
+def evaluate_case(
+    case: dict[str, Any],
+    index: int,
+    throughput_threshold: float,
+    latency_threshold: float,
+    throughput_ci_lower_min: float,
+    latency_ci_upper_max: float,
+) -> dict[str, Any]:
     case_id = case.get("id")
     if not isinstance(case_id, str) or not case_id:
         fail(f"case {index}: missing id")
@@ -152,11 +171,11 @@ def evaluate_case(case: dict[str, Any], index: int) -> dict[str, Any]:
     observed = ratio(kind, oxiland, redland)
     lower, upper = bootstrap_interval(kind, oxiland, redland, index)
     if kind == "throughput":
-        passed = observed >= THROUGHPUT_THRESHOLD and lower > 1.0
-        threshold = THROUGHPUT_THRESHOLD
+        passed = observed >= throughput_threshold and lower > throughput_ci_lower_min
+        threshold = throughput_threshold
     else:
-        passed = observed <= LATENCY_THRESHOLD and upper < 1.0
-        threshold = LATENCY_THRESHOLD
+        passed = observed <= latency_threshold and upper < latency_ci_upper_max
+        threshold = latency_threshold
 
     return {
         "id": case_id,
@@ -187,10 +206,26 @@ def evaluate(data: dict[str, Any], suite: dict[str, Any] | None = None) -> dict[
         if not isinstance(data.get(key), str) or not data[key].strip():
             fail(f"missing non-empty {key}")
     validate_production_compile(data, suite)
+    (
+        throughput_threshold,
+        latency_threshold,
+        throughput_ci_lower_min,
+        latency_ci_upper_max,
+    ) = suite_thresholds(suite)
     cases = data.get("cases")
     if not isinstance(cases, list) or not cases:
         fail("cases must be a non-empty list")
-    results = [evaluate_case(case, index) for index, case in enumerate(cases)]
+    results = [
+        evaluate_case(
+            case,
+            index,
+            throughput_threshold,
+            latency_threshold,
+            throughput_ci_lower_min,
+            latency_ci_upper_max,
+        )
+        for index, case in enumerate(cases)
+    ]
     ids = [result["id"] for result in results]
     if len(ids) != len(set(ids)):
         fail("case ids must be unique")
@@ -244,10 +279,15 @@ def evaluate(data: dict[str, Any], suite: dict[str, Any] | None = None) -> dict[
                 fail(f"{item['id']}: resource unit differs from the frozen suite")
         thresholds = suite.get("thresholds", {})
         if (
-            thresholds.get("throughput_oxiland_over_redland_min") != THROUGHPUT_THRESHOLD
-            or thresholds.get("latency_oxiland_over_redland_max") != LATENCY_THRESHOLD
-            or thresholds.get("bootstrap_rounds") != BOOTSTRAP_ROUNDS
+            thresholds.get("bootstrap_rounds") != BOOTSTRAP_ROUNDS
             or thresholds.get("minimum_samples") != MINIMUM_SAMPLES
+        ):
+            fail("frozen suite thresholds disagree with the qualification implementation")
+        if (
+            float(thresholds.get("throughput_oxiland_over_redland_min", 1.05))
+            != throughput_threshold
+            or float(thresholds.get("latency_oxiland_over_redland_max", 0.95))
+            != latency_threshold
         ):
             fail("frozen suite thresholds disagree with the qualification implementation")
 

@@ -391,12 +391,7 @@ fn parse_bytes_to_stream(
     }
     box_handle(
         TAG_STREAM,
-        StreamInner {
-            statements,
-            triples: Vec::new(),
-            index: 0,
-            current: None,
-        },
+        StreamInner::from_statements(statements),
     )
 }
 

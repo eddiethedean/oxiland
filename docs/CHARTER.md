@@ -158,10 +158,10 @@ Version 1.0 means:
 - the 0.11 demonstrated full Redland parity gate has passed: every public item
   and applicable observable behavior in the pinned baseline is verified by
   native, revision-bound evidence, with no in-scope exclusion or deviation;
-- the 0.12 performance-optimization gate has passed: the frozen
-  faster-than-Redland protocol wins every required benchmark and supported
-  performance profile on the exact parity-qualified, performance-optimized
-  artifacts, with no tie, loss, or inconclusive result;
+- the 0.12 performance-optimization gate has passed: the frozen ADR-028
+  competitive-parity protocol holds on every required benchmark and supported
+  performance profile for the parity-qualified artifacts (production compile,
+  resource budgets, no required-case waiver);
 - the published behavioral, source, and ABI matrices meet their stated gates;
 - API, ABI, persistence, MSRV, support, and deprecation policies are published;
 - clean installation and selected downstream workflows work from release

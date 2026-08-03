@@ -24,7 +24,7 @@ unimplemented = "deny"
 
 [package]
 name = "oxiland"
-version = "0.11.0"
+version = "0.12.0"
 edition = "2024"
 rust-version = "1.87"
 description = "Embedded RDF datasets, SPARQL, persistence, and streaming I/O for Rust"
@@ -67,6 +67,10 @@ sha1 = "0.10"
 sha2 = "0.10"
 unicode-normalization = "0.1"
 tracing = { version = "0.1", optional = true }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
 
 [dev-dependencies]
 tempfile = "3"

@@ -22,6 +22,17 @@ pub fn clear_last_error() {
     });
 }
 
+/// Clears the last-error slot only when it currently holds a message.
+#[inline]
+pub fn clear_last_error_if_set() {
+    LAST_ERROR.with(|slot| {
+        let mut borrowed = slot.borrow_mut();
+        if borrowed.is_some() {
+            *borrowed = None;
+        }
+    });
+}
+
 /// Returns the last error message, if any.
 #[allow(
     dead_code,

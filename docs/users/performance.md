@@ -1,10 +1,11 @@
 # Performance
 
-Oxiland does not yet authorize a blanket faster-than-Redland claim. Milestone
-[0.12](../milestones/0.12.md) is the active optimization phase that closes
-the frozen comparison gate; until it completes, treat the following as
-operational guidance and cite only per-case native ratios when discussing
-speed.
+Milestone [0.12](../milestones/0.12.md) freezes a **competitive-parity** gate
+([ADR-028](../DECISIONS.md#adr-028--012-competitive-parity-performance-gate)):
+on matched production builds, Oxiland must stay within about 5% of Redland on
+every required case (throughput median ≥ `0.95`, latency ≤ `1.05`, with
+bootstrap CI bounds). That is **not** a blanket “faster than Redland” claim—
+cite per-case ratios from the native matrix when discussing speed.
 
 ## Practical defaults
 
@@ -22,16 +23,14 @@ speed.
 ## Comparison status
 
 - Protocol and thresholds:
-  [VERIFICATION.md — 0.12 performance optimization](../VERIFICATION.md#012-performance-optimization).
-- Progress: [0.12 report](../reports/0.12.md).
+  [VERIFICATION.md — 0.12 performance optimization](../VERIFICATION.md#012-performance-optimization)
+  and [ADR-028](../DECISIONS.md#adr-028--012-competitive-parity-performance-gate).
+- Results: [0.12 report](../reports/0.12.md); raw samples under
+  `compatibility/qualification/performance/0.12/`.
 - **Always measure release builds.** Use
   `cargo build -p oxiland-capi --release --locked` (and matching `--release`
   Rust examples/benches). Debug/`dev` compiles are not comparable to Redland
   production libraries and are rejected by the 0.12 performance gate.
-- Native 0.11 diagnostic samples live under
-  `compatibility/qualification/performance/` (`synthetic: false`). They show
-  strong Unix wins on mutation/parse/serialize and known cliffs on scan and
-  trivial C-call overhead; they are not a completed 0.12 gate.
 
 ## Related guides
 

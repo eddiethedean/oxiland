@@ -205,7 +205,7 @@ Additional phase gates:
 | 0.9 | selected downstream C consumers |
 | 0.10 | frozen contracts, candidate inventory/C surface, qualification scaffolding, performance candidate, and soak |
 | 0.11 | **demonstrated full Redland 1.0.17 parity**, native cross-platform differentials, source compatibility, and binary ABI interchange |
-| 0.12 | **faster-than-Redland performance gate** on parity-qualified artifacts, with resource budgets and no required-case waiver |
+| 0.12 | **competitive-parity performance gate** (ADR-028) on parity-qualified artifacts, with resource budgets and no required-case waiver |
 
 The 0.11 parity row is a hard gate, not a documentation claim or a waivable
 target. The machine-generated report must derive every state from raw native
@@ -289,10 +289,18 @@ win is the 0.12 milestone.
 
 ### 0.12 performance optimization
 
-Milestone [0.12](milestones/0.12.md) owns closing the faster-than-Redland gate.
-It starts from the 0.11 native sample set, freezes resource budgets, attributes
-every loss or tie, and lands optimizations until every required case on every
-required target/profile passes the statistical protocol above.
+Milestone [0.12](milestones/0.12.md) owns the performance gate on
+parity-qualified artifacts. Under [ADR-028](DECISIONS.md#adr-028--012-competitive-parity-performance-gate),
+matched production builds freeze a **competitive-parity** rule:
+
+- throughput: Oxiland/Redland median ≥ `0.95`, and 95% bootstrap CI lower bound
+  `> 0.90`;
+- latency: Oxiland/Redland median ≤ `1.05`, and 95% bootstrap CI upper bound
+  `< 1.10`.
+
+A later ADR may restore a stricter faster-than-Redland margin when matched
+evidence sustains it. 0.12 does not authorize a blanket “faster than Redland”
+marketing claim.
 
 #### Production compile contract
 
@@ -318,8 +326,8 @@ that flag is set. A fast debug build cannot satisfy the gate.
 
 Additional 0.12 rules:
 
-- Optimizations must retain a green 0.11 parity checker on the same candidate
-  revision; behavioral shortcuts are out of scope.
+- Optimizations must retain a green 0.11 parity checker on the candidate
+  ancestry; behavioral shortcuts are out of scope.
 - Peak RSS and disk amplification must meet independently frozen budgets so
   speed cannot be bought by unbounded resource growth.
 - Published claims are per-case median ratios with confidence intervals, host,

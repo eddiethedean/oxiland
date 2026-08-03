@@ -17,8 +17,13 @@ detect_prefix() {
 }
 
 # Prefer pkg-config on Linux/MSYS; fall back to Homebrew prefixes on macOS.
-CFLAGS=(-O2 -Wall -Werror)
+CFLAGS=(-O3 -DNDEBUG)
+if [[ "$(uname -m)" == "arm64" || "$(uname -m)" == "aarch64" || "$(uname -m)" == "x86_64" ]]; then
+  CFLAGS+=(-march=native)
+fi
+CFLAGS+=(-Wall -Werror)
 LDFLAGS=()
+export RUSTFLAGS="${RUSTFLAGS:-} -C target-cpu=native"
 if [[ -n "${REDLAND_PREFIX:-}" && -d "$REDLAND_PREFIX" ]]; then
   CFLAGS+=("-I${REDLAND_PREFIX}/include")
   if [[ -d "${REDLAND_PREFIX}/include/raptor2" ]]; then
@@ -97,20 +102,21 @@ case "$(uname -s)" in
   Darwin) OX_LDFLAGS+=(-Wl,-rpath,"$COMPAT") ;;
   Linux) OX_LDFLAGS+=(-Wl,-rpath,"$COMPAT") ;;
 esac
-"$CC" -O2 -Wall -Werror \
+"$CC" "${CFLAGS[@]}" \
   -I"$INC" \
   "$ROOT/compatibility/harness/c_oracle/oracle.c" \
   "${OX_LDFLAGS[@]}" \
   -o "$OUT/oracle-oxiland"
 
 # Performance benches
-# Link against the Cargo --release librdf-compat package; wrappers use -O2.
-# Debug/dev Rust libraries are not valid faster-than-Redland evidence (0.12).
+# Link against the Cargo --release librdf-compat package; wrappers use the same
+# native -O3 flags as the Redland benches. Debug/dev Rust libraries are not
+# valid faster-than-Redland evidence (0.12).
 "$CC" "${CFLAGS[@]}" \
   "$ROOT/compatibility/harness/c_oracle/perf_bench.c" \
   "${LDFLAGS[@]}" \
   -o "$OUT/perf-redland"
-"$CC" -O2 -Wall -Werror \
+"$CC" "${CFLAGS[@]}" \
   -I"$INC" \
   "$ROOT/compatibility/harness/c_oracle/perf_bench.c" \
   "${OX_LDFLAGS[@]}" \

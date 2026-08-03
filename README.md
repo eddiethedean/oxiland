@@ -228,9 +228,10 @@ lines; export standards RDF before major upgrades. See the
 [support policy](SUPPORT.md) and [changelog](CHANGELOG.md).
 
 Milestone 0.11 demonstrated Redland parity on the frozen matrix. Milestone
-[0.12](docs/milestones/0.12.md) is the active performance-optimization phase
-that closes the faster-than-Redland gate before the readiness checks in
-[ROADMAP](docs/ROADMAP.md) for version 1.0.
+[0.12](docs/milestones/0.12.md) closed the ADR-028 competitive-parity
+performance gate on production-compile evidence (not a blanket faster-than-
+Redland claim). See [performance](docs/users/performance.md) and the
+[ROADMAP](docs/ROADMAP.md) for version 1.0 readiness.
 
 Report suspected vulnerabilities privately according to
 [SECURITY.md](SECURITY.md), not in a public issue.

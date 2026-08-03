@@ -74,6 +74,34 @@ class PerformanceGateTests(unittest.TestCase):
             "resource_budgets": [{"id": "rss", "unit": "MiB", "maximum": 20}],
         }
 
+    def test_competitive_parity_suite_thresholds_are_honored(self) -> None:
+        data = self.data()
+        # Near-parity throughput still clears ADR-028 (median >= 0.95, CI > 0.90).
+        data["cases"][0]["oxiland"] = [97 + index % 3 for index in range(30)]
+        data["cases"][0]["redland"] = [100 + index % 3 for index in range(30)]
+        data["cases"][1]["oxiland"] = [103 + index % 3 for index in range(30)]
+        data["cases"][1]["redland"] = [100 + index % 3 for index in range(30)]
+        suite = self.suite(data)
+        suite["thresholds"] = {
+            "throughput_oxiland_over_redland_min": 0.95,
+            "latency_oxiland_over_redland_max": 1.05,
+            "throughput_ci_lower_min": 0.90,
+            "latency_ci_upper_max": 1.10,
+            "bootstrap_rounds": 10000,
+            "minimum_samples": 30,
+        }
+        report = performance.evaluate(data, suite)
+        self.assertTrue(report["passed"])
+
+    def test_legacy_faster_than_redland_suite_still_requires_ci_above_parity(self) -> None:
+        data = self.data()
+        data["cases"][0]["oxiland"] = [102 + index % 2 for index in range(30)]
+        data["cases"][0]["redland"] = [100 + index % 2 for index in range(30)]
+        suite = self.suite(data)
+        report = performance.evaluate(data, suite)
+        # Median ~1.02 fails the historical 1.05 median rule.
+        self.assertFalse(report["passed"])
+
     def test_passing_matrix_requires_each_case_and_resource_to_win(self) -> None:
         data = self.data()
         report = performance.evaluate(data, self.suite(data))

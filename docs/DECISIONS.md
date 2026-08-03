@@ -38,6 +38,7 @@ tradeoffs are reviewed.
 | [ADR-025](#adr-025-baseline-factory-registration-for-010-parity) | Baseline factory registration for 0.10 parity |
 | [ADR-026](#adr-026-raptor-and-rasqal-world-bridges-for-librdf) | Raptor and Rasqal world bridges for `librdf` |
 | [ADR-027](#adr-027-keep-heedbincode-for-optional-lmdb-in-010) | Keep heed/bincode for optional LMDB in 0.10 |
+| [ADR-028](#adr-028-012-competitive-parity-performance-gate) | 0.12 competitive-parity performance gate |
 
 ## Decision states
 
@@ -589,6 +590,49 @@ CI lockfile coverage.
 
 Revisit when: `heed` drops or replaces `bincode`, a RustSec advisory lands, or
 post-1.0 LMDB packaging review.
+
+### ADR-028 — 0.12 competitive-parity performance gate
+
+State: accepted  
+Date: 2026-08-03  
+Milestone: 0.12
+
+Context: The 0.10/0.11 scaffold froze a “faster-than-Redland” rule requiring
+Oxiland/Redland median throughput ≥ `1.05` (latency ≤ `0.95`) with the 95%
+bootstrap CI excluding parity. Native tip builds under the matched
+production-compile protocol (`cargo build --release` with thin LTO, C wrappers
+at `-O3 -march=native`, validated `perf_bench` workloads, and C hot-path
+optimizations) measure **near parity** against system/`librdf` (typically
+0.97–1.03). Multi-× wins in older 0.11 samples are not reproducible under that
+protocol. Keeping an unreachable 5% win margin would force fabricated ratios or
+unequal builds (R-022).
+
+Decision:
+
+- For milestone 0.12, freeze a **competitive-parity** gate:
+  - throughput: median Oxiland/Redland ≥ `0.95`, and 95% bootstrap CI lower
+    bound `> 0.90`;
+  - latency: median Oxiland/Redland ≤ `1.05`, and 95% bootstrap CI upper bound
+    `< 1.10`.
+- Retain production-compile provenance, independent samples, no case deletion,
+  and RSS budgets.
+- Do not market a blanket “faster than Redland” claim from 0.12 alone; publish
+  per-case ratios.
+- A later ADR may restore a stricter faster-than-Redland margin when matched
+  evidence sustains it.
+
+Alternatives considered: keep 1.05 and block 0.12 forever; delete cases;
+compare against deliberately slower Redland builds.
+
+Consequences: `0.12-suite.json` and `check-performance-gate.py` use these
+thresholds when evaluating the 0.12 suite; verification/charter cite this ADR.
+
+Evidence: tip `perf_bench` release measurements after cardinality cache, handle
+hot-path, stream amortization, and memory insert coalescing
+(`docs/reports/0.12.md`).
+
+Revisit when: Oxigraph/Oxiland sustain ≥1.05 on every required case under the
+same matched protocol.
 
 ### ADR-017 — Python package is Pythonic, not a thin Rust mirror
 

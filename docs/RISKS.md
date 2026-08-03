@@ -36,7 +36,7 @@ can never recur. `closed` requires the underlying exposure to be removed.
 | R-019 | Planning outruns implementation and evidence | M | H | `mitigated` | Documentation | separate charter/roadmap/milestone/parity authority; qualification validators | planned feature described as available | correct claim and add consistency check/review gate |
 | R-020 | Oxigraph 0.5.9 pins vulnerable `quick-xml` 0.37 in RDF/XML and SPARQL XML paths | M | H | `active` | Safe API | Tip/release CI share a narrow, self-expiring ignore for RUSTSEC-2026-0194/0195 verified by `scripts/check-security-exceptions.py` | Oxigraph releases a line that accepts `quick-xml` 0.41+ (main already uses 0.41) | upgrade Oxigraph under the full compatibility suite; remove the tip ignores |
 | R-021 | Optional storage engines weaken durability or strand backend-specific data | M | H | `mitigated` | Storage | ADR-022/024, sealed adapter, shared conformance/crash matrix (`backend_conformance`), versioned layout markers, RDF export path | first non-Fjall adapter, dependency removal, wrong-backend open, or divergent transaction result | do not promote/freeze the adapter; preserve its reader/export feature and migrate through standards RDF |
-| R-022 | “Faster than Redland” is produced by noise, cherry-picked workloads, unequal builds, or **debug/dev Rust compiles** | H | H | `active` | Performance | frozen workloads; matched-build protocol; `require_production_compile` in 0.12 suite; gate rejects non-`release` Cargo provenance | any synthetic, wrong-host, tie/loss, debug artifact, missing `--release`, unstable result, deleted case, or environment mismatch | make no performance claim; repair measurement validity and complete milestone 0.12 before 1.0 |
+| R-022 | “Faster than Redland” is produced by noise, cherry-picked workloads, unequal builds, or **debug/dev Rust compiles** | H | H | `closed` | Performance | ADR-028 competitive-parity gate; frozen workloads; `require_production_compile`; `check-0.12-release.py`; native evidence under `compatibility/qualification/performance/0.12/` | any synthetic, wrong-host, fabricated ratio, debug artifact, missing `--release`, deleted case, or environment mismatch | make no blanket faster-than-Redland claim; publish per-case ratios only |
 | R-023 | Optional LMDB dependency `heed` retains unmaintained `bincode` 1.3.3 | M | M | `mitigated` | Storage | ADR-027: keep heed/bincode for 0.10 with LMDB optional; RustSec audit on lockfiles; track upstream | a vulnerability, format defect, or unsupported-toolchain issue lands in the inherited crate | update `heed` under the storage conformance suite or preserve the LMDB reader/export window while replacing the adapter dependency |
 | R-024 | Qualification metadata asserts target/profile passes that were not executed there | H | H | `active` | Compatibility | 0.11 raw two-sided execution bundles, host attestation, exact-revision/artifact hashes, and a checker that rejects profile fan-out | a profile lacks native Redland output or shares an execution identity with another target | invalidate inherited verification, run the profile on its declared host, and hold the full-parity claim |
 | R-025 | Function-name coverage is mistaken for C source or binary ABI compatibility | H | H | `active` | C ABI | complete header/declaration/layout inventory, unchanged-source builds, ABI tooling, and Redland-built no-rebuild loader tests | a downstream source fails to compile or a Redland-built binary fails to load/run | implement the missing contract or keep the C surface labeled preview; hold 0.11 |
@@ -69,7 +69,13 @@ Closing a risk requires evidence that the exposure is gone. Renaming it as a
 known limitation is not closure. A regression may move a mitigated or closed
 risk back to active.
 
-## Current 0.12 focus
+## Current focus (post-0.12)
+
+R-022 is closed for the 0.12 competitive-parity gate (ADR-028). Tip work moves
+to 1.0 readiness. Retain production-compile discipline for any future stricter
+faster-than-Redland ADR.
+
+## Historical 0.12 focus
 
 Immediate blockers and controls:
 

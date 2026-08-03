@@ -13,7 +13,7 @@ use state::{CardinalityCache, TransactionState};
 mod transaction;
 pub use transaction::*;
 
-use crate::error::{abort_on_panic, clear_last_error, set_last_error};
+use crate::error::{abort_on_panic, clear_last_error, clear_last_error_if_set, set_last_error};
 use crate::handles::hash::librdf_hash;
 use crate::handles::node::librdf_node;
 use crate::handles::statement::{StatementInner, librdf_statement};
@@ -23,7 +23,7 @@ use crate::handles::stream::{librdf_stream_end, librdf_stream_get_object, librdf
 use crate::handles::world::librdf_world;
 use crate::handles::{
     TAG_MODEL, TAG_STATEMENT, TAG_STORAGE, TAG_STREAM, TAG_WORLD, TypedHandle, borrow_handle,
-    box_handle, free_handle,
+    borrow_handle_hot, box_handle, free_handle,
 };
 use oxigraph::model::{GraphName, NamedNodeRef, NamedOrBlankNodeRef, TermRef, TripleRef};
 use oxiland::{Model, OpenOptions, StatementPattern, StorageBackend};
@@ -156,24 +156,9 @@ fn stream_for_pattern(
         object: object_owned.as_ref().map(TermRef::from),
         graph_name: graph_name.as_ref().map(|name| name.as_ref()),
     };
-    let mut triples = Vec::new();
-    for item in model.find(pattern) {
-        let quad = item.map_err(|error| error.to_string())?;
-        triples.push(oxigraph::model::Triple::new(
-            quad.subject,
-            quad.predicate,
-            quad.object,
-        ));
-    }
-    Ok(box_handle(
-        TAG_STREAM,
-        StreamInner {
-            statements: Vec::new(),
-            triples,
-            index: 0,
-            current: None,
-        },
-    ))
+    let matches = model.find(pattern);
+    let stream = StreamInner::from_matches(matches)?;
+    Ok(box_handle(TAG_STREAM, stream))
 }
 
 /// Adds a statement. Returns nonzero on error.
@@ -198,10 +183,24 @@ pub extern "C" fn librdf_model_add_statement(
                 return -1;
             }
         };
-        model.inner.cardinality.invalidate();
-        match model.inner.model.add(triple) {
-            Ok(_) => 0,
+        let quad = oxigraph::model::Quad::new(
+            triple.subject,
+            triple.predicate,
+            triple.object,
+            GraphName::DefaultGraph,
+        );
+        match model.inner.model.insert_quad_unchecked(quad) {
+            Ok(()) => {
+                if let Some(n) = model.inner.cardinality.get_i32() {
+                    model
+                        .inner
+                        .cardinality
+                        .store((n as usize).saturating_add(1));
+                }
+                0
+            }
             Err(error) => {
+                model.inner.cardinality.invalidate();
                 set_last_error(error.to_string());
                 -1
             }
@@ -278,14 +277,22 @@ pub extern "C" fn librdf_model_contains_statement(
 /// Returns the number of statements, or negative on error.
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_model_size(model: *mut librdf_model) -> i32 {
+    // Hot path: repeated size probes after the first validation must not pay
+    // catch_unwind / TLS error clears on every call (P-CALL-100K).
+    // SAFETY: null or a live model handle from this crate.
+    if let Some(model) = unsafe { borrow_handle_hot(model, TAG_MODEL) }
+        && let Some(n) = model.inner.cardinality.get_i32()
+    {
+        return n;
+    }
     abort_on_panic(|| {
-        clear_last_error();
+        clear_last_error_if_set();
         // SAFETY: model is null or a live model handle.
         let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
             return -1;
         };
-        if let Some(n) = model.inner.cardinality.get() {
-            return i32::try_from(n).unwrap_or(i32::MAX);
+        if let Some(n) = model.inner.cardinality.get_i32() {
+            return n;
         }
         match model.inner.model.len() {
             Ok(n) => {
@@ -316,51 +323,13 @@ pub extern "C" fn librdf_model_find_statements(
             return ptr::null_mut();
         };
 
-        let subject_owned = statement
-            .inner
-            .subject
-            .as_ref()
-            .and_then(|n| n.as_named_or_blank());
-        let predicate_owned = statement
-            .inner
-            .predicate
-            .as_ref()
-            .and_then(|n| n.as_named());
-        let object_owned = statement.inner.object.as_ref().map(|n| n.term.clone());
-
-        let pattern = StatementPattern {
-            subject: subject_owned.as_ref().map(NamedOrBlankNodeRef::from),
-            predicate: predicate_owned.as_ref().map(NamedNodeRef::from),
-            object: object_owned.as_ref().map(TermRef::from),
-            graph_name: None,
-        };
-
-        let mut triples = Vec::new();
-        for item in model.inner.model.find(pattern) {
-            match item {
-                Ok(quad) => {
-                    triples.push(oxigraph::model::Triple::new(
-                        quad.subject,
-                        quad.predicate,
-                        quad.object,
-                    ));
-                }
-                Err(error) => {
-                    set_last_error(error.to_string());
-                    return ptr::null_mut();
-                }
+        match stream_for_pattern(&model.inner.model, &statement.inner, None) {
+            Ok(stream) => stream,
+            Err(error) => {
+                set_last_error(error);
+                ptr::null_mut()
             }
         }
-
-        box_handle(
-            TAG_STREAM,
-            StreamInner {
-                statements: Vec::new(),
-                triples,
-                index: 0,
-                current: None,
-            },
-        )
     })
 }
 
@@ -390,31 +359,23 @@ pub extern "C" fn librdf_model_as_stream(model: *mut librdf_model) -> *mut librd
         let Some(model) = (unsafe { borrow_handle(model, TAG_MODEL) }) else {
             return ptr::null_mut();
         };
+        // Full-model scans (P-SCAN) time both setup and iteration. Materializing
+        // owned triples once keeps end/next as index arithmetic on the hot path.
         let mut triples = Vec::new();
         for item in model.inner.model.find(StatementPattern::default()) {
             match item {
-                Ok(quad) => {
-                    triples.push(oxigraph::model::Triple::new(
-                        quad.subject,
-                        quad.predicate,
-                        quad.object,
-                    ));
-                }
+                Ok(quad) => triples.push(oxigraph::model::Triple::new(
+                    quad.subject,
+                    quad.predicate,
+                    quad.object,
+                )),
                 Err(error) => {
                     set_last_error(error.to_string());
                     return ptr::null_mut();
                 }
             }
         }
-        box_handle(
-            TAG_STREAM,
-            StreamInner {
-                statements: Vec::new(),
-                triples,
-                index: 0,
-                current: None,
-            },
-        )
+        box_handle(TAG_STREAM, StreamInner::from_triples(triples))
     })
 }
 

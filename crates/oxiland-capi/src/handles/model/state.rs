@@ -6,27 +6,37 @@
 use std::ffi::c_void;
 use std::ptr;
 
-pub struct CardinalityCache(Option<usize>);
+pub struct CardinalityCache(i32);
 
 impl CardinalityCache {
     pub fn known_empty() -> Self {
-        Self(Some(0))
+        Self(0)
     }
 
     pub fn unknown() -> Self {
-        Self(None)
+        Self(-1)
     }
 
+    #[inline(always)]
     pub fn get(&self) -> Option<usize> {
-        self.0
+        if self.0 < 0 {
+            None
+        } else {
+            Some(self.0 as usize)
+        }
+    }
+
+    #[inline(always)]
+    pub fn get_i32(&self) -> Option<i32> {
+        if self.0 < 0 { None } else { Some(self.0) }
     }
 
     pub fn store(&mut self, value: usize) {
-        self.0 = Some(value);
+        self.0 = i32::try_from(value).unwrap_or(i32::MAX);
     }
 
     pub fn invalidate(&mut self) {
-        self.0 = None;
+        self.0 = -1;
     }
 }
 

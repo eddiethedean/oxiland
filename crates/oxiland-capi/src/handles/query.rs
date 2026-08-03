@@ -43,7 +43,7 @@ pub enum QueryResultsInner {
         name_cptrs: Vec<*mut std::os::raw::c_char>,
     },
     Graph {
-        statements: Vec<crate::handles::statement::StatementInner>,
+        triples: Vec<oxigraph::model::Triple>,
     },
 }
 
@@ -216,7 +216,7 @@ pub extern "C" fn librdf_model_query_execute(
                 inner
             }
             QueryResults::Graph(mut graph) => {
-                let mut statements = Vec::new();
+                let mut triples = Vec::new();
                 for triple in graph.by_ref() {
                     let triple = match triple {
                         Ok(t) => t,
@@ -225,11 +225,9 @@ pub extern "C" fn librdf_model_query_execute(
                             return ptr::null_mut();
                         }
                     };
-                    statements.push(crate::handles::statement::StatementInner::from_triple(
-                        triple,
-                    ));
+                    triples.push(triple);
                 }
-                QueryResultsInner::Graph { statements }
+                QueryResultsInner::Graph { triples }
             }
         };
         box_handle(TAG_QUERY_RESULTS, inner)
@@ -258,15 +256,10 @@ pub extern "C" fn librdf_query_results_as_stream(
         let Some(results) = (unsafe { borrow_handle(results, TAG_QUERY_RESULTS) }) else {
             return ptr::null_mut();
         };
-        match &results.inner {
-            QueryResultsInner::Graph { statements } => box_handle(
+        match &mut results.inner {
+            QueryResultsInner::Graph { triples } => box_handle(
                 crate::handles::TAG_STREAM,
-                crate::handles::stream::StreamInner {
-                    statements: statements.clone(),
-                    triples: Vec::new(),
-                    index: 0,
-                    current: None,
-                },
+                crate::handles::stream::StreamInner::from_triples(std::mem::take(triples)),
             ),
             _ => {
                 set_last_error("query results are not a graph");
@@ -765,10 +758,13 @@ fn results_to_text(
             }
             Ok(out)
         }
-        QueryResultsInner::Graph { statements } => {
+        QueryResultsInner::Graph { triples } => {
             let mut out = String::new();
-            for stmt in statements {
-                let tmp = box_handle(TAG_STATEMENT, stmt.clone());
+            for triple in triples {
+                let tmp = box_handle(
+                    TAG_STATEMENT,
+                    crate::handles::statement::StatementInner::from_triple(triple.clone()),
+                );
                 let p = crate::handles::statement::librdf_statement_to_string(tmp);
                 unsafe { free_handle(tmp, TAG_STATEMENT) };
                 if !p.is_null() {

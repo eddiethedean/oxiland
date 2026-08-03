@@ -1,7 +1,7 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 0.12 (in progress — performance optimization)
+Current milestone: 1.0 (planned — after complete 0.12 performance gate)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the

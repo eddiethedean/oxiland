@@ -1,12 +1,14 @@
 {
   "schema_version": 1,
   "id": "oxiland-redland-0.12-v1",
-  "status": "draft",
+  "status": "frozen",
   "baseline": "Redland librdf 1.0.17",
   "surface": "public C API",
   "thresholds": {
-    "throughput_oxiland_over_redland_min": 1.05,
-    "latency_oxiland_over_redland_max": 0.95,
+    "throughput_oxiland_over_redland_min": 0.95,
+    "latency_oxiland_over_redland_max": 1.05,
+    "throughput_ci_lower_min": 0.90,
+    "latency_ci_upper_max": 1.10,
     "confidence": 0.95,
     "bootstrap_rounds": 10000,
     "minimum_samples": 30
@@ -107,7 +109,20 @@
       "required": true
     }
   ],
-  "resource_budgets": [],
+  "resource_budgets": [
+    {
+      "id": "R-RSS-PARSE",
+      "unit": "ratio",
+      "maximum": 1.25,
+      "notes": "Peak RSS Oxiland/Redland for P-PARSE-TTL-10K (ADR-028 competitive-parity gate)."
+    },
+    {
+      "id": "R-RSS-QUERY",
+      "unit": "ratio",
+      "maximum": 1.25,
+      "notes": "Peak RSS Oxiland/Redland for P-SELECT-10K."
+    }
+  ],
   "milestone": "0.12",
-  "notes": "Draft until WP-12-01 freezes budgets. Cases inherit the 0.11 diagnostic set. Samples must be native (synthetic=false) and record production-compile provenance."
+  "notes": "Frozen under ADR-028 competitive-parity thresholds. Samples must be native (synthetic=false) with production-compile provenance. Does not authorize a blanket faster-than-Redland marketing claim."
 }

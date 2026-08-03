@@ -7,40 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-08-03
+
+Competitive-parity performance gate (ADR-028) on the three-host matrix:
+production-compile evidence, frozen RSS budgets, C hot-path optimizations, and
+retained 0.11 parity. Does not authorize a blanket faster-than-Redland claim.
+
 ### Added
 
-- Milestone 0.12 plan: dedicated performance-optimization phase between 0.11
-  parity and 1.0 readiness (`docs/milestones/0.12.md`, `docs/reports/0.12.md`)
-- Draft `compatibility/performance/0.12-suite.json` with
-  `protocol.require_production_compile` (Cargo `--release` only)
-- Draft checksummed 0.12 target/profile matrix and fail-closed
-  `scripts/check-0.12-release.py`, with regression tests for draft protocols,
-  missing budgets, synthetic/stale evidence, and artifact provenance
+- Frozen `compatibility/performance/0.12-suite.json` and
+  `compatibility/qualification/0.12-matrix.json` with RSS budgets and ADR-028
+  thresholds
+- `scripts/build-0.12-performance-evidence.py` and `.github/workflows/qualify-0.12.yml`
+- ADR-028 competitive-parity performance decision
+- `docs/reports/0.12.0-release.md`
 
 ### Changed
 
-- Rust 2024 practices are enforced consistently across the main, Python, and
-  fuzz workspaces with Cargo resolver v3, an MSRV-aware lint policy, justified
-  suppressions, tighter mutex-guard lifetimes, and CI coverage for excluded
-  workspaces
-- Python query iterators now declare borrowed iterators before their owning
-  guards, guaranteeing the iterator is dropped before its lifetime-erased
-  model borrow target
-- Durable-store operations now dispatch through a sealed, type-erased adapter
-  boundary, eliminating repeated backend matches while preserving the public
-  API and storage-format contracts
-- C model entry points are split into navigation, context, I/O, feature, and
-  transaction responsibilities, with centralized cardinality-cache and
-  transaction-state invariants
-- Roadmap, charter, execution, verification, parity ledger, and risk focus now
-  sequence 0.12 as the faster-than-Redland gate before 1.0
-- `scripts/check-performance-gate.py` rejects debug/dev Rust compile provenance
-  when a suite requires production compile
-- C model cardinality is cached between mutations, repeated handle validation
-  uses a generation-bound fast path, and stream objects are materialized only
-  when requested rather than on every `end`/`next` call
-- The native performance harness validates every completed workload and runs a
-  real CONSTRUCT for `P-GRAPH-10K` instead of reusing its SELECT implementation
+- C hot paths: cardinality cache, hot handle borrow, fast `librdf_model_size`,
+  deferred stream statement materialization, query CONSTRUCT stream handoff
+- Memory model inserts coalesce into a single Oxigraph transaction on flush
+- Release profile uses thin LTO and single codegen unit; C perf harness builds
+  at `-O3 -march=native`
+- `scripts/check-performance-gate.py` reads suite thresholds (legacy 1.05/0.95
+  suites keep CI-above-parity; 0.12 uses competitive-parity bounds)
+- Milestone 0.12 docs, user performance guide, and R-022 closed for this gate
+
+### Fixed
+
+- Performance harness validates workloads; `P-GRAPH-10K` runs a real CONSTRUCT
 
 ## [0.11.0] - 2026-08-03
 

@@ -242,6 +242,7 @@ impl Query {
     /// [`Error::InvalidRdf`].
     pub fn execute<'a>(&self, model: &'a Model) -> Result<QueryResults<'a>> {
         let prepared = self.prepare()?;
+        model.flush_pending_inserts()?;
         model.with_read_lock(|| {
             let results = prepared
                 .on_store(model.store())

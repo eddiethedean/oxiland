@@ -39,16 +39,29 @@ pub struct StatementPattern<'a> {
 /// [`Error::Storage`].
 #[must_use]
 pub struct StatementMatches {
-    inner: QuadIter<'static>,
+    inner: Option<QuadIter<'static>>,
+    prelude_error: Option<Error>,
+}
+
+impl StatementMatches {
+    fn failed(error: Error) -> Self {
+        Self {
+            inner: None,
+            prelude_error: Some(error),
+        }
+    }
 }
 
 impl Iterator for StatementMatches {
     type Item = Result<Quad>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner
-            .next()
-            .map(|item| item.map_err(|error| Error::Storage(error.to_string())))
+        if let Some(error) = self.prelude_error.take() {
+            return Some(Err(error));
+        }
+        self.inner.as_mut()?.next().map(|item| {
+            item.map_err(|error| Error::Storage(error.to_string()))
+        })
     }
 }
 
@@ -172,6 +185,10 @@ pub struct Model {
     store: Store,
     disk: Option<DurableStore>,
     lock: Arc<RwLock<()>>,
+    /// Memory-only insert coalescing. Flushed before reads/sync so callers see
+    /// committed store state while C-style one-quad writes avoid a transaction
+    /// commit per statement.
+    pending_inserts: Arc<Mutex<Vec<Quad>>>,
     read_only: bool,
     in_transaction: Arc<AtomicBool>,
     txn_owner: Arc<Mutex<Option<ThreadId>>>,
@@ -214,6 +231,7 @@ impl Model {
             store,
             disk,
             lock: Arc::new(RwLock::new(())),
+            pending_inserts: Arc::new(Mutex::new(Vec::new())),
             read_only,
             in_transaction: Arc::new(AtomicBool::new(false)),
             txn_owner: Arc::new(Mutex::new(None)),
@@ -412,6 +430,42 @@ impl Model {
         f()
     }
 
+    pub(crate) fn flush_pending_inserts(&self) -> Result<()> {
+        let batch = {
+            let mut pending = self
+                .pending_inserts
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            if pending.is_empty() {
+                return Ok(());
+            }
+            std::mem::take(&mut *pending)
+        };
+        let _guard = self
+            .lock
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let result = (|| {
+            let mut transaction = self
+                .store
+                .start_transaction()
+                .map_err(|error| Error::Storage(error.to_string()))?;
+            for quad in &batch {
+                transaction.insert(quad);
+            }
+            transaction
+                .commit()
+                .map_err(|error| Error::Storage(error.to_string()))
+        })();
+        if result.is_err() {
+            self.pending_inserts
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .splice(0..0, batch);
+        }
+        result
+    }
+
     /// Reports whether a named storage backend is available in this build.
     pub fn storage_backend_available(name: &str) -> Result<bool> {
         let backend = StorageBackend::from_name(name)?;
@@ -464,6 +518,7 @@ impl Model {
                 "nested Model::transaction is unsupported".into(),
             ));
         }
+        self.flush_pending_inserts()?;
         let _guard = self
             .lock
             .write()
@@ -514,6 +569,7 @@ impl Model {
                 "sync is unavailable while a Model::transaction is open on this thread".into(),
             ));
         }
+        self.flush_pending_inserts()?;
         let _guard = self
             .lock
             .write()
@@ -527,6 +583,7 @@ impl Model {
     /// Clears all statements (and named graphs) from the model.
     pub fn clear(&self) -> Result<()> {
         self.ensure_writable()?;
+        self.flush_pending_inserts()?;
         let _guard = self
             .lock
             .write()
@@ -550,6 +607,7 @@ impl Model {
     /// Clears a single graph/context.
     pub fn clear_graph(&self, graph_name: impl Into<GraphName>) -> Result<()> {
         self.ensure_writable()?;
+        self.flush_pending_inserts()?;
         let graph_name = graph_name.into();
         let _guard = self
             .lock
@@ -652,6 +710,7 @@ impl Model {
     /// Inserts a fully formed quad into the model.
     pub fn insert_quad(&self, quad: Quad) -> Result<bool> {
         self.ensure_writable()?;
+        self.flush_pending_inserts()?;
         let _guard = self
             .lock
             .write()
@@ -681,9 +740,47 @@ impl Model {
         Ok(true)
     }
 
+    /// Inserts a quad without a preflight contains probe.
+    ///
+    /// Used by the C ABI where callers only need success/failure and unique
+    /// inserts are the common case (P-MUT). Presence-sensitive callers should
+    /// keep using [`Self::insert_quad`].
+    pub fn insert_quad_unchecked(&self, quad: Quad) -> Result<()> {
+        self.ensure_writable()?;
+        if self.disk.is_none() {
+            self.pending_inserts
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .push(quad);
+            return Ok(());
+        }
+        self.flush_pending_inserts()?;
+        let _guard = self
+            .lock
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        self.store
+            .insert(&quad)
+            .map_err(|error| Error::Storage(error.to_string()))?;
+        if let Some(disk) = &self.disk {
+            let canonical = storage::stored_matching_quad(&self.store, &quad)?;
+            if let Err(error) = disk.insert_quad(&canonical) {
+                if let Err(reload_error) = self.reload_store_from_disk_unlocked(disk) {
+                    let _ = self.store.remove(canonical.as_ref());
+                    return Err(Error::Storage(format!(
+                        "durable insert failed ({error}); rollback from disk also failed ({reload_error})"
+                    )));
+                }
+                return Err(error);
+            }
+        }
+        Ok(())
+    }
+
     /// Removes a fully formed quad from the model.
     pub fn remove_quad(&self, quad: &Quad) -> Result<bool> {
         self.ensure_writable()?;
+        self.flush_pending_inserts()?;
         let _guard = self
             .lock
             .write()
@@ -740,6 +837,7 @@ impl Model {
         statement: TripleRef<'_>,
         graph_name: GraphNameRef<'_>,
     ) -> Result<bool> {
+        self.flush_pending_inserts()?;
         self.with_read_lock(|| {
             self.store
                 .contains(oxigraph::model::QuadRef::new(
@@ -754,6 +852,7 @@ impl Model {
 
     /// Returns the number of statements across all contexts.
     pub fn len(&self) -> Result<usize> {
+        self.flush_pending_inserts()?;
         self.with_read_lock(|| {
             self.store
                 .len()
@@ -763,6 +862,7 @@ impl Model {
 
     /// Returns whether the model contains no statements.
     pub fn is_empty(&self) -> Result<bool> {
+        self.flush_pending_inserts()?;
         self.with_read_lock(|| {
             self.store
                 .is_empty()
@@ -772,13 +872,17 @@ impl Model {
 
     /// Streams quads matching a partial statement/context pattern.
     pub fn find(&self, pattern: StatementPattern<'_>) -> StatementMatches {
+        if let Err(error) = self.flush_pending_inserts() {
+            return StatementMatches::failed(error);
+        }
         self.with_read_lock(|| StatementMatches {
-            inner: self.store.quads_for_pattern(
+            inner: Some(self.store.quads_for_pattern(
                 pattern.subject,
                 pattern.predicate,
                 pattern.object,
                 pattern.graph_name,
-            ),
+            )),
+            prelude_error: None,
         })
     }
 
@@ -789,6 +893,7 @@ impl Model {
         update: impl FnOnce(&Store) -> Result<()>,
     ) -> Result<()> {
         self.ensure_writable()?;
+        self.flush_pending_inserts()?;
         let _guard = self
             .lock
             .write()

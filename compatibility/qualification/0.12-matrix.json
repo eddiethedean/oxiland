@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "milestone": "0.12",
-  "status": "draft",
+  "status": "frozen",
   "targets": [
     "x86_64-unknown-linux-gnu",
     "aarch64-apple-darwin",
@@ -9,7 +9,7 @@
   ],
   "performance": {
     "suite": "compatibility/performance/0.12-suite.json",
-    "suite_sha256": "c35f433004bb4abf9502c52e02fd74ac14f053f4b7f6236443c636a4b64ec5c8",
+    "suite_sha256": "5d7d04f60294ea77abe535ee87914d902a42cabaad181e67955a975056f5c881",
     "harness": "compatibility/harness/c_oracle/perf_bench.c",
     "harness_sha256": "e38186b62fe43df22771cfcdf97cb755503279f1721ffe4737b078eee624fc8d",
     "evidence_dir": "compatibility/qualification/performance/0.12",
@@ -31,5 +31,5 @@
       "x86_64-pc-windows-msvc/release-all-storage"
     ]
   },
-  "notes": "Draft until measured resource budgets are reviewed and frozen. The release checker rejects draft matrices and suites."
+  "notes": "Frozen under ADR-028 competitive-parity thresholds with RSS budgets. Evidence under performance/0.12 must be native, production-compile, and revision-bound."
 }

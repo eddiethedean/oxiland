@@ -1,6 +1,6 @@
 //! `librdf_stream` handle.
 
-use crate::error::{abort_on_panic, clear_last_error, set_last_error};
+use crate::error::{abort_on_panic, clear_last_error, clear_last_error_if_set, set_last_error};
 use crate::handles::io::FILE;
 use crate::handles::iterator::librdf_iterator;
 use crate::handles::node::librdf_node;
@@ -8,9 +8,11 @@ use crate::handles::statement::{StatementInner, librdf_statement};
 use crate::handles::world::librdf_world;
 use crate::handles::{TAG_ITERATOR, TAG_NODE, TAG_WORLD};
 use crate::handles::{
-    TAG_STATEMENT, TAG_STREAM, TypedHandle, borrow_handle, box_handle, free_handle,
+    TAG_STATEMENT, TAG_STREAM, TypedHandle, borrow_handle, borrow_handle_hot, box_handle,
+    free_handle,
 };
 use oxigraph::model::Triple;
+use oxiland::StatementMatches;
 use std::ffi::c_void;
 use std::ptr;
 
@@ -21,6 +23,9 @@ pub struct StreamInner {
     /// Raw triples for model-backed streams. `StatementInner` conversion is
     /// deferred until `librdf_stream_get_object` actually observes an item.
     pub triples: Vec<Triple>,
+    /// Lazy store cursor. When set, `lookahead` holds the current triple.
+    pub matches: Option<StatementMatches>,
+    pub lookahead: Option<Triple>,
     pub index: usize,
     /// Borrowed-by-C current object; owned by the stream.
     pub current: Option<*mut librdf_statement>,
@@ -37,67 +42,172 @@ impl Drop for StreamInner {
     }
 }
 
-fn refresh_current(stream: &mut StreamInner) {
-    if let Some(ptr) = stream.current.take() {
-        if !ptr.is_null() {
-            // SAFETY: previous current owned exclusively by this stream.
-            unsafe { free_handle(ptr, TAG_STATEMENT) };
+impl StreamInner {
+    pub fn from_matches(mut matches: StatementMatches) -> Result<Self, String> {
+        let lookahead = match matches.next() {
+            None => None,
+            Some(Ok(quad)) => Some(Triple::new(quad.subject, quad.predicate, quad.object)),
+            Some(Err(error)) => return Err(error.to_string()),
+        };
+        Ok(Self {
+            statements: Vec::new(),
+            triples: Vec::new(),
+            matches: Some(matches),
+            lookahead,
+            index: 0,
+            current: None,
+        })
+    }
+
+    pub fn from_triples(triples: Vec<Triple>) -> Self {
+        Self {
+            statements: Vec::new(),
+            triples,
+            matches: None,
+            lookahead: None,
+            index: 0,
+            current: None,
         }
     }
-    let statement = stream.statements.get(stream.index).cloned().or_else(|| {
-        stream
-            .triples
-            .get(stream.index)
-            .cloned()
-            .map(StatementInner::from_triple)
-    });
-    if let Some(stmt) = statement {
-        stream.current = Some(box_handle(TAG_STATEMENT, stmt));
-    }
-}
 
-fn stream_len(stream: &StreamInner) -> usize {
-    debug_assert!(stream.statements.is_empty() || stream.triples.is_empty());
-    stream.statements.len() + stream.triples.len()
+    pub fn from_statements(statements: Vec<StatementInner>) -> Self {
+        Self {
+            statements,
+            triples: Vec::new(),
+            matches: None,
+            lookahead: None,
+            index: 0,
+            current: None,
+        }
+    }
+
+    fn is_lazy(&self) -> bool {
+        self.matches.is_some() || self.lookahead.is_some()
+    }
+
+    fn materialized_len(&self) -> usize {
+        debug_assert!(self.statements.is_empty() || self.triples.is_empty());
+        self.statements.len() + self.triples.len()
+    }
+
+    fn at_end(&self) -> bool {
+        if self.is_lazy() {
+            self.lookahead.is_none() && self.matches.is_none()
+        } else {
+            self.index >= self.materialized_len()
+        }
+    }
+
+    fn advance_lazy(&mut self) -> Result<bool, String> {
+        self.drop_current();
+        let next = match self.matches.as_mut() {
+            Some(matches) => matches.next(),
+            None => None,
+        };
+        match next {
+            None => {
+                self.matches = None;
+                self.lookahead = None;
+                Ok(true)
+            }
+            Some(Ok(quad)) => {
+                self.lookahead = Some(Triple::new(quad.subject, quad.predicate, quad.object));
+                Ok(false)
+            }
+            Some(Err(error)) => Err(error.to_string()),
+        }
+    }
+
+    fn drop_current(&mut self) {
+        if let Some(ptr) = self.current.take() {
+            if !ptr.is_null() {
+                // SAFETY: previous current owned exclusively by this stream.
+                unsafe { free_handle(ptr, TAG_STATEMENT) };
+            }
+        }
+    }
+
+    fn ensure_current(&mut self) {
+        if self.current.is_some() || self.at_end() {
+            return;
+        }
+        let statement = if let Some(triple) = self.lookahead.as_ref() {
+            Some(StatementInner::from_triple(triple.clone()))
+        } else {
+            self.statements
+                .get(self.index)
+                .cloned()
+                .or_else(|| {
+                    self.triples
+                        .get(self.index)
+                        .cloned()
+                        .map(StatementInner::from_triple)
+                })
+        };
+        if let Some(stmt) = statement {
+            self.current = Some(box_handle(TAG_STATEMENT, stmt));
+        }
+    }
 }
 
 /// Returns nonzero if the stream is finished.
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_stream_end(stream: *mut librdf_stream) -> i32 {
+    // SAFETY: null or live stream handle from this crate.
+    if let Some(stream) = unsafe { borrow_handle_hot(stream, TAG_STREAM) } {
+        return i32::from(stream.inner.at_end());
+    }
     abort_on_panic(|| {
-        clear_last_error();
+        clear_last_error_if_set();
         // SAFETY: stream is null or a live stream handle.
         let Some(stream) = (unsafe { borrow_handle(stream, TAG_STREAM) }) else {
             return 1;
         };
-        i32::from(stream.inner.index >= stream_len(&stream.inner))
+        i32::from(stream.inner.at_end())
     })
 }
 
 /// Advances the stream. Returns nonzero on error / past end.
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_stream_next(stream: *mut librdf_stream) -> i32 {
+    // SAFETY: null or live stream handle from this crate.
+    if let Some(stream) = unsafe { borrow_handle_hot(stream, TAG_STREAM) } {
+        if stream.inner.is_lazy() {
+            return match stream.inner.advance_lazy() {
+                Ok(true) => 1,
+                Ok(false) => 0,
+                Err(_) => -1,
+            };
+        }
+        if stream.inner.at_end() {
+            return 1;
+        }
+        stream.inner.drop_current();
+        stream.inner.index += 1;
+        return i32::from(stream.inner.at_end());
+    }
     abort_on_panic(|| {
-        clear_last_error();
+        clear_last_error_if_set();
         // SAFETY: stream is null or a live stream handle.
         let Some(stream) = (unsafe { borrow_handle(stream, TAG_STREAM) }) else {
             return -1;
         };
-        if stream.inner.index >= stream_len(&stream.inner) {
+        if stream.inner.is_lazy() {
+            return match stream.inner.advance_lazy() {
+                Ok(true) => 1,
+                Ok(false) => 0,
+                Err(error) => {
+                    set_last_error(error);
+                    -1
+                }
+            };
+        }
+        if stream.inner.at_end() {
             return 1;
         }
-        if let Some(ptr) = stream.inner.current.take() {
-            if !ptr.is_null() {
-                // SAFETY: the current statement is owned exclusively by this stream.
-                unsafe { free_handle(ptr, TAG_STATEMENT) };
-            }
-        }
+        stream.inner.drop_current();
         stream.inner.index += 1;
-        if stream.inner.index >= stream_len(&stream.inner) {
-            1
-        } else {
-            0
-        }
+        i32::from(stream.inner.at_end())
     })
 }
 
@@ -105,17 +215,15 @@ pub extern "C" fn librdf_stream_next(stream: *mut librdf_stream) -> i32 {
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_stream_get_object(stream: *mut librdf_stream) -> *mut librdf_statement {
     abort_on_panic(|| {
-        clear_last_error();
+        clear_last_error_if_set();
         // SAFETY: stream is null or a live stream handle.
         let Some(stream) = (unsafe { borrow_handle(stream, TAG_STREAM) }) else {
             return ptr::null_mut();
         };
-        if stream.inner.index >= stream_len(&stream.inner) {
+        if stream.inner.at_end() {
             return ptr::null_mut();
         }
-        if stream.inner.current.is_none() {
-            refresh_current(&mut stream.inner);
-        }
+        stream.inner.ensure_current();
         stream.inner.current.unwrap_or(ptr::null_mut())
     })
 }
@@ -124,7 +232,7 @@ pub extern "C" fn librdf_stream_get_object(stream: *mut librdf_stream) -> *mut l
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_free_stream(stream: *mut librdf_stream) {
     abort_on_panic(|| {
-        clear_last_error();
+        clear_last_error_if_set();
         // SAFETY: stream is null or a live stream handle.
         unsafe { free_handle(stream, TAG_STREAM) };
     });
@@ -137,15 +245,7 @@ pub extern "C" fn librdf_new_empty_stream(world: *mut librdf_world) -> *mut libr
         if unsafe { borrow_handle(world, TAG_WORLD) }.is_none() {
             return ptr::null_mut();
         }
-        box_handle(
-            TAG_STREAM,
-            StreamInner {
-                statements: Vec::new(),
-                triples: Vec::new(),
-                index: 0,
-                current: None,
-            },
-        )
+        box_handle(TAG_STREAM, StreamInner::from_statements(Vec::new()))
     })
 }
 
@@ -193,15 +293,7 @@ pub extern "C" fn librdf_new_stream_from_node_iterator(
                 break;
             }
         }
-        box_handle(
-            TAG_STREAM,
-            StreamInner {
-                statements,
-                triples: Vec::new(),
-                index: 0,
-                current: None,
-            },
-        )
+        box_handle(TAG_STREAM, StreamInner::from_statements(statements))
     })
 }
 

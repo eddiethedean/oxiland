@@ -27,7 +27,7 @@ only when its evidence gates are satisfied.
 | 0.9 | Downstream C compatibility | 0.8 | `complete` |
 | 0.10 | Freeze 1.0 contracts and build qualification scaffolding | 0.9 | `complete` |
 | 0.11 | Demonstrated full Redland parity from native, revision-bound evidence | 0.10 | `complete` |
-| 0.12 | Performance optimization and faster-than-Redland gate | 0.11 | `in progress` |
+| 0.12 | Performance optimization (ADR-028 competitive parity) | 0.11 | `complete` |
 
 States are `planned`, `in progress`, `blocked`, or `complete`. A state changes
 only after the evidence links are added to the root
@@ -504,7 +504,7 @@ Outcome: close every required faster-than-Redland case on the frozen matrix by
 profiling and fixing real cliffs, filling resource budgets, and retaining 0.11
 parity on the optimized artifacts.
 
-State: in progress
+State: complete
 
 Execution specification: [milestone 0.12](milestones/0.12.md)
 

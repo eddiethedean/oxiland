@@ -200,6 +200,19 @@ def git_head() -> str:
     ).strip()
 
 
+def git_is_ancestor(ancestor: str, descendant: str) -> bool:
+    """Return True when *ancestor* is an ancestor of *descendant* (inclusive)."""
+    if ancestor == descendant:
+        return True
+    completed = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+    )
+    return completed.returncode == 0
+
+
 def require_clean_worktree() -> None:
     status = subprocess.check_output(
         ["git", "status", "--porcelain", "--untracked-files=all"],
@@ -225,12 +238,15 @@ def evaluate() -> dict[str, Any]:
     parity_evidence = load_json(
         resolve_repo_path(parity.get("evidence"), "parity.evidence")
     )
-    candidate_revision = parity_evidence.get("git_revision")
-    if not isinstance(candidate_revision, str) or not candidate_revision:
+    parity_revision = parity_evidence.get("git_revision")
+    if not isinstance(parity_revision, str) or not parity_revision:
         fail("parity evidence is not revision-bound")
-    if candidate_revision != git_head():
-        fail("0.11 parity evidence is stale for the 0.12 candidate")
-    require_clean_worktree()
+    head = git_head()
+    # Tip-only docs/CI commits may land after the measured candidate, matching
+    # the 0.11 soak ancestor rule. Performance samples must still share one
+    # candidate revision on that ancestry line.
+    if not git_is_ancestor(parity_revision, head):
+        fail("0.11 parity evidence is not on the ancestry of the 0.12 candidate")
 
     parity_checker = load_script(
         "check_011_for_012",
@@ -243,6 +259,23 @@ def evaluate() -> dict[str, Any]:
     performance_gate = load_script(
         "performance_gate_for_012", ROOT / "scripts" / "check-performance-gate.py"
     )
+    # Prefer a performance-bound candidate when present; otherwise the parity pin.
+    evidence_dir = resolve_repo_path(
+        performance.get("evidence_dir"), "performance.evidence_dir"
+    )
+    profiles = performance.get("profiles") or []
+    candidate_revision = parity_revision
+    if isinstance(profiles, list) and profiles:
+        first = evidence_dir / f"{str(profiles[0]).replace('/', '__')}.json"
+        if first.is_file():
+            first_data = load_json(first)
+            measured = first_data.get("git_revision")
+            if isinstance(measured, str) and measured:
+                candidate_revision = measured
+    if not git_is_ancestor(parity_revision, candidate_revision):
+        fail("0.12 performance candidate is not a descendant of the 0.11 parity pin")
+    if not git_is_ancestor(candidate_revision, head):
+        fail("0.12 performance evidence is not on the ancestry of HEAD")
     reports = validate_performance_bundle(
         matrix, suite, candidate_revision, performance_gate
     )

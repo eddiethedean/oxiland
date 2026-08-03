@@ -359,6 +359,46 @@ fn find_stream_lifecycle() {
 }
 
 #[test]
+fn model_as_stream_end_next_without_get_object() {
+    // Scan-style consumers (P-SCAN) call end/next without materializing objects.
+    let world = librdf_new_world();
+    let storage = librdf_new_storage(world, cstr("memory").as_ptr(), ptr::null(), ptr::null());
+    let model = librdf_new_model(world, storage, ptr::null());
+    for i in 0..8 {
+        let uri = CString::new(format!("http://example.org/s{i}")).unwrap();
+        let s = librdf_new_node_from_uri_string(world, uri.as_ptr());
+        let p = librdf_new_node_from_uri_string(world, cstr("http://example.org/p").as_ptr());
+        let o = librdf_new_node_from_literal(world, cstr("o").as_ptr(), ptr::null(), 0);
+        let stmt = librdf_new_statement_from_nodes(world, s, p, o);
+        assert_eq!(librdf_model_add_statement(model, stmt), 0);
+        librdf_free_statement(stmt);
+    }
+    assert_eq!(librdf_model_size(model), 8);
+
+    let stream = librdf_model_as_stream(model);
+    assert!(!stream.is_null());
+    let mut count = 0;
+    while librdf_stream_end(stream) == 0 {
+        count += 1;
+        let _ = librdf_stream_next(stream);
+    }
+    assert_eq!(count, 8);
+    librdf_free_stream(stream);
+
+    let stream = librdf_model_as_stream(model);
+    assert!(!stream.is_null());
+    assert_eq!(librdf_stream_end(stream), 0);
+    let object = librdf_stream_get_object(stream);
+    assert!(!object.is_null());
+    assert!(!librdf_statement_get_subject(object).is_null());
+    librdf_free_stream(stream);
+
+    librdf_free_model(model);
+    librdf_free_storage(storage);
+    librdf_free_world(world);
+}
+
+#[test]
 fn double_free_is_defended() {
     let world = librdf_new_world();
     assert!(!world.is_null());

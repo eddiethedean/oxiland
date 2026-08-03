@@ -192,6 +192,36 @@ pub unsafe fn borrow_handle<'a, T>(
     Some(handle)
 }
 
+/// Hot-path borrow for repeated getters that already passed validation.
+///
+/// Skips mutex registry lookups when the thread-local last-validated entry
+/// still matches. Does not clear or set last-error; callers that miss should
+/// fall back to [`borrow_handle`].
+///
+/// # Safety
+/// Same requirements as [`borrow_handle`].
+#[inline]
+pub unsafe fn borrow_handle_hot<'a, T>(
+    ptr: *mut TypedHandle<T>,
+    expected_tag: u32,
+) -> Option<&'a mut TypedHandle<T>> {
+    if ptr.is_null() {
+        return None;
+    }
+    let addr = ptr as usize;
+    let generation = LIVE_GENERATION.load(Ordering::Acquire);
+    let tls_hit = LAST_VALIDATED.with(|last| last.get() == (addr, expected_tag, generation));
+    if !tls_hit && !validate_live(addr, expected_tag) {
+        return None;
+    }
+    // SAFETY: registry (or TLS hit after a prior registry success) affirms live tag.
+    let handle = unsafe { &mut *ptr };
+    if handle.tag != expected_tag {
+        return None;
+    }
+    Some(handle)
+}
+
 /// Frees a handle. Null is a no-op. Double-free of an unregistered pointer
 /// records an error and returns without dropping again.
 ///

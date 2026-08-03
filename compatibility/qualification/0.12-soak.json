@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "milestone": "0.12",
+  "completed": true,
+  "abi_resets": 0,
+  "performance_resets": 0,
+  "release_blockers": [],
+  "started_at": "2026-08-03T00:00:00Z",
+  "finished_at": "2026-08-03T18:00:00Z",
+  "abi_freeze_tag": "OXILAND_0.12",
+  "notes": "RC soak for 0.12 competitive-parity gate (ADR-028). No ABI or performance-protocol resets. Production-compile evidence under performance/0.12/; parity retained via check-0.11-release.py."
+}
