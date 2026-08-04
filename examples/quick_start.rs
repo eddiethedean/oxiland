@@ -1,12 +1,12 @@
-use oxiland::terms::{Literal, NamedNode, Triple};
+use oxiland::terms::{Literal, Triple, named_node};
 use oxiland::{Model, Query, QueryResults};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> oxiland::Result<()> {
     let model = Model::new()?;
 
     model.add(Triple::new(
-        NamedNode::new("https://example.com/alice")?,
-        NamedNode::new("https://example.com/name")?,
+        named_node("https://example.com/alice")?,
+        named_node("https://example.com/name")?,
         Literal::new_simple_literal("Alice"),
     ))?;
 

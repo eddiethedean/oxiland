@@ -142,10 +142,12 @@ nav:
   - Command line:
       - CLI guide: users/cli.md
   - C ABI:
-      - Preview guide: users/c-abi.md
+      - C ABI guide: users/c-abi.md
       - Limitations: users/c-abi-limitations.md
   - Help:
       - FAQ: users/faq.md
+      - Known limitations: users/limitations.md
+      - Upgrading: users/upgrading.md
       - Support: support.md
       - Security: security.md
       - Performance: users/performance.md
@@ -155,9 +157,9 @@ nav:
       - Redland symbol map: evaluators/redland-symbol-map.md
       - Compatibility contract: COMPATIBILITY.md
       - Parity ledger: parity.md
-      - Current performance work (0.12): reports/0.12.md
+      - Performance report (0.12): reports/0.12.md
       - Milestone 0.12: milestones/0.12.md
-      - Current parity work (0.11): reports/0.11.md
+      - Parity report (0.11): reports/0.11.md
       - 0.12.0 release checklist: reports/0.12.0-release.md
       - 0.11.0 release checklist: reports/0.11.0-release.md
       - Milestone 0.11: milestones/0.11.md

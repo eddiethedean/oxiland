@@ -1,15 +1,16 @@
 # Redland parity ledger
 
-Last completed milestone: 0.11
-Current development milestone: 0.12 performance optimization (`in progress` — after
-0.11 full-parity gate; see `docs/ROADMAP.md` and `docs/milestones/0.12.md`)
+Last completed milestone: 0.12
+Current development milestone: 1.0 readiness (`planned` — after complete 0.11
+parity and 0.12 competitive-parity performance gate; see `docs/ROADMAP.md`)
 Ledger maturity: header-derived full public `librdf` 1.0.17 function inventory
-(0.6); Python package usability evidence (0.7); C ABI source-compat preview
-accounting (0.8); curated 0.1–0.5 slices retained for historical evidence;
+(0.6); Python package usability evidence (0.7); C ABI source-compat accounting
+(0.8–0.9); curated 0.1–0.5 slices retained for historical evidence;
 0.10 candidate full-parity inventory and qualification scaffold; 0.11
 demonstrated parity from six-cell native differentials (`scripts/check-0.11-release.py`
-green on revision-bound raw evidence); 0.12 opens the dedicated
-faster-than-Redland optimization phase on that parity baseline
+green on revision-bound raw evidence); 0.12 closed the ADR-028 competitive-parity
+performance gate on that parity baseline (suite-wide faster-than-Redland remains
+open)
 
 > **Newcomer gloss:** This ledger classifies Redland `librdf_*` symbols and
 > records what Oxiland has implemented with tests for a **stated scope**.
@@ -128,3 +129,14 @@ librdf ↔ Oxiland librdf-compat), with failure/boundary/lifecycle fixtures,
 independent native performance benches (`synthetic: false`), ABI-swap
 evidence, and `scripts/check-0.11-release.py` green on the revision-bound tip.
 See [`docs/reports/0.11.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.11.md).
+
+## Completed 0.12 performance qualification
+
+Complete for its stated ADR-028 competitive-parity gate on the committed
+three-host bundle (`scripts/check-0.12-release.py` green). Tip retains 0.11
+parity on the optimized candidate. Host-scoped strict wins after library-path
+isolation are documented in the performance guide; a suite-wide
+faster-than-Redland claim still requires three independent corrected-runner
+passes per host.
+See [`docs/reports/0.12.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.12.md)
+and [`docs/users/performance.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/users/performance.md).

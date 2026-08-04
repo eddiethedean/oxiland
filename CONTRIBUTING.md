@@ -18,7 +18,7 @@ do not treat planning ADRs as the product manual.
 | `tests/`, `examples/` | Rust integration evidence and runnable workflows |
 | `python/` | Maturin/PyO3 Python package, stubs, tests, and examples |
 | `crates/oxiland-cli/` | Command-line package and workflow tests |
-| `crates/oxiland-capi/` | C ABI preview (`publish = false`; headers, examples, symbol checks) |
+| `crates/oxiland-capi/` | C ABI (`publish = false`; headers, examples, symbol checks; 0.11 packaging retained) |
 | `docs/users/` | Task-oriented product documentation |
 | `docs/evaluators/` | Positioning and migration guidance |
 | `compatibility/` | Inventories, conformance fixtures, and oracle harnesses |

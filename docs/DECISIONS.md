@@ -699,12 +699,13 @@ not silent forever-forward binary compatibility across Oxiland major versions.
 
 Format v1 stores an `__oxiland/meta` JSON document (`format_version: 1`) beside
 N-Quads quad keys in the Fjall `oxiland_quads` partition. Patch releases in the
-**0.4.x–0.8.x** lines must open format v1 without migration. Pre-0.4 experimental
+**0.4.x–0.12.x** lines must open format v1 without migration. Pre-0.4 experimental
 stores (no metadata) are opened only via `Model::migrate_legacy_store`, which
 rewrites metadata after validating parseable quad keys; otherwise callers receive
 `Unsupported` with N-Quads archival guidance.
 
-Archival continuity is standards RDF (N-Quads/TriG), not Fjall directories.
+Archival continuity is standards RDF (N-Quads/TriG), not Fjall directories. Export
+N-Quads before any future format-v2 migration.
 
 Alternatives considered:
 
@@ -719,8 +720,9 @@ Consequences:
 
 - `Model::open` requires format v1 or initializes it for empty new stores.
 - User docs stop calling Fjall “experimental.”
-- R-016 mitigated for 0.4.x–0.8.x; major bumps may introduce format v2 with a
-  documented migrator.
+- R-016 mitigated for 0.4.x–0.12.x; major bumps may introduce format v2 with a
+  documented migrator. The reopen window was extended through 0.12 without a
+  format bump; `SUPPORT.md` is the canonical user-facing statement.
 
 Evidence: `docs/design/0.4-storage-api.md`, `src/storage/fjall.rs`,
 `tests/storage.rs`.

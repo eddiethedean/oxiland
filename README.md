@@ -12,12 +12,10 @@
 > **Release status:** repository tip **0.12.0** retains demonstrated Redland
 > parity and carries the performance-optimized C compatibility paths.
 >
-> **Performance highlight:** on the corrected strict macOS/arm64 benchmark,
-> Oxiland beat genuine Redland 1.0.17 in **all 10 required cases**. Throughput
-> was **1.60×–29.35×** Redland; ASK latency was **0.106×** Redland. Every paired
-> 95% confidence interval cleared parity. Linux, Windows, and three independent
-> runs per platform remain pending, so this is a host-scoped result rather than
-> a blanket cross-platform claim. See [Performance](docs/users/performance.md).
+> **Performance:** tip **0.12.0** closed the ADR-028 competitive-parity gate.
+> Separately, on a corrected strict macOS/arm64 run, Oxiland beat genuine
+> Redland 1.0.17 in all 10 required cases (host-scoped; not a blanket
+> cross-platform claim). See [Performance](docs/users/performance.md).
 
 Oxiland is an embedded RDF toolkit for Rust and Python. It provides validated
 RDF terms, in-memory and persistent datasets, named graphs, SPARQL 1.1, and
@@ -31,7 +29,7 @@ performance candidate. See the [parity report](docs/reports/0.11.md),
 
 | Surface | Install | Best for |
 |---|---|---|
-| Rust library | `oxiland = "0.11.0"` from crates.io, or path/git for tip | Native applications and services |
+| Rust library | `oxiland = "0.12.0"` from crates.io, or path/git for tip | Native applications and services |
 | Python package | `python -m pip install oxiland` | Python data pipelines and embedded RDF applications |
 | Command line | `cargo install oxiland-cli` | Store inspection, imports, exports, and scripted queries |
 | C ABI | Build from this repo: `cargo build -p oxiland-capi` | Redland-shaped C source + librdf-compat packaging (not on crates.io) |
@@ -64,10 +62,10 @@ Oxiland requires Rust **1.87 or newer**.
 
 ```toml
 [dependencies]
-oxiland = "0.11.0"
+oxiland = "0.12.0"
 ```
 
-**This repository tip (0.11.0 APIs and qualification tooling):**
+**This repository tip (0.12.0 APIs and qualification tooling):**
 
 ```toml
 [dependencies]
@@ -79,7 +77,7 @@ Enable `tracing` only when `World` log records should also be emitted as
 
 ```toml
 [dependencies]
-oxiland = { version = "0.11.0", features = ["tracing"] }
+oxiland = { version = "0.12.0", features = ["tracing"] }
 ```
 
 ### Python
@@ -200,12 +198,12 @@ does not silently guess syntax from document contents.
 
 | Need | Start here |
 |---|---|
-| Python | [Overview](docs/users/python.md) · [API](docs/users/python-api.md) · [Production](docs/users/python-production.md) |
-| Rust | [Overview](docs/users/rust.md) · [API on docs.rs](https://docs.rs/oxiland) · [Production](docs/users/rust-production.md) |
+| Python | [Overview](docs/users/python.md) · [Installation](docs/users/python-installation.md) · [API](docs/users/python-api.md) · [Production](docs/users/python-production.md) |
+| Rust | [Overview](docs/users/rust.md) · [Getting started](docs/users/getting-started.md) · [API on docs.rs](https://docs.rs/oxiland) · [Production](docs/users/rust-production.md) |
 | Command line | [CLI guide](docs/users/cli.md) |
 | C ABI | [C guide](docs/users/c-abi.md) · [Limitations](docs/users/c-abi-limitations.md) |
 | Examples | [Runnable examples](docs/users/examples.md) |
-| Troubleshooting | [FAQ](docs/users/faq.md) |
+| Troubleshooting | [FAQ](docs/users/faq.md) · [Known limitations](docs/users/limitations.md) · [Upgrading](docs/users/upgrading.md) |
 | Evaluation | [Positioning](docs/evaluators/positioning.md) · [Compatibility contract](docs/COMPATIBILITY.md) |
 | Project | [Support](SUPPORT.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) |
 
@@ -229,8 +227,8 @@ value.
 ## Stability and support
 
 Oxiland is pre-1.0. Minor 0.x releases may contain documented public API
-changes. Persistent format v1 is reopen-compatible across 0.4.x–0.11.x patch
-lines; export standards RDF before major upgrades. See the
+changes. Persistent format v1 is reopen-compatible across 0.4.x–0.12.x patch
+lines; export N-Quads before any future format-v2 migration. See the
 [support policy](SUPPORT.md) and [changelog](CHANGELOG.md).
 
 Milestone 0.11 demonstrated Redland parity on the frozen matrix. The optimized

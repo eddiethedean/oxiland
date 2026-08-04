@@ -54,6 +54,17 @@ that owns the store and define concurrency at that service boundary.
 Group related mutations in a transaction:
 
 ```python
+from oxiland import Literal, NamedNode, Triple
+
+staging_graph = NamedNode("https://example.com/staging")
+replacement = [
+    Triple(
+        NamedNode("https://example.com/alice"),
+        NamedNode("https://example.com/status"),
+        Literal("active"),
+    )
+]
+
 with model.transaction() as tx:
     tx.clear_graph(staging_graph)
     for statement in replacement:
@@ -137,10 +148,11 @@ Before changing Oxiland versions in a persistent deployment:
 6. Run representative ASK/SELECT checks and compare expected statement counts.
 7. Upgrade production, keeping the portable backup until validation completes.
 
-Store format v1 is reopen-compatible across 0.4.x–0.8.x patch lines. Very old
-experimental stores without format metadata require
-`Model.migrate_legacy_store(path)`. Migration and restore should be controlled
-maintenance operations, never request-path fallbacks.
+Store format v1 is reopen-compatible across 0.4.x–0.12.x patch lines. Export
+N-Quads before any future format-v2 migration. Very old experimental stores
+without format metadata require `Model.migrate_legacy_store(path)`. Migration
+and restore should be controlled maintenance operations, never request-path
+fallbacks.
 
 ## Failure handling
 

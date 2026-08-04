@@ -12,7 +12,7 @@ for your platform/Python, it may attempt a source build and fail. Use CPython
 3.10–3.14 on a platform with published wheels, or build from a git checkout with
 maturin ([Python installation guide](python-installation.md)).
 
-Tip **0.11.0** is the current package version.
+Tip **0.12.0** is the current package version.
 
 ## Why not use Oxigraph directly?
 
@@ -31,18 +31,17 @@ replication, tenant isolation, or managed backups. See the
 ## Is Oxiland “Redland-compatible”?
 
 Only in evidence-scoped senses documented in the [parity ledger](../parity.md).
-Tip **0.9** ships an expanded C **source-compat preview** (`oxiland-capi`)—
-still **not** ABI drop-in compatibility with existing `librdf` shared libraries.
-Oxiland
-is not a 100% `librdf` port and not an rdflib adapter. “Safe-API accounting”
-means inventoried symbols are **classified**, not that behavior is drop-in.
-See the [C ABI guide](c-abi.md) and [limitations](c-abi-limitations.md).
+Tip **0.12** retains the **0.11** demonstrated Redland matrix for Rust, Python,
+and C source + librdf-compat packaging. Remaining behavioral gaps are listed in
+[C ABI limitations](c-abi-limitations.md). Oxiland is not a silent 100%
+`librdf` port and not an rdflib adapter. “Safe-API accounting” means inventoried
+symbols are **classified**, not that every Redland behavior is drop-in. See the
+[C ABI guide](c-abi.md).
 
 ## Does Oxiland ship a C package on crates.io?
 
 No. `oxiland-capi` is `publish = false`. Build it from a repository checkout
-(`cargo build -p oxiland-capi`). Packaging as an installed ABI artifact is
-planned for later milestones. See [C ABI](c-abi.md).
+(`cargo build -p oxiland-capi`). See [C ABI](c-abi.md).
 
 ## What does “Verified” mean in the parity ledger?
 
@@ -105,10 +104,11 @@ See [Performance](performance.md).
 Call `add` / `remove` inside `with model.transaction() as txn:` — methods
 outside an entered context raise `UnsupportedError`.
 
-## Will my 0.8 store open in a later 0.8.x?
+## Will my format-v1 store open after an upgrade?
 
-Format v1 reopen is promised for patch releases in **0.4.x–0.8.x**. See
-[persistence](persistence.md).
+Format v1 reopen is promised for patch releases in **0.4.x–0.12.x**. Export
+N-Quads before any future format-v2 migration. See
+[persistence](persistence.md) and the [support policy](../support.md).
 
 ## Can multiple processes write the same store path?
 
@@ -126,7 +126,7 @@ guarantees.
 
 ## Performance guidance?
 
-See [Performance](performance.md). Prefer streaming parse/serialize APIs for
-large data; avoid collecting full iterators. Fjall mode keeps a full in-memory
-working set—plan RAM accordingly. Budgeted benchmark suites are not published
-yet.
+See [Performance](performance.md) for published suites, host scope, and what is
+not claimable. Prefer streaming parse/serialize APIs for large data; avoid
+collecting full iterators. Fjall mode keeps a full in-memory working set—plan
+RAM accordingly.

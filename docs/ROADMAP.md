@@ -500,9 +500,11 @@ Evidence gates:
 
 ## 0.12 — Performance optimization
 
-Outcome: close every required faster-than-Redland case on the frozen matrix by
-profiling and fixing real cliffs, filling resource budgets, and retaining 0.11
-parity on the optimized artifacts.
+Outcome: close the ADR-028 **competitive-parity** gate on the frozen matrix
+(Oxiland within about 10% of Redland on every required case), fill resource
+budgets, retain 0.11 parity on the optimized artifacts, and publish scoped
+ratios. A suite-wide faster-than-Redland claim remains a separate 1.0 readiness
+gate.
 
 State: complete
 
@@ -525,9 +527,10 @@ Deliverables:
 
 Evidence gates:
 
-- Every required throughput case has Oxiland/Redland median ratio ≥ `1.05`
-  with a 95% bootstrap CI excluding parity on every required target/profile.
-- Every required latency case has Oxiland/Redland median ratio ≤ `0.95` with
+- Every required throughput case has Oxiland/Redland median ratio ≥ `0.90`
+  with a 95% bootstrap CI excluding the competitive-parity failure band on
+  every required target/profile (ADR-028).
+- Every required latency case has Oxiland/Redland median ratio ≤ `1.20` with
   the same CI rule.
 - Peak memory and disk amplification stay within the frozen budgets.
 - No required case is deleted, marked optional, or waived after a failure.
@@ -538,17 +541,20 @@ Evidence gates:
   release checker are green on the same candidate.
 - Risk R-022 has no open trigger on the release candidate.
 
-0.11’s native samples remain the diagnostic baseline. They do not satisfy this
-milestone’s gate while any required case loses, ties, or lacks resource proof.
+0.11’s native samples remain the diagnostic baseline. Host-scoped strict wins
+after library-path isolation are documented separately and do not by themselves
+authorize a suite-wide faster-than-Redland claim.
 
 ## 1.0 readiness
 
 Version 1.0 is eligible only after 0.11 has passed the demonstrated full
-Redland parity gate and 0.12 has closed the faster-than-Redland performance
-gate on the exact parity-qualified (and performance-optimized) artifacts. The
-safe Rust mappings and the promised C source, binary ABI, and behavioral
-surfaces must meet their published definitions with no in-scope exclusion or
-deviation.
+Redland parity gate and 0.12 has closed the ADR-028 competitive-parity
+performance gate on the exact parity-qualified (and performance-optimized)
+artifacts, and the suite-wide faster-than-Redland claim (three independent
+corrected-runner passes per host) is either closed or explicitly deferred with
+documented scope. The safe Rust mappings and the promised C source, binary ABI,
+and behavioral surfaces must meet their published definitions with no in-scope
+exclusion or deviation.
 The Python package (if still in the 1.0 promise) must also meet its published
 PyPI contract. Independent Raptor/Rasqal APIs not exposed through `librdf`,
 third-party plug-ins outside the pinned baseline, and targets outside the

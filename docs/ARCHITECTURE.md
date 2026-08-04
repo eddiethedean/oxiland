@@ -2,14 +2,16 @@
 
 Status: active design baseline  
 Current implementation: Cargo workspace — library crate `oxiland`,
-`crates/oxiland-cli` (0.6+), `crates/oxiland-capi` (0.8+ C ABI preview), and
-`python/` PyPI package (0.7+, not a workspace member). Oxigraph 0.5.9 remains
-the RDF engine.  
-Next review gate: before C compatibility / optional adapters (0.9)
+`crates/oxiland-cli` (0.6+), `crates/oxiland-capi` (0.8+ C ABI with 0.11
+demonstrated packaging retained at tip 0.12), and `python/` PyPI package
+(0.7+, not a workspace member). Oxigraph 0.5.9 remains the RDF engine.  
+`fuzz/` holds parser/FFI/lifecycle targets.  
+Next review gate: before 1.0 readiness (suite-wide performance claim and final
+contract freeze)
 
 This document specifies the implemented dependency direction, ownership model,
-and safety boundaries, then labels future C ABI components explicitly. It is a
-design contract rather than an item-level API reference.
+and safety boundaries. It is a design contract rather than an item-level API
+reference.
 
 ## Design principles
 
@@ -66,12 +68,11 @@ oxiland/
 └── fuzz/                Parser, FFI, and lifecycle fuzz targets
 ```
 
-Implemented in 0.8: the root Rust library, `crates/oxiland-cli`,
-`crates/oxiland-capi` (preview allowlist), `python/`, tests, documentation,
-compatibility inventory/fixtures/harness, sealed durable storage adapters, and
-release automation. Planned for later milestones: a dedicated `fuzz/` tree and
-expanded C symbol / downstream matrices (0.9). Planned paths must not be cited
-as current user capabilities beyond their documented preview scope.
+Implemented through tip 0.12: the root Rust library, `crates/oxiland-cli`,
+`crates/oxiland-capi` (0.11 demonstrated packaging retained), `python/`,
+`fuzz/`, tests, documentation, compatibility inventory/fixtures/harness,
+sealed durable storage adapters, and release automation. Remaining C behavioral
+gaps are documented in user limitations—not silent expansions of the allowlist.
 
 ## Component responsibilities
 

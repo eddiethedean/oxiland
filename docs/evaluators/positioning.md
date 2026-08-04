@@ -16,7 +16,7 @@ contract, CLI, and evidence-backed Redland migration path.
 | A trait-oriented modular Rust RDF ecosystem | Sophia |
 | Existing `librdf` C ABI and storage plug-ins | Native Redland |
 | Measured migration from Redland workflows | Oxiland migration and parity documentation |
-| C source-compat preview against a frozen allowlist | Oxiland `oxiland-capi` (build from source) |
+| C source + librdf-compat packaging against a frozen allowlist | Oxiland `oxiland-capi` (build from source; see limitations) |
 
 This is a boundary guide, not a universal benchmark. Validate syntax support,
 store lifecycle, query behavior, target artifacts, and operational limits
@@ -45,7 +45,7 @@ inventory-backed claims matter.
 
 ## Compared to Redland (`librdf`)
 
-| | Oxiland 0.11 tip | Native Redland |
+| | Oxiland tip 0.12 | Native Redland |
 |---|---|---|
 | Language | Safe Rust + Python package + C ABI | C (+ bindings) |
 | Memory | Rust ownership; opaque C handles | Manual / library conventions |

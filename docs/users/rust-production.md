@@ -154,9 +154,10 @@ in an isolated path.
 6. Run representative ASK/SELECT checks and a backup/restore smoke test.
 7. Upgrade production and retain the portable backup until validation completes.
 
-Format v1 reopens across 0.4.x–0.8.x patch lines. Pre-0.4 experimental stores
-without metadata require `Model::migrate_legacy_store`; run migration only as a
-controlled maintenance operation.
+Format v1 reopens across 0.4.x–0.12.x patch lines. Export N-Quads before any
+future format-v2 migration. Pre-0.4 experimental stores without metadata require
+`Model::migrate_legacy_store`; run migration only as a controlled maintenance
+operation.
 
 ## Security boundaries
 

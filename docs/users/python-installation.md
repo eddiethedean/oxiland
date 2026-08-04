@@ -2,7 +2,7 @@
 
 !!! info "Release status"
 
-    Tip **0.11.0** is the current package version. Pin as shown below, or build
+    Tip **0.12.0** is the current package version. Pin as shown below, or build
     from a git checkout for unreleased tip APIs.
 
 ## Supported runtime
@@ -30,7 +30,7 @@ Create an isolated environment and upgrade `pip` before installing:
     python3 -m venv .venv
     source .venv/bin/activate
     python -m pip install --upgrade pip
-    python -m pip install oxiland==0.11.0
+    python -m pip install oxiland==0.12.0
     ```
 
 === "Windows PowerShell"
@@ -39,7 +39,7 @@ Create an isolated environment and upgrade `pip` before installing:
     py -m venv .venv
     .venv\Scripts\Activate.ps1
     python -m pip install --upgrade pip
-    python -m pip install oxiland==0.11.0
+    python -m pip install oxiland==0.12.0
     ```
 
 Confirm the installed runtime before deployment:
@@ -51,7 +51,7 @@ python -c "import oxiland; print(oxiland.__version__)"
 ```python
 import oxiland
 
-assert tuple(map(int, oxiland.__version__.split("."))) >= (0, 11, 0)
+assert tuple(map(int, oxiland.__version__.split("."))) >= (0, 12, 0)
 assert oxiland.Model().backend == "memory"
 ```
 
@@ -62,7 +62,7 @@ application:
 
 ```text
 # requirements.in
-oxiland==0.11.0
+oxiland==0.12.0
 ```
 
 For environments that require artifact integrity, download the wheel and
@@ -100,7 +100,7 @@ supported runtime or build from a repository checkout.
 ## Building from a checkout
 
 Source builds are a contributor and platform-porting workflow—and the way to
-evaluate tip **0.9** before the PyPI tag. They require a Rust toolchain,
+evaluate tip APIs before a PyPI tag. They require a Rust toolchain,
 Maturin, and the repository source:
 
 ```console
@@ -121,5 +121,6 @@ Cargo, or a Rust compiler.
 
 Read the [changelog](https://github.com/eddiethedean/oxiland/blob/main/CHANGELOG.md)
 before changing minor versions. Oxiland is pre-1.0, so a minor release may
-contain documented API changes. Persistent deployments should also follow the
+contain documented API changes. See also the [upgrading guide](upgrading.md).
+Persistent deployments should follow the
 [upgrade runbook](python-production.md#upgrade-runbook).

@@ -8,8 +8,9 @@ description: Build typed, local RDF applications with SPARQL, persistent dataset
 
 !!! info "Release status"
 
-    This documentation tip describes **0.12.0**. Use registry pins for published
-    installs, or a git/path checkout for tip APIs.
+    This documentation tip describes **0.12.0** (the current published package
+    version). Pin installs as `oxiland = "0.12.0"` / `pip install oxiland==0.12.0`,
+    or use a git/path checkout for unreleased tip APIs.
 
 <section class="hero" aria-labelledby="hero-title">
   <div class="hero__copy">
@@ -56,14 +57,13 @@ assert query(graph, "ASK { ?s ?p ?o }")</code></pre>
   <span role="listitem"><b aria-hidden="true">✓</b> Streaming RDF I/O</span>
 </div>
 
-!!! success "10/10 strict benchmark wins on macOS/arm64"
+!!! success "Competitive parity closed; host-scoped strict wins"
 
-    The optimized tip beat genuine Redland 1.0.17 in every required strict
-    benchmark case on the corrected local macOS/arm64 run. Throughput was
-    **1.60×–29.35×** Redland and ASK latency was **0.106×** Redland, with every
-    paired 95% confidence interval beyond parity. Linux/Windows and three-run
-    platform qualification are still pending. See the
-    [performance guide](users/performance.md) for the complete, scoped result.
+    Tip **0.12.0** closed the ADR-028 competitive-parity gate. Separately, the
+    optimized tip beat genuine Redland 1.0.17 in every required strict case on
+    a corrected local macOS/arm64 run (host-scoped; suite-wide
+    faster-than-Redland still pending). See the
+    [performance guide](users/performance.md) for claims policy and tables.
 
 ## Choose your path
 

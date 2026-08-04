@@ -1,8 +1,8 @@
 # C ABI limitations
 
-Oxiland 0.11 ships a Redland-shaped C surface (`oxiland-capi`) and a
-librdf-compatible packaging path. The following limits remain part of the
-product contract.
+Oxiland tip **0.12** ships a Redland-shaped C surface (`oxiland-capi`) and a
+librdf-compatible packaging path (demonstrated in milestone 0.11). The following
+limits remain part of the product contract.
 
 ## Compatibility boundary
 

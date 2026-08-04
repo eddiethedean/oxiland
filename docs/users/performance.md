@@ -1,12 +1,27 @@
 # Performance
 
+## Claims policy
+
+Publish only results that name the suite, host (or CI matrix), build profile,
+and statistical method. Do **not** treat any single-host table as a blanket
+cross-platform or “always faster than Redland” claim.
+
+| Claim class | What it means | Where it lives |
+|---|---|---|
+| Competitive parity (ADR-028) | Oxiland stays within about 10% of Redland on every required case | 0.12 release gate / three-host bundle |
+| Host-scoped strict wins | Corrected local or tip-CI runs after library-path isolation | Highlight table and tip CI diagnostics below |
+| Suite-wide faster-than-Redland | Linux, macOS, and Windows each pass three independent runs | Still open; not authorized by tip 0.12.0 |
+
+Always measure **release** builds. Debug/`dev` compiles are not comparable to
+Redland production libraries.
+
 ## Highlight: every strict case won locally
 
 The optimized tip beat genuine system Redland 1.0.17 in **all ten required
 cases** on macOS/arm64. The corrected driver ran 100 per-sample AB/BA pairs per
 case, calibrated each sample to at least 10 ms, and evaluated paired-bootstrap
 95% confidence intervals. Higher is better for throughput; lower is better for
-latency.
+latency. This is a **host-scoped** result under the claims policy above.
 
 | Case | Oxiland / Redland | Paired 95% CI |
 |---|---:|---:|
@@ -22,15 +37,17 @@ latency.
 | 100K model-size calls | 1.598× | 1.595–1.602 |
 
 Median peak RSS was 1.012× Redland for parsing and 1.246× for SELECT, both
-inside the frozen 1.25 budget. Reproduce a host run with:
+inside the frozen 1.25 budget. Reproduce a host run with the next-suite (0.13)
+driver against the strict candidate suite:
 
 ```console
 python3 scripts/run-0.13-performance.py --output oxiland-0.13-performance.json
 ```
 
-This is a strong **host-scoped** result, not yet a blanket cross-platform
-claim. Linux, macOS, and Windows must each pass three independent runs before
-the suite-wide claim is frozen.
+The 0.13 script and `compatibility/performance/0.13-suite.json` are the
+forward tooling for suite-wide qualification; they do not redefine the closed
+0.12 competitive-parity gate. Linux, macOS, and Windows must each pass three
+independent runs before a suite-wide faster-than-Redland claim is frozen.
 
 ## Release qualification baseline
 
@@ -98,3 +115,4 @@ From
 - [Rust production](rust-production.md)
 - [Python production](python-production.md)
 - [FAQ](faq.md)
+- [Known limitations](limitations.md)

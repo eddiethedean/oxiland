@@ -78,6 +78,11 @@ permissions, backup policy, and process lifecycle.
 ## Atomic writes
 
 ```python
+from oxiland import Literal, Model, NamedNode, Triple
+
+EX = "https://example.com/"
+catalog = Model()
+
 with catalog.transaction() as tx:
     tx.clear_graph(NamedNode(f"{EX}staging"))
     tx.add(
@@ -101,8 +106,11 @@ lazy. Process their iterators directly instead of converting them to lists when
 the result might be large:
 
 ```python
+from oxiland import NamedNode
+
+EX = "https://example.com/"
 for quad in catalog.find(predicate=NamedNode(f"{EX}status")):
-    handle(quad)
+    print(quad)
 ```
 
 Dropping an iterator early is supported. The iterator owns the state required
@@ -117,7 +125,8 @@ to continue reading.
 5. [API reference](python-api.md)
 6. [Runnable examples](examples.md#python-pythonexamples)
 
-The [support policy](../support.md), [security policy](../security.md), and
+The [support policy](../support.md), [security policy](../security.md),
+[known limitations](limitations.md), [upgrading](upgrading.md), and
 [changelog](https://github.com/eddiethedean/oxiland/blob/main/CHANGELOG.md)
 apply to the Python distribution.
 

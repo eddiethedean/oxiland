@@ -9,8 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Document tip CI 0.12 diagnostic performance ratios (Linux/macOS) and mark the
-  0.12.0 release checklist ready to tag
+- Align user/support/security docs with published tip **0.12.0**: install pins,
+  format-v1 reopen **0.4.x–0.12.x**, FAQ/C ABI/migration language, performance
+  claims policy, and process docs (PARITY, EXECUTION, ARCHITECTURE)
+- Add known-limitations and upgrading user guides; document `api/` snapshots;
+  extend `scripts/check-docs.py` with a version/format consistency guard
 
 ## [0.12.0] - 2026-08-03
 

@@ -1,7 +1,8 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 1.0 (planned — after complete 0.12 performance gate)
+Current milestone: 1.0 (planned — after complete 0.11 parity and 0.12
+competitive-parity performance gate)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -113,17 +114,18 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Measure and review RSS/disk maxima, then freeze the draft checksummed 0.12
-   suite and target/profile matrix (WP-12-01 and WP-12-07).
-2. Continue release-binary attribution for `P-SCAN-*` and `P-CALL-*`; the first
-   landing caches model cardinality and avoids eager stream objects, but local
-   diagnostics remain below the gate (WP-12-02–04).
-3. Close remaining mutation, I/O, query, and Windows gaps until the statistical
-   gate passes on every required profile (WP-12-05–06).
-4. Exercise the new fail-closed 0.12 release checker with native CI bundles,
-   retain green 0.11 parity on the same candidate, and publish qualification
-   ratios with confidence intervals (WP-12-08–11).
-
+1. Drive the suite-wide faster-than-Redland claim: three independent
+   corrected-runner passes on Linux, macOS, and Windows against the strict
+   suite (`compatibility/performance/0.13-suite.json` /
+   `scripts/run-0.13-performance.py`).
+2. Keep tip documentation, support/security tables, and install pins aligned
+   with the published 0.12.0 line (see `SUPPORT.md` and the performance claims
+   policy).
+3. Close remaining C behavioral gaps listed in
+   [C ABI limitations](users/c-abi-limitations.md) only when evidence warrants
+   a contract change—do not silently widen the allowlist.
+4. Prepare 1.0 readiness work: contract freeze, upgrade notes, and independent
+   reproduction of the performance claim under ADR-028 / ROADMAP rules.
 ## Completed 0.8 backlog
 
 | Priority | Deliverable | Notes |

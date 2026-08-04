@@ -1,6 +1,6 @@
 # Python API reference
 
-This page is the compact reference for Oxiland tip **0.11.0**. All public symbols
+This page is the compact reference for Oxiland tip **0.12.0**. All public symbols
 are available from `oxiland` unless a vocabulary submodule is shown. The wheel
 ships PEP 561 declarations, so the signatures below are also available through
 IDE completion and static type checkers. Tip-only symbols below require a

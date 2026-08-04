@@ -13,7 +13,7 @@ cd "$ROOT"
 PROFILE="${1:-release}"
 LIBDIR="$ROOT/target/$PROFILE"
 COMPAT="$LIBDIR/compat"
-VERSION="${OXILAND_CAPI_VERSION:-0.11.0}"
+VERSION="${OXILAND_CAPI_VERSION:-0.12.0}"
 
 if [[ ! -d "$LIBDIR" ]]; then
   echo "error: missing $LIBDIR (run: cargo build -p oxiland-capi --$PROFILE)" >&2

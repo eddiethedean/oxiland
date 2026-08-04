@@ -57,6 +57,7 @@ a named graph.
 from oxiland import Model, load, load_path
 
 model = Model()
+turtle_text = '<https://example.com/s> <https://example.com/p> "value" .'
 
 count = load(model, turtle_text, "turtle")
 # Named-graph TriG/N-Quads need an explicit graph= target in Python today.
