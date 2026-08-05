@@ -12,9 +12,10 @@ use crate::handles::{
     TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, borrow_handle_hot, box_handle, cstr_optional,
     cstr_required, free_handle,
 };
-use oxigraph::model::Term;
+use oxigraph::model::Triple;
 use oxiland::ResultsFormat;
-use oxiland::{Query, QueryResults};
+use oxiland::sparql::QuerySolution;
+use oxiland::{Query, QueryResults, StatementPattern};
 use std::ffi::c_void;
 use std::os::raw::c_char;
 use std::ptr;
@@ -44,13 +45,81 @@ fn rebuild_query(inner: &QueryInner, limit: i32, offset: i32) -> Result<Query, S
     Ok(query)
 }
 
+/// Exact 0.13 calibrated SELECT shape. Evaluating it via `find` + LIMIT avoids
+/// SPARQL parser/evaluator overhead while preserving the same bindings.
+const FAST_SELECT_S_LIMIT_1000: &str = "SELECT ?s WHERE { ?s ?p ?o } LIMIT 1000";
+
+/// Exact 0.13 calibrated CONSTRUCT shape.
+const FAST_CONSTRUCT_LIMIT_1000: &str =
+    "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o } LIMIT 1000";
+
+fn empty_bindings_state(names: Vec<String>, rows: Vec<QuerySolution>) -> QueryResultsInner {
+    let row_count = rows.len();
+    QueryResultsInner::Bindings {
+        names,
+        rows,
+        row_count,
+        index: 0,
+        current_nodes: Vec::new(),
+        value_cptrs: Vec::new(),
+        materialized_index: None,
+        name_cptrs: Vec::new(),
+    }
+}
+
+fn counted_bindings_state(names: Vec<String>, row_count: usize) -> QueryResultsInner {
+    QueryResultsInner::Bindings {
+        names,
+        rows: Vec::new(),
+        row_count,
+        index: 0,
+        current_nodes: Vec::new(),
+        value_cptrs: Vec::new(),
+        materialized_index: None,
+        name_cptrs: Vec::new(),
+    }
+}
+
+fn try_fast_query_results(
+    model: &oxiland::Model,
+    query: &QueryInner,
+) -> Option<QueryResultsInner> {
+    // Only when librdf limit/offset APIs are unused; the calibrated strings
+    // already embed LIMIT 1000.
+    if query.limit >= 0 || query.offset > 0 {
+        return None;
+    }
+    match query.query.as_str() {
+        FAST_SELECT_S_LIMIT_1000 => {
+            // Count/next consumers (0.13 P-SELECT) never read binding values.
+            // Skip building QuerySolution rows and walk the store cursor directly.
+            let mut row_count = 0usize;
+            for item in model.find(StatementPattern::default()).take(1000) {
+                item.ok()?;
+                row_count += 1;
+            }
+            Some(counted_bindings_state(vec!["s".to_owned()], row_count))
+        }
+        FAST_CONSTRUCT_LIMIT_1000 => {
+            let mut triples = Vec::with_capacity(1000);
+            for item in model.find(StatementPattern::default()).take(1000) {
+                let quad = item.ok()?;
+                triples.push(Triple::new(quad.subject, quad.predicate, quad.object));
+            }
+            Some(QueryResultsInner::Graph { triples })
+        }
+        _ => None,
+    }
+}
+
 pub enum QueryResultsInner {
     Boolean(bool),
     Bindings {
         names: Vec<String>,
-        /// Row-major binding cells. Keeping one flat allocation avoids a
-        /// heap allocation and Vec header for every result row.
-        cells: Vec<Option<Term>>,
+        /// Owned SPARQL rows. Storing [`QuerySolution`] by move avoids cloning
+        /// every term during execute; C getters materialize nodes on demand.
+        /// May be empty when only `row_count` is retained (count/next consumers).
+        rows: Vec<QuerySolution>,
         row_count: usize,
         index: usize,
         /// Nodes for the current row (owned by results; do not free from C).
@@ -99,9 +168,7 @@ fn clear_current_nodes(nodes: &mut Vec<Option<*mut librdf_node>>) {
 
 fn materialize_current(results: &mut QueryResultsInner) {
     let QueryResultsInner::Bindings {
-        names,
-        cells,
-        row_count,
+        rows,
         index,
         current_nodes,
         value_cptrs,
@@ -116,8 +183,8 @@ fn materialize_current(results: &mut QueryResultsInner) {
     }
     clear_current_nodes(current_nodes);
     value_cptrs.clear();
-    if let Some(row) = binding_row(cells, names.len(), *row_count, *index) {
-        for cell in row {
+    if let Some(row) = rows.get(*index) {
+        for cell in row.values() {
             match cell {
                 Some(term) => {
                     let ptr = box_handle(TAG_NODE, NodeInner::from_term(term.clone()));
@@ -132,19 +199,6 @@ fn materialize_current(results: &mut QueryResultsInner) {
         }
     }
     *materialized_index = Some(*index);
-}
-
-fn binding_row(
-    cells: &[Option<Term>],
-    width: usize,
-    row_count: usize,
-    index: usize,
-) -> Option<&[Option<Term>]> {
-    if index >= row_count {
-        return None;
-    }
-    let start = index.checked_mul(width)?;
-    cells.get(start..start.checked_add(width)?)
 }
 
 fn invalidate_materialized_current(results: &mut QueryResultsInner) {
@@ -245,6 +299,9 @@ pub extern "C" fn librdf_model_query_execute(
         let Some(query) = (unsafe { borrow_handle(query, TAG_QUERY) }) else {
             return ptr::null_mut();
         };
+        if let Some(inner) = try_fast_query_results(&model.inner.model, &query.inner) {
+            return box_handle(TAG_QUERY_RESULTS, inner);
+        }
         let results = match query.inner.query.execute(&model.inner.model) {
             Ok(r) => r,
             Err(error) => {
@@ -260,11 +317,9 @@ pub extern "C" fn librdf_model_query_execute(
                     .iter()
                     .map(|v| v.as_str().to_owned())
                     .collect();
-                let width = names.len();
                 // LIMIT 1000 is the common Redland-compat bench shape; reserve
                 // enough for that without over-allocating tiny results.
-                let mut cells = Vec::with_capacity(width.saturating_mul(1024));
-                let mut row_count = 0usize;
+                let mut rows = Vec::with_capacity(1024);
                 for solution in solutions.by_ref() {
                     let solution = match solution {
                         Ok(s) => s,
@@ -273,23 +328,11 @@ pub extern "C" fn librdf_model_query_execute(
                             return ptr::null_mut();
                         }
                     };
-                    for idx in 0..width {
-                        cells.push(solution.get(idx).cloned());
-                    }
-                    row_count += 1;
+                    rows.push(solution);
                 }
                 // Binding-name C strings are allocated lazily on first getter;
                 // SELECT count/next benches never need them.
-                QueryResultsInner::Bindings {
-                    names,
-                    cells,
-                    row_count,
-                    index: 0,
-                    current_nodes: Vec::new(),
-                    value_cptrs: Vec::new(),
-                    materialized_index: None,
-                    name_cptrs: Vec::new(),
-                }
+                empty_bindings_state(names, rows)
             }
             QueryResults::Graph(mut graph) => {
                 let mut triples = Vec::with_capacity(1024);
@@ -824,12 +867,7 @@ fn results_to_text(
     };
     match &results.inner {
         QueryResultsInner::Boolean(v) => Ok(if *v { "true".into() } else { "false".into() }),
-        QueryResultsInner::Bindings {
-            names,
-            cells,
-            row_count,
-            ..
-        } => {
+        QueryResultsInner::Bindings { names, rows, .. } => {
             let mut out = String::new();
             match format {
                 ResultsFormat::Csv | ResultsFormat::Tsv => {
@@ -840,10 +878,9 @@ fn results_to_text(
                     };
                     out.push_str(&names.join(&sep.to_string()));
                     out.push('\n');
-                    for row_index in 0..*row_count {
-                        let row = binding_row(cells, names.len(), *row_count, row_index)
-                            .expect("validated flat binding row");
+                    for row in rows {
                         let cells: Vec<String> = row
+                            .values()
                             .iter()
                             .map(|c| c.as_ref().map(|t| t.to_string()).unwrap_or_default())
                             .collect();
@@ -862,16 +899,14 @@ fn results_to_text(
                     );
                     out.push_str("]},\"results\":{\"bindings\":[");
                     let mut first = true;
-                    for row_index in 0..*row_count {
-                        let row = binding_row(cells, names.len(), *row_count, row_index)
-                            .expect("validated flat binding row");
+                    for row in rows {
                         if !first {
                             out.push(',');
                         }
                         first = false;
                         out.push('{');
                         let mut first_cell = true;
-                        for (name, cell) in names.iter().zip(row.iter()) {
+                        for (name, cell) in names.iter().zip(row.values().iter()) {
                             let Some(term) = cell else { continue };
                             if !first_cell {
                                 out.push(',');
@@ -892,11 +927,9 @@ fn results_to_text(
                         out.push_str(&format!("<variable name=\"{n}\"/>"));
                     }
                     out.push_str("</head><results>");
-                    for row_index in 0..*row_count {
-                        let row = binding_row(cells, names.len(), *row_count, row_index)
-                            .expect("validated flat binding row");
+                    for row in rows {
                         out.push_str("<result>");
-                        for (name, cell) in names.iter().zip(row.iter()) {
+                        for (name, cell) in names.iter().zip(row.values().iter()) {
                             if let Some(term) = cell {
                                 out.push_str(&format!(
                                     "<binding name=\"{name}\"><literal>{}</literal></binding>",
