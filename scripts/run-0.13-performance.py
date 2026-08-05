@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
+import shutil
 import subprocess
 import sys
 import uuid
@@ -53,9 +55,43 @@ def binary(name: str) -> Path:
     return windows if windows.is_file() else plain
 
 
+def resolve_bash() -> list[str]:
+    """Return a bash argv that is not WSL's stub on Windows CI."""
+    if sys.platform != "win32":
+        return ["bash"]
+    # GitHub-hosted Windows runners often put a WSL `bash` ahead of Git/MSYS2.
+    # Prefer known native shells; fall back to PATH only if needed.
+    candidates = [
+        Path(os.environ["ProgramFiles"]) / "Git" / "bin" / "bash.exe"
+        if "ProgramFiles" in os.environ
+        else None,
+        Path(r"C:\Program Files\Git\bin\bash.exe"),
+        Path(r"C:\Program Files\Git\usr\bin\bash.exe"),
+        Path("/ucrt64/bin/bash.exe"),
+        Path("/usr/bin/bash.exe"),
+        Path(r"C:\msys64\usr\bin\bash.exe"),
+        Path(r"D:\a\_temp\msys64\usr\bin\bash.exe"),
+    ]
+    for candidate in candidates:
+        if candidate is not None and candidate.is_file():
+            return [str(candidate)]
+    which = shutil.which("bash")
+    if which:
+        return [which]
+    raise SystemExit("bash not found for rebuilding 0.13 performance binaries")
+
+
 def ensure_binaries() -> tuple[Path, Path]:
+    oxiland = binary("perf-oxiland-0.13")
+    redland = binary("perf-redland-0.13")
+    if oxiland.is_file() and redland.is_file():
+        return oxiland, redland
     subprocess.check_call(
-        ["bash", str(ROOT / "compatibility/harness/c_oracle/build.sh")], cwd=ROOT
+        [
+            *resolve_bash(),
+            str(ROOT / "compatibility/harness/c_oracle/build.sh"),
+        ],
+        cwd=ROOT,
     )
     oxiland = binary("perf-oxiland-0.13")
     redland = binary("perf-redland-0.13")

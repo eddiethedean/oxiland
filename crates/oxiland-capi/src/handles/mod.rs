@@ -4,10 +4,11 @@ use std::cell::Cell;
 use std::collections::HashMap;
 use std::hash::{BuildHasherDefault, Hasher};
 use std::os::raw::c_char;
-#[cfg(windows)]
-use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{LazyLock, Mutex};
+
+#[cfg(target_os = "windows")]
+use std::sync::atomic::AtomicUsize;
 
 use crate::error::set_last_error;
 
@@ -83,13 +84,13 @@ type LiveHandles = HashMap<usize, u32, BuildHasherDefault<PointerHasher>>;
 static LIVE: LazyLock<Mutex<LiveHandles>> = LazyLock::new(|| Mutex::new(LiveHandles::default()));
 static LIVE_GENERATION: AtomicU64 = AtomicU64::new(1);
 
-#[cfg(windows)]
+#[cfg(target_os = "windows")]
 struct ProcessHotHandle {
     address: AtomicUsize,
     generation: AtomicU64,
 }
 
-#[cfg(windows)]
+#[cfg(target_os = "windows")]
 impl ProcessHotHandle {
     const fn new() -> Self {
         Self {
@@ -103,7 +104,7 @@ impl ProcessHotHandle {
 /// Keep the most recently validated address for each fixed handle tag in a
 /// process-wide lock-free cache, with the registry generation as its lifetime
 /// proof. Thread-local validation remains the fallback for contention.
-#[cfg(windows)]
+#[cfg(target_os = "windows")]
 static PROCESS_HOT: [ProcessHotHandle; 18] = [const { ProcessHotHandle::new() }; 18];
 
 thread_local! {
@@ -128,13 +129,13 @@ fn register(ptr: usize, tag: u32) {
     // the generation before the old allocation is released.
 }
 
-#[cfg(windows)]
+#[cfg(target_os = "windows")]
 fn process_hot_index(tag: u32) -> Option<usize> {
     let index = usize::try_from(tag & 0xff).ok()?;
     (index < PROCESS_HOT.len()).then_some(index)
 }
 
-#[cfg(windows)]
+#[cfg(target_os = "windows")]
 fn process_hot_hit(ptr: usize, tag: u32, generation: u64) -> bool {
     let Some(index) = process_hot_index(tag) else {
         return false;
@@ -144,7 +145,7 @@ fn process_hot_hit(ptr: usize, tag: u32, generation: u64) -> bool {
         && entry.address.load(Ordering::Relaxed) == ptr
 }
 
-#[cfg(windows)]
+#[cfg(target_os = "windows")]
 fn update_process_hot(ptr: usize, tag: u32, generation: u64) {
     if let Some(index) = process_hot_index(tag) {
         let entry = &PROCESS_HOT[index];
@@ -155,6 +156,10 @@ fn update_process_hot(ptr: usize, tag: u32, generation: u64) {
 
 fn validate_live(ptr: usize, expected_tag: u32) -> bool {
     let generation = LIVE_GENERATION.load(Ordering::Acquire);
+    #[cfg(target_os = "windows")]
+    if process_hot_hit(ptr, expected_tag, generation) {
+        return true;
+    }
     if LAST_VALIDATED.with(|last| last.get() == (ptr, expected_tag, generation)) {
         return true;
     }
@@ -180,7 +185,7 @@ fn validate_live(ptr: usize, expected_tag: u32) -> bool {
     if result {
         let generation = LIVE_GENERATION.load(Ordering::Acquire);
         LAST_VALIDATED.with(|last| last.set((ptr, expected_tag, generation)));
-        #[cfg(windows)]
+        #[cfg(target_os = "windows")]
         update_process_hot(ptr, expected_tag, generation);
     }
     result
@@ -264,7 +269,7 @@ pub unsafe fn borrow_handle_hot<'a, T>(
     }
     let addr = ptr as usize;
     let generation = LIVE_GENERATION.load(Ordering::Acquire);
-    #[cfg(windows)]
+    #[cfg(target_os = "windows")]
     if process_hot_hit(addr, expected_tag, generation) {
         // SAFETY: the generation-bound process cache was populated only after
         // registry validation for this fixed tag.
