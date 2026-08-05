@@ -81,12 +81,13 @@ impl StreamInner {
     }
 
     pub fn from_triples(triples: Vec<Triple>) -> Self {
+        let known_len = triples.len();
         Self {
             statements: Vec::new(),
             triples,
             matches: None,
             lookahead: None,
-            known_len: None,
+            known_len: Some(known_len),
             matches_consumed: 0,
             index: 0,
             current: None,

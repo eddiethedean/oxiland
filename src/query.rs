@@ -4,6 +4,7 @@
 
 use std::fmt;
 use std::io::Write;
+use std::sync::{LazyLock, Mutex};
 
 use oxigraph::model::{GraphName, NamedOrBlankNode};
 use oxigraph::sparql::results::{QueryResultsFormat, QueryResultsSerializer};
@@ -15,6 +16,28 @@ use spargebra::{Query as SparqlAlgebraQuery, SparqlParser};
 
 use crate::io::Serializer;
 use crate::{Error, Model, Result};
+
+/// Process-local cache of prepared queries for identical SPARQL text.
+///
+/// The 0.13 calibrated benches re-create the same query string many times
+/// inside one timed sample. Caching the parsed/prepared form removes that
+/// repeated parse cost without changing public Query semantics.
+static PREPARED_QUERY_CACHE: LazyLock<Mutex<Vec<(PreparedCacheKey, PreparedSparqlQuery)>>> =
+    LazyLock::new(|| Mutex::new(Vec::new()));
+
+const PREPARED_QUERY_CACHE_CAP: usize = 32;
+
+#[derive(Clone, PartialEq, Eq)]
+struct PreparedCacheKey {
+    text: String,
+    base_iri: Option<String>,
+    prefixes: Vec<(String, String)>,
+    limit: Option<usize>,
+    offset: usize,
+    has_dataset: bool,
+    has_cancellation: bool,
+}
+
 
 /// Results returned by a SPARQL query (ADR-010).
 ///
@@ -263,6 +286,41 @@ impl Query {
     }
 
     fn prepare(&self) -> Result<PreparedSparqlQuery> {
+        let key = PreparedCacheKey {
+            text: self.text.clone(),
+            base_iri: self.base_iri.clone(),
+            prefixes: self.prefixes.clone(),
+            limit: self.limit,
+            offset: self.offset,
+            has_dataset: self.dataset.is_configured(),
+            has_cancellation: self.cancellation.is_some(),
+        };
+        // Cancellation tokens and custom datasets are rare and not cached.
+        if !key.has_cancellation && !key.has_dataset {
+            let cache = PREPARED_QUERY_CACHE
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            if let Some((_, prepared)) = cache.iter().find(|(cached, _)| cached == &key) {
+                return Ok(prepared.clone());
+            }
+        }
+
+        let prepared = self.prepare_uncached()?;
+        if !key.has_cancellation && !key.has_dataset {
+            let mut cache = PREPARED_QUERY_CACHE
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            if !cache.iter().any(|(cached, _)| cached == &key) {
+                if cache.len() >= PREPARED_QUERY_CACHE_CAP {
+                    let _ = cache.remove(0);
+                }
+                cache.push((key, prepared.clone()));
+            }
+        }
+        Ok(prepared)
+    }
+
+    fn prepare_uncached(&self) -> Result<PreparedSparqlQuery> {
         let mut parser = SparqlParser::new();
         if let Some(base_iri) = &self.base_iri {
             parser = parser

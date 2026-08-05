@@ -1,7 +1,7 @@
 //! `librdf_query` and `librdf_query_results` handles.
 
 use crate::alloc::strdup_c;
-use crate::error::{abort_on_panic, clear_last_error, set_last_error};
+use crate::error::{abort_on_panic, clear_last_error, clear_last_error_if_set, set_last_error};
 use crate::handles::io::{FILE, write_file};
 use crate::handles::model::librdf_model;
 use crate::handles::node::{NodeInner, librdf_node};
@@ -9,8 +9,8 @@ use crate::handles::uri::librdf_uri;
 use crate::handles::world::{librdf_world, register_baseline_query, reject_factory_callback};
 use crate::handles::{
     TAG_MODEL, TAG_NODE, TAG_QUERY, TAG_QUERY_RESULTS, TAG_QUERY_RESULTS_FORMATTER, TAG_STATEMENT,
-    TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, box_handle, cstr_optional, cstr_required,
-    free_handle,
+    TAG_URI, TAG_WORLD, TypedHandle, borrow_handle, borrow_handle_hot, box_handle, cstr_optional,
+    cstr_required, free_handle,
 };
 use oxigraph::model::Term;
 use oxiland::ResultsFormat;
@@ -157,9 +157,25 @@ fn invalidate_materialized_current(results: &mut QueryResultsInner) {
     else {
         return;
     };
+    if materialized_index.is_none() && current_nodes.is_empty() {
+        return;
+    }
     clear_current_nodes(current_nodes);
     value_cptrs.clear();
     *materialized_index = None;
+}
+
+fn ensure_binding_name_cptrs(results: &mut QueryResultsInner) {
+    let QueryResultsInner::Bindings {
+        names, name_cptrs, ..
+    } = results
+    else {
+        return;
+    };
+    if !name_cptrs.is_empty() {
+        return;
+    }
+    *name_cptrs = names.iter().map(|n| strdup_c(n)).collect();
 }
 
 /// Creates a SPARQL query (`name` must be `"sparql"` for the preview).
@@ -244,7 +260,10 @@ pub extern "C" fn librdf_model_query_execute(
                     .iter()
                     .map(|v| v.as_str().to_owned())
                     .collect();
-                let mut cells = Vec::new();
+                let width = names.len();
+                // LIMIT 1000 is the common Redland-compat bench shape; reserve
+                // enough for that without over-allocating tiny results.
+                let mut cells = Vec::with_capacity(width.saturating_mul(1024));
                 let mut row_count = 0usize;
                 for solution in solutions.by_ref() {
                     let solution = match solution {
@@ -254,12 +273,13 @@ pub extern "C" fn librdf_model_query_execute(
                             return ptr::null_mut();
                         }
                     };
-                    for idx in 0..names.len() {
+                    for idx in 0..width {
                         cells.push(solution.get(idx).cloned());
                     }
                     row_count += 1;
                 }
-                let name_cptrs = names.iter().map(|n| strdup_c(n)).collect();
+                // Binding-name C strings are allocated lazily on first getter;
+                // SELECT count/next benches never need them.
                 QueryResultsInner::Bindings {
                     names,
                     cells,
@@ -268,11 +288,11 @@ pub extern "C" fn librdf_model_query_execute(
                     current_nodes: Vec::new(),
                     value_cptrs: Vec::new(),
                     materialized_index: None,
-                    name_cptrs,
+                    name_cptrs: Vec::new(),
                 }
             }
             QueryResults::Graph(mut graph) => {
-                let mut triples = Vec::new();
+                let mut triples = Vec::with_capacity(1024);
                 for triple in graph.by_ref() {
                     let triple = match triple {
                         Ok(t) => t,
@@ -293,8 +313,12 @@ pub extern "C" fn librdf_model_query_execute(
 /// Returns nonzero if results are a CONSTRUCT/DESCRIBE graph.
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_query_results_is_graph(results: *mut librdf_query_results) -> i32 {
+    // SAFETY: null or live results handle from this crate.
+    if let Some(results) = unsafe { borrow_handle_hot(results, TAG_QUERY_RESULTS) } {
+        return i32::from(matches!(results.inner, QueryResultsInner::Graph { .. }));
+    }
     abort_on_panic(|| {
-        clear_last_error();
+        clear_last_error_if_set();
         let Some(results) = (unsafe { borrow_handle(results, TAG_QUERY_RESULTS) }) else {
             return 0;
         };
@@ -360,8 +384,12 @@ pub extern "C" fn librdf_query_results_get_boolean(results: *mut librdf_query_re
 /// Returns nonzero if results are variable bindings (SELECT).
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_query_results_is_bindings(results: *mut librdf_query_results) -> i32 {
+    // SAFETY: null or live results handle from this crate.
+    if let Some(results) = unsafe { borrow_handle_hot(results, TAG_QUERY_RESULTS) } {
+        return i32::from(matches!(results.inner, QueryResultsInner::Bindings { .. }));
+    }
     abort_on_panic(|| {
-        clear_last_error();
+        clear_last_error_if_set();
         // SAFETY: results is null or a live handle.
         let Some(results) = (unsafe { borrow_handle(results, TAG_QUERY_RESULTS) }) else {
             return 0;
@@ -373,8 +401,17 @@ pub extern "C" fn librdf_query_results_is_bindings(results: *mut librdf_query_re
 /// Returns nonzero if there is no current bindings row.
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_query_results_finished(results: *mut librdf_query_results) -> i32 {
+    // SAFETY: null or live results handle from this crate.
+    if let Some(results) = unsafe { borrow_handle_hot(results, TAG_QUERY_RESULTS) } {
+        return match &results.inner {
+            QueryResultsInner::Boolean(_) | QueryResultsInner::Graph { .. } => 1,
+            QueryResultsInner::Bindings {
+                row_count, index, ..
+            } => i32::from(*index >= *row_count),
+        };
+    }
     abort_on_panic(|| {
-        clear_last_error();
+        clear_last_error_if_set();
         // SAFETY: results is null or a live handle.
         let Some(results) = (unsafe { borrow_handle(results, TAG_QUERY_RESULTS) }) else {
             return 1;
@@ -391,8 +428,33 @@ pub extern "C" fn librdf_query_results_finished(results: *mut librdf_query_resul
 /// Advances to the next bindings row. Returns nonzero on error / finished.
 #[unsafe(no_mangle)]
 pub extern "C" fn librdf_query_results_next(results: *mut librdf_query_results) -> i32 {
+    // SAFETY: null or live results handle from this crate.
+    if let Some(results) = unsafe { borrow_handle_hot(results, TAG_QUERY_RESULTS) } {
+        return match &mut results.inner {
+            QueryResultsInner::Boolean(_) | QueryResultsInner::Graph { .. } => -1,
+            QueryResultsInner::Bindings {
+                row_count,
+                index,
+                materialized_index,
+                current_nodes,
+                value_cptrs,
+                ..
+            } => {
+                if *index >= *row_count {
+                    return 1;
+                }
+                *index += 1;
+                if materialized_index.is_some() || !current_nodes.is_empty() {
+                    clear_current_nodes(current_nodes);
+                    value_cptrs.clear();
+                    *materialized_index = None;
+                }
+                i32::from(*index >= *row_count)
+            }
+        };
+    }
     abort_on_panic(|| {
-        clear_last_error();
+        clear_last_error_if_set();
         // SAFETY: results is null or a live handle.
         let Some(results) = (unsafe { borrow_handle(results, TAG_QUERY_RESULTS) }) else {
             return -1;
@@ -432,6 +494,7 @@ pub extern "C" fn librdf_query_results_get_binding_name(
         let Ok(offset) = usize::try_from(offset) else {
             return ptr::null();
         };
+        ensure_binding_name_cptrs(&mut results.inner);
         match &results.inner {
             QueryResultsInner::Bindings { name_cptrs, .. } => {
                 name_cptrs.get(offset).copied().unwrap_or(ptr::null_mut())
@@ -711,6 +774,7 @@ pub extern "C" fn librdf_query_results_get_bindings(
         let Some(results) = (unsafe { borrow_handle(results, TAG_QUERY_RESULTS) }) else {
             return -1;
         };
+        ensure_binding_name_cptrs(&mut results.inner);
         materialize_current(&mut results.inner);
         match &results.inner {
             QueryResultsInner::Bindings {

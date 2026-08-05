@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Speed up C SELECT/CONSTRUCT hot paths for 0.13 qualification: process-local
+  prepared SPARQL cache, hot-path results iteration, lazy binding-name C
+  strings, and known stream length for CONSTRUCT graphs
 - Align user/support/security docs with published tip **0.12.0**: install pins,
   format-v1 reopen **0.4.x–0.12.x**, FAQ/C ABI/migration language, performance
   claims policy, and process docs (PARITY, EXECUTION, ARCHITECTURE)
