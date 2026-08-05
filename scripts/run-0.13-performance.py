@@ -9,8 +9,8 @@ import json
 import subprocess
 import sys
 import uuid
-from statistics import median
 from pathlib import Path
+from statistics import median
 from typing import Any
 
 
@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SUITE_PATH = ROOT / "compatibility/performance/0.13-suite.json"
 HARNESS = ROOT / "compatibility/harness/c_oracle/perf_bench_0_13.c"
 BIN_DIR = ROOT / "compatibility/harness/c_oracle/bin"
+OUT_DIR = ROOT / "compatibility/qualification/performance/0.13"
 
 SIZE_HINTS = {
     "P-MUT-1K": 1_000.0,
@@ -61,6 +62,23 @@ def ensure_binaries() -> tuple[Path, Path]:
     if not oxiland.is_file() or not redland.is_file():
         raise SystemExit("0.13 performance binaries were not built")
     return oxiland, redland
+
+
+def clean_worktree() -> bool:
+    """Like the 0.12 collector, but ignore the 0.13 evidence directory."""
+    status = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=all"],
+        cwd=ROOT,
+        text=True,
+    )
+    out_prefix = str(OUT_DIR.relative_to(ROOT)).replace("\\", "/")
+    for line in status.splitlines():
+        path = line[3:].strip().replace("\\", "/")
+        if path.startswith(out_prefix + "/") or path == out_prefix:
+            continue
+        if path:
+            return False
+    return True
 
 
 def run_sample(executable: Path, case_id: str, target_ms: float) -> float:
@@ -124,10 +142,24 @@ def rss_samples(executable: Path, case_id: str, count: int) -> list[float]:
     return [legacy.measure_rss_mb(executable, case_id) for _ in range(count)]
 
 
+def default_output_path(target: str, run_index: int | None) -> Path:
+    if run_index is None:
+        return OUT_DIR / f"{target}__release-default.json"
+    return OUT_DIR / f"{target}__release-default__run{run_index}.json"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--run-index",
+        type=int,
+        metavar="N",
+        help="Independent run number (writes {target}__release-default__runN.json)",
+    )
     args = parser.parse_args()
+    if args.run_index is not None and args.run_index < 1:
+        raise SystemExit("--run-index must be >= 1")
 
     suite = json.loads(SUITE_PATH.read_text(encoding="utf-8"))
     sample_count = int(suite["thresholds"]["minimum_samples"])
@@ -197,6 +229,7 @@ def main() -> int:
 
     target = legacy.host_target()
     execution_id = uuid.uuid4().hex
+    is_clean = clean_worktree()
     payload = {
         "schema_version": 1,
         "suite_revision": suite["id"],
@@ -204,10 +237,11 @@ def main() -> int:
         "execution_id": execution_id,
         "target": target,
         "profile": "release-default",
+        "run_index": args.run_index,
         "oracle": "system librdf + Oxiland librdf-compat strict paired C bench",
         "host": f"{legacy.platform.system()}/{legacy.platform.machine()}",
         "synthetic": False,
-        "clean_worktree": legacy.clean_worktree(),
+        "clean_worktree": is_clean,
         "git_revision": legacy.git_revision(),
         "build": {
             "oxiland": {
@@ -229,9 +263,7 @@ def main() -> int:
         "notes": "True per-sample AB/BA pairs; each sample calibrated to at least 10 ms.",
     }
 
-    output = args.output or (
-        ROOT / "compatibility/qualification/performance/0.13" / f"{target}__release-default.json"
-    )
+    output = args.output or default_output_path(target, args.run_index)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {output}")

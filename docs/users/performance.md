@@ -10,7 +10,7 @@ cross-platform or “always faster than Redland” claim.
 |---|---|---|
 | Competitive parity (ADR-028) | Oxiland stays within about 10% of Redland on every required case | 0.12 release gate / three-host bundle |
 | Host-scoped strict wins | Corrected local or tip-CI runs after library-path isolation | Highlight table and tip CI diagnostics below |
-| Suite-wide faster-than-Redland | Linux, macOS, and Windows each pass three independent runs | Still open; not authorized by tip 0.12.0 |
+| Suite-wide faster-than-Redland | Linux, macOS, and Windows each pass three independent runs (ADR-029) | `.github/workflows/qualify-0.13.yml` + `scripts/check-0.13-release.py` (open until nine cells are green) |
 
 Always measure **release** builds. Debug/`dev` compiles are not comparable to
 Redland production libraries.
@@ -41,13 +41,16 @@ inside the frozen 1.25 budget. Reproduce a host run with the next-suite (0.13)
 driver against the strict candidate suite:
 
 ```console
-python3 scripts/run-0.13-performance.py --output oxiland-0.13-performance.json
+python3 scripts/run-0.13-performance.py --run-index 1
+python3 scripts/check-0.13-release.py
 ```
 
-The 0.13 script and `compatibility/performance/0.13-suite.json` are the
-forward tooling for suite-wide qualification; they do not redefine the closed
-0.12 competitive-parity gate. Linux, macOS, and Windows must each pass three
-independent runs before a suite-wide faster-than-Redland claim is frozen.
+The frozen 0.13 suite and `compatibility/performance/0.13-suite.json` are the
+suite-wide qualification protocol ([ADR-029](../DECISIONS.md#adr-029-013-suite-wide-faster-than-redland-gate)).
+They do not redefine the closed 0.12 competitive-parity gate. Prove the claim
+with `.github/workflows/qualify-0.13.yml` (nine parallel collectors: three
+hosts × three independent runs). Linux, macOS, and Windows must each pass
+three independent runs before a suite-wide faster-than-Redland claim is frozen.
 
 ## Release qualification baseline
 
@@ -99,14 +102,16 @@ From
 ## Comparison status
 
 - Protocol and thresholds:
-  [VERIFICATION.md — 0.12 performance optimization](../VERIFICATION.md#012-performance-optimization)
-  and [ADR-028](../DECISIONS.md#adr-028-012-competitive-parity-performance-gate).
-- Results and methodology: [0.12 report](../reports/0.12.md); strict candidate
-  suite in `compatibility/performance/0.13-suite.json`.
+  [VERIFICATION.md — 0.12 performance optimization](../VERIFICATION.md#012-performance-optimization),
+  [ADR-028](../DECISIONS.md#adr-028-012-competitive-parity-performance-gate), and
+  [ADR-029](../DECISIONS.md#adr-029-013-suite-wide-faster-than-redland-gate).
+- Results and methodology: [0.12 report](../reports/0.12.md); strict suite in
+  `compatibility/performance/0.13-suite.json`; CI gate in
+  `.github/workflows/qualify-0.13.yml`.
 - **Always measure release builds.** Use
   `cargo build -p oxiland-capi --release --locked` (and matching `--release`
   Rust examples/benches). Debug/`dev` compiles are not comparable to Redland
-  production libraries and are rejected by the 0.12 performance gate.
+  production libraries and are rejected by the performance gates.
 
 ## Related guides
 

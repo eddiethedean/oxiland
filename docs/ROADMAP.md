@@ -1,7 +1,7 @@
 # Oxiland 0.x roadmap
 
 Status: active  
-Applies to: Oxiland 0.1 through 0.12
+Applies to: Oxiland 0.1 through 0.13
 Companion plans: [architecture](ARCHITECTURE.md),
 [compatibility](COMPATIBILITY.md), [verification](VERIFICATION.md), and
 [execution](EXECUTION.md). Durable backend expansion is specified separately in
@@ -28,6 +28,7 @@ only when its evidence gates are satisfied.
 | 0.10 | Freeze 1.0 contracts and build qualification scaffolding | 0.9 | `complete` |
 | 0.11 | Demonstrated full Redland parity from native, revision-bound evidence | 0.10 | `complete` |
 | 0.12 | Performance optimization (ADR-028 competitive parity) | 0.11 | `complete` |
+| 0.13 | Suite-wide faster-than-Redland (ADR-029; three runs × three hosts) | 0.12 | `in progress` |
 
 States are `planned`, `in progress`, `blocked`, or `complete`. A state changes
 only after the evidence links are added to the root
@@ -545,16 +546,45 @@ Evidence gates:
 after library-path isolation are documented separately and do not by themselves
 authorize a suite-wide faster-than-Redland claim.
 
+## 0.13 — Suite-wide faster-than-Redland
+
+Outcome: close ADR-029 by proving three independent corrected-runner passes
+on Linux, macOS, and Windows against the frozen strict suite.
+
+State: in progress (tooling frozen; nine-cell evidence open)
+
+Execution specification: [milestone 0.13](milestones/0.13.md)
+
+Deliverables:
+
+- Frozen `0.13-suite.json` / `0.13-matrix.json` with strict thresholds and
+  checksummed `perf_bench_0_13.c`.
+- Fail-closed collector (`run-0.13-performance.py --run-index`) and checker
+  (`check-0.13-release.py`).
+- GitHub Actions qualification matrix
+  (`.github/workflows/qualify-0.13.yml`).
+
+Evidence gates:
+
+- Every required throughput case has Oxiland/Redland median ratio ≥ `1.05`
+  with 95% bootstrap CI lower bound `> 1.0` on every required target.
+- Every required latency case has Oxiland/Redland median ratio ≤ `0.95` with
+  CI upper bound `< 1.0`.
+- Three independent `execution_id`s per target; production-compile provenance;
+  RSS budgets within `1.25`.
+- `scripts/check-0.13-release.py` green on the staged nine-cell bundle.
+
 ## 1.0 readiness
 
 Version 1.0 is eligible only after 0.11 has passed the demonstrated full
 Redland parity gate and 0.12 has closed the ADR-028 competitive-parity
 performance gate on the exact parity-qualified (and performance-optimized)
-artifacts, and the suite-wide faster-than-Redland claim (three independent
-corrected-runner passes per host) is either closed or explicitly deferred with
-documented scope. The safe Rust mappings and the promised C source, binary ABI,
-and behavioral surfaces must meet their published definitions with no in-scope
-exclusion or deviation.
+artifacts, and the suite-wide faster-than-Redland claim (ADR-029: three
+independent corrected-runner passes per host via
+`.github/workflows/qualify-0.13.yml` / `scripts/check-0.13-release.py`) is
+either closed or explicitly deferred with documented scope. The safe Rust
+mappings and the promised C source, binary ABI, and behavioral surfaces must
+meet their published definitions with no in-scope exclusion or deviation.
 The Python package (if still in the 1.0 promise) must also meet its published
 PyPI contract. Independent Raptor/Rasqal APIs not exposed through `librdf`,
 third-party plug-ins outside the pinned baseline, and targets outside the

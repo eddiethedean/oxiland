@@ -114,10 +114,12 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Drive the suite-wide faster-than-Redland claim: three independent
-   corrected-runner passes on Linux, macOS, and Windows against the strict
-   suite (`compatibility/performance/0.13-suite.json` /
-   `scripts/run-0.13-performance.py`).
+1. Run `.github/workflows/qualify-0.13.yml` (workflow_dispatch or `0.13*` /
+   `milestone-0.13*` branches) until Linux, macOS, and Windows each have three
+   independent green cells under ADR-029; then commit the artifact bundle if
+   desired. Local reproduction:
+   `python3 scripts/run-0.13-performance.py --run-index N` and
+   `python3 scripts/check-0.13-release.py`.
 2. Keep tip documentation, support/security tables, and install pins aligned
    with the published 0.12.0 line (see `SUPPORT.md` and the performance claims
    policy).
@@ -125,7 +127,7 @@ The detailed acceptance criteria and dependency map live in the
    [C ABI limitations](users/c-abi-limitations.md) only when evidence warrants
    a contract change—do not silently widen the allowlist.
 4. Prepare 1.0 readiness work: contract freeze, upgrade notes, and independent
-   reproduction of the performance claim under ADR-028 / ROADMAP rules.
+   reproduction of the performance claim under ADR-028 / ADR-029 / ROADMAP rules.
 ## Completed 0.8 backlog
 
 | Priority | Deliverable | Notes |

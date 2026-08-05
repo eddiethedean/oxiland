@@ -1,16 +1,16 @@
 # Redland parity ledger
 
 Last completed milestone: 0.12
-Current development milestone: 1.0 readiness (`planned` — after complete 0.11
-parity and 0.12 competitive-parity performance gate; see `docs/ROADMAP.md`)
+Current development milestone: 0.13 suite-wide faster-than-Redland (`in progress`
+— ADR-029 / `.github/workflows/qualify-0.13.yml`; see `docs/ROADMAP.md`)
 Ledger maturity: header-derived full public `librdf` 1.0.17 function inventory
 (0.6); Python package usability evidence (0.7); C ABI source-compat accounting
 (0.8–0.9); curated 0.1–0.5 slices retained for historical evidence;
 0.10 candidate full-parity inventory and qualification scaffold; 0.11
 demonstrated parity from six-cell native differentials (`scripts/check-0.11-release.py`
 green on revision-bound raw evidence); 0.12 closed the ADR-028 competitive-parity
-performance gate on that parity baseline (suite-wide faster-than-Redland remains
-open)
+performance gate on that parity baseline (suite-wide faster-than-Redland is
+gated by ADR-029 until nine corrected-runner cells are green)
 
 > **Newcomer gloss:** This ledger classifies Redland `librdf_*` symbols and
 > records what Oxiland has implemented with tests for a **stated scope**.

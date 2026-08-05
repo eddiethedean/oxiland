@@ -39,6 +39,7 @@ tradeoffs are reviewed.
 | [ADR-026](#adr-026-raptor-and-rasqal-world-bridges-for-librdf) | Raptor and Rasqal world bridges for `librdf` |
 | [ADR-027](#adr-027-keep-heedbincode-for-optional-lmdb-in-010) | Keep heed/bincode for optional LMDB in 0.10 |
 | [ADR-028](#adr-028-012-competitive-parity-performance-gate) | 0.12 competitive-parity performance gate |
+| [ADR-029](#adr-029-013-suite-wide-faster-than-redland-gate) | 0.13 suite-wide faster-than-Redland gate |
 
 ## Decision states
 
@@ -633,6 +634,48 @@ hot-path, stream amortization, and memory insert coalescing
 
 Revisit when: Oxigraph/Oxiland sustain ≥1.05 on every required case under the
 same matched protocol.
+
+### ADR-029 — 0.13 suite-wide faster-than-Redland gate
+
+State: accepted  
+Date: 2026-08-04  
+Milestone: 0.13 / 1.0 readiness
+
+Context: ADR-028 froze a competitive-parity gate for 0.12 and deferred a
+blanket faster-than-Redland claim until matched evidence sustained the
+stricter margin (throughput ≥ `1.05`, latency ≤ `0.95`, bootstrap CI
+excluding parity). The corrected paired driver
+(`perf_bench_0_13.c` / `scripts/run-0.13-performance.py`) and tip host-scoped
+wins make that claim testable. Suite-wide authorization still requires three
+independent corrected-runner passes on every required host.
+
+Decision:
+
+- Freeze `compatibility/performance/0.13-suite.json` with the historical
+  faster-than-Redland thresholds (throughput median ≥ `1.05` and CI lower
+  `> 1.0`; latency median ≤ `0.95` and CI upper `< 1.0`), 100 paired samples,
+  and RSS budgets at `1.25`.
+- Require three independent runs per target (Linux x86-64, macOS Apple Silicon,
+  Windows x86-64), collected via `.github/workflows/qualify-0.13.yml` and
+  checked by `scripts/check-0.13-release.py`.
+- Do not weaken thresholds to turn a loss green; red CI means the suite-wide
+  claim stays unauthorized.
+- ADR-028 remains the closed 0.12 competitive-parity record; 0.13 does not
+  reopen or rewrite that gate.
+
+Alternatives considered: keep competitive-parity forever; accept a single-host
+or single-run win as suite-wide; auto-commit evidence without a fail-closed
+checker.
+
+Consequences: marketing and evaluator docs may claim suite-wide
+faster-than-Redland only after nine cells pass under this ADR. Local
+host-scoped tables remain separately scoped.
+
+Evidence: `compatibility/qualification/0.13-matrix.json`, qualify-0.13
+workflow artifacts, and `check-0.13-release.py`.
+
+Revisit when: a required host cannot sustain the margin under the matched
+protocol, or 1.0 readiness defers the claim with documented scope.
 
 ### ADR-017 — Python package is Pythonic, not a thin Rust mirror
 

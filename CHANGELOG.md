@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Fail-closed suite-wide faster-than-Redland qualification (ADR-029): frozen
+  `compatibility/performance/0.13-suite.json`,
+  `compatibility/qualification/0.13-matrix.json`,
+  `scripts/check-0.13-release.py`, and `.github/workflows/qualify-0.13.yml`
+  (three independent corrected-runner runs × Linux/macOS/Windows)
+
 ### Changed
 
 - Align user/support/security docs with published tip **0.12.0**: install pins,
@@ -14,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   claims policy, and process docs (PARITY, EXECUTION, ARCHITECTURE)
 - Add known-limitations and upgrading user guides; document `api/` snapshots;
   extend `scripts/check-docs.py` with a version/format consistency guard
+- `scripts/run-0.13-performance.py` writes `{target}__release-default__runN.json`
+  via `--run-index` and ignores the 0.13 evidence directory for clean-worktree
+  provenance
 
 ## [0.12.0] - 2026-08-03
 

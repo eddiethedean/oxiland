@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "milestone": "0.13",
+  "status": "frozen",
+  "targets": [
+    "x86_64-unknown-linux-gnu",
+    "aarch64-apple-darwin",
+    "x86_64-pc-windows-msvc"
+  ],
+  "performance": {
+    "suite": "compatibility/performance/0.13-suite.json",
+    "suite_sha256": "fada1a6fb7e83f0b8c07a8e75d1d19de2e9f87a8058969e84de2d903cc0bb639",
+    "harness": "compatibility/harness/c_oracle/perf_bench_0_13.c",
+    "harness_sha256": "90edfaefe026a6e09c4cb84ffe8a59220db9f4095b3a464756c31d1c4ebdf0c5",
+    "evidence_dir": "compatibility/qualification/performance/0.13",
+    "independent_runs": 3,
+    "profiles": [
+      "x86_64-unknown-linux-gnu/release-default",
+      "aarch64-apple-darwin/release-default",
+      "x86_64-pc-windows-msvc/release-default"
+    ]
+  },
+  "notes": "Frozen under ADR-029 stricter faster-than-Redland thresholds. Each target requires three independent corrected-runner evidence files ({target}__release-default__runN.json) collected via .github/workflows/qualify-0.13.yml."
+}

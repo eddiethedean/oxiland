@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "oxiland-redland-0.13-v1",
-  "status": "draft",
+  "status": "frozen",
   "baseline": "Redland librdf 1.0.17",
   "surface": "public C API",
   "thresholds": {
@@ -42,5 +42,5 @@
     {"id": "R-RSS-QUERY", "unit": "ratio", "maximum": 1.25}
   ],
   "milestone": "0.13",
-  "notes": "Draft strict faster-than-Redland gate. Freeze only after the paired harness and three-host baselines are reviewed."
+  "notes": "Frozen strict faster-than-Redland gate (ADR-029). Every host must pass three independent corrected-runner runs via qualify-0.13."
 }

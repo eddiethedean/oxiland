@@ -40,7 +40,7 @@ than an aspiration.
 | Downstream compatibility | selected real consumers pass unchanged | 0.9 |
 | Full Redland 1.0.17 parity | all in-scope safe mappings plus C source, binary ABI interchange, and observable behavior verified from native raw evidence | 0.11 |
 | Competitive parity vs Redland (frozen suite) | every required case/profile clears ADR-028 thresholds with resource budgets and native production-compile samples | 0.12 (closed) |
-| Faster-than-Redland (suite-wide) | three independent corrected-runner wins per required host | post-0.12 |
+| Faster-than-Redland (suite-wide) | three independent corrected-runner wins per required host (ADR-029; `.github/workflows/qualify-0.13.yml`) | 0.13 / 1.0 readiness |
 
 Claims are subsystem- and platform-scoped until 1.0. For example, “parser
 behavior verified on Linux” does not imply full storage ABI compatibility on

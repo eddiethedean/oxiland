@@ -62,7 +62,8 @@ assert query(graph, "ASK { ?s ?p ?o }")</code></pre>
     Tip **0.12.0** closed the ADR-028 competitive-parity gate. Separately, the
     optimized tip beat genuine Redland 1.0.17 in every required strict case on
     a corrected local macOS/arm64 run (host-scoped; suite-wide
-    faster-than-Redland still pending). See the
+    faster-than-Redland via [ADR-029](DECISIONS.md#adr-029-013-suite-wide-faster-than-redland-gate)
+    / `qualify-0.13` until nine cells are green). See the
     [performance guide](users/performance.md) for claims policy and tables.
 
 ## Choose your path

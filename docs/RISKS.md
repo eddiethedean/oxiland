@@ -71,9 +71,11 @@ risk back to active.
 
 ## Current focus (post-0.12)
 
-R-022 is closed for the 0.12 competitive-parity gate (ADR-028). Tip work moves
-to 1.0 readiness. Retain production-compile discipline for any future stricter
-faster-than-Redland ADR.
+R-022 is closed for the 0.12 competitive-parity gate (ADR-028). ADR-029 restores
+the stricter suite-wide faster-than-Redland margin under
+`.github/workflows/qualify-0.13.yml` / `scripts/check-0.13-release.py`. Retain
+production-compile discipline; red nine-cell CI means the blanket claim stays
+unauthorized.
 
 ## Historical 0.12 focus
 

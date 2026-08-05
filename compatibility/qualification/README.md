@@ -1,5 +1,32 @@
 # Qualification bundles
 
+## 0.13 suite-wide faster-than-Redland
+
+`0.13-matrix.json` checksums the frozen strict suite and
+`perf_bench_0_13.c` harness. Each required target needs three independent
+evidence files under `performance/0.13/`:
+
+```text
+{target}__release-default__run{1,2,3}.json
+```
+
+Thresholds follow [ADR-029](../../docs/DECISIONS.md#adr-029-013-suite-wide-faster-than-redland-gate)
+(throughput ≥ 1.05 / latency ≤ 0.95 with CI excluding parity). Collect with:
+
+```console
+cargo build -p oxiland-capi --release --locked
+scripts/package-librdf-compat.sh
+compatibility/harness/c_oracle/build.sh
+python3 scripts/run-0.13-performance.py --run-index 1
+# repeat --run-index 2 and 3 (preferably on fresh hosts / CI runners)
+python3 scripts/check-0.13-release.py
+```
+
+Tip CI runs the full nine-cell matrix via `.github/workflows/qualify-0.13.yml`
+(`workflow_dispatch` or `0.13*` / `milestone-0.13*` branches). The gate fails
+closed until every cell passes; red CI means the suite-wide claim stays
+unauthorized.
+
 ## 0.12 performance qualification
 
 `0.12-matrix.json` checksums the frozen suite and native C benchmark harness and
