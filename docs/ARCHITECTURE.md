@@ -3,7 +3,7 @@
 Status: active design baseline  
 Current implementation: Cargo workspace — library crate `oxiland`,
 `crates/oxiland-cli` (0.6+), `crates/oxiland-capi` (0.8+ C ABI with 0.11
-demonstrated packaging retained at tip 0.12), and `python/` PyPI package
+demonstrated packaging retained at tip 0.13), and `python/` PyPI package
 (0.7+, not a workspace member). Oxigraph 0.5.9 remains the RDF engine.  
 `fuzz/` holds parser/FFI/lifecycle targets.  
 Next review gate: before 1.0 readiness (final contract freeze; suite-wide

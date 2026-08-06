@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/crates/l/oxiland)](LICENSE-APACHE)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/eddiethedean/oxiland)
 
-> **Release status:** repository tip **0.12.0** retains demonstrated Redland
+> **Release status:** repository tip **0.13.0** retains demonstrated Redland
 > parity and carries the performance-optimized C compatibility paths.
 >
 > **Performance:** tip closed the ADR-028 competitive-parity gate and the
@@ -21,7 +21,7 @@ RDF terms, in-memory and persistent datasets, named graphs, SPARQL 1.1, and
 streaming RDF input and output through a compact, typed API—without running a
 database server.
 
-Tip **0.12.0** retains the demonstrated Redland-parity gate defined in the
+Tip **0.13.0** retains the demonstrated Redland-parity gate defined in the
 [0.11 milestone](docs/milestones/0.11.md) and adds the optimized performance
 candidate. See the [parity report](docs/reports/0.11.md),
 [0.12 performance report](docs/reports/0.12.md),
@@ -29,7 +29,7 @@ candidate. See the [parity report](docs/reports/0.11.md),
 
 | Surface | Install | Best for |
 |---|---|---|
-| Rust library | `oxiland = "0.12.0"` from crates.io, or path/git for tip | Native applications and services |
+| Rust library | `oxiland = "0.13.0"` from crates.io, or path/git for tip | Native applications and services |
 | Python package | `python -m pip install oxiland` | Python data pipelines and embedded RDF applications |
 | Command line | `cargo install oxiland-cli` | Store inspection, imports, exports, and scripted queries |
 | C ABI | Build from this repo: `cargo build -p oxiland-capi` | Redland-shaped C source + librdf-compat packaging (not on crates.io) |
@@ -62,10 +62,10 @@ Oxiland requires Rust **1.87 or newer**.
 
 ```toml
 [dependencies]
-oxiland = "0.12.0"
+oxiland = "0.13.0"
 ```
 
-**This repository tip (0.12.0 APIs and qualification tooling):**
+**This repository tip (0.13.0 APIs and qualification tooling):**
 
 ```toml
 [dependencies]
@@ -77,7 +77,7 @@ Enable `tracing` only when `World` log records should also be emitted as
 
 ```toml
 [dependencies]
-oxiland = { version = "0.12.0", features = ["tracing"] }
+oxiland = { version = "0.13.0", features = ["tracing"] }
 ```
 
 ### Python
@@ -212,7 +212,7 @@ Published guides are available at
 
 ## Compatibility and scope
 
-Oxiland supports Redland-shaped concepts and migration workflows. Tip **0.12.0**
+Oxiland supports Redland-shaped concepts and migration workflows. Tip **0.13.0**
 ships `oxiland-capi` with demonstrated source and librdf-compat binary evidence
 on the frozen matrix—see [limitations](docs/users/c-abi-limitations.md) for
 remaining behavioral gaps. The Python package is not an rdflib adapter. Every
@@ -227,7 +227,7 @@ value.
 ## Stability and support
 
 Oxiland is pre-1.0. Minor 0.x releases may contain documented public API
-changes. Persistent format v1 is reopen-compatible across 0.4.x–0.12.x patch
+changes. Persistent format v1 is reopen-compatible across 0.4.x–0.13.x patch
 lines; export N-Quads before any future format-v2 migration. See the
 [support policy](SUPPORT.md) and [changelog](CHANGELOG.md).
 

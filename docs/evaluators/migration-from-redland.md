@@ -1,7 +1,7 @@
 # Migration from Redland
 
 This page helps maintainers map Redland `librdf` workflows to **Oxiland tip
-0.12** (safe Rust facade + `oxiland-cli` + PyPI package + C ABI on the verified
+0.13** (safe Rust facade + `oxiland-cli` + PyPI package + C ABI on the verified
 matrix). Milestone 0.11 closed the demonstrated full-parity gate; tip retains
 that evidence and adds the competitive-parity performance gate
 ([ADR-028](../DECISIONS.md#adr-028-012-competitive-parity-performance-gate))
@@ -126,7 +126,7 @@ Guide: [python.md](../users/python.md).
 
 ## C source and ABI
 
-Tip **0.12** ships `oxiland-capi` (`publish = false`) with the **0.11**
+Tip **0.13** ships `oxiland-capi` (`publish = false`) with the **0.11**
 demonstrated source corpus and librdf-compat packaging evidence retained.
 Build it from this repository—it is not published on crates.io. Remaining
 behavioral gaps (fail-closed APIs, factory callbacks, and related limits) are

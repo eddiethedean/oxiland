@@ -61,7 +61,7 @@ inventory-backed claims matter.
 
 Oxiland targets measurable migration over time. Tip **0.11** demonstrates
 Redland parity on the frozen matrix. Tip **0.12** closes the competitive-parity
-performance gate; tip also closes the suite-wide faster-than-Redland claim
+performance gate; tip **0.13** closes the suite-wide faster-than-Redland claim
 under ADR-029 and `.github/workflows/qualify-0.13.yml` (three independent
 corrected-runner passes on Linux, macOS, and Windows). See the
 [performance guide](../users/performance.md) and [0.13 report](../reports/0.13.md).

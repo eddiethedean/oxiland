@@ -1,16 +1,16 @@
 # C ABI
 
-Oxiland tip **0.12.0** ships a **source-compatible Redland-shaped** C library
-(`oxiland-capi`, version `0.12.0`, `publish = false`) with a frozen allowlist.
+Oxiland tip **0.13.0** ships a **source-compatible Redland-shaped** C library
+(`oxiland-capi`, version `0.13.0`, `publish = false`) with a frozen allowlist.
 Use this surface for world → storage → model → parse/serialize → ASK/SELECT
 workflows against Oxiland. Milestone 0.11 demonstrated a **Redland-compatible
 shared library name** (`librdf.0` / `librdf.so.0`) for binary ABI interchange;
-tip 0.12 retains that packaging and the optimized C paths. Remaining behavioral
+tip 0.13 retains that packaging and the optimized C paths. Remaining behavioral
 gaps are listed in the limitations guide.
 
 !!! note "Verified matrix"
     Milestone 0.11 closed the source corpus and librdf-compat packaging gates on
-    the frozen targets/profiles; tip 0.12 retains that evidence. Read
+    the frozen targets/profiles; tip 0.13 retains that evidence. Read
     [C ABI limitations](c-abi-limitations.md) for remaining behavioral gaps
     (factories, iostream tagging, log surface). Interchange evidence lives under
     `compatibility/downstream/` and `compatibility/qualification/`.
@@ -100,11 +100,11 @@ Link with `-loxiland_capi` (the cdylib / staticlib name is `liboxiland_capi`).
 
 1. Copy `crates/oxiland-capi/oxiland.pc.in` to a writable location (for
    example `./oxiland.pc`).
-2. Substitute `@PREFIX@` and `@VERSION@` (use `0.12.0` for the C API crate).
+2. Substitute `@PREFIX@` and `@VERSION@` (use `0.13.0` for the C API crate).
 3. Put that directory on `PKG_CONFIG_PATH` and query flags:
 
 ```console
-sed 's|@PREFIX@|'"$PWD"'/stage|g; s|@VERSION@|0.12.0|g' \
+sed 's|@PREFIX@|'"$PWD"'/stage|g; s|@VERSION@|0.13.0|g' \
   crates/oxiland-capi/oxiland.pc.in > ./oxiland.pc
 export PKG_CONFIG_PATH="$PWD:${PKG_CONFIG_PATH:-}"
 pkg-config --cflags --libs oxiland

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-08-05
+
+Suite-wide faster-than-Redland gate (ADR-029) on Linux, macOS, and Windows:
+three independent corrected-runner cells per host, production-compile evidence,
+retained 0.11 parity and 0.12 competitive parity, and published tip claims.
+
 ### Added
 
 - Fail-closed suite-wide faster-than-Redland qualification (ADR-029): frozen
@@ -18,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `compatibility/qualification/performance/0.13/` and
   [0.13 performance report](docs/reports/0.13.md) authorizing the suite-wide
   faster-than-Redland claim
+- `docs/reports/0.13.0-release.md`
 
 ### Changed
 
@@ -28,8 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   prepared SPARQL cache, hot-path results iteration, lazy binding-name C
   strings, known stream length for CONSTRUCT graphs, and store-cursor fast
   paths for the calibrated SELECT/CONSTRUCT shapes
-- Align user/support/security docs with published tip **0.12.0**: install pins,
-  format-v1 reopen **0.4.x–0.12.x**, FAQ/C ABI/migration language, performance
+- Align user/support/security docs with published tip **0.13.0**: install pins,
+  format-v1 reopen **0.4.x–0.13.x**, FAQ/C ABI/migration language, performance
   claims policy, and process docs (PARITY, EXECUTION, ARCHITECTURE)
 - Add known-limitations and upgrading user guides; document `api/` snapshots;
   extend `scripts/check-docs.py` with a version/format consistency guard

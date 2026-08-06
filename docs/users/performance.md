@@ -81,8 +81,8 @@ Milestone [0.12](../milestones/0.12.md) freezes a **competitive-parity** gate
 on matched production builds, Oxiland must stay within about 10% of Redland on
 every required case (throughput median ≥ `0.90`, latency ≤ `1.20`, with
 bootstrap CI bounds). Tip **0.12.0** closed that gate on the committed
-three-host bundle. Milestone 0.13 then restored and closed the stricter
-suite-wide margin (ADR-029) on the tip evidence above.
+three-host bundle. Milestone **0.13** / tip **0.13.0** then restored and closed
+the stricter suite-wide margin (ADR-029) on the committed nine-cell evidence.
 
 ### Tip CI diagnostic medians (historical 0.12)
 

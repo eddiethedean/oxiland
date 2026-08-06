@@ -95,6 +95,7 @@ def version_guard_failures(current: str) -> list[str]:
         "0.4.x–0.8.x",
         "0.4.x–0.10.x",
         "0.4.x–0.11.x",
+        "0.4.x–0.12.x",
     ]
     # Drop the expected current reopen from the stale list if it coincides.
     stale_reopens = [item for item in stale_reopens if item != expected_reopen]

@@ -25,13 +25,13 @@ cargo new hello-oxiland
 cd hello-oxiland
 ```
 
-Tip **0.12.0** is the current package version.
+Tip **0.13.0** is the current package version.
 
 **Published / tip pin:**
 
 ```toml
 [dependencies]
-oxiland = "0.12.0"
+oxiland = "0.13.0"
 ```
 
 **Tip (git or path):**

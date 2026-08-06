@@ -8,8 +8,8 @@ description: Build typed, local RDF applications with SPARQL, persistent dataset
 
 !!! info "Release status"
 
-    This documentation tip describes **0.12.0** (the current published package
-    version). Pin installs as `oxiland = "0.12.0"` / `pip install oxiland==0.12.0`,
+    This documentation tip describes **0.13.0** (the current published package
+    version). Pin installs as `oxiland = "0.13.0"` / `pip install oxiland==0.13.0`,
     or use a git/path checkout for unreleased tip APIs.
 
 <section class="hero" aria-labelledby="hero-title">
@@ -157,11 +157,11 @@ model.
 
 !!! info "Compatibility claims are evidence-scoped"
 
-    Oxiland provides Redland-shaped workflows. Tip **0.12** retains the frozen
-    0.11 source/binary compatibility evidence and adds a strict host-scoped
-    performance win; it is not an rdflib adapter. Start with the
-    [positioning guide](evaluators/positioning.md) and verify each claim in the
-    [parity ledger](parity.md).
+    Oxiland provides Redland-shaped workflows. Tip **0.13** retains the frozen
+    0.11 source/binary compatibility evidence and authorizes suite-wide
+    faster-than-Redland under ADR-029; it is not an rdflib adapter. Start with
+    the [positioning guide](evaluators/positioning.md) and verify each claim in
+    the [parity ledger](parity.md).
 
 <div class="home-footer-cta" markdown>
 

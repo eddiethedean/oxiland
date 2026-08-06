@@ -988,7 +988,7 @@ dependencies = [
 
 [[package]]
 name = "oxiland"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "fjall",
  "heed",
@@ -1010,7 +1010,7 @@ dependencies = [
 
 [[package]]
 name = "oxiland-capi"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "cc",
  "libc",
@@ -1021,7 +1021,7 @@ dependencies = [
 
 [[package]]
 name = "oxiland-cli"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "assert_cmd",
  "clap",

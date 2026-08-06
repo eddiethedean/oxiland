@@ -115,9 +115,9 @@ The detailed acceptance criteria and dependency map live in the
 ### Immediate next actions
 
 1. Keep tip documentation, support/security tables, and install pins aligned
-   with the published 0.12.0 line while 0.13 suite-wide performance evidence
-   remains tip-scoped (see `SUPPORT.md`, [0.13 report](reports/0.13.md), and
-   the performance claims policy).
+   with the published 0.13.0 line (see `SUPPORT.md`, [0.13 report](reports/0.13.md),
+   [0.13.0 release checklist](reports/0.13.0-release.md), and the performance
+   claims policy).
 2. Close remaining C behavioral gaps listed in
    [C ABI limitations](users/c-abi-limitations.md) only when evidence warrants
    a contract change—do not silently widen the allowlist.

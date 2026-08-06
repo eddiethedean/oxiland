@@ -24,7 +24,7 @@ unimplemented = "deny"
 
 [package]
 name = "oxiland"
-version = "0.12.0"
+version = "0.13.0"
 edition = "2024"
 rust-version = "1.87"
 description = "Embedded RDF datasets, SPARQL, persistence, and streaming I/O for Rust"

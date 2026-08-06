@@ -12,7 +12,7 @@ for your platform/Python, it may attempt a source build and fail. Use CPython
 3.10–3.14 on a platform with published wheels, or build from a git checkout with
 maturin ([Python installation guide](python-installation.md)).
 
-Tip **0.12.0** is the current package version.
+Tip **0.13.0** is the current package version.
 
 ## Why not use Oxigraph directly?
 
@@ -31,8 +31,9 @@ replication, tenant isolation, or managed backups. See the
 ## Is Oxiland “Redland-compatible”?
 
 Only in evidence-scoped senses documented in the [parity ledger](../parity.md).
-Tip **0.12** retains the **0.11** demonstrated Redland matrix for Rust, Python,
-and C source + librdf-compat packaging. Remaining behavioral gaps are listed in
+Tip **0.13** retains the **0.11** demonstrated Redland matrix for Rust, Python,
+and C source + librdf-compat packaging, and adds the ADR-029 suite-wide
+faster-than-Redland performance claim. Remaining behavioral gaps are listed in
 [C ABI limitations](c-abi-limitations.md). Oxiland is not a silent 100%
 `librdf` port and not an rdflib adapter. “Safe-API accounting” means inventoried
 symbols are **classified**, not that every Redland behavior is drop-in. See the
@@ -106,7 +107,7 @@ outside an entered context raise `UnsupportedError`.
 
 ## Will my format-v1 store open after an upgrade?
 
-Format v1 reopen is promised for patch releases in **0.4.x–0.12.x**. Export
+Format v1 reopen is promised for patch releases in **0.4.x–0.13.x**. Export
 N-Quads before any future format-v2 migration. See
 [persistence](persistence.md) and the [support policy](../support.md).
 

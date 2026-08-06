@@ -6,13 +6,13 @@ supported persistent-store contract behind one error model.
 
 ## Install
 
-Oxiland requires Rust 1.87+. Tip **0.12.0** is the current package version.
+Oxiland requires Rust 1.87+. Tip **0.13.0** is the current package version.
 
 **Published / tip pin:**
 
 ```toml
 [dependencies]
-oxiland = "0.12.0"
+oxiland = "0.13.0"
 ```
 
 **This repository tip (git checkout):**

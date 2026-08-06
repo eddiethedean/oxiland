@@ -1,6 +1,6 @@
 [package]
 name = "oxiland-capi"
-version = "0.12.0"
+version = "0.13.0"
 edition = "2024"
 rust-version = "1.87"
 description = "C ABI for Oxiland (Redland-shaped source-compat; 0.11 librdf packaging)"
@@ -30,7 +30,7 @@ storage-sqlite = ["oxiland/storage-sqlite"]
 storage-lmdb = ["oxiland/storage-lmdb"]
 
 [dependencies]
-oxiland = { path = "../..", version = "0.12.0", default-features = false }
+oxiland = { path = "../..", version = "0.13.0", default-features = false }
 oxigraph = { version = "=0.5.9", default-features = false }
 libc = "0.2"
 

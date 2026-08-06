@@ -8,7 +8,8 @@ vulnerability before coordinated disclosure.
 
 | Version | Security status |
 |---|---|
-| 0.12.x | Supported |
+| 0.13.x | Supported |
+| 0.12.x | Supported when practical; upgrade preferred |
 | 0.11.x | Supported when practical; upgrade preferred |
 | 0.10.x | Supported when practical; upgrade preferred |
 | 0.9.x | Critical fixes when practical; upgrade strongly preferred |

@@ -2,7 +2,7 @@
 
 !!! info "Release status"
 
-    Tip **0.12.0** is the current package version. Pin as shown below, or build
+    Tip **0.13.0** is the current package version. Pin as shown below, or build
     from a git checkout for unreleased tip APIs.
 
 ## Supported runtime
@@ -30,7 +30,7 @@ Create an isolated environment and upgrade `pip` before installing:
     python3 -m venv .venv
     source .venv/bin/activate
     python -m pip install --upgrade pip
-    python -m pip install oxiland==0.12.0
+    python -m pip install oxiland==0.13.0
     ```
 
 === "Windows PowerShell"
@@ -39,7 +39,7 @@ Create an isolated environment and upgrade `pip` before installing:
     py -m venv .venv
     .venv\Scripts\Activate.ps1
     python -m pip install --upgrade pip
-    python -m pip install oxiland==0.12.0
+    python -m pip install oxiland==0.13.0
     ```
 
 Confirm the installed runtime before deployment:
@@ -62,7 +62,7 @@ application:
 
 ```text
 # requirements.in
-oxiland==0.12.0
+oxiland==0.13.0
 ```
 
 For environments that require artifact integrity, download the wheel and

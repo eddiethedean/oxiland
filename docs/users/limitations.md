@@ -14,7 +14,7 @@ detail; do not treat silence elsewhere as support.
   ([Performance](performance.md))
 - Do not share one writable store directory across mutually untrusted processes
   as a coordination protocol. ([FAQ](faq.md))
-- Format v1 reopens across **0.4.x–0.12.x** patch lines; export N-Quads before
+- Format v1 reopens across **0.4.x–0.13.x** patch lines; export N-Quads before
   any future format-v2 migration. ([Support policy](../support.md))
 
 ## RDF I/O
