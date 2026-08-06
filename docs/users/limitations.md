@@ -58,7 +58,7 @@ detail; do not treat silence elsewhere as support.
 
 ## Performance claims
 
-- Competitive parity (ADR-028) and host-scoped strict wins are distinct claim
-  classes; a suite-wide faster-than-Redland claim is still open until
-  `.github/workflows/qualify-0.13.yml` / ADR-029 are green.
+- Competitive parity (ADR-028) and suite-wide faster-than-Redland (ADR-029)
+  are distinct claim classes; both are closed on tip evidence. Host-scoped
+  highlight tables remain separately scoped when cited alone.
   ([Performance claims policy](performance.md#claims-policy))

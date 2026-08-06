@@ -162,6 +162,9 @@ Version 1.0 means:
   competitive-parity protocol holds on every required benchmark and supported
   performance profile for the parity-qualified artifacts (production compile,
   resource budgets, no required-case waiver);
+- the 0.13 suite-wide faster-than-Redland gate has passed: ADR-029 nine-cell
+  evidence (three independent corrected-runner runs × Linux/macOS/Windows)
+  holds on the tip performance candidate;
 - the published behavioral, source, and ABI matrices meet their stated gates;
 - API, ABI, persistence, MSRV, support, and deprecation policies are published;
 - clean installation and selected downstream workflows work from release

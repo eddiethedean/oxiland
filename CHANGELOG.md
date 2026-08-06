@@ -14,9 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `compatibility/qualification/0.13-matrix.json`,
   `scripts/check-0.13-release.py`, and `.github/workflows/qualify-0.13.yml`
   (three independent corrected-runner runs × Linux/macOS/Windows)
+- Committed nine-cell ADR-029 evidence under
+  `compatibility/qualification/performance/0.13/` and
+  [0.13 performance report](docs/reports/0.13.md) authorizing the suite-wide
+  faster-than-Redland claim
 
 ### Changed
 
+- Publish suite-wide faster-than-Redland claims across README, performance
+  guide, parity ledger, roadmap, and evaluator docs after the green nine-cell
+  qualification
 - Speed up C SELECT/CONSTRUCT hot paths for 0.13 qualification: process-local
   prepared SPARQL cache, hot-path results iteration, lazy binding-name C
   strings, known stream length for CONSTRUCT graphs, and store-cursor fast

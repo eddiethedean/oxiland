@@ -57,14 +57,12 @@ assert query(graph, "ASK { ?s ?p ?o }")</code></pre>
   <span role="listitem"><b aria-hidden="true">✓</b> Streaming RDF I/O</span>
 </div>
 
-!!! success "Competitive parity closed; host-scoped strict wins"
+!!! success "Suite-wide faster-than-Redland authorized"
 
-    Tip **0.12.0** closed the ADR-028 competitive-parity gate. Separately, the
-    optimized tip beat genuine Redland 1.0.17 in every required strict case on
-    a corrected local macOS/arm64 run (host-scoped; suite-wide
-    faster-than-Redland via [ADR-029](DECISIONS.md#adr-029-013-suite-wide-faster-than-redland-gate)
-    / `qualify-0.13` until nine cells are green). See the
-    [performance guide](users/performance.md) for claims policy and tables.
+    Tip closed the ADR-028 competitive-parity gate and the ADR-029 suite-wide
+    faster-than-Redland gate (Linux, macOS, and Windows × three independent
+    strict runs). See the [performance guide](users/performance.md) and the
+    [0.13 report](reports/0.13.md) for claims policy and tables.
 
 ## Choose your path
 

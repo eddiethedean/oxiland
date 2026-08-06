@@ -28,7 +28,7 @@ only when its evidence gates are satisfied.
 | 0.10 | Freeze 1.0 contracts and build qualification scaffolding | 0.9 | `complete` |
 | 0.11 | Demonstrated full Redland parity from native, revision-bound evidence | 0.10 | `complete` |
 | 0.12 | Performance optimization (ADR-028 competitive parity) | 0.11 | `complete` |
-| 0.13 | Suite-wide faster-than-Redland (ADR-029; three runs × three hosts) | 0.12 | `in progress` |
+| 0.13 | Suite-wide faster-than-Redland (ADR-029; three runs × three hosts) | 0.12 | `complete` |
 
 States are `planned`, `in progress`, `blocked`, or `complete`. A state changes
 only after the evidence links are added to the root
@@ -504,8 +504,8 @@ Evidence gates:
 Outcome: close the ADR-028 **competitive-parity** gate on the frozen matrix
 (Oxiland within about 10% of Redland on every required case), fill resource
 budgets, retain 0.11 parity on the optimized artifacts, and publish scoped
-ratios. A suite-wide faster-than-Redland claim remains a separate 1.0 readiness
-gate.
+ratios. A suite-wide faster-than-Redland claim is closed separately under
+milestone 0.13 (ADR-029).
 
 State: complete
 
@@ -543,17 +543,19 @@ Evidence gates:
 - Risk R-022 has no open trigger on the release candidate.
 
 0.11’s native samples remain the diagnostic baseline. Host-scoped strict wins
-after library-path isolation are documented separately and do not by themselves
-authorize a suite-wide faster-than-Redland claim.
+after library-path isolation are documented separately; suite-wide
+authorization is the 0.13 ADR-029 nine-cell bundle.
 
 ## 0.13 — Suite-wide faster-than-Redland
 
 Outcome: close ADR-029 by proving three independent corrected-runner passes
 on Linux, macOS, and Windows against the frozen strict suite.
 
-State: in progress (tooling frozen; nine-cell evidence open)
+State: complete
 
 Execution specification: [milestone 0.13](milestones/0.13.md)
+
+Progress report: [0.13 report](reports/0.13.md)
 
 Deliverables:
 
@@ -563,6 +565,8 @@ Deliverables:
   (`check-0.13-release.py`).
 - GitHub Actions qualification matrix
   (`.github/workflows/qualify-0.13.yml`).
+- Committed nine-cell evidence under
+  `compatibility/qualification/performance/0.13/`.
 
 Evidence gates:
 
@@ -577,19 +581,18 @@ Evidence gates:
 ## 1.0 readiness
 
 Version 1.0 is eligible only after 0.11 has passed the demonstrated full
-Redland parity gate and 0.12 has closed the ADR-028 competitive-parity
+Redland parity gate, 0.12 has closed the ADR-028 competitive-parity
 performance gate on the exact parity-qualified (and performance-optimized)
-artifacts, and the suite-wide faster-than-Redland claim (ADR-029: three
-independent corrected-runner passes per host via
-`.github/workflows/qualify-0.13.yml` / `scripts/check-0.13-release.py`) is
-either closed or explicitly deferred with documented scope. The safe Rust
-mappings and the promised C source, binary ABI, and behavioral surfaces must
-meet their published definitions with no in-scope exclusion or deviation.
-The Python package (if still in the 1.0 promise) must also meet its published
-PyPI contract. Independent Raptor/Rasqal APIs not exposed through `librdf`,
-third-party plug-ins outside the pinned baseline, and targets outside the
-published support matrix are not part of the denominator; anything inside that
-denominator is mandatory.
+artifacts, and the suite-wide faster-than-Redland claim (ADR-029) is closed
+(nine corrected-runner cells via `.github/workflows/qualify-0.13.yml` /
+`scripts/check-0.13-release.py`—complete on tip) or explicitly deferred with
+documented scope. The safe Rust mappings and the promised C source, binary
+ABI, and behavioral surfaces must meet their published definitions with no
+in-scope exclusion or deviation. The Python package (if still in the 1.0
+promise) must also meet its published PyPI contract. Independent
+Raptor/Rasqal APIs not exposed through `librdf`, third-party plug-ins outside
+the pinned baseline, and targets outside the published support matrix are not
+part of the denominator; anything inside that denominator is mandatory.
 
 The release decision consumes the evidence defined above; elapsed time,
 inventory percentages alone, or a green unit-test suite are insufficient.

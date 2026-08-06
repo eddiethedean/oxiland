@@ -668,11 +668,15 @@ or single-run win as suite-wide; auto-commit evidence without a fail-closed
 checker.
 
 Consequences: marketing and evaluator docs may claim suite-wide
-faster-than-Redland only after nine cells pass under this ADR. Local
+faster-than-Redland after nine cells pass under this ADR. Local
 host-scoped tables remain separately scoped.
 
-Evidence: `compatibility/qualification/0.13-matrix.json`, qualify-0.13
-workflow artifacts, and `check-0.13-release.py`.
+Evidence: committed nine-cell bundle under
+`compatibility/qualification/performance/0.13/`,
+[qualify-0.13 run 30973969324](https://github.com/eddiethedean/oxiland/actions/runs/30973969324)
+on `a50ee5b25eb9daa56b0cf1d155856e1c312b35fb`,
+`compatibility/qualification/0.13-matrix.json`, and
+`scripts/check-0.13-release.py` green.
 
 Revisit when: a required host cannot sustain the margin under the matched
 protocol, or 1.0 readiness defers the claim with documented scope.

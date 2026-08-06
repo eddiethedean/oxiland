@@ -38,7 +38,6 @@ struct PreparedCacheKey {
     has_cancellation: bool,
 }
 
-
 /// Results returned by a SPARQL query (ADR-010).
 ///
 /// Wraps Oxigraph iterators. [`Debug`] prints the variant without draining

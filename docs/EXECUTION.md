@@ -1,8 +1,8 @@
 # Execution plan
 
 Status: active operating model  
-Current milestone: 1.0 (planned — after complete 0.11 parity and 0.12
-competitive-parity performance gate)
+Current milestone: 1.0 readiness (planned — 0.11 parity, 0.12 competitive
+parity, and 0.13 suite-wide faster-than-Redland are complete on tip)
 
 This plan turns roadmap outcomes into reviewable work. It deliberately avoids
 calendar estimates until the API inventory and differential harness reveal the
@@ -114,20 +114,16 @@ The detailed acceptance criteria and dependency map live in the
 
 ### Immediate next actions
 
-1. Run `.github/workflows/qualify-0.13.yml` (workflow_dispatch or `0.13*` /
-   `milestone-0.13*` branches) until Linux, macOS, and Windows each have three
-   independent green cells under ADR-029; then commit the artifact bundle if
-   desired. Local reproduction:
-   `python3 scripts/run-0.13-performance.py --run-index N` and
-   `python3 scripts/check-0.13-release.py`.
-2. Keep tip documentation, support/security tables, and install pins aligned
-   with the published 0.12.0 line (see `SUPPORT.md` and the performance claims
-   policy).
-3. Close remaining C behavioral gaps listed in
+1. Keep tip documentation, support/security tables, and install pins aligned
+   with the published 0.12.0 line while 0.13 suite-wide performance evidence
+   remains tip-scoped (see `SUPPORT.md`, [0.13 report](reports/0.13.md), and
+   the performance claims policy).
+2. Close remaining C behavioral gaps listed in
    [C ABI limitations](users/c-abi-limitations.md) only when evidence warrants
    a contract change—do not silently widen the allowlist.
-4. Prepare 1.0 readiness work: contract freeze, upgrade notes, and independent
-   reproduction of the performance claim under ADR-028 / ADR-029 / ROADMAP rules.
+3. Prepare 1.0 readiness work: contract freeze, upgrade notes, and independent
+   reproduction of the performance claim under ADR-028 / ADR-029 / ROADMAP rules
+   (`python3 scripts/check-0.13-release.py` on the committed nine-cell bundle).
 ## Completed 0.8 backlog
 
 | Priority | Deliverable | Notes |

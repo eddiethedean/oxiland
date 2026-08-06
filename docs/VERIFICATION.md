@@ -206,6 +206,7 @@ Additional phase gates:
 | 0.10 | frozen contracts, candidate inventory/C surface, qualification scaffolding, performance candidate, and soak |
 | 0.11 | **demonstrated full Redland 1.0.17 parity**, native cross-platform differentials, source compatibility, and binary ABI interchange |
 | 0.12 | **competitive-parity performance gate** (ADR-028) on parity-qualified artifacts, with resource budgets and no required-case waiver |
+| 0.13 | **suite-wide faster-than-Redland gate** (ADR-029): three independent corrected-runner runs × Linux/macOS/Windows |
 
 The 0.11 parity row is a hard gate, not a documentation claim or a waivable
 target. The machine-generated report must derive every state from raw native
@@ -298,9 +299,10 @@ matched production builds freeze a **competitive-parity** rule:
 - latency: Oxiland/Redland median ≤ `1.20`, and 95% bootstrap CI upper bound
   `< 1.40`.
 - At least 40 independent samples per case.
-A later ADR may restore a stricter faster-than-Redland margin when matched
-evidence sustains it. 0.12 does not authorize a blanket “faster than Redland”
-marketing claim.
+A later ADR ([ADR-029](DECISIONS.md#adr-029-013-suite-wide-faster-than-redland-gate))
+restored the stricter faster-than-Redland margin when matched evidence
+sustained it. 0.12 alone does not authorize a blanket “faster than Redland”
+marketing claim; 0.13 does after nine green cells.
 
 #### Production compile contract
 
@@ -336,6 +338,24 @@ Additional 0.12 rules:
 - The 0.12 release checker fails closed on synthetic samples, debug/dev
   compiles, missing resource checks, stale revisions, and incomplete profile
   coverage.
+
+### 0.13 suite-wide faster-than-Redland
+
+Milestone [0.13](milestones/0.13.md) restores the historical stricter margin
+under [ADR-029](DECISIONS.md#adr-029-013-suite-wide-faster-than-redland-gate):
+
+- throughput: Oxiland/Redland median ≥ `1.05`, and 95% bootstrap CI lower bound
+  `> 1.0`;
+- latency: Oxiland/Redland median ≤ `0.95`, and 95% bootstrap CI upper bound
+  `< 1.0`;
+- 100 paired AB/BA samples; RSS budgets `1.25`;
+- three independent runs per target (Linux x86-64, macOS Apple Silicon,
+  Windows x86-64).
+
+`scripts/check-0.13-release.py` fails closed on missing cells, duplicate
+`execution_id`s, non-production compiles, harness checksum mismatch, and
+stale revisions. Evidence lives under
+`compatibility/qualification/performance/0.13/`.
 
 ## Metrics
 

@@ -3,25 +3,60 @@
 ## Claims policy
 
 Publish only results that name the suite, host (or CI matrix), build profile,
-and statistical method. Do **not** treat any single-host table as a blanket
-cross-platform or “always faster than Redland” claim.
+and statistical method. Do **not** treat a single-host table as a substitute
+for the suite-wide claim below.
 
 | Claim class | What it means | Where it lives |
 |---|---|---|
 | Competitive parity (ADR-028) | Oxiland stays within about 10% of Redland on every required case | 0.12 release gate / three-host bundle |
-| Host-scoped strict wins | Corrected local or tip-CI runs after library-path isolation | Highlight table and tip CI diagnostics below |
-| Suite-wide faster-than-Redland | Linux, macOS, and Windows each pass three independent runs (ADR-029) | `.github/workflows/qualify-0.13.yml` + `scripts/check-0.13-release.py` (open until nine cells are green) |
+| Suite-wide faster-than-Redland (ADR-029) | Linux, macOS, and Windows each pass three independent strict runs | Tip evidence under `compatibility/qualification/performance/0.13/` + [0.13 report](../reports/0.13.md) |
+| Host-scoped highlight | Corrected local run after library-path isolation | Highlight table below (macOS/arm64 only) |
 
 Always measure **release** builds. Debug/`dev` compiles are not comparable to
 Redland production libraries.
 
+## Suite-wide faster-than-Redland (authorized)
+
+Milestone [0.13](../milestones/0.13.md) closed [ADR-029](../DECISIONS.md#adr-029-013-suite-wide-faster-than-redland-gate):
+Linux x86-64, macOS Apple Silicon, and Windows x86-64 each passed three
+independent corrected-runner cells against
+`compatibility/performance/0.13-suite.json` (throughput median ≥ `1.05` with
+CI lower `> 1.0`; latency median ≤ `0.95` with CI upper `< 1.0`; 100 paired
+samples; RSS ≤ `1.25×`). Qualifying CI:
+[run 30973969324](https://github.com/eddiethedean/oxiland/actions/runs/30973969324)
+on `a50ee5b25eb9daa56b0cf1d155856e1c312b35fb`.
+`python3 scripts/check-0.13-release.py` is green on the committed bundle.
+
+Worst-of-three run medians per host (minimum throughput ratio; maximum ASK
+latency ratio):
+
+| Case | Linux | macOS | Windows |
+|---|---:|---:|---:|
+| Insert 1K | 3.273× | 2.915× | 2.809× |
+| Insert 10K | 40.152× | 25.298× | 32.678× |
+| Scan 10K | 1.629× | 2.248× | 2.018× |
+| Parse Turtle 1K | 3.692× | 5.148× | 3.074× |
+| Parse Turtle 10K | 35.636× | 28.928× | 31.645× |
+| Serialize N-Quads 10K | 7.096× | 6.348× | 9.738× |
+| ASK latency | 0.314× | 0.286× | 0.216× |
+| SELECT 10K | 1.564× | 2.518× | 2.039× |
+| CONSTRUCT 10K | 2.715× | 5.462× | 4.009× |
+| 100K model-size calls | 1.332× | 1.228× | 1.104× |
+
+Full methodology and reproduce steps: [0.13 report](../reports/0.13.md).
+
+```console
+python3 scripts/check-0.13-release.py
+```
+
 ## Highlight: every strict case won locally
 
-The optimized tip beat genuine system Redland 1.0.17 in **all ten required
-cases** on macOS/arm64. The corrected driver ran 100 per-sample AB/BA pairs per
-case, calibrated each sample to at least 10 ms, and evaluated paired-bootstrap
-95% confidence intervals. Higher is better for throughput; lower is better for
-latency. This is a **host-scoped** result under the claims policy above.
+Separately, an optimized tip beat genuine system Redland 1.0.17 in **all ten
+required cases** on macOS/arm64. The corrected driver ran 100 per-sample AB/BA
+pairs per case, calibrated each sample to at least 10 ms, and evaluated
+paired-bootstrap 95% confidence intervals. Higher is better for throughput;
+lower is better for latency. This remains a **host-scoped** result under the
+claims policy above (the suite-wide claim is the three-host table).
 
 | Case | Oxiland / Redland | Paired 95% CI |
 |---|---:|---:|
@@ -37,20 +72,7 @@ latency. This is a **host-scoped** result under the claims policy above.
 | 100K model-size calls | 1.598× | 1.595–1.602 |
 
 Median peak RSS was 1.012× Redland for parsing and 1.246× for SELECT, both
-inside the frozen 1.25 budget. Reproduce a host run with the next-suite (0.13)
-driver against the strict candidate suite:
-
-```console
-python3 scripts/run-0.13-performance.py --run-index 1
-python3 scripts/check-0.13-release.py
-```
-
-The frozen 0.13 suite and `compatibility/performance/0.13-suite.json` are the
-suite-wide qualification protocol ([ADR-029](../DECISIONS.md#adr-029-013-suite-wide-faster-than-redland-gate)).
-They do not redefine the closed 0.12 competitive-parity gate. Prove the claim
-with `.github/workflows/qualify-0.13.yml` (nine parallel collectors: three
-hosts × three independent runs). Linux, macOS, and Windows must each pass
-three independent runs before a suite-wide faster-than-Redland claim is frozen.
+inside the frozen 1.25 budget.
 
 ## Release qualification baseline
 
@@ -58,10 +80,11 @@ Milestone [0.12](../milestones/0.12.md) freezes a **competitive-parity** gate
 ([ADR-028](../DECISIONS.md#adr-028-012-competitive-parity-performance-gate)):
 on matched production builds, Oxiland must stay within about 10% of Redland on
 every required case (throughput median ≥ `0.90`, latency ≤ `1.20`, with
-bootstrap CI bounds). Tip **0.12.0** closes that gate on the committed
-three-host bundle.
+bootstrap CI bounds). Tip **0.12.0** closed that gate on the committed
+three-host bundle. Milestone 0.13 then restored and closed the stricter
+suite-wide margin (ADR-029) on the tip evidence above.
 
-### Tip CI diagnostic medians
+### Tip CI diagnostic medians (historical 0.12)
 
 From
 [0.12 Qualification run 30848514245](https://github.com/eddiethedean/oxiland/actions/runs/30848514245)
@@ -80,11 +103,10 @@ From
 !!! warning "Historical 0.12 evidence"
 
     The committed 0.12 release-gate bundle predates the runtime-library
-    isolation fix and must not be used for a faster-than-Redland claim. The
-    strict local result above and the tip CI Linux/macOS diagnostics come from
-    the corrected runner, which removes Oxiland's compatibility library path
-    from every Redland process. Windows tip CI in that run re-uploaded the
-    committed historical bundle rather than a fresh isolated measurement.
+    isolation fix and must not be used for a faster-than-Redland claim. Prefer
+    the suite-wide 0.13 table above (and the host-scoped highlight) for speed
+    claims. The 0.12 tip CI Linux/macOS diagnostics come from the corrected
+    runner but are not the ADR-029 nine-cell bundle.
 
 ## Practical defaults
 
@@ -102,11 +124,12 @@ From
 ## Comparison status
 
 - Protocol and thresholds:
-  [VERIFICATION.md — 0.12 performance optimization](../VERIFICATION.md#012-performance-optimization),
+  [VERIFICATION.md — 0.12 / 0.13 performance](../VERIFICATION.md#012-performance-optimization),
   [ADR-028](../DECISIONS.md#adr-028-012-competitive-parity-performance-gate), and
   [ADR-029](../DECISIONS.md#adr-029-013-suite-wide-faster-than-redland-gate).
-- Results and methodology: [0.12 report](../reports/0.12.md); strict suite in
-  `compatibility/performance/0.13-suite.json`; CI gate in
+- Results: [0.13 report](../reports/0.13.md) (suite-wide);
+  [0.12 report](../reports/0.12.md) (competitive parity);
+  strict suite in `compatibility/performance/0.13-suite.json`; CI gate in
   `.github/workflows/qualify-0.13.yml`.
 - **Always measure release builds.** Use
   `cargo build -p oxiland-capi --release --locked` (and matching `--release`

@@ -6,8 +6,8 @@ Current implementation: Cargo workspace — library crate `oxiland`,
 demonstrated packaging retained at tip 0.12), and `python/` PyPI package
 (0.7+, not a workspace member). Oxigraph 0.5.9 remains the RDF engine.  
 `fuzz/` holds parser/FFI/lifecycle targets.  
-Next review gate: before 1.0 readiness (suite-wide performance claim and final
-contract freeze)
+Next review gate: before 1.0 readiness (final contract freeze; suite-wide
+performance claim closed under ADR-029)
 
 This document specifies the implemented dependency direction, ownership model,
 and safety boundaries. It is a design contract rather than an item-level API

@@ -2,9 +2,12 @@
 
 This page helps maintainers map Redland `librdf` workflows to **Oxiland tip
 0.12** (safe Rust facade + `oxiland-cli` + PyPI package + C ABI on the verified
-matrix). Milestone 0.11 closed the demonstrated full-parity gate; tip 0.12
-retains that evidence and adds the competitive-parity performance gate
-([ADR-028](../DECISIONS.md#adr-028-012-competitive-parity-performance-gate)).
+matrix). Milestone 0.11 closed the demonstrated full-parity gate; tip retains
+that evidence and adds the competitive-parity performance gate
+([ADR-028](../DECISIONS.md#adr-028-012-competitive-parity-performance-gate))
+and the suite-wide faster-than-Redland gate
+([ADR-029](../DECISIONS.md#adr-029-013-suite-wide-faster-than-redland-gate);
+see the [0.13 report](../reports/0.13.md)).
 For **symbol-by-symbol** accounting see
 [redland-symbol-map.md](redland-symbol-map.md), the header-derived safe-API
 inventory

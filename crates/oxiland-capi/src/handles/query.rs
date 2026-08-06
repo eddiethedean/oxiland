@@ -50,8 +50,7 @@ fn rebuild_query(inner: &QueryInner, limit: i32, offset: i32) -> Result<Query, S
 const FAST_SELECT_S_LIMIT_1000: &str = "SELECT ?s WHERE { ?s ?p ?o } LIMIT 1000";
 
 /// Exact 0.13 calibrated CONSTRUCT shape.
-const FAST_CONSTRUCT_LIMIT_1000: &str =
-    "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o } LIMIT 1000";
+const FAST_CONSTRUCT_LIMIT_1000: &str = "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o } LIMIT 1000";
 
 fn empty_bindings_state(names: Vec<String>, rows: Vec<QuerySolution>) -> QueryResultsInner {
     let row_count = rows.len();
@@ -80,10 +79,7 @@ fn counted_bindings_state(names: Vec<String>, row_count: usize) -> QueryResultsI
     }
 }
 
-fn try_fast_query_results(
-    model: &oxiland::Model,
-    query: &QueryInner,
-) -> Option<QueryResultsInner> {
+fn try_fast_query_results(model: &oxiland::Model, query: &QueryInner) -> Option<QueryResultsInner> {
     // Only when librdf limit/offset APIs are unused; the calibrated strings
     // already embed LIMIT 1000.
     if query.limit >= 0 || query.offset > 0 {

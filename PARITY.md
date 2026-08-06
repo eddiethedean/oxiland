@@ -1,16 +1,15 @@
 # Redland parity ledger
 
-Last completed milestone: 0.12
-Current development milestone: 0.13 suite-wide faster-than-Redland (`in progress`
-— ADR-029 / `.github/workflows/qualify-0.13.yml`; see `docs/ROADMAP.md`)
+Last completed milestone: 0.13
+Current development milestone: 1.0 readiness (see `docs/ROADMAP.md`)
 Ledger maturity: header-derived full public `librdf` 1.0.17 function inventory
 (0.6); Python package usability evidence (0.7); C ABI source-compat accounting
 (0.8–0.9); curated 0.1–0.5 slices retained for historical evidence;
 0.10 candidate full-parity inventory and qualification scaffold; 0.11
 demonstrated parity from six-cell native differentials (`scripts/check-0.11-release.py`
 green on revision-bound raw evidence); 0.12 closed the ADR-028 competitive-parity
-performance gate on that parity baseline (suite-wide faster-than-Redland is
-gated by ADR-029 until nine corrected-runner cells are green)
+performance gate on that parity baseline; 0.13 closed the ADR-029 suite-wide
+faster-than-Redland gate (nine corrected-runner cells green)
 
 > **Newcomer gloss:** This ledger classifies Redland `librdf_*` symbols and
 > records what Oxiland has implemented with tests for a **stated scope**.
@@ -135,8 +134,16 @@ See [`docs/reports/0.11.md`](https://github.com/eddiethedean/oxiland/blob/main/d
 Complete for its stated ADR-028 competitive-parity gate on the committed
 three-host bundle (`scripts/check-0.12-release.py` green). Tip retains 0.11
 parity on the optimized candidate. Host-scoped strict wins after library-path
-isolation are documented in the performance guide; a suite-wide
-faster-than-Redland claim still requires three independent corrected-runner
-passes per host.
+isolation are documented in the performance guide.
 See [`docs/reports/0.12.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.12.md)
 and [`docs/users/performance.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/users/performance.md).
+
+## Completed 0.13 suite-wide faster-than-Redland
+
+Complete for ADR-029: Linux, macOS, and Windows each have three independent
+corrected-runner evidence files under
+`compatibility/qualification/performance/0.13/`, and
+`scripts/check-0.13-release.py` is green on tip ancestry of
+`a50ee5b25eb9daa56b0cf1d155856e1c312b35fb`
+([qualify-0.13 run 30973969324](https://github.com/eddiethedean/oxiland/actions/runs/30973969324)).
+See [`docs/reports/0.13.md`](https://github.com/eddiethedean/oxiland/blob/main/docs/reports/0.13.md).
