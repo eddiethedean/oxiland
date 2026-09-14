@@ -1,4 +1,4 @@
 # Reproducible tools used by .github/workflows/ci.yml.
-maturin==1.14.1
-pyright==1.1.411
+maturin==1.15.0
+pyright==1.1.414
 pytest==9.1.1
